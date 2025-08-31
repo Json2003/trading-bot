@@ -1,0 +1,28 @@
+[
+  {
+    "ts": "2025-08-31T07:22:01.640640",
+    "summary": {
+      "n_trades": 1,
+      "total_pnl": 3.996,
+      "avg_pnl": 3.996,
+      "win_rate": 1.0,
+      "avg_hold_time_s": 0.000188,
+      "per_model_files": [
+        "tradingbot_ibkr\\datafiles\\trades_model_sim-0.csv"
+      ]
+    }
+  },
+  {
+    "ts": "2025-08-31T07:26:32.799828",
+    "summary": {
+      "n_trades": 1,
+      "total_pnl": 3.996,
+      "avg_pnl": 3.996,
+      "win_rate": 1.0,
+      "avg_hold_time_s": 0.000188,
+      "per_model_files": [
+        "tradingbot_ibkr\\datafiles\\trades_model_sim-0.csv"
+      ]
+    }
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Lehman_2008",
+    "shock_start": "2008-09-15",
+    "shock_end": "2008-10-15",
+    "pre_days": 30,
+    "recovery_days": 180
+  },
+  {
+    "name": "FlashCrash_2010",
+    "shock_start": "2010-05-06",
+    "shock_end": "2010-05-06",
+    "pre_days": 7,
+    "recovery_days": 30
+  },
+  {
+    "name": "COVID_March2020",
+    "shock_start": "2020-02-19",
+    "shock_end": "2020-03-23",
+    "pre_days": 30,
+    "recovery_days": 365
+  },
+  {
+    "name": "Crypto_2018",
+    "shock_start": "2018-01-01",
+    "shock_end": "2018-12-31",
+    "pre_days": 60,
+    "recovery_days": 365
+  },
+  {
+    "name": "Crypto_2022",
+    "shock_start": "2022-05-01",
+    "shock_end": "2022-12-31",
+    "pre_days": 60,
+    "recovery_days": 365
+  }
+]

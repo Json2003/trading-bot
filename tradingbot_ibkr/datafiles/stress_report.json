@@ -1,0 +1,9 @@
+{
+  "events": [],
+  "overall": {
+    "total_return": -0.06889070937469066,
+    "max_drawdown": -0.13210424623099215,
+    "volatility_annualized": 0.05827082419259294,
+    "n_bars": 502
+  }
+}

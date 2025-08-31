@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>TradingBot Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body>
+    <h1>TradingBot Dashboard</h1>
+    <section>
+      <h2>Models</h2>
+  <div>Current model version: <span id="model_version">loading...</span></div>
+      <ul>
+      {% for name, mtime in models.items() %}
+        <li>{{name}} (mtime: {{mtime}})</li>
+      {% else %}
+        <li>No models found</li>
+      {% endfor %}
+      </ul>
+  <button id="train">Run Demo Training</button>
+  <button id="pretrain">Run Pretrain</button>
+      <div>
+        <label>Job ID: <input id="job_id"/></label>
+        <button id="submit_job">Submit Pretrain Job</button>
+        <div id="job_status">No job</div>
+      </div>
+    </section>
+
+    <script>
+    document.getElementById('train').addEventListener('click', async ()=>{
+      const res = await fetch('/api/train', {method:'POST'});
+      const j = await res.json();
+      alert(JSON.stringify(j));
+    });
+
+    document.getElementById('pretrain').addEventListener('click', async ()=>{
+      const res = await fetch('/api/pretrain', {method:'POST'});
+      const j = await res.json();
+      alert(JSON.stringify(j));
+    });
+
+  document.getElementById('submit_job').addEventListener('click', async ()=>{
+      const jid = document.getElementById('job_id').value || '';
+      const body = { files: [], epochs: 1 };
+      const res = await fetch('/api/pretrain', {method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)});
+      const j = await res.json();
+      if(j.job_id){
+    document.getElementById('job_status').textContent = `Queued ${j.job_id}`;
+    startEventStream(j.job_id);
+      }
+    });
+
+    function startEventStream(jid){
+      const el = document.getElementById('job_status');
+      const src = new EventSource(`/api/job_stream?job_id=${jid}`);
+      src.onmessage = function(e){
+        try{
+          const data = JSON.parse(e.data);
+          el.textContent = JSON.stringify(data);
+          if(data && data.status && (data.status === 'done' || data.status === 'failed')){
+            src.close();
+            setTimeout(loadModelVersion, 1000);
+          }
+        }catch(err){ console.error(err); }
+      };
+      src.onerror = function(e){ console.error('EventSource error', e); src.close(); };
+    }
+
+    async function loadModelVersion(){
+      try{
+        const r = await fetch('/api/model_version');
+        const j = await r.json();
+        document.getElementById('model_version').textContent = j.model_version ? `${j.model_version} (${j.last_hash?.slice(0,8)})` : 'none';
+      }catch(e){ document.getElementById('model_version').textContent = 'error'; }
+    }
+    loadModelVersion();
+    </script>
+  </body>
+</html>

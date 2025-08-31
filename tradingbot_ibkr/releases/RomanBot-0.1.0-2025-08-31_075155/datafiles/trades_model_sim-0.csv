@@ -1,0 +1,2 @@
+trade_id,symbol,entry_ts,exit_ts,entry_price,exit_price,size,side,fees,pnl,pnl_pct,model_version,entry_reason,exit_reason,outcome,hold_time_s
+sim-2025-08-31T14:18:32.086890,BTC/USDT,2025-08-31 14:18:32.086890,2025-08-31 14:18:32.087078,30000.0,30060.0,0.0666,buy,0.0,3.996,0.002,sim-0,paper-test,simulated,win,0.000188

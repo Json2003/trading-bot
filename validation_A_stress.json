@@ -1,0 +1,21 @@
+{
+  "candidate": {
+    "label": "A",
+    "tp": 0.01,
+    "sl": 0.005,
+    "hold": 12,
+    "risk": 0.005,
+    "trail": null
+  },
+  "summary": {
+    "trades": 26,
+    "win_rate": 57.692307692307686,
+    "pnl": -937.5350386301866,
+    "overall_max_drawdown_pct": 13.496711841461284
+  },
+  "monte_carlo_block_bootstrap": {
+    "runs": 5000,
+    "prob_dd_gt_30pct": 0.0102,
+    "worst_dd_pct": 38.85952159746913
+  }
+}

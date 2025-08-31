@@ -1,0 +1,46 @@
+{
+  "candidate": {
+    "label": "A",
+    "tp": 0.01,
+    "sl": 0.005,
+    "hold": 1,
+    "risk": 0.5,
+    "trail": null
+  },
+  "summary": {
+    "trades": 0,
+    "win_rate": 0.0,
+    "pnl": 0.0,
+    "overall_max_drawdown_pct": 0.0
+  },
+  "walk_forward": [
+    {
+      "period": 1,
+      "trades": 0,
+      "win_rate": 0.0,
+      "pnl": 0.0,
+      "max_drawdown_pct": 0.0
+    },
+    {
+      "period": 2,
+      "trades": 0,
+      "win_rate": 0.0,
+      "pnl": 0.0,
+      "max_drawdown_pct": 0.0
+    },
+    {
+      "period": 3,
+      "trades": 0,
+      "win_rate": 0.0,
+      "pnl": 0.0,
+      "max_drawdown_pct": 0.0
+    }
+  ],
+  "monte_carlo": {
+    "runs": 1000,
+    "samples": 0,
+    "prob_dd_gt_30pct": null,
+    "worst_dd_pct": null,
+    "note": "too few trades for reliable MC"
+  }
+}
