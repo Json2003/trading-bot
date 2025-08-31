@@ -9,6 +9,7 @@ import pandas as pd
 from datetime import datetime, timezone
 import hashlib
 import json
+import io
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / 'datafiles'
@@ -31,6 +32,41 @@ def load_bars(symbol: str) -> pd.DataFrame:
     if not path.exists():
         return pd.DataFrame()
     return pd.read_csv(path, parse_dates=['ts'], index_col='ts')
+
+
+def save_bars_to_gcs(symbol: str, df: pd.DataFrame, bucket_name: str, path_prefix: str = 'data'):
+    """Upload bars DataFrame to a GCS bucket."""
+    if df.empty:
+        return
+    try:
+        from google.cloud import storage  # type: ignore
+    except Exception as e:  # pragma: no cover - network dependency
+        raise RuntimeError('google-cloud-storage is required for GCS operations') from e
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob_name = f"{path_prefix}/{symbol.replace('/', '_')}_bars.csv"
+    tmp_df = df.reset_index()
+    with tempfile.NamedTemporaryFile('w', delete=False) as tmp:
+        tmp_df.to_csv(tmp.name, index=False)
+        blob = bucket.blob(blob_name)
+        blob.upload_from_filename(tmp.name)
+        Path(tmp.name).unlink()
+
+
+def load_bars_from_gcs(symbol: str, bucket_name: str, path_prefix: str = 'data') -> pd.DataFrame:
+    """Load bars DataFrame from a GCS bucket if present, else return empty DataFrame."""
+    try:
+        from google.cloud import storage  # type: ignore
+    except Exception as e:  # pragma: no cover - network dependency
+        raise RuntimeError('google-cloud-storage is required for GCS operations') from e
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob_name = f"{path_prefix}/{symbol.replace('/', '_')}_bars.csv"
+    blob = bucket.blob(blob_name)
+    if not blob.exists():
+        return pd.DataFrame()
+    data = blob.download_as_bytes()
+    return pd.read_csv(io.BytesIO(data), parse_dates=['ts'], index_col='ts')
 
 def append_trades(symbol: str, trades_df: pd.DataFrame):
     path = DATA_DIR / f'{symbol.replace("/", "_")}_trades.csv'
