@@ -23,13 +23,25 @@ def fetch_ohlcv(symbol, timeframe='1h', limit=500):
 def run(symbol='BTC/USDT'):
     print('Demo: fetching bars for', symbol)
     df = fetch_ohlcv(symbol)
-    # append to data store
-    from data.store import append_bars, load_bars
+    # append to data store and optionally sync with GCS
+    from data.store import (
+        append_bars,
+        load_bars,
+        load_bars_from_gcs,
+        save_bars_to_gcs,
+    )
     # ensure ts column
     if 'ts' not in df.columns:
         df = df.reset_index()
     append_bars(symbol, df)
-    bars = load_bars(symbol)
+    gcs_bucket = os.getenv('GCS_BUCKET')
+    if gcs_bucket:
+        # upload consolidated bars to GCS and reload from there
+        local = load_bars(symbol)
+        save_bars_to_gcs(symbol, local, gcs_bucket)
+        bars = load_bars_from_gcs(symbol, gcs_bucket)
+    else:
+        bars = load_bars(symbol)
     if bars.empty:
         print('No bars stored, abort')
         return
