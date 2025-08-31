@@ -1,0 +1,55 @@
+# Byte-compiled / cached files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# PyTest cache
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment variables
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Release/build artifacts
+tradingbot_ibkr/dist/
+tradingbot_ibkr/releases/
+
+# Local analysis outputs
+analysis/
+
+# Model store - local artifacts and DBs
+tradingbot_ibkr/model_store/*.db
+tradingbot_ibkr/model_store/*.pkl
+
+# Logs
+*.log
+
+# Temporary files
+tmp_import_test.py
