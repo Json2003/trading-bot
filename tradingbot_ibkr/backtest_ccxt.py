@@ -9,9 +9,10 @@ from dotenv import load_dotenv
 import ccxt
 import pandas as pd
 import numpy as np
-from money_engine import choose_position_size, fixed_fractional
+# Use package-relative imports
+from .money_engine import choose_position_size, fixed_fractional, round_qty, round_price
 # Adaptive learning
-from models.online_trainer import OnlineTrainer
+from .models.online_trainer import OnlineTrainer
 
 load_dotenv()
 EXCHANGE = os.getenv('EXCHANGE', 'binance')
@@ -46,10 +47,19 @@ def simple_backtest(df):
     return pnl, trades
 
 
-def aggressive_strategy_backtest(df, take_profit_pct=0.004, stop_loss_pct=0.002, max_holding_bars=12, fee_pct=0.0, slippage_pct=0.0, starting_balance=10000.0,
+def aggressive_strategy_backtest(df, take_profit_pct=0.004, stop_loss_pct=0.002, max_holding_bars=12,
+                                fee_pct=0.0, slippage_pct=0.0, starting_balance=10000.0,
                                 trend_filter=False, ema_fast=50, ema_slow=200,
                                 vol_filter=False, vol_lookback=20, vol_multiplier=1.0,
-                                trailing_stop_pct=None):
+                                trailing_stop_pct=None,
+                                # new sizing/execution params
+                                risk_per_trade: float | None = None,
+                                leverage: float = 1.0,
+                                min_qty: float = 0.0,
+                                # optional volume-based slippage
+                                slippage_vs_volume: bool = False,
+                                slippage_k: float = 0.0,
+                                slippage_cap: float = 0.05):
     """Aggressive intraday-style strategy: enter on breakout and use tight TP/SL.
 
     Rules (example aggressive setup):
@@ -74,7 +84,9 @@ def aggressive_strategy_backtest(df, take_profit_pct=0.004, stop_loss_pct=0.002,
     entry_idx = None
     entry_price = None
     balance = starting_balance  # starting balance in quote currency (e.g., USDT / USD)
-    risk_per_trade = 0.01  # 1% risk per trade
+    # allow caller to override the per-trade risk; default to 1% if not provided
+    if risk_per_trade is None:
+        risk_per_trade = 0.01
     holding = 0
     # Initialize adaptive trainer
     trainer = OnlineTrainer()
@@ -133,7 +145,10 @@ def aggressive_strategy_backtest(df, take_profit_pct=0.004, stop_loss_pct=0.002,
                 position = 'long'
                 entry_idx = row.name
                 entry_price = row['close']
-                qty, notional = choose_position_size(balance, risk_per_trade, entry_price, entry_price * (1 - stop_loss_pct))
+                raw_qty, notional = choose_position_size(balance, risk_per_trade, entry_price, entry_price * (1 - stop_loss_pct), leverage=leverage, min_qty=min_qty)
+                # round quantity to exchange lot and enforce minimums
+                qty = round_qty(raw_qty, step=0.0001, min_qty=min_qty)
+                notional = qty * entry_price
                 trades.append({'type': 'entry', 'time': entry_idx, 'price': entry_price, 'qty': qty, 'notional': notional})
                 holding = 0
                 peak_price = entry_price
@@ -208,9 +223,34 @@ def aggressive_strategy_backtest(df, take_profit_pct=0.004, stop_loss_pct=0.002,
         e = entries[i]
         x = exits[i]
         qty = e.get('qty', 0.0)
+        # ensure qty is rounded and non-negative
+        qty = round_qty(qty, step=0.0001, min_qty=min_qty)
         # apply slippage: assume worse execution on entry and exit
         entry_px = e['price'] * (1 + slippage_pct)
         exit_px = x['price'] * (1 - slippage_pct)
+        # optionally increase slippage when trade notional relative to recent volume is large
+        if slippage_vs_volume:
+            # attempt to read nearby vol_mean20 if present in df
+            try:
+                # use time index to lookup volume mean; fall back to simple average
+                idx_time = pd.to_datetime(e['time'])
+                if 'volume' in df.columns:
+                    # compute a simple recent avg volume per bar (20-bar) if not present
+                    vol_mean20 = df['volume'].rolling(20).mean()
+                    if idx_time in vol_mean20.index:
+                        recent_vol = float(vol_mean20.loc[idx_time]) if not pd.isna(vol_mean20.loc[idx_time]) else float(vol_mean20.mean())
+                    else:
+                        recent_vol = float(vol_mean20.mean())
+                else:
+                    recent_vol = 1.0
+            except Exception:
+                recent_vol = 1.0
+            # avoid div by zero
+            eps = 1e-8
+            extra = slippage_k * (qty / max(recent_vol, eps))
+            extra = min(extra, slippage_cap)
+            entry_px = e['price'] * (1 + slippage_pct + extra)
+            exit_px = x['price'] * (1 - slippage_pct - extra)
         trade_pnl_price = exit_px - entry_px
         # trade PnL before fees
         trade_pnl = trade_pnl_price * qty
