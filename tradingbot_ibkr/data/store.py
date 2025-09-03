@@ -5,11 +5,16 @@ with a proper time-series DB or parquet files.
 """
 from pathlib import Path
 import tempfile
-import pandas as pd
 from datetime import datetime, timezone
 import hashlib
 import json
 import io
+import csv
+
+try:  # pragma: no cover - exercised via stub in tests
+    import pandas as pd  # type: ignore
+except Exception:  # pragma: no cover - fallback if pandas missing
+    pd = None
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / 'datafiles'
@@ -83,30 +88,25 @@ def load_trades(symbol: str) -> pd.DataFrame:
 
 
 def append_trade_record(trade: dict):
-    """Append a single trade record (dict) to DATA_DIR/trades.csv. Creates file if missing."""
+    """Append a single trade record to ``trades.csv`` using only the stdlib."""
     path = DATA_DIR / 'trades.csv'
-    # enrich trade with model_version/hash if missing
+    # enrich trade with model metadata if missing
     if 'model_version' not in trade or not trade.get('model_version'):
-        mv = get_or_update_model_version()
-        trade['model_version'] = mv
+        trade['model_version'] = get_or_update_model_version()
     if 'model_hash' not in trade or not trade.get('model_hash'):
-        mh = get_model_hash() or ''
-        trade['model_hash'] = mh
+        trade['model_hash'] = get_model_hash() or ''
 
-    # store raw order/fills JSON separately to keep trades.csv compact
     raw_dir = DATA_DIR / 'order_raw'
     raw_dir.mkdir(parents=True, exist_ok=True)
-    if 'trade_id' in trade:
-        tid = trade['trade_id']
-    else:
-        tid = f"auto-{pd.Timestamp.now().strftime('%Y%m%dT%H%M%S%f')}"
-        trade['trade_id'] = tid
+    tid = trade.get('trade_id') or f"auto-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')}"
+    trade['trade_id'] = tid
 
+    # persist optional raw order/fill data
     if 'order_raw' in trade:
         try:
             raw_path = raw_dir / f"{tid}_order.json"
             raw_path.write_text(json.dumps(trade['order_raw']))
-            trade['order_raw_file'] = str(raw_path.name)
+            trade['order_raw_file'] = raw_path.name
             del trade['order_raw']
         except Exception:
             trade['order_raw_file'] = ''
@@ -114,33 +114,18 @@ def append_trade_record(trade: dict):
         try:
             fills_path = raw_dir / f"{tid}_fills.json"
             fills_path.write_text(json.dumps(trade['fills']))
-            trade['fills_file'] = str(fills_path.name)
+            trade['fills_file'] = fills_path.name
             del trade['fills']
         except Exception:
             trade['fills_file'] = ''
 
-    df = pd.DataFrame.from_records([trade])
-    # ensure timestamps are timezone-aware ISO strings in UTC
-    for c in ['entry_ts', 'exit_ts']:
-        if c in df.columns:
-            ts = pd.to_datetime(df[c])
-            # convert to UTC and ISO
-            ts = ts.dt.tz_convert('UTC') if ts.dt.tz is not None else ts.dt.tz_localize('UTC')
-            df[c] = ts.dt.strftime('%Y-%m-%dT%H:%M:%S%z')
-
-    # atomic write: write to temp file then append/rename
-    with tempfile.NamedTemporaryFile('w', delete=False, newline='', suffix='.csv') as tmp:
-        df.to_csv(tmp.name, index=False, header=not path.exists())
-        tmp_path = Path(tmp.name)
-
-    # append or move
-    if path.exists():
-        # append without header
-        tmp_df = pd.read_csv(tmp_path)
-        tmp_df.to_csv(path, mode='a', header=False, index=False)
-        tmp_path.unlink()
-    else:
-        tmp_path.replace(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    write_header = not path.exists()
+    with open(path, 'a', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=list(trade.keys()))
+        if write_header:
+            writer.writeheader()
+        writer.writerow(trade)
 
 
 def get_model_hash() -> str:

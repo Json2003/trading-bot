@@ -1,15 +1,28 @@
 """Fetch 1 year of historical bars and run the aggressive backtest, save report as JSON."""
 import os
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
-import ccxt
-import pandas as pd
+try:  # pragma: no cover
+    from dotenv import load_dotenv
+except Exception:  # pragma: no cover
+    def load_dotenv(*args, **kwargs):
+        return None
 import json
+
+try:  # pragma: no cover - external deps optional for tests
+    import ccxt  # type: ignore
+except Exception:  # pragma: no cover
+    ccxt = None
+try:  # pragma: no cover
+    import pandas as pd  # type: ignore
+except Exception:  # pragma: no cover
+    pd = None
 
 load_dotenv()
 EXCHANGE = os.getenv('EXCHANGE', 'binance')
 
 def fetch_ohlcv_since(symbol, timeframe='1h', since_ts=None):
+    if ccxt is None or pd is None:
+        raise RuntimeError('ccxt and pandas are required for this function')
     ex = getattr(ccxt, EXCHANGE)()
     all_bars = []
     limit = 1000
