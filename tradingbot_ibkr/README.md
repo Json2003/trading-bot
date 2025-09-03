@@ -2,13 +2,49 @@
 
 Minimal example folder showing how to run CCXT backtests/live and IBKR live scripts.
 
-Setup (Windows PowerShell):
+## Installation
+
+### Standard Setup (Windows PowerShell):
 
 ```powershell
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 copy .env.example .env
+```
+
+### If pip install fails with network errors:
+
+```powershell
+# Use the automated fix script from the root directory
+python ../fix_pip_install.py
+
+# OR use manual installation with network settings
+pip install --timeout 60 --retries 5 --trusted-host pypi.org --trusted-host pypi.python.org pandas==2.2.2 ccxt==3.0.72
+```
+
+For detailed network troubleshooting, see [../NETWORK_TROUBLESHOOTING.md](../NETWORK_TROUBLESHOOTING.md)
+
+### Standard Setup (Linux/Mac):
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate  
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+### If pip install fails with network errors (Linux/Mac):
+
+```bash
+# Use the automated fix script from the root directory
+python3 ../fix_pip_install.py
+
+# OR use the robust installation script
+../install_dependencies.sh
+
+# OR manual installation with network settings
+pip install --timeout 60 --retries 5 --trusted-host pypi.org --trusted-host pypi.python.org pandas==2.2.2 ccxt==3.0.72
 ```
 
 Edit `.env`:

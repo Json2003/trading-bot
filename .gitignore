@@ -53,3 +53,5 @@ tradingbot_ibkr/model_store/*.pkl
 
 # Temporary files
 tmp_import_test.py
+test_network_fixes.py
+demo_pip_fix.sh
