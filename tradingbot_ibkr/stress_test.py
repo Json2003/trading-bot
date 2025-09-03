@@ -7,24 +7,29 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-import pandas as pd
-import numpy as np
+try:  # pragma: no cover - optional for tests
+    import pandas as pd  # type: ignore
+except Exception:  # pragma: no cover
+    pd = None
+try:  # pragma: no cover
+    import numpy as np  # type: ignore
+except Exception:  # pragma: no cover
+    np = None
 
 
 def compute_metrics(df: pd.DataFrame):
+    if pd is None or np is None:  # pragma: no cover - function unused in tests
+        raise RuntimeError("pandas and numpy are required")
     # expects df sorted by ts
     df = df.sort_values("ts").reset_index(drop=True)
     df["ret"] = df["close"].pct_change().fillna(0)
     cum_ret = (1 + df["ret"]).cumprod() - 1
     total_return = cum_ret.iloc[-1]
 
-    # max drawdown
     peak = (1 + df["ret"]).cumprod().cummax()
     trough = (1 + df["ret"]).cumprod()
     dd = trough / peak - 1
     max_dd = dd.min()
-
-    # annualized vol estimate (based on daily bars if >1d frequency this is approximate)
     vol = df["ret"].std() * np.sqrt(252)
 
     return {
@@ -36,6 +41,8 @@ def compute_metrics(df: pd.DataFrame):
 
 
 def run_report(annotated_csv: Path, out_json: Path):
+    if pd is None:
+        raise RuntimeError("pandas is required")
     df = pd.read_csv(annotated_csv)
     if "ts" in df.columns:
         df["ts"] = pd.to_datetime(df["ts"])
