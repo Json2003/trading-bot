@@ -283,15 +283,82 @@ def aggressive_strategy_backtest(df, take_profit_pct=0.004, stop_loss_pct=0.002,
     }
 
 def main():
+    """Main backtest runner - now supports multiple strategies"""
     symbol = 'BTC/USDT'
     print('Fetching', symbol)
-    df = fetch_ohlcv(symbol)
+    
+    try:
+        df = fetch_ohlcv(symbol)
+    except Exception as e:
+        print(f"Error fetching data: {e}")
+        print("Using sample data for demonstration...")
+        # Create simple sample data if fetch fails
+        import pandas as pd
+        import numpy as np
+        from datetime import datetime, timedelta
+        
+        periods = 100
+        dates = [datetime.now() - timedelta(hours=i) for i in range(periods)]
+        dates.reverse()
+        
+        # Simple random walk
+        prices = [50000]  # Starting price
+        for i in range(1, periods):
+            change = np.random.normal(0, 0.02)  # 2% volatility
+            prices.append(prices[-1] * (1 + change))
+            
+        df = pd.DataFrame({
+            'open': prices,
+            'high': [p * (1 + abs(np.random.normal(0, 0.01))) for p in prices],
+            'low': [p * (1 - abs(np.random.normal(0, 0.01))) for p in prices],
+            'close': prices,
+            'volume': [np.random.uniform(100, 1000) for _ in range(periods)]
+        }, index=dates)
+    
     print('Running aggressive strategy backtest...')
     stats = aggressive_strategy_backtest(df)
+    print('=== Aggressive Strategy Results ===')
     print('Trades:', stats['trades'])
     print('Wins:', stats['wins'])
     print(f"Win rate: {stats['win_rate_pct']:.2f}%")
     print('PnL (price units):', stats['pnl'])
+    
+    # Try to run advanced strategies if available
+    try:
+        from advanced_strategies import run_all_strategies_backtest
+        print('\n' + '='*50)
+        print('Running Advanced Trading Strategies...')
+        print('='*50)
+        
+        # Convert DataFrame to list of dicts for advanced strategies
+        df_data = []
+        for i in range(len(df)):
+            row = df.iloc[i]
+            df_data.append({
+                'timestamp': row.name,
+                'open': row['open'],
+                'high': row['high'],
+                'low': row['low'],
+                'close': row['close'],
+                'volume': row['volume']
+            })
+            
+        advanced_results = run_all_strategies_backtest(df_data)
+        
+        if 'comparison' in advanced_results:
+            comparison = advanced_results['comparison']
+            summary = comparison.get('summary', {})
+            if summary:
+                print(f"\n=== Advanced Strategies Summary ===")
+                print(f"Best Performing: {summary.get('best_performing', 'N/A')}")
+                print(f"Most Consistent: {summary.get('most_consistent', 'N/A')}")
+                print(f"Average PnL: {summary.get('avg_pnl', 0):.2f}")
+                
+    except ImportError as e:
+        print(f"\nAdvanced strategies not available: {e}")
+        print("Run 'python advanced_strategies.py' separately to test new strategies")
+    except Exception as e:
+        print(f"\nError running advanced strategies: {e}")
 
 if __name__ == '__main__':
     main()

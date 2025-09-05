@@ -1,0 +1,156 @@
+{
+  "strategies": {
+    "amm": {
+      "name": "Automated Market Maker",
+      "description": "Provides liquidity by placing bid/ask orders around current price to capture spreads",
+      "expected_return_range": "5-15% annually",
+      "risk_level": "Medium",
+      "config": {
+        "starting_balance": 10000.0,
+        "spread_bps": 20,
+        "order_size": 100.0,
+        "max_inventory": 500.0,
+        "inventory_skew_factor": 0.1,
+        "min_spread_bps": 5,
+        "max_spread_bps": 100,
+        "fee_pct": 0.001
+      }
+    },
+    "multipool_staking": {
+      "name": "Multi-Pool Staking System", 
+      "description": "Diversified staking across multiple pools with automatic rebalancing",
+      "expected_return_range": "6-20% annually",
+      "risk_level": "Low-Medium",
+      "config": {
+        "starting_balance": 10000.0,
+        "rebalance_threshold": 0.1,
+        "max_pool_allocation": 0.4,
+        "min_pool_allocation": 0.05,
+        "rebalance_frequency_days": 7,
+        "risk_tolerance": 5,
+        "pools": [
+          {
+            "name": "BTC_Staking",
+            "apy": 4.5,
+            "risk_score": 3,
+            "min_stake": 0.001
+          },
+          {
+            "name": "ETH_Staking", 
+            "apy": 6.0,
+            "risk_score": 4,
+            "min_stake": 0.01
+          },
+          {
+            "name": "USDC_Lending",
+            "apy": 8.0,
+            "risk_score": 2,
+            "min_stake": 10.0
+          },
+          {
+            "name": "DeFi_Pool",
+            "apy": 15.0,
+            "risk_score": 7,
+            "min_stake": 50.0
+          },
+          {
+            "name": "Stable_Farm",
+            "apy": 12.0,
+            "risk_score": 5,
+            "min_stake": 20.0
+          }
+        ]
+      }
+    },
+    "momentum": {
+      "name": "Momentum Trading Strategy",
+      "description": "Trades in direction of strong price trends using multiple momentum indicators",
+      "expected_return_range": "10-30% annually (high volatility)",
+      "risk_level": "High",
+      "config": {
+        "starting_balance": 10000.0,
+        "lookback_period": 20,
+        "momentum_threshold": 0.02,
+        "stop_loss_pct": 0.03,
+        "take_profit_pct": 0.06,
+        "position_size_pct": 0.1,
+        "min_volume_ratio": 1.5
+      }
+    },
+    "mean_reversion": {
+      "name": "Mean Reversion Strategy",
+      "description": "Trades oversold/overbought conditions expecting price to revert to mean",
+      "expected_return_range": "8-25% annually",
+      "risk_level": "Medium-High",
+      "config": {
+        "starting_balance": 10000.0,
+        "lookback_period": 20,
+        "std_dev_threshold": 2.0,
+        "rsi_oversold": 30,
+        "rsi_overbought": 70,
+        "position_size_pct": 0.15,
+        "max_holding_period": 10
+      }
+    },
+    "arbitrage": {
+      "name": "Arbitrage Strategy", 
+      "description": "Captures price differences between exchanges/markets for risk-free profits",
+      "expected_return_range": "3-12% annually (low risk)",
+      "risk_level": "Very Low",
+      "config": {
+        "starting_balance": 10000.0,
+        "min_profit_threshold": 0.003,
+        "max_position_size": 1000.0,
+        "execution_slippage": 0.001,
+        "transaction_fee": 0.001
+      }
+    }
+  },
+  "portfolio_allocation": {
+    "conservative": {
+      "description": "Low risk, stable returns",
+      "allocation": {
+        "multipool_staking": 0.5,
+        "arbitrage": 0.3, 
+        "amm": 0.2
+      }
+    },
+    "balanced": {
+      "description": "Balanced risk/return profile",
+      "allocation": {
+        "multipool_staking": 0.3,
+        "amm": 0.25,
+        "mean_reversion": 0.2,
+        "arbitrage": 0.15,
+        "momentum": 0.1
+      }
+    },
+    "aggressive": {
+      "description": "Higher risk, higher potential returns",
+      "allocation": {
+        "momentum": 0.35,
+        "mean_reversion": 0.25,
+        "amm": 0.2,
+        "multipool_staking": 0.15,
+        "arbitrage": 0.05
+      }
+    }
+  },
+  "backtest_settings": {
+    "default_period_days": 365,
+    "default_starting_balance": 10000.0,
+    "benchmark_symbol": "BTC/USDT",
+    "fee_structure": {
+      "maker_fee": 0.001,
+      "taker_fee": 0.0015,
+      "slippage": 0.0005
+    }
+  },
+  "risk_management": {
+    "max_drawdown_pct": 0.15,
+    "max_position_size_pct": 0.2,
+    "stop_loss_global_pct": 0.05,
+    "rebalance_frequency_hours": 24,
+    "emergency_stop_loss_pct": 0.25
+  }
+}

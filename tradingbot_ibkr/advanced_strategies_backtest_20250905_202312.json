@@ -1,0 +1,152 @@
+{
+  "amm": {
+    "strategy": "AMM",
+    "trades": 0,
+    "trade_list": [],
+    "metrics": {
+      "total_pnl": 0.0,
+      "win_rate": 0.0,
+      "trade_count": 0,
+      "current_inventory": 0.0,
+      "inventory_utilization": 0.0,
+      "spread_efficiency": 0.0,
+      "market_making_trades": 0,
+      "avg_spread_captured": 0.0
+    },
+    "final_inventory": 0.0,
+    "pnl": 0.0,
+    "win_rate_pct": 0.0
+  },
+  "multipool_staking": {
+    "strategy": "Multipool Staking",
+    "trades": 0,
+    "trade_list": [],
+    "metrics": {
+      "total_pnl": 0.0,
+      "win_rate": 0.0,
+      "trade_count": 0,
+      "total_staked": 6928.795109588663,
+      "total_rewards_earned": 0.0,
+      "staking_utilization": 0.6928795109588662,
+      "weighted_portfolio_apy": 8.695446988521766,
+      "number_of_pools": 4,
+      "pool_allocations": {
+        "BTC_Staking": 0.21585299454890597,
+        "ETH_Staking": 0.2303623471236671,
+        "USDC_Lending": 0.28069077780024543,
+        "DeFi_Pool": 0.27309388052718153
+      },
+      "pool_details": {
+        "BTC_Staking": {
+          "stake": 1495.601173020528,
+          "rewards": 0.0,
+          "apy": 4.5,
+          "risk_score": 3
+        },
+        "ETH_Staking": {
+          "stake": 1596.1335041838306,
+          "rewards": 0.0,
+          "apy": 6.0,
+          "risk_score": 4
+        },
+        "USDC_Lending": {
+          "stake": 1944.8488885289785,
+          "rewards": 0.0,
+          "apy": 8.0,
+          "risk_score": 2
+        },
+        "DeFi_Pool": {
+          "stake": 1892.211543855326,
+          "rewards": 0.0,
+          "apy": 15.0,
+          "risk_score": 7
+        }
+      }
+    },
+    "total_rewards": 0.0,
+    "final_balance": 3071.2048904113367,
+    "total_staked": 6928.795109588663,
+    "pnl": 0.0,
+    "apy_achieved": 8.695446988521766
+  },
+  "momentum": {
+    "strategy": "Momentum Strategy",
+    "trades": 0,
+    "trade_list": [],
+    "metrics": {
+      "total_pnl": 0.0,
+      "win_rate": 0.0,
+      "trade_count": 0
+    },
+    "pnl": 0.0,
+    "win_rate_pct": 0.0
+  },
+  "mean_reversion": {
+    "strategy": "Mean Reversion Strategy",
+    "trades": 0,
+    "trade_list": [],
+    "metrics": {
+      "total_pnl": 0.0,
+      "win_rate": 0.0,
+      "trade_count": 0
+    },
+    "pnl": 0.0,
+    "win_rate_pct": 0.0
+  },
+  "arbitrage": {
+    "strategy": "Arbitrage Strategy",
+    "trades": 0,
+    "trade_list": [],
+    "metrics": {
+      "total_pnl": 0.0,
+      "win_rate": 0.0,
+      "trade_count": 0,
+      "total_arbitrages_executed": 0,
+      "active_arbitrages": 0,
+      "avg_expected_profit_per_arbitrage": 0.0,
+      "arbitrage_success_rate": 0.0
+    },
+    "pnl": 0.0,
+    "win_rate_pct": 0.0
+  },
+  "comparison": {
+    "summary": {
+      "total_strategies": 5,
+      "avg_pnl": 0.0,
+      "avg_win_rate": 0.0,
+      "best_performing": "amm",
+      "most_consistent": "amm"
+    },
+    "rankings": {
+      "best_pnl": [
+        "amm",
+        "multipool_staking",
+        "momentum",
+        "mean_reversion",
+        "arbitrage"
+      ],
+      "best_win_rate": [
+        "amm",
+        "multipool_staking",
+        "momentum",
+        "mean_reversion",
+        "arbitrage"
+      ],
+      "best_pnl_per_trade": [
+        "amm",
+        "multipool_staking",
+        "momentum",
+        "mean_reversion",
+        "arbitrage"
+      ],
+      "best_expected_return": [
+        "multipool_staking",
+        "amm",
+        "momentum",
+        "mean_reversion",
+        "arbitrage"
+      ]
+    },
+    "risk_metrics": {}
+  }
+}
