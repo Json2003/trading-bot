@@ -19,6 +19,12 @@ install.bat
 
 This creates a `venv` directory and installs packages from `tradingbot_ibkr/requirements.txt`.
 
+## Asset classes
+
+The bot supports multiple asset classes including forex, options, futures,
+crypto, and stocks via a unified `AssetClass` enum. Trading scripts and the
+engine can adjust risk settings based on the selected class.
+
 ## Binance to GCS ingestion
 
 Fetch minute and five-minute klines for BTCUSDT and ETHUSDT across spot and

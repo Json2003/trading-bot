@@ -12,6 +12,8 @@ The bot now follows a modular pipeline:
 - **Decision Layer** (`decision_layer.py`) – reinforcement learning agents (PPO/DDQN placeholders).
 - **Risk Management** (`risk_management.py`) – CVaR, drawdown limits and volatility filters.
 - **Trading Engine** (`trading_engine.py`) – orchestrates the stages above.
+- **Asset Classes** (`asset_classes.py`) – enumerates forex, options, futures,
+  crypto and stocks with default risk settings.
 
 These modules provide a foundation for enhancing performance by expanding each component.
 
@@ -36,6 +38,9 @@ python live_trade_ccxt.py           # live crypto
 python ibkr_live_stock_bracket.py   # live stocks (PDT if margin < $25k)
 python ibkr_live_forex_bracket.py   # live FX (no PDT)
 ```
+
+Specify the asset class via environment variable when running the live CCXT
+script, e.g. `ASSET_CLASS=forex python live_trade_ccxt.py`.
 
 Notes:
 - These scripts are minimal examples for demonstration. Review and test in paper mode before enabling live trading.
