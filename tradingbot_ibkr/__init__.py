@@ -6,4 +6,5 @@ from . import (
     decision_layer,
     risk_management,
     trading_engine,
+    asset_classes,
 )

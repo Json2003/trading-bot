@@ -10,6 +10,7 @@ import ccxt
 from money_engine import choose_position_size, round_qty
 from data.store import append_trade_record
 from datetime import datetime, timezone
+from asset_classes import AssetClass
 
 load_dotenv()
 EXCHANGE = os.getenv('EXCHANGE', 'binance')
@@ -17,6 +18,15 @@ API_KEY = os.getenv('API_KEY')
 API_SECRET = os.getenv('API_SECRET')
 PAPER = os.getenv('PAPER', 'true').lower() == 'true'
 ALLOW_LIVE_RISK = os.getenv('ALLOW_LIVE_RISK', 'false').lower() == 'true'
+ASSET_CLASS = AssetClass(os.getenv('ASSET_CLASS', 'crypto'))
+
+RISK_PER_TRADE = {
+    AssetClass.CRYPTO: 0.02,
+    AssetClass.FOREX: 0.01,
+    AssetClass.STOCKS: 0.02,
+    AssetClass.FUTURES: 0.03,
+    AssetClass.OPTIONS: 0.05,
+}
 
 
 def build_exchange():
@@ -41,9 +51,10 @@ def main():
     balance = 1000.0
     entry_price = 30000.0
     stop_loss_price = 29700.0
-    qty, notional = choose_position_size(balance, 0.02, entry_price, stop_loss_price)
+    risk_pct = RISK_PER_TRADE.get(ASSET_CLASS, 0.02)
+    qty, notional = choose_position_size(balance, risk_pct, entry_price, stop_loss_price)
     qty = round_qty(qty, step=0.0001, min_qty=0.0001)
-    print('Exchange:', EXCHANGE, 'PAPER:', PAPER, 'ALLOW_LIVE_RISK:', ALLOW_LIVE_RISK)
+    print('Exchange:', EXCHANGE, 'PAPER:', PAPER, 'ALLOW_LIVE_RISK:', ALLOW_LIVE_RISK, 'ASSET_CLASS:', ASSET_CLASS.value)
     print(f'Would place {side} {qty} {symbol} (notional {notional})')
     res = place_market_order(ex, symbol, side, qty)
     print('Result:', res)
