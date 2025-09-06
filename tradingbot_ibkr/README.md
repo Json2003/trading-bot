@@ -2,6 +2,19 @@
 
 Minimal example folder showing how to run CCXT backtests/live and IBKR live scripts.
 
+
+## Architecture blueprint
+
+The bot now follows a modular pipeline:
+
+- **Feature Extraction** (`feature_extraction.py`) – technical indicators, placeholder sentiment and order book features.
+- **Signal Prediction** (`signal_prediction.py`) – gradient boosting baseline with hooks for LSTM/Transformer models.
+- **Decision Layer** (`decision_layer.py`) – reinforcement learning agents (PPO/DDQN placeholders).
+- **Risk Management** (`risk_management.py`) – CVaR, drawdown limits and volatility filters.
+- **Trading Engine** (`trading_engine.py`) – orchestrates the stages above.
+
+These modules provide a foundation for enhancing performance by expanding each component.
+
 Setup (Windows PowerShell):
 
 ```powershell
