@@ -1,6 +1,24 @@
 # trading bot
 tradingbot
 
+## Desktop installation
+
+Run one of the provided scripts to set up a virtual environment and install dependencies.
+
+On Linux or macOS:
+
+```bash
+./install.sh
+```
+
+On Windows (cmd or PowerShell):
+
+```bat
+install.bat
+```
+
+This creates a `venv` directory and installs packages from `tradingbot_ibkr/requirements.txt`.
+
 ## Binance to GCS ingestion
 
 Fetch minute and five-minute klines for BTCUSDT and ETHUSDT across spot and
