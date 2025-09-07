@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>TraderDash</title></head>
+  <body>
+    <h1>TraderDash Desktop</h1>
+    <button onclick="start()">Start Bot</button>
+    <button onclick="stop()">Stop Bot</button>
+    <pre id="metrics"></pre>
+    <script>
+      const API = window.env.API_BASE;
+      async function start(){ await fetch(API+'/control/start',{method:'POST'}); }
+      async function stop(){ await fetch(API+'/control/stop',{method:'POST'}); }
+      const ws = new WebSocket('ws://localhost:8000/ws');
+      ws.onmessage = e => { document.getElementById('metrics').textContent = e.data; };
+    </script>
+  </body>
+</html>
