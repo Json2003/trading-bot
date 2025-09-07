@@ -21,6 +21,11 @@ def index():
             info[f.name] = str(f.stat().st_mtime)
     return render_template('index.html', models=info)
 
+
+@app.route('/traderdash')
+def traderdash():
+    return render_template('traderdash.html')
+
 @app.route('/api/train', methods=['POST'])
 def api_train():
     # trigger demo training (runs synchronously)
