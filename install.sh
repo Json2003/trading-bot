@@ -12,6 +12,7 @@ fi
 
 # Upgrade pip and install requirements
 pip install --upgrade pip
+pip install -r requirements.txt
 pip install -r tradingbot_ibkr/requirements.txt
 
 echo "\nInstallation complete. Activate the environment with 'source venv/bin/activate'."
