@@ -20,14 +20,61 @@ except ImportError:
     logger = logging.getLogger(__name__)
     logger.warning("python-dotenv not available, skipping .env file loading")
 
-import ccxt
-import pandas as pd
+try:
+    import ccxt
+except ImportError:
+    logger = logging.getLogger(__name__)
+    logger.warning("ccxt not available, some functionality will be limited")
+    ccxt = None
+
+# Use our pandas utility for better compatibility
+try:
+    from .utils.pandas_utils import get_pandas, is_using_real_pandas, safe_date_range, safe_to_datetime
+    pd, using_real_pandas = get_pandas()
+except ImportError:
+    # Fallback to direct pandas import
+    try:
+        import pandas as pd
+        using_real_pandas = True
+    except ImportError:
+        from . import pandas as pd
+        using_real_pandas = False
+
 import numpy as np
 
-# Use package-relative imports
-from .money_engine import choose_position_size, fixed_fractional, round_qty, round_price
-# Adaptive learning
-from .models.online_trainer import OnlineTrainer
+# Use package-relative imports with fallbacks
+try:
+    from .money_engine import choose_position_size, fixed_fractional, round_qty, round_price
+except ImportError:
+    logger.warning("money_engine not available - using fallback implementations")
+    # Fallback implementations
+    def choose_position_size(balance, risk_pct, entry_price, stop_price, leverage=1.0, min_qty=0.0):
+        risk_amount = balance * risk_pct
+        risk_per_unit = abs(entry_price - stop_price)
+        if risk_per_unit == 0:
+            return 0.0, 0.0
+        qty = risk_amount / risk_per_unit
+        return max(qty, min_qty), qty * entry_price
+    
+    def fixed_fractional(balance, risk_pct):
+        return balance * risk_pct
+    
+    def round_qty(qty, step=0.001, min_qty=0.0):
+        return max(round(qty / step) * step, min_qty)
+    
+    def round_price(price, step=0.01):
+        return round(price / step) * step
+
+# Adaptive learning - make optional
+try:
+    from .models.online_trainer import OnlineTrainer
+except ImportError:
+    logger.warning("OnlineTrainer not available - ML features will be disabled")
+    # Create a dummy OnlineTrainer for compatibility
+    class OnlineTrainer:
+        def load(self): pass
+        def predict_proba(self, features): return 0.6  # Default confidence
+        def learn_one(self, features, outcome): pass
 
 EXCHANGE = os.getenv('EXCHANGE', 'binance')
 PAPER = os.getenv('PAPER', 'true').lower() == 'true'
@@ -125,10 +172,41 @@ def vectorized_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame with additional technical indicator columns
     """
-    logger.debug("Calculating technical indicators using vectorized operations")
+    logger.debug("Calculating technical indicators")
     
-    # Make a copy to avoid modifying original
-    data = df.copy()
+    # Check pandas capabilities
+    has_copy = hasattr(df, 'copy')
+    has_rolling = hasattr(df, 'rolling') if hasattr(df, '__class__') else False
+    
+    # Make a copy if possible, otherwise work with original
+    if has_copy:
+        data = df.copy()
+    else:
+        logger.warning("DataFrame.copy() not available - working with original data")
+        data = df
+    
+    # Use real pandas methods when available, fallback for custom pandas
+    if not using_real_pandas or not has_rolling:
+        logger.warning("Limited pandas functionality - returning basic data with minimal indicators")
+        
+        # Only add very basic indicators that work with custom pandas
+        try:
+            # Simple price-based features
+            close_data = [row.get('close', 0) for row in data._rows] if hasattr(data, '_rows') else []
+            if close_data:
+                # Simple return calculation
+                data._rows[0]['ret1'] = 0.0
+                for i in range(1, len(data._rows)):
+                    if close_data[i-1] != 0:
+                        data._rows[i]['ret1'] = (close_data[i] - close_data[i-1]) / close_data[i-1]
+                    else:
+                        data._rows[i]['ret1'] = 0.0
+                        
+                logger.debug("Added basic return calculation")
+        except Exception as e:
+            logger.warning(f"Could not add basic indicators: {e}")
+        
+        return data
     
     # Price-based indicators
     data['ret1'] = data['close'].pct_change().fillna(0.0)
@@ -183,7 +261,13 @@ def vectorized_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     
     # Fill NaN values using forward fill and backward fill
     numeric_columns = data.select_dtypes(include=[np.number]).columns
-    data[numeric_columns] = data[numeric_columns].fillna(method='bfill').fillna(method='ffill').fillna(0)
+    
+    # Handle fillna method differences between pandas versions
+    try:
+        data[numeric_columns] = data[numeric_columns].fillna(method='bfill').fillna(method='ffill').fillna(0)
+    except (TypeError, AttributeError):
+        # Newer pandas versions
+        data[numeric_columns] = data[numeric_columns].bfill().ffill().fillna(0)
     
     logger.debug(f"Technical indicators calculated for {len(data)} bars")
     return data
@@ -191,7 +275,7 @@ def vectorized_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
 def enhanced_trade_analysis(trades: List[Dict[str, Any]], 
                            equity_curve: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Perform comprehensive trade analysis using vectorized operations.
+    """Perform comprehensive trade analysis with compatibility for both pandas implementations.
     
     Args:
         trades: List of trade dictionaries
@@ -203,57 +287,99 @@ def enhanced_trade_analysis(trades: List[Dict[str, Any]],
     if not trades:
         return {'error': 'No trades to analyze'}
     
-    # Convert to DataFrame for vectorized operations
-    trade_df = pd.DataFrame(trades)
-    
-    # Basic statistics
+    # Basic statistics using simple calculations for compatibility
     total_trades = len(trades)
-    winning_trades = (trade_df['pnl'] > 0).sum()
-    losing_trades = (trade_df['pnl'] <= 0).sum()
+    pnl_values = [trade['pnl'] for trade in trades]
+    
+    winning_trades = sum(1 for pnl in pnl_values if pnl > 0)
+    losing_trades = sum(1 for pnl in pnl_values if pnl <= 0)
     win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else 0
     
     # PnL statistics
-    total_pnl = trade_df['pnl'].sum()
-    avg_win = trade_df[trade_df['pnl'] > 0]['pnl'].mean() if winning_trades > 0 else 0
-    avg_loss = trade_df[trade_df['pnl'] <= 0]['pnl'].mean() if losing_trades > 0 else 0
+    total_pnl = sum(pnl_values)
+    winning_pnls = [pnl for pnl in pnl_values if pnl > 0]
+    losing_pnls = [pnl for pnl in pnl_values if pnl <= 0]
+    
+    avg_win = sum(winning_pnls) / len(winning_pnls) if winning_pnls else 0
+    avg_loss = sum(losing_pnls) / len(losing_pnls) if losing_pnls else 0
     
     # Risk metrics
-    profit_factor = abs(avg_win * winning_trades / (avg_loss * losing_trades)) if losing_trades > 0 and avg_loss != 0 else np.inf
-    
-    # Consecutive wins/losses
-    trade_df['win'] = trade_df['pnl'] > 0
-    trade_df['streak_id'] = (trade_df['win'] != trade_df['win'].shift()).cumsum()
-    streaks = trade_df.groupby(['streak_id', 'win']).size()
-    max_consecutive_wins = streaks[streaks.index.get_level_values(1) == True].max() if any(streaks.index.get_level_values(1)) else 0
-    max_consecutive_losses = streaks[streaks.index.get_level_values(1) == False].max() if any(~streaks.index.get_level_values(1)) else 0
-    
-    # Drawdown analysis using equity curve
-    if equity_curve:
-        equity_df = pd.DataFrame(equity_curve)
-        equity_df['running_max'] = equity_df['balance'].expanding().max()
-        equity_df['drawdown'] = (equity_df['balance'] - equity_df['running_max']) / equity_df['running_max']
-        max_drawdown = equity_df['drawdown'].min()
-        max_drawdown_pct = max_drawdown * 100
+    if losing_trades > 0 and avg_loss != 0:
+        profit_factor = abs(avg_win * winning_trades / (avg_loss * losing_trades))
     else:
-        max_drawdown_pct = 0
+        profit_factor = float('inf')
+    
+    # Consecutive wins/losses analysis
+    consecutive_wins = []
+    consecutive_losses = []
+    current_streak = 0
+    current_type = None
+    
+    for pnl in pnl_values:
+        is_win = pnl > 0
+        if current_type is None or current_type != is_win:
+            if current_type is not None:
+                if current_type:
+                    consecutive_wins.append(current_streak)
+                else:
+                    consecutive_losses.append(current_streak)
+            current_streak = 1
+            current_type = is_win
+        else:
+            current_streak += 1
+    
+    # Add final streak
+    if current_type is not None:
+        if current_type:
+            consecutive_wins.append(current_streak)
+        else:
+            consecutive_losses.append(current_streak)
+    
+    max_consecutive_wins = max(consecutive_wins) if consecutive_wins else 0
+    max_consecutive_losses = max(consecutive_losses) if consecutive_losses else 0
+    
+    # Basic drawdown calculation
+    max_drawdown_pct = 0
+    if equity_curve:
+        balances = [point['balance'] for point in equity_curve]
+        running_max = balances[0]
+        max_drawdown = 0
+        
+        for balance in balances:
+            if balance > running_max:
+                running_max = balance
+            else:
+                drawdown = (running_max - balance) / running_max
+                if drawdown > max_drawdown:
+                    max_drawdown = drawdown
+        
+        max_drawdown_pct = max_drawdown * 100
+    
+    # Standard deviation calculation
+    if len(pnl_values) > 1:
+        mean_pnl = total_pnl / len(pnl_values)
+        variance = sum((pnl - mean_pnl) ** 2 for pnl in pnl_values) / (len(pnl_values) - 1)
+        std_deviation = variance ** 0.5
+    else:
+        std_deviation = 0
     
     # Return comprehensive analysis
     analysis = {
         'trade_count': total_trades,
-        'winning_trades': int(winning_trades),
-        'losing_trades': int(losing_trades),
+        'winning_trades': winning_trades,
+        'losing_trades': losing_trades,
         'win_rate_pct': round(win_rate, 2),
         'total_pnl': round(total_pnl, 2),
         'average_win': round(avg_win, 2),
         'average_loss': round(avg_loss, 2),
-        'profit_factor': round(profit_factor, 2) if profit_factor != np.inf else 'inf',
-        'max_consecutive_wins': int(max_consecutive_wins),
-        'max_consecutive_losses': int(max_consecutive_losses),
+        'profit_factor': round(profit_factor, 2) if profit_factor != float('inf') else 'inf',
+        'max_consecutive_wins': max_consecutive_wins,
+        'max_consecutive_losses': max_consecutive_losses,
         'max_drawdown_pct': round(max_drawdown_pct, 2),
-        'largest_win': round(trade_df['pnl'].max(), 2),
-        'largest_loss': round(trade_df['pnl'].min(), 2),
-        'std_deviation': round(trade_df['pnl'].std(), 2),
-        'sharpe_ratio': round(total_pnl / trade_df['pnl'].std(), 2) if trade_df['pnl'].std() != 0 else 0
+        'largest_win': round(max(pnl_values), 2) if pnl_values else 0,
+        'largest_loss': round(min(pnl_values), 2) if pnl_values else 0,
+        'std_deviation': round(std_deviation, 2),
+        'sharpe_ratio': round(total_pnl / std_deviation, 2) if std_deviation != 0 else 0
     }
     
     logger.info(f"Trade analysis completed: {total_trades} trades, "
@@ -272,6 +398,9 @@ def fetch_ohlcv(symbol: str, timeframe: str = '1h', limit: int = 500) -> pd.Data
     Returns:
         DataFrame with OHLCV data
     """
+    if ccxt is None:
+        raise ImportError("ccxt is not available - cannot fetch live data")
+        
     logger.info(f"Fetching {limit} {timeframe} candles for {symbol} from {EXCHANGE}")
     
     try:
@@ -282,7 +411,13 @@ def fetch_ohlcv(symbol: str, timeframe: str = '1h', limit: int = 500) -> pd.Data
             raise ValueError("No data returned from exchange")
             
         df = pd.DataFrame(data, columns=['ts', 'open', 'high', 'low', 'close', 'volume'])
-        df['ts'] = pd.to_datetime(df['ts'], unit='ms')
+        
+        # Use safe datetime conversion
+        if hasattr(pd, 'to_datetime'):
+            df['ts'] = pd.to_datetime(df['ts'], unit='ms')
+        else:
+            df['ts'] = safe_to_datetime([d / 1000 for d in df['ts']])
+            
         df.set_index('ts', inplace=True)
         
         logger.info(f"Successfully fetched {len(df)} candles from {df.index[0]} to {df.index[-1]}")
@@ -705,8 +840,35 @@ def main():
     logger.info(f"Starting enhanced backtest demonstration for {symbol}")
     
     try:
-        # Fetch data
-        df = fetch_ohlcv(symbol, timeframe='1h', limit=1000)
+        # Check if we can fetch live data
+        if ccxt is not None:
+            # Fetch data from exchange
+            df = fetch_ohlcv(symbol, timeframe='1h', limit=1000)
+        else:
+            # Create sample data for demonstration when ccxt is not available
+            logger.warning("CCXT not available - creating sample data for demonstration")
+            
+            # Create realistic sample OHLCV data
+            dates = safe_date_range(start='2023-01-01', periods=1000, freq='1h')
+            np.random.seed(42)  # For reproducible results
+            
+            # Generate realistic price data with trend and volatility
+            base_price = 30000
+            returns = np.random.normal(0.0001, 0.02, 1000).cumsum()
+            prices = base_price * np.exp(returns)
+            
+            data = {
+                'open': prices + np.random.normal(0, prices * 0.001),
+                'high': prices * (1 + np.abs(np.random.normal(0, 0.01, 1000))),
+                'low': prices * (1 - np.abs(np.random.normal(0, 0.01, 1000))),
+                'close': prices,
+                'volume': np.random.lognormal(8, 0.5, 1000)  # Realistic volume distribution
+            }
+            
+            df = pd.DataFrame(data, index=dates)
+            # Ensure OHLC consistency
+            df['high'] = np.maximum(df['high'], df[['open', 'close']].max(axis=1))
+            df['low'] = np.minimum(df['low'], df[['open', 'close']].min(axis=1))
         
         # Run simple backtest first
         logger.info("Running simple MA crossover backtest...")
