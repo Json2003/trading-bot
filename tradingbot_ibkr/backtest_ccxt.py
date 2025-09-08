@@ -802,6 +802,50 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
     }
 
 def main():
+    """
+    Main entry point for CCXT backtesting demonstration.
+    
+    This function demonstrates the basic usage of the enhanced backtesting framework:
+    1. Fetches OHLCV data from the configured exchange
+    2. Runs the aggressive strategy backtest with default parameters
+    3. Displays comprehensive performance metrics and analytics
+    
+    The aggressive strategy uses:
+    - Breakout entry signals (price closes above rolling high)
+    - Tight take-profit and stop-loss exits
+    - Time-based exit after maximum holding period
+    - Adaptive machine learning filtering
+    - Professional-grade performance analytics
+    
+    Example usage:
+        python backtest_ccxt.py
+    
+    Environment variables used:
+        EXCHANGE: Exchange name (default: binance)
+        PAPER: Paper trading mode (default: true)
+        
+    Returns:
+        None: Results are printed to console and logged to backtest.log
+        
+    Raises:
+        Exception: If data fetching or backtesting fails
+        
+    Performance Metrics Displayed:
+        - Total number of trades executed
+        - Win count and win rate percentage  
+        - Total profit/loss in price units
+        - Sharpe ratio for risk-adjusted returns
+        - Maximum drawdown percentage
+        - Profit factor (average win / average loss)
+        - Additional risk and performance metrics
+        
+    Note:
+        This is a demonstration function. For production use, consider:
+        - Using larger datasets for more robust results
+        - Adjusting parameters based on market conditions
+        - Implementing proper risk management
+        - Adding position sizing based on account balance
+    """
     symbol = 'BTC/USDT'
     print('Fetching', symbol)
     df = fetch_ohlcv(symbol)
