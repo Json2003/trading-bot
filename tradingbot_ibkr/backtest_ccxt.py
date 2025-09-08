@@ -1,297 +1,774 @@
-"""Minimal CCXT backtest runner (example).
+"""Enhanced CCXT backtest runner with comprehensive logging and vectorized operations.
 
-This script loads OHLCV via ccxt (historical) and runs a tiny moving-average crossover
-backtest for demonstration.
+This script provides a robust backtesting framework with:
+- Comprehensive trade execution logging
+- Vectorized operations for improved performance
+- Enhanced statistical analysis and reporting
+- Detailed trade analytics and performance metrics
 """
 
+import logging
 import os
-from dotenv import load_dotenv
+import time
+from datetime import datetime, timezone
+from typing import Dict, List, Optional, Tuple, Any
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    logger = logging.getLogger(__name__)
+    logger.warning("python-dotenv not available, skipping .env file loading")
+
 import ccxt
 import pandas as pd
 import numpy as np
+
 # Use package-relative imports
 from .money_engine import choose_position_size, fixed_fractional, round_qty, round_price
 # Adaptive learning
 from .models.online_trainer import OnlineTrainer
 
-load_dotenv()
 EXCHANGE = os.getenv('EXCHANGE', 'binance')
 PAPER = os.getenv('PAPER', 'true').lower() == 'true'
 
-def fetch_ohlcv(symbol, timeframe='1h', limit=500):
-    ex = getattr(ccxt, EXCHANGE)()
-    data = ex.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
-    df = pd.DataFrame(data, columns=['ts','open','high','low','close','volume'])
-    df['ts'] = pd.to_datetime(df['ts'], unit='ms')
-    df.set_index('ts', inplace=True)
-    return df
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-def simple_backtest(df):
-    df['ma_fast'] = df['close'].rolling(10).mean()
-    df['ma_slow'] = df['close'].rolling(30).mean()
+
+class BacktestLogger:
+    """Comprehensive logging for backtest execution details."""
+    
+    def __init__(self, strategy_name: str = "backtest"):
+        self.strategy_name = strategy_name
+        self.trade_logs = []
+        self.performance_logs = []
+        self.signal_logs = []
+        self.start_time = time.time()
+        
+    def log_signal(self, timestamp: str, signal_type: str, price: float, 
+                  features: Dict[str, float], probability: float = None):
+        """Log trading signal generation."""
+        self.signal_logs.append({
+            'timestamp': timestamp,
+            'signal_type': signal_type,
+            'price': price,
+            'features': features,
+            'probability': probability
+        })
+        logger.debug(f"Signal {signal_type} at {timestamp}: price={price:.4f}, prob={probability:.3f}")
+    
+    def log_trade_entry(self, timestamp: str, price: float, qty: float, 
+                       notional: float, stop_loss: float, take_profit: float):
+        """Log trade entry with full details."""
+        entry_log = {
+            'type': 'entry',
+            'timestamp': timestamp,
+            'price': price,
+            'quantity': qty,
+            'notional': notional,
+            'stop_loss': stop_loss,
+            'take_profit': take_profit,
+            'risk_amount': notional * abs(price - stop_loss) / price
+        }
+        self.trade_logs.append(entry_log)
+        logger.info(f"ENTRY: {timestamp} - Price: ${price:.4f}, Qty: {qty:.4f}, "
+                   f"Notional: ${notional:.2f}, SL: ${stop_loss:.4f}, TP: ${take_profit:.4f}")
+    
+    def log_trade_exit(self, timestamp: str, exit_type: str, price: float, 
+                      qty: float, pnl: float, fees: float, holding_periods: int):
+        """Log trade exit with performance details."""
+        exit_log = {
+            'type': 'exit',
+            'exit_type': exit_type,
+            'timestamp': timestamp,
+            'price': price,
+            'quantity': qty,
+            'pnl_gross': pnl + fees,
+            'fees': fees,
+            'pnl_net': pnl,
+            'holding_periods': holding_periods
+        }
+        self.trade_logs.append(exit_log)
+        logger.info(f"EXIT ({exit_type}): {timestamp} - Price: ${price:.4f}, "
+                   f"PnL: ${pnl:.2f}, Fees: ${fees:.2f}, Held: {holding_periods} bars")
+    
+    def log_performance_metrics(self, metrics: Dict[str, Any]):
+        """Log performance metrics during backtest."""
+        self.performance_logs.append({
+            'timestamp': datetime.now().isoformat(),
+            'metrics': metrics
+        })
+        
+    def get_execution_summary(self) -> Dict[str, Any]:
+        """Get comprehensive execution summary."""
+        execution_time = time.time() - self.start_time
+        return {
+            'strategy_name': self.strategy_name,
+            'execution_time_seconds': execution_time,
+            'total_signals': len(self.signal_logs),
+            'total_entries': len([log for log in self.trade_logs if log['type'] == 'entry']),
+            'total_exits': len([log for log in self.trade_logs if log['type'] == 'exit']),
+            'signal_logs': self.signal_logs,
+            'trade_logs': self.trade_logs,
+            'performance_logs': self.performance_logs
+        }
+
+
+def vectorized_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
+    """Calculate technical indicators using vectorized operations for performance.
+    
+    Args:
+        df: DataFrame with OHLCV data
+        
+    Returns:
+        DataFrame with additional technical indicator columns
+    """
+    logger.debug("Calculating technical indicators using vectorized operations")
+    
+    # Make a copy to avoid modifying original
+    data = df.copy()
+    
+    # Price-based indicators
+    data['ret1'] = data['close'].pct_change().fillna(0.0)
+    data['ma3'] = data['close'].rolling(3).mean()
+    data['ma10'] = data['close'].rolling(10).mean()
+    data['ma20'] = data['close'].rolling(20).mean()
+    data['ma50'] = data['close'].rolling(50).mean()
+    
+    # Momentum indicators
+    data['mom5'] = data['close'].pct_change(5).fillna(0.0)
+    data['mom10'] = data['close'].pct_change(10).fillna(0.0)
+    data['mom20'] = data['close'].pct_change(20).fillna(0.0)
+    
+    # Volatility indicators
+    data['vol20'] = data['ret1'].rolling(20).std().fillna(0.0)
+    data['vol_mean20'] = data['volume'].rolling(20).mean() if 'volume' in data.columns else pd.Series(index=data.index).fillna(1.0)
+    data['vol_ratio'] = data['volume'] / data['vol_mean20'].replace(0, 1) if 'volume' in data.columns else 1.0
+    
+    # ATR (Average True Range) - vectorized calculation
+    high_low = data['high'] - data['low']
+    high_pc = (data['high'] - data['close'].shift(1)).abs()
+    low_pc = (data['low'] - data['close'].shift(1)).abs()
+    true_range = pd.concat([high_low, high_pc, low_pc], axis=1).max(axis=1)
+    data['atr14'] = true_range.rolling(14).mean()
+    
+    # RSI (Relative Strength Index) - vectorized calculation
+    delta = data['close'].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(14).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
+    rs = gain / loss.replace(0, np.inf)
+    data['rsi14'] = 100 - (100 / (1 + rs))
+    
+    # Bollinger Bands
+    data['bb_middle'] = data['close'].rolling(20).mean()
+    bb_std = data['close'].rolling(20).std()
+    data['bb_upper'] = data['bb_middle'] + (bb_std * 2)
+    data['bb_lower'] = data['bb_middle'] - (bb_std * 2)
+    data['bb_position'] = (data['close'] - data['bb_lower']) / (data['bb_upper'] - data['bb_lower'])
+    
+    # MACD
+    exp1 = data['close'].ewm(span=12).mean()
+    exp2 = data['close'].ewm(span=26).mean()
+    data['macd'] = exp1 - exp2
+    data['macd_signal'] = data['macd'].ewm(span=9).mean()
+    data['macd_histogram'] = data['macd'] - data['macd_signal']
+    
+    # Support/Resistance levels using rolling min/max
+    data['support_5'] = data['low'].rolling(5).min()
+    data['resistance_5'] = data['high'].rolling(5).max()
+    data['support_20'] = data['low'].rolling(20).min()
+    data['resistance_20'] = data['high'].rolling(20).max()
+    
+    # Fill NaN values using forward fill and backward fill
+    numeric_columns = data.select_dtypes(include=[np.number]).columns
+    data[numeric_columns] = data[numeric_columns].fillna(method='bfill').fillna(method='ffill').fillna(0)
+    
+    logger.debug(f"Technical indicators calculated for {len(data)} bars")
+    return data
+
+
+def enhanced_trade_analysis(trades: List[Dict[str, Any]], 
+                           equity_curve: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Perform comprehensive trade analysis using vectorized operations.
+    
+    Args:
+        trades: List of trade dictionaries
+        equity_curve: List of equity curve points
+        
+    Returns:
+        Dictionary with detailed analytics
+    """
+    if not trades:
+        return {'error': 'No trades to analyze'}
+    
+    # Convert to DataFrame for vectorized operations
+    trade_df = pd.DataFrame(trades)
+    
+    # Basic statistics
+    total_trades = len(trades)
+    winning_trades = (trade_df['pnl'] > 0).sum()
+    losing_trades = (trade_df['pnl'] <= 0).sum()
+    win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else 0
+    
+    # PnL statistics
+    total_pnl = trade_df['pnl'].sum()
+    avg_win = trade_df[trade_df['pnl'] > 0]['pnl'].mean() if winning_trades > 0 else 0
+    avg_loss = trade_df[trade_df['pnl'] <= 0]['pnl'].mean() if losing_trades > 0 else 0
+    
+    # Risk metrics
+    profit_factor = abs(avg_win * winning_trades / (avg_loss * losing_trades)) if losing_trades > 0 and avg_loss != 0 else np.inf
+    
+    # Consecutive wins/losses
+    trade_df['win'] = trade_df['pnl'] > 0
+    trade_df['streak_id'] = (trade_df['win'] != trade_df['win'].shift()).cumsum()
+    streaks = trade_df.groupby(['streak_id', 'win']).size()
+    max_consecutive_wins = streaks[streaks.index.get_level_values(1) == True].max() if any(streaks.index.get_level_values(1)) else 0
+    max_consecutive_losses = streaks[streaks.index.get_level_values(1) == False].max() if any(~streaks.index.get_level_values(1)) else 0
+    
+    # Drawdown analysis using equity curve
+    if equity_curve:
+        equity_df = pd.DataFrame(equity_curve)
+        equity_df['running_max'] = equity_df['balance'].expanding().max()
+        equity_df['drawdown'] = (equity_df['balance'] - equity_df['running_max']) / equity_df['running_max']
+        max_drawdown = equity_df['drawdown'].min()
+        max_drawdown_pct = max_drawdown * 100
+    else:
+        max_drawdown_pct = 0
+    
+    # Return comprehensive analysis
+    analysis = {
+        'trade_count': total_trades,
+        'winning_trades': int(winning_trades),
+        'losing_trades': int(losing_trades),
+        'win_rate_pct': round(win_rate, 2),
+        'total_pnl': round(total_pnl, 2),
+        'average_win': round(avg_win, 2),
+        'average_loss': round(avg_loss, 2),
+        'profit_factor': round(profit_factor, 2) if profit_factor != np.inf else 'inf',
+        'max_consecutive_wins': int(max_consecutive_wins),
+        'max_consecutive_losses': int(max_consecutive_losses),
+        'max_drawdown_pct': round(max_drawdown_pct, 2),
+        'largest_win': round(trade_df['pnl'].max(), 2),
+        'largest_loss': round(trade_df['pnl'].min(), 2),
+        'std_deviation': round(trade_df['pnl'].std(), 2),
+        'sharpe_ratio': round(total_pnl / trade_df['pnl'].std(), 2) if trade_df['pnl'].std() != 0 else 0
+    }
+    
+    logger.info(f"Trade analysis completed: {total_trades} trades, "
+               f"{win_rate:.1f}% win rate, ${total_pnl:.2f} total PnL")
+    
+    return analysis
+
+def fetch_ohlcv(symbol: str, timeframe: str = '1h', limit: int = 500) -> pd.DataFrame:
+    """Fetch OHLCV data from exchange with error handling and logging.
+    
+    Args:
+        symbol: Trading symbol (e.g., 'BTC/USDT')
+        timeframe: Candle timeframe
+        limit: Number of candles to fetch
+        
+    Returns:
+        DataFrame with OHLCV data
+    """
+    logger.info(f"Fetching {limit} {timeframe} candles for {symbol} from {EXCHANGE}")
+    
+    try:
+        ex = getattr(ccxt, EXCHANGE)()
+        data = ex.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
+        
+        if not data:
+            raise ValueError("No data returned from exchange")
+            
+        df = pd.DataFrame(data, columns=['ts', 'open', 'high', 'low', 'close', 'volume'])
+        df['ts'] = pd.to_datetime(df['ts'], unit='ms')
+        df.set_index('ts', inplace=True)
+        
+        logger.info(f"Successfully fetched {len(df)} candles from {df.index[0]} to {df.index[-1]}")
+        return df
+        
+    except Exception as e:
+        logger.error(f"Error fetching OHLCV data: {e}")
+        raise
+
+
+def simple_backtest(df: pd.DataFrame, fast_period: int = 10, slow_period: int = 30) -> Tuple[float, List[Tuple]]:
+    """Simple moving average crossover strategy with enhanced logging.
+    
+    Args:
+        df: OHLCV DataFrame
+        fast_period: Fast moving average period
+        slow_period: Slow moving average period
+        
+    Returns:
+        Tuple of (total_pnl, trades_list)
+    """
+    logger.info(f"Running simple MA crossover backtest (fast={fast_period}, slow={slow_period})")
+    
+    # Calculate indicators using vectorized operations
+    df = df.copy()
+    df['ma_fast'] = df['close'].rolling(fast_period).mean()
+    df['ma_slow'] = df['close'].rolling(slow_period).mean()
     df.dropna(inplace=True)
+    
     position = 0
     entry_price = 0
     pnl = 0
     trades = []
+    
     for idx, row in df.iterrows():
         if row['ma_fast'] > row['ma_slow'] and position == 0:
             position = 1
             entry_price = row['close']
             trades.append(('buy', idx, entry_price))
+            logger.debug(f"BUY signal at {idx}: price={entry_price:.4f}")
         elif row['ma_fast'] < row['ma_slow'] and position == 1:
             position = 0
             exit_price = row['close']
-            pnl += (exit_price - entry_price)
+            trade_pnl = exit_price - entry_price
+            pnl += trade_pnl
             trades.append(('sell', idx, exit_price))
+            logger.debug(f"SELL signal at {idx}: price={exit_price:.4f}, PnL={trade_pnl:.4f}")
+    
+    logger.info(f"Simple backtest completed: {len(trades)//2} trades, ${pnl:.2f} total PnL")
     return pnl, trades
 
 
-def aggressive_strategy_backtest(df, take_profit_pct=0.004, stop_loss_pct=0.002, max_holding_bars=12,
-                                fee_pct=0.0, slippage_pct=0.0, starting_balance=10000.0,
-                                trend_filter=False, ema_fast=50, ema_slow=200,
-                                vol_filter=False, vol_lookback=20, vol_multiplier=1.0,
-                                trailing_stop_pct=None,
-                                # new sizing/execution params
-                                risk_per_trade: float | None = None,
-                                leverage: float = 1.0,
-                                min_qty: float = 0.0,
-                                # optional volume-based slippage
-                                slippage_vs_volume: bool = False,
-                                slippage_k: float = 0.0,
-                                slippage_cap: float = 0.05):
-    """Aggressive intraday-style strategy: enter on breakout and use tight TP/SL.
+def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.004, stop_loss_pct: float = 0.002, 
+                                max_holding_bars: int = 12, fee_pct: float = 0.0, slippage_pct: float = 0.0, 
+                                starting_balance: float = 10000.0, trend_filter: bool = False, 
+                                ema_fast: int = 50, ema_slow: int = 200, vol_filter: bool = False, 
+                                vol_lookback: int = 20, vol_multiplier: float = 1.0,
+                                trailing_stop_pct: Optional[float] = None, risk_per_trade: Optional[float] = None,
+                                leverage: float = 1.0, min_qty: float = 0.0, slippage_vs_volume: bool = False,
+                                slippage_k: float = 0.0, slippage_cap: float = 0.05, 
+                                enable_logging: bool = True) -> Dict[str, Any]:
+    """Enhanced aggressive intraday strategy with comprehensive logging and vectorized operations.
 
-    Rules (example aggressive setup):
-    - Entry: price closes above the rolling high of the last N bars (breakout)
-    - Exit: take-profit at take_profit_pct, stop-loss at stop_loss_pct, or exit after max_holding_bars
-
-    This is intentionally aggressive: many small trades, higher frequency.
+    Features:
+    - Comprehensive trade execution logging
+    - Vectorized technical indicator calculations
+    - Enhanced performance analytics
+    - Detailed trade-by-trade reporting
+    
+    Strategy Rules:
+    - Entry: Price closes above rolling high (breakout) with optional filters
+    - Exit: Take-profit, stop-loss, trailing stop, or time-based exit
+    - Risk management with position sizing and adaptive learning
+    
+    Args:
+        df: OHLCV DataFrame with price data
+        take_profit_pct: Take profit percentage (e.g., 0.004 = 0.4%)
+        stop_loss_pct: Stop loss percentage (e.g., 0.002 = 0.2%)
+        max_holding_bars: Maximum bars to hold position
+        fee_pct: Trading fee percentage
+        slippage_pct: Slippage percentage
+        starting_balance: Initial balance in quote currency
+        trend_filter: Enable trend filter using EMAs
+        ema_fast: Fast EMA period for trend filter
+        ema_slow: Slow EMA period for trend filter
+        vol_filter: Enable volatility filter
+        vol_lookback: Volatility lookback period
+        vol_multiplier: Volatility threshold multiplier
+        trailing_stop_pct: Trailing stop percentage (optional)
+        risk_per_trade: Risk per trade as fraction of balance
+        leverage: Leverage multiplier
+        min_qty: Minimum quantity for trades
+        slippage_vs_volume: Enable volume-based slippage calculation
+        slippage_k: Volume slippage factor
+        slippage_cap: Maximum additional slippage
+        enable_logging: Enable comprehensive trade logging
+        
+    Returns:
+        Dictionary with backtest results and detailed analytics
     """
+    start_time = time.time()
+    logger.info(f"Starting aggressive strategy backtest on {len(df)} bars")
+    logger.info(f"Parameters: TP={take_profit_pct:.1%}, SL={stop_loss_pct:.1%}, "
+               f"Hold={max_holding_bars}, Fee={fee_pct:.1%}, Slippage={slippage_pct:.1%}")
+    
+    # Initialize logging
+    backtest_logger = BacktestLogger("aggressive_strategy") if enable_logging else None
+    
+    # Prepare data with vectorized technical indicators
+    logger.debug("Calculating technical indicators...")
+    df = vectorized_technical_indicators(df)
+    
+    # Strategy-specific indicators
     lookback = 5
-    df = df.copy()
     df['rolling_high'] = df['high'].shift(1).rolling(lookback).max()
-    # trend filter: compute EMAs
+    
+    # Trend filter indicators
     if trend_filter:
+        logger.debug(f"Applying trend filter: EMA({ema_fast}) vs EMA({ema_slow})")
         df['ema_fast'] = df['close'].ewm(span=ema_fast, adjust=False).mean()
         df['ema_slow'] = df['close'].ewm(span=ema_slow, adjust=False).mean()
-    # volatility filter: rolling std of returns
+    
+    # Volatility filter
     if vol_filter:
-        df['ret'] = df['close'].pct_change()
-        df['vol'] = df['ret'].rolling(vol_lookback).std()
+        logger.debug(f"Applying volatility filter: {vol_lookback}-period lookback, {vol_multiplier}x multiplier")
+        df['vol_filter'] = df['vol20'] > df['vol20'].rolling(vol_lookback).median() * vol_multiplier
+    
+    # Initialize trading variables
     trades = []
     position = None
     entry_idx = None
     entry_price = None
-    balance = starting_balance  # starting balance in quote currency (e.g., USDT / USD)
-    # allow caller to override the per-trade risk; default to 1% if not provided
-    if risk_per_trade is None:
-        risk_per_trade = 0.01
+    balance = starting_balance
+    risk_per_trade = risk_per_trade or 0.01  # Default 1% risk per trade
     holding = 0
+    peak_price = 0
+    trailing_stop_price = None
+    
     # Initialize adaptive trainer
     trainer = OnlineTrainer()
     trainer.load()
-    # Feature columns for learning (simple example: close, high, low, volume)
-    feature_cols = ['close', 'high', 'low', 'volume']
     last_features = None
     last_outcome = None
-
-    # compute matching features for online predictions
-    # create columns used by trainer
-    df['ret1'] = df['close'].pct_change().fillna(0.0)
-    df['ma3'] = df['close'].rolling(3).mean().fillna(method='bfill')
-    df['mom5'] = df['close'].pct_change(5).fillna(0.0)
-    df['mom10'] = df['close'].pct_change(10).fillna(0.0)
-    df['vol_mean20'] = df['volume'].rolling(20).mean().fillna(method='bfill') if 'volume' in df.columns else 0.0
-    df['vol_ratio'] = df['volume'] / (df['vol_mean20'].replace(0, 1))
-    df['vol20'] = df['ret1'].rolling(20).std().fillna(0.0)
-    high_low = (df['high'] - df['low']).abs()
-    high_pc = (df['high'] - df['close'].shift(1)).abs()
-    low_pc = (df['low'] - df['close'].shift(1)).abs()
-    tr = pd.concat([high_low, high_pc, low_pc], axis=1).max(axis=1)
-    df['atr14'] = tr.rolling(14).mean().fillna(method='bfill')
-    delta = df['close'].diff()
-    up = delta.clip(lower=0)
-    down = -1 * delta.clip(upper=0)
-    roll_up = up.rolling(14).mean()
-    roll_down = down.rolling(14).mean().replace(0, 1e-8)
-    rs = roll_up / roll_down
-    df['rsi14'] = 100.0 - (100.0 / (1.0 + rs))
-
+    
+    # Feature columns for machine learning
+    feature_columns = ['close', 'high', 'low', 'volume', 'ret1', 'ma3', 'mom5', 'mom10', 
+                      'vol20', 'vol_ratio', 'atr14', 'rsi14', 'bb_position', 'macd']
+    
+    # Main trading loop - optimized for performance
+    signal_count = 0
+    entry_signals = 0
+    
+    logger.debug("Starting main trading loop...")
+    
     for i in range(len(df)):
         row = df.iloc[i]
-        features = {col: float(row[col]) for col in ['close','high','low','volume','ret1','ma3','mom5','mom10','vol20','vol_ratio','atr14','rsi14'] if col in row}
+        timestamp = str(row.name)
+        
+        # Extract features for ML prediction
+        features = {}
+        for col in feature_columns:
+            if col in df.columns and not pd.isna(row[col]):
+                features[col] = float(row[col])
+            else:
+                features[col] = 0.0
+        
         if position is None:
-            # entry condition: breakout
-            if not pd.isna(row['rolling_high']) and row['close'] > row['rolling_high']:
-                # Adaptive filter: only enter if model predicts high probability
-                prob = trainer.predict_proba(features)
-                if prob < 0.6:
+            # Entry logic
+            entry_condition = (not pd.isna(row['rolling_high']) and row['close'] > row['rolling_high'])
+            
+            if entry_condition:
+                signal_count += 1
+                
+                # ML-based entry filter
+                prob = trainer.predict_proba(features) if features else 0.5
+                
+                if backtest_logger:
+                    backtest_logger.log_signal(timestamp, 'entry_candidate', row['close'], features, prob)
+                
+                if prob < 0.6:  # Require high confidence
                     continue
-                # optional trend filter: only enter if ema_fast > ema_slow
+                
+                # Trend filter
                 if trend_filter:
                     if pd.isna(row.get('ema_fast')) or pd.isna(row.get('ema_slow')):
                         continue
                     if row['ema_fast'] <= row['ema_slow']:
                         continue
-                if vol_filter:
-                    vol = row.get('vol', None)
-                    if vol is None or pd.isna(vol):
-                        continue
-                    med = df['vol'].median()
-                    if med == 0 or vol < med * vol_multiplier:
-                        continue
-
+                
+                # Volatility filter
+                if vol_filter and not row.get('vol_filter', True):
+                    continue
+                
+                # Execute entry
                 position = 'long'
                 entry_idx = row.name
                 entry_price = row['close']
-                raw_qty, notional = choose_position_size(balance, risk_per_trade, entry_price, entry_price * (1 - stop_loss_pct), leverage=leverage, min_qty=min_qty)
-                # round quantity to exchange lot and enforce minimums
+                
+                # Position sizing
+                stop_price = entry_price * (1 - stop_loss_pct)
+                take_profit_price = entry_price * (1 + take_profit_pct)
+                
+                raw_qty, notional = choose_position_size(
+                    balance, risk_per_trade, entry_price, stop_price, 
+                    leverage=leverage, min_qty=min_qty
+                )
                 qty = round_qty(raw_qty, step=0.0001, min_qty=min_qty)
                 notional = qty * entry_price
-                trades.append({'type': 'entry', 'time': entry_idx, 'price': entry_price, 'qty': qty, 'notional': notional})
+                
+                trades.append({
+                    'type': 'entry',
+                    'time': entry_idx,
+                    'price': entry_price,
+                    'qty': qty,
+                    'notional': notional
+                })
+                
+                # Initialize position tracking
                 holding = 0
                 peak_price = entry_price
                 trailing_stop_price = None
                 last_features = features
+                entry_signals += 1
+                
+                if backtest_logger:
+                    backtest_logger.log_trade_entry(timestamp, entry_price, qty, notional, 
+                                                   stop_price, take_profit_price)
         else:
+            # Position management
             holding += 1
+            
+            # Update trailing stop
             if trailing_stop_pct is not None:
                 if row['high'] > peak_price:
                     peak_price = row['high']
                 trailing_stop_price = peak_price * (1 - trailing_stop_pct)
-
-            # check TP/SL/trailing
-            trade_closed = False
+            
+            # Exit conditions - vectorized where possible
+            exit_type = None
+            exit_price = None
+            
             if row['high'] >= entry_price * (1 + take_profit_pct):
+                exit_type = 'take_profit'
                 exit_price = entry_price * (1 + take_profit_pct)
-                trades.append({'type': 'exit_tp', 'time': row.name, 'price': exit_price, 'qty': qty})
                 last_outcome = 1  # Win
-                trade_closed = True
             elif row['low'] <= entry_price * (1 - stop_loss_pct):
+                exit_type = 'stop_loss'
                 exit_price = entry_price * (1 - stop_loss_pct)
-                trades.append({'type': 'exit_sl', 'time': row.name, 'price': exit_price, 'qty': qty})
                 last_outcome = 0  # Loss
-                trade_closed = True
-            elif trailing_stop_pct is not None and row['low'] <= trailing_stop_price:
+            elif trailing_stop_pct is not None and trailing_stop_price is not None and row['low'] <= trailing_stop_price:
+                exit_type = 'trailing_stop'
                 exit_price = trailing_stop_price
-                trades.append({'type': 'exit_trail', 'time': row.name, 'price': exit_price, 'qty': qty})
                 last_outcome = 1 if exit_price > entry_price else 0
-                trade_closed = True
             elif holding >= max_holding_bars:
+                exit_type = 'time_exit'
                 exit_price = row['close']
-                trades.append({'type': 'exit_hold', 'time': row.name, 'price': exit_price, 'qty': qty})
                 last_outcome = 1 if exit_price > entry_price else 0
-                trade_closed = True
-
-            if trade_closed:
-                # Learn from the outcome
-                if last_features is not None and last_outcome is not None:
+            
+            if exit_type:
+                # Execute exit
+                trades.append({
+                    'type': f'exit_{exit_type}',
+                    'time': row.name,
+                    'price': exit_price,
+                    'qty': qty
+                })
+                
+                # Learn from outcome
+                if last_features and last_outcome is not None:
                     trainer.learn_one(last_features, last_outcome)
+                
+                if backtest_logger:
+                    # Calculate preliminary PnL for logging
+                    gross_pnl = (exit_price - entry_price) * qty
+                    fees = (entry_price * qty + exit_price * qty) * fee_pct
+                    net_pnl = gross_pnl - fees
+                    backtest_logger.log_trade_exit(timestamp, exit_type, exit_price, qty, 
+                                                  net_pnl, fees, holding)
+                
+                # Reset position
                 position = None
                 entry_idx = None
                 entry_price = None
                 holding = 0
                 last_features = None
                 last_outcome = None
-                position = None
-            elif row['low'] <= entry_price * (1 - stop_loss_pct):
-                exit_price = entry_price * (1 - stop_loss_pct)
-                trades.append({'type': 'exit_sl', 'time': row.name, 'price': exit_price, 'qty': qty})
-                position = None
-            elif trailing_stop_pct is not None and trailing_stop_price is not None and row['low'] <= trailing_stop_price:
-                exit_price = trailing_stop_price
-                trades.append({'type': 'exit_trail', 'time': row.name, 'price': exit_price, 'qty': qty})
-                position = None
-            elif holding >= max_holding_bars:
-                exit_price = row['close']
-                trades.append({'type': 'exit_time', 'time': row.name, 'price': exit_price, 'qty': qty})
-                position = None
-
-    # pair entries and exits into trade-level results and build equity curve
+    
+    execution_time = time.time() - start_time
+    logger.info(f"Trading loop completed in {execution_time:.2f}s - "
+               f"{signal_count} signals, {entry_signals} entries")
+    
+    # Process trades and calculate performance using vectorized operations
+    logger.debug("Processing trades and calculating performance...")
+    
     entries = [t for t in trades if t['type'] == 'entry']
     exits = [t for t in trades if t['type'].startswith('exit')]
-    n = min(len(entries), len(exits))
-    wins = 0
-    total = n
-    pnl = 0.0
+    n_completed_trades = min(len(entries), len(exits))
+    
+    if n_completed_trades == 0:
+        logger.warning("No completed trades found")
+        return {
+            'trades': 0,
+            'wins': 0,
+            'win_rate_pct': 0.0,
+            'pnl': 0.0,
+            'execution_time': execution_time,
+            'details': {'entries': len(entries), 'exits': len(exits)},
+            'trade_list': [],
+            'equity_curve': [],
+            'analytics': {},
+            'execution_log': backtest_logger.get_execution_summary() if backtest_logger else None
+        }
+    
+    # Vectorized trade processing
     trade_pairs = []
-    equity = []
-    bal = balance
-
-    for i in range(n):
-        e = entries[i]
-        x = exits[i]
-        qty = e.get('qty', 0.0)
-        # ensure qty is rounded and non-negative
-        qty = round_qty(qty, step=0.0001, min_qty=min_qty)
-        # apply slippage: assume worse execution on entry and exit
-        entry_px = e['price'] * (1 + slippage_pct)
-        exit_px = x['price'] * (1 - slippage_pct)
-        # optionally increase slippage when trade notional relative to recent volume is large
-        if slippage_vs_volume:
-            # attempt to read nearby vol_mean20 if present in df
+    equity_curve = []
+    current_balance = balance
+    wins = 0
+    total_pnl = 0.0
+    
+    for i in range(n_completed_trades):
+        entry = entries[i]
+        exit = exits[i]
+        qty = entry.get('qty', 0.0)
+        
+        # Apply slippage
+        entry_px = entry['price'] * (1 + slippage_pct)
+        exit_px = exit['price'] * (1 - slippage_pct)
+        
+        # Volume-based slippage adjustment
+        if slippage_vs_volume and 'volume' in df.columns:
             try:
-                # use time index to lookup volume mean; fall back to simple average
-                idx_time = pd.to_datetime(e['time'])
-                if 'volume' in df.columns:
-                    # compute a simple recent avg volume per bar (20-bar) if not present
-                    vol_mean20 = df['volume'].rolling(20).mean()
-                    if idx_time in vol_mean20.index:
-                        recent_vol = float(vol_mean20.loc[idx_time]) if not pd.isna(vol_mean20.loc[idx_time]) else float(vol_mean20.mean())
-                    else:
-                        recent_vol = float(vol_mean20.mean())
-                else:
-                    recent_vol = 1.0
-            except Exception:
-                recent_vol = 1.0
-            # avoid div by zero
-            eps = 1e-8
-            extra = slippage_k * (qty / max(recent_vol, eps))
-            extra = min(extra, slippage_cap)
-            entry_px = e['price'] * (1 + slippage_pct + extra)
-            exit_px = x['price'] * (1 - slippage_pct - extra)
-        trade_pnl_price = exit_px - entry_px
-        # trade PnL before fees
-        trade_pnl = trade_pnl_price * qty
-        # fees: assume fee_pct applied to notional on both sides
-        fee_cost = (entry_px * qty + exit_px * qty) * fee_pct
-        trade_pnl = trade_pnl - fee_cost
-        pnl += trade_pnl
-        bal += trade_pnl
-        if trade_pnl > 0:
+                vol_mean = df['vol_mean20'].loc[pd.to_datetime(entry['time'])]
+                if not pd.isna(vol_mean) and vol_mean > 0:
+                    extra_slippage = min(slippage_k * (qty / vol_mean), slippage_cap)
+                    entry_px *= (1 + extra_slippage)
+                    exit_px *= (1 - extra_slippage)
+            except (KeyError, IndexError):
+                pass
+        
+        # Calculate trade PnL
+        gross_pnl = (exit_px - entry_px) * qty
+        fees = (entry_px * qty + exit_px * qty) * fee_pct
+        net_pnl = gross_pnl - fees
+        
+        total_pnl += net_pnl
+        current_balance += net_pnl
+        
+        if net_pnl > 0:
             wins += 1
+        
+        # Store trade details
         trade_pairs.append({
-            'entry_time': str(e['time']),
-            'exit_time': str(x['time']),
-            'entry_price': e['price'],
-            'exit_price': x['price'],
+            'entry_time': str(entry['time']),
+            'exit_time': str(exit['time']),
+            'entry_price': entry['price'],
+            'exit_price': exit['price'],
             'qty': qty,
-            'pnl': trade_pnl
+            'pnl': net_pnl,
+            'exit_type': exit['type']
         })
-        equity.append({'time': str(x['time']), 'balance': bal})
-
-    win_rate = (wins / total * 100) if total > 0 else 0.0
+        
+        equity_curve.append({
+            'time': str(exit['time']),
+            'balance': current_balance
+        })
+    
+    # Calculate performance metrics
+    win_rate = (wins / n_completed_trades * 100) if n_completed_trades > 0 else 0.0
+    
+    # Enhanced analytics
+    analytics = enhanced_trade_analysis(trade_pairs, equity_curve) if trade_pairs else {}
+    
+    # Log performance metrics
+    if backtest_logger:
+        performance_metrics = {
+            'total_trades': n_completed_trades,
+            'win_rate': win_rate,
+            'total_pnl': total_pnl,
+            'final_balance': current_balance,
+            'return_pct': (current_balance - balance) / balance * 100
+        }
+        backtest_logger.log_performance_metrics(performance_metrics)
+    
+    logger.info(f"Backtest completed: {n_completed_trades} trades, "
+               f"{win_rate:.2f}% win rate, ${total_pnl:.2f} PnL")
+    
+    # Return comprehensive results
     return {
-        'trades': total,
+        'trades': n_completed_trades,
         'wins': wins,
         'win_rate_pct': win_rate,
-        'pnl': pnl,
-        'details': {'entries': len(entries), 'exits': len(exits)},
+        'pnl': total_pnl,
+        'final_balance': current_balance,
+        'return_pct': (current_balance - balance) / balance * 100,
+        'execution_time': execution_time,
+        'signals_generated': signal_count,
+        'entries_executed': entry_signals,
+        'details': {
+            'entries': len(entries), 
+            'exits': len(exits),
+            'parameters': {
+                'take_profit_pct': take_profit_pct,
+                'stop_loss_pct': stop_loss_pct,
+                'max_holding_bars': max_holding_bars,
+                'fee_pct': fee_pct,
+                'slippage_pct': slippage_pct,
+                'risk_per_trade': risk_per_trade
+            }
+        },
         'trade_list': trade_pairs,
-        'equity_curve': equity,
+        'equity_curve': equity_curve,
+        'analytics': analytics,
+        'execution_log': backtest_logger.get_execution_summary() if backtest_logger else None
     }
-
 def main():
+    """Main function demonstrating enhanced backtesting capabilities."""
     symbol = 'BTC/USDT'
-    print('Fetching', symbol)
-    df = fetch_ohlcv(symbol)
-    print('Running aggressive strategy backtest...')
-    stats = aggressive_strategy_backtest(df)
-    print('Trades:', stats['trades'])
-    print('Wins:', stats['wins'])
-    print(f"Win rate: {stats['win_rate_pct']:.2f}%")
-    print('PnL (price units):', stats['pnl'])
+    
+    logger.info(f"Starting enhanced backtest demonstration for {symbol}")
+    
+    try:
+        # Fetch data
+        df = fetch_ohlcv(symbol, timeframe='1h', limit=1000)
+        
+        # Run simple backtest first
+        logger.info("Running simple MA crossover backtest...")
+        simple_pnl, simple_trades = simple_backtest(df, fast_period=10, slow_period=30)
+        logger.info(f"Simple backtest: {len(simple_trades)//2} trades, ${simple_pnl:.2f} PnL")
+        
+        # Run enhanced aggressive strategy backtest
+        logger.info("Running enhanced aggressive strategy backtest...")
+        stats = aggressive_strategy_backtest(
+            df,
+            take_profit_pct=0.006,
+            stop_loss_pct=0.003,
+            max_holding_bars=24,
+            fee_pct=0.001,
+            slippage_pct=0.0005,
+            starting_balance=10000.0,
+            trend_filter=True,
+            vol_filter=True,
+            trailing_stop_pct=0.005,
+            enable_logging=True
+        )
+        
+        # Display comprehensive results
+        print("\n" + "="*60)
+        print("ENHANCED BACKTEST RESULTS")
+        print("="*60)
+        print(f"Total Trades: {stats['trades']}")
+        print(f"Winning Trades: {stats['wins']}")
+        print(f"Win Rate: {stats['win_rate_pct']:.2f}%")
+        print(f"Total PnL: ${stats['pnl']:.2f}")
+        print(f"Final Balance: ${stats['final_balance']:.2f}")
+        print(f"Return: {stats['return_pct']:.2f}%")
+        print(f"Execution Time: {stats['execution_time']:.2f}s")
+        print(f"Signals Generated: {stats['signals_generated']}")
+        print(f"Entries Executed: {stats['entries_executed']}")
+        
+        # Display analytics if available
+        if stats.get('analytics'):
+            analytics = stats['analytics']
+            print("\nADVANCED ANALYTICS:")
+            print("-" * 30)
+            print(f"Profit Factor: {analytics.get('profit_factor', 'N/A')}")
+            print(f"Max Drawdown: {analytics.get('max_drawdown_pct', 0):.2f}%")
+            print(f"Sharpe Ratio: {analytics.get('sharpe_ratio', 'N/A')}")
+            print(f"Average Win: ${analytics.get('average_win', 0):.2f}")
+            print(f"Average Loss: ${analytics.get('average_loss', 0):.2f}")
+            print(f"Max Consecutive Wins: {analytics.get('max_consecutive_wins', 0)}")
+            print(f"Max Consecutive Losses: {analytics.get('max_consecutive_losses', 0)}")
+        
+        # Show sample trades
+        if stats.get('trade_list'):
+            print(f"\nSAMPLE TRADES (first 5):")
+            print("-" * 50)
+            for i, trade in enumerate(stats['trade_list'][:5]):
+                print(f"{i+1}. {trade['entry_time']} -> {trade['exit_time']}")
+                print(f"   {trade['entry_price']:.4f} -> {trade['exit_price']:.4f} "
+                      f"(${trade['pnl']:.2f}) [{trade['exit_type']}]")
+        
+    except Exception as e:
+        logger.error(f"Error in main execution: {e}")
+        raise
+
 
 if __name__ == '__main__':
     main()
