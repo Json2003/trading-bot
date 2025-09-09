@@ -53,3 +53,35 @@ tradingbot_ibkr/model_store/*.pkl
 
 # Temporary files
 tmp_import_test.py
+
+# Trading Bot Specific Additions
+validation_*.json
+opt_results*.json
+report_*.json
+*.joblib
+*.tmp
+*.checkpoint.json
+datafiles/
+data/
+model_store/
+*.bak
+*.backup
+
+# Large data files (keep sample files)
+*.csv
+*.parquet
+*.h5
+*.hdf5
+!**/sample_*.csv
+!**/requirements.txt
+
+# API keys and secrets
+config.py
+secrets.json
+.env.local
+.env.production
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
