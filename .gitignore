@@ -44,6 +44,9 @@ tradingbot_ibkr/releases/
 # Local analysis outputs
 analysis/
 
+# Backtest run outputs
+artifacts/
+
 # Model store - local artifacts and DBs
 tradingbot_ibkr/model_store/*.db
 tradingbot_ibkr/model_store/*.pkl

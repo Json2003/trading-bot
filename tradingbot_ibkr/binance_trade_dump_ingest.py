@@ -84,22 +84,50 @@ def read_trade_file(path: Path) -> pd.DataFrame:
 def append_ticks(ticks: pd.DataFrame, out_path: Path) -> int:
     """Append tick DataFrame to ``out_path`` deduplicating by ts/price/qty."""
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    new_rows = ticks.to_dict()
-    existing: List[dict] = []
-    if out_path.exists():
-        existing = pd.read_csv(out_path).to_dict()
+    def _to_records(df) -> List[dict]:
+        """Return list-of-dict records from either real pandas or the local stub."""
+        try:
+            recs = df.to_dict(orient='records')  # real pandas path
+        except TypeError:
+            # local stub path: to_dict() returns List[dict]
+            recs = df.to_dict()
+        # If we somehow received a column-oriented dict, convert to records
+        if isinstance(recs, dict):
+            cols = list(recs.keys())
+            length = len(next(iter(recs.values()))) if recs else 0
+            tmp: List[dict] = []
+            for i in range(length):
+                tmp.append({c: recs[c][i] for c in cols})
+            recs = tmp
+        # ensure clean dict copies
+        return [dict(r) for r in recs]
 
-    combined = existing + new_rows
+    new_rows: List[dict] = _to_records(ticks)
+    existing_rows: List[dict] = []
+    if out_path.exists():
+        existing_rows = _to_records(pd.read_csv(out_path))
+
+    # Build set of existing keys for fast membership checks
+    def _key(r: dict):
+        return (r.get('ts'), r.get('price'), r.get('qty'))
+
+    existing_keys = { _key(r) for r in existing_rows }
+
+    # Count only actually new rows
+    actually_new = [r for r in new_rows if _key(r) not in existing_keys]
+
+    combined = existing_rows + actually_new
+    # Deduplicate just in case inputs overlap; maintain earliest occurrence
     seen = set()
     unique: List[dict] = []
     for r in combined:
-        key = (r.get("ts"), r.get("price"), r.get("qty"))
-        if key not in seen:
-            seen.add(key)
+        k = _key(r)
+        if k not in seen:
+            seen.add(k)
             unique.append(r)
-    unique.sort(key=lambda x: x["ts"])
+    unique.sort(key=lambda x: x['ts'])
     pd.DataFrame(unique).to_csv(out_path, index=False)
-    return len(new_rows)
+    return len(actually_new)
 
 
 def ticks_to_ohlcv(ticks: pd.DataFrame, timeframe: str = "1m") -> pd.DataFrame:  # pragma: no cover - unused in tests
