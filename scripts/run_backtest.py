@@ -77,6 +77,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     p.add_argument("--trend", action="store_true", help="Enable EMA trend filter (50/200)")
     p.add_argument("--vol", action="store_true", help="Enable volatility filter")
+    p.add_argument("--strategy", default="default", choices=["default", "sma_cross", "enhanced", "breakout"],
+                   help="Signal generation strategy to use")
 
     p.add_argument("--out", default=None, help="Path to save JSON report (default auto)")
     return p
@@ -162,6 +164,15 @@ def run_backtest(args: argparse.Namespace) -> dict:
     else:
         df = fetch_ccxt(args.exchange, args.symbol, args.timeframe, args.since, args.until)
 
+    # Apply signal generation if specified
+    if args.strategy != "default":
+        from tradingbot_ibkr.signal_generators import get_signal_generator
+        signal_func = get_signal_generator(args.strategy)
+        signal_df = signal_func(df)
+        # Add signals to the main dataframe
+        df = df.join(signal_df, how='left')
+        print(f"Applied {args.strategy} signal generation strategy")
+
     stats = aggressive_strategy_backtest(
         df,
         take_profit_pct=args.tp,
@@ -179,7 +190,8 @@ def run_backtest(args: argparse.Namespace) -> dict:
     if args.out:
         out_path = args.out
     else:
-        base = f"backtest_{args.source}_{args.symbol.replace('/','_') if args.source=='ccxt' else os.path.basename(args.path).split('.')[0]}_{args.timeframe if args.source=='ccxt' else 'csv'}_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+        strategy_suffix = f"_{args.strategy}" if args.strategy != "default" else ""
+        base = f"backtest_{args.source}_{args.symbol.replace('/','_') if args.source=='ccxt' else os.path.basename(args.path).split('.')[0]}_{args.timeframe if args.source=='ccxt' else 'csv'}{strategy_suffix}_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
         out_path = os.path.join(REPO_ROOT, f"{base}.json")
 
     with open(out_path, 'w') as f:
