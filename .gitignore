@@ -37,6 +37,10 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Node packages
+node_modules/
+**/node_modules/
+
 # Release/build artifacts
 tradingbot_ibkr/dist/
 tradingbot_ibkr/releases/
@@ -69,6 +73,10 @@ data/
 model_store/
 *.bak
 *.backup
+
+# Desktop build artifacts
+dashboard/electron-app/dist/
+server.pid
 
 # Large data files (keep sample files)
 *.csv
