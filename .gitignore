@@ -88,3 +88,8 @@ secrets.json
 *.db
 *.sqlite
 *.sqlite3
+
+# Model artifacts
+models/checkpoints/
+*.pt
+*.pth
