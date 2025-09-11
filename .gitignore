@@ -37,6 +37,10 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Node packages
+node_modules/
+**/node_modules/
+
 # Release/build artifacts
 tradingbot_ibkr/dist/
 tradingbot_ibkr/releases/
