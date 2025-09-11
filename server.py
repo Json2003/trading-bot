@@ -128,7 +128,7 @@ def _tail_text(path: Path, limit: int = 200):
             lines = f.readlines()
         return lines[-limit:]
     except Exception:
-    return []
+        return []
 
 def _read_json(path: Path):
     try:
