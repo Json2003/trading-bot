@@ -35,12 +35,13 @@ install -m 0755 -D "${APPIMAGE_SRC}" "${APPIMAGE_DST}"
 install -m 0644 -D "${ICON_SRC_SVG}" "${ICON_DST_SVG}"
 
 # Create launcher wrapper that starts backend on 9000 if not running
-cat > "${LAUNCHER_DST}" <<'EOS'
-#!/usr/bin/env bash
-set -euo pipefail
-
-APP_ID="splitstar-trading-bot"
-REPO_DIR="$(cd -- "$(dirname -- "$0")/.." &>/dev/null && pwd)"
+{
+  echo '#!/usr/bin/env bash'
+  echo 'set -euo pipefail'
+  echo ''
+  echo 'APP_ID="splitstar-trading-bot"'
+  echo "REPO_DIR=\"${REPO_DIR}\""
+  cat <<'EOS'
 
 # Detect if port 9000 is in use
 is_listening() {
@@ -64,6 +65,7 @@ fi
 
 exec "${HOME}/.local/bin/${APP_ID}" "$@"
 EOS
+} > "${LAUNCHER_DST}"
 chmod +x "${LAUNCHER_DST}"
 
 # Write desktop entry
@@ -92,4 +94,3 @@ echo "Installed desktop launcher: ${DESKTOP_FILE}"
 echo "Icon installed: ${ICON_DST_SVG}"
 echo "Launcher: ${LAUNCHER_DST}"
 echo "AppImage: ${APPIMAGE_DST}"
-

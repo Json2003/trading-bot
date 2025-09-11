@@ -74,6 +74,10 @@ model_store/
 *.bak
 *.backup
 
+# Desktop build artifacts
+dashboard/electron-app/dist/
+server.pid
+
 # Large data files (keep sample files)
 *.csv
 *.parquet
