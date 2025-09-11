@@ -9,7 +9,7 @@ Features:
 - WebSocket connection pooling and management
 - Detailed logging and metrics tracking
 """
-from fastapi import FastAPI, WebSocket, HTTPException, Depends, status, Request
+from fastapi import FastAPI, WebSocket, HTTPException, Depends, status, Request, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone, timedelta
@@ -22,6 +22,9 @@ from collections import defaultdict, deque
 from pydantic import BaseModel
 import uuid
 import os
+import glob
+import subprocess
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(
@@ -79,6 +82,59 @@ STATE = {
         "error_count": 0
     }
 }
+
+# Paths
+REPO_ROOT = Path(__file__).resolve().parent
+ART_DIR = REPO_ROOT / "artifacts"
+MODELS_DIR = REPO_ROOT / "models"
+GATE_CFG = ART_DIR / "gate_config.json"
+RUN_PID = REPO_ROOT / "run.pid"
+
+def _read_text(path: Path) -> str:
+    try:
+        return path.read_text().strip()
+    except Exception:
+        return ""
+
+def _write_text(path: Path, txt: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(txt)
+
+def _latest(glob_pattern: str) -> Optional[Path]:
+    files = [Path(p) for p in glob.glob(str(ART_DIR / glob_pattern))]
+    return max(files, key=lambda p: p.stat().st_mtime) if files else None
+
+def _json_load(path: Path):
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        return {}
+
+def _tail_csv(path: Path, limit: int = 200):
+    try:
+        import csv
+        rows = []
+        with path.open() as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                rows.append(row)
+        return rows[-limit:]
+    except Exception:
+        return []
+
+def _tail_text(path: Path, limit: int = 200):
+    try:
+        with path.open("r", errors="ignore") as f:
+            lines = f.readlines()
+        return lines[-limit:]
+    except Exception:
+    return []
+
+def _read_json(path: Path):
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        return {}
 
 # Connection and rate limiting tracking
 class ConnectionManager:
@@ -303,21 +359,31 @@ async def metrics():
 
 # Protected endpoints
 @app.post("/control/start")
-async def start(current_user: dict = Depends(require_permission("control"))):
-    """Start the trading bot."""
+async def start(payload: dict | None = Body(default=None), current_user: dict = Depends(require_permission("control"))):
+    """Start the trading bot (optionally spawn a process).
+
+    Body example: { "cmd": ["bash", "scripts/start_paper.sh"] }
+    Writes PID to run.pid for management.
+    """
     try:
         STATE["running"] = True
-        logger.info(f"Trading bot started by user: {current_user['username']}")
-        
-        # Broadcast to all connected clients
+        # Optional external command
+        cmd = None
+        if isinstance(payload, dict):
+            cmd = payload.get("cmd")
+        spawned = None
+        if cmd and isinstance(cmd, list) and not RUN_PID.exists():
+            proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            RUN_PID.write_text(str(proc.pid))
+            spawned = {"pid": proc.pid, "cmd": cmd}
+        logger.info(f"Trading bot started by user: {current_user['username']}; spawned={spawned}")
+
         await manager.broadcast(json.dumps({
             "event": "bot_started",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "user": current_user['username']
         }))
-        
-        return {"ok": True, "message": "Trading bot started"}
-        
+        return {"ok": True, "message": "Trading bot started", "spawned": spawned}
     except Exception as e:
         logger.error(f"Failed to start bot: {e}")
         STATE['server_stats']['error_count'] += 1
@@ -328,7 +394,20 @@ async def stop(current_user: dict = Depends(require_permission("control"))):
     """Stop the trading bot."""
     try:
         STATE["running"] = False
-        logger.info(f"Trading bot stopped by user: {current_user['username']}")
+        # Try to terminate spawned process if tracked
+        killed = False
+        if RUN_PID.exists():
+            try:
+                pid = int(RUN_PID.read_text().strip())
+                os.kill(pid, 15)
+                killed = True
+            except Exception:
+                pass
+            try:
+                RUN_PID.unlink(missing_ok=True)
+            except Exception:
+                pass
+        logger.info(f"Trading bot stopped by user: {current_user['username']}; killed={killed}")
         
         # Broadcast to all connected clients
         await manager.broadcast(json.dumps({
@@ -451,6 +530,143 @@ async def shutdown_event():
         manager.disconnect(connection)
     
     logger.info("Trading bot server shutdown complete")
+
+# ------------------ Control/Config/Diagnostics endpoints ------------------
+# ------------------ Control/Config/Diagnostics endpoints ------------------
+
+class UpdateConfig(BaseModel):
+    active_tag: Optional[str] = None
+    gate_threshold: Optional[float] = None
+    strategy: Optional[dict] = None  # written to artifacts/superbot/active_config.json
+
+
+@app.get("/config")
+async def get_config():
+    active_tag = _read_text(MODELS_DIR / "active_tag.txt")
+    gate = _json_load(GATE_CFG)
+    strat = _json_load(ART_DIR / "superbot" / "active_config.json")
+    return {
+        "active_tag": active_tag,
+        "gate_threshold": gate.get("threshold"),
+        "strategy": strat or None,
+    }
+
+
+@app.post("/config")
+async def post_config(cfg: UpdateConfig, current_user: dict = Depends(require_permission("control"))):
+    before = await get_config()
+    if cfg.active_tag:
+        _write_text(MODELS_DIR / "active_tag.txt", cfg.active_tag)
+    if cfg.gate_threshold is not None:
+        GATE_CFG.parent.mkdir(parents=True, exist_ok=True)
+        curr = _json_load(GATE_CFG)
+        curr["threshold"] = float(cfg.gate_threshold)
+        GATE_CFG.write_text(json.dumps(curr, indent=2))
+    if cfg.strategy is not None:
+        path = ART_DIR / "superbot" / "active_config.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(cfg.strategy, indent=2))
+    after = await get_config()
+    return {"ok": True, "before": before, "after": after}
+
+
+@app.get("/diagnostics/metrics")
+async def diagnostics_metrics():
+    # Prefer the latest *_metrics.json artifact; fallback to STATE metrics
+    path = _latest("*_metrics.json")
+    if path:
+        try:
+            return _json_load(path)
+        except Exception:
+            pass
+    # Fallback
+    STATE["metrics"]["timestamp"] = datetime.now(timezone.utc).isoformat()
+    return STATE["metrics"]
+
+
+@app.get("/diagnostics/equity")
+async def diagnostics_equity(limit: int = 500):
+    path = _latest("*_equity.csv")
+    return {"path": str(path) if path else None, "rows": _tail_csv(path, limit) if path else []}
+
+
+@app.get("/diagnostics/trades")
+async def diagnostics_trades(limit: int = 500):
+    path = _latest("*_trades.csv")
+    return {"path": str(path) if path else None, "rows": _tail_csv(path, limit) if path else []}
+
+
+@app.get("/logs")
+async def get_logs(file: str = "ml", limit: int = 200, current_user: dict = Depends(require_permission("read"))):
+    """Tail text logs for UI: ml (artifacts/ml_infer.log) or server (server.log)."""
+    if file == "ml":
+        path = REPO_ROOT / "artifacts" / "ml_infer.log"
+    else:
+        path = REPO_ROOT / "server.log"
+    return {"file": str(path), "lines": _tail_text(path, limit)}
+
+
+# Aliases for compatibility
+@app.post("/config/model")
+async def post_config_model(body: dict, current_user: dict = Depends(require_permission("control"))):
+    tag = (body or {}).get("active_tag")
+    if not tag:
+        raise HTTPException(status_code=400, detail="active_tag required")
+    _write_text(MODELS_DIR / "active_tag.txt", tag)
+    return await get_config()
+
+
+@app.post("/config/strategy")
+async def post_config_strategy(body: dict, current_user: dict = Depends(require_permission("control"))):
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="strategy body required")
+    path = ART_DIR / "superbot" / "active_config.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(body, indent=2))
+    return await get_config()
+
+
+@app.get("/models/registry")
+async def get_model_registry():
+    """Return model registry tags and metadata."""
+    reg = _read_json(MODELS_DIR / "registry.json")
+    return reg or {}
+
+
+@app.get("/models/tags")
+async def get_model_tags(symbol: str | None = None, timeframe: str | None = None):
+    reg = _read_json(MODELS_DIR / "registry.json")
+    out = []
+    for tag, meta in (reg or {}).items():
+        if symbol and meta.get("symbol") != symbol:
+            continue
+        if timeframe and meta.get("timeframe") != timeframe:
+            continue
+        out.append({"tag": tag, **meta})
+    return out
+
+
+# Simple order/position actions for UI demo
+@app.post("/orders/cancel")
+async def cancel_order(body: dict, current_user: dict = Depends(require_permission("control"))):
+    oid = (body or {}).get("id")
+    if oid is None:
+        raise HTTPException(status_code=400, detail="id required")
+    before = len(STATE["orders"])
+    STATE["orders"] = [o for o in STATE["orders"] if str(o.get("id")) != str(oid)]
+    return {"ok": True, "removed": before - len(STATE["orders"]) }
+
+
+@app.post("/positions/close")
+async def close_position(body: dict, current_user: dict = Depends(require_permission("control"))):
+    pid = (body or {}).get("id")
+    if pid is None:
+        raise HTTPException(status_code=400, detail="id required")
+    # naive: remove from positions and increment total trades
+    before = len(STATE["positions"])
+    STATE["positions"] = [p for p in STATE["positions"] if str(p.get("id")) != str(pid)]
+    STATE["metrics"]["total_trades"] = int(STATE["metrics"].get("total_trades", 0)) + 1
+    return {"ok": True, "removed": before - len(STATE["positions"]) }
 
 if __name__ == "__main__":
     import uvicorn

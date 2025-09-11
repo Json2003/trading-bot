@@ -3,9 +3,155 @@
   <head>
     <meta charset="UTF-8">
     <title>Trading Bot Dashboard</title>
+    <style>
+      body { margin:0; font: 14px/1.4 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif; color:#eaeef3; background:#0b1220; }
+      header { background:#0f172a; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #1f2a44; }
+      .brand { font-weight:700; letter-spacing:0.5px; }
+      .brand em { color:#6ee7ff; font-style:normal; }
+      .tray { display:flex; gap:8px; }
+      .btn { background:#1f2a44; border:1px solid #283556; color:#eaeef3; padding:6px 10px; border-radius:6px; cursor:pointer; }
+      .btn:hover { background:#273355; }
+      main { display:grid; grid-template-columns: 1fr 1fr; gap:12px; padding:12px; }
+      section { background:#0f172a; border:1px solid #1f2a44; border-radius:10px; padding:12px; min-height:180px; }
+      table { width:100%; border-collapse: collapse; }
+      th, td { text-align:left; padding:6px 8px; border-bottom:1px solid #1f2a44; font-size:12px; }
+      th { color:#9ab6ff; text-transform:uppercase; letter-spacing:0.4px; }
+      h2 { margin:0 0 8px 0; font-size:14px; color:#9ab6ff; text-transform:uppercase; letter-spacing:0.6px; }
+      pre { background:#0b1220; border:1px solid #1f2a44; border-radius:8px; padding:8px; max-height:240px; overflow:auto; }
+      footer { padding:8px 12px; border-top:1px solid #1f2a44; color:#8fa3c7; display:flex; justify-content:space-between; font-size:12px; }
+    </style>
   </head>
   <body>
-    <h1>Trading Bot Dashboard</h1>
-    <p>Electron renderer placeholder.</p>
+    <header>
+      <div class="brand">Splitstar <em>Development</em> — Trading Console</div>
+      <div class="tray">
+        <button class="btn" id="refresh">Refresh</button>
+        <button class="btn" id="start">Start</button>
+        <button class="btn" id="stop">Stop</button>
+      </div>
+    </header>
+    <main>
+      <section>
+        <h2>Health</h2>
+        <pre id="health">health...</pre>
+      </section>
+      <section>
+        <h2>Config</h2>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+          <label>Symbol:</label>
+          <input id="cfgSym" value="BTC/USDT" style="background:#0b1220;color:#eaeef3;border:1px solid #1f2a44;border-radius:6px;padding:4px 6px;"/>
+          <label>Timeframe:</label>
+          <input id="cfgTf" value="4h" style="background:#0b1220;color:#eaeef3;border:1px solid #1f2a44;border-radius:6px;padding:4px 6px;"/>
+          <label>Active Tag:</label>
+          <select id="tag"></select>
+          <label>Threshold:</label>
+          <input id="th" type="range" min="0.5" max="0.7" step="0.01" value="0.55" />
+          <span id="thv">0.55</span>
+          <button class="btn" id="saveCfg">Save</button>
+        </div>
+        <textarea id="strat" style="width:100%; height:120px; background:#0b1220; color:#eaeef3; border:1px solid #1f2a44; border-radius:8px; padding:8px;" placeholder="{\n  \"symbol\": \"BTC/USDT\", ...\n}"></textarea>
+      </section>
+      <section>
+        <h2>Metrics</h2>
+        <pre id="metrics">metrics...</pre>
+      </section>
+      <section>
+        <h2>Latest Trades</h2>
+        <pre id="trades">trades...</pre>
+      </section>
+      <section>
+        <h2>Logs</h2>
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+          <label>Source:</label>
+          <select id="logsrc"><option value="server">Server</option><option value="ml">ML</option></select>
+        </div>
+        <pre id="logs">logs...</pre>
+      </section>
+      <section>
+        <h2>Positions</h2>
+        <table id="posTbl"><thead><tr><th>ID</th><th>Symbol</th><th>Side</th><th>Size</th><th>AvgPx</th><th>PNL</th><th></th></tr></thead><tbody></tbody></table>
+      </section>
+      <section>
+        <h2>Orders</h2>
+        <table id="ordTbl"><thead><tr><th>ID</th><th>Symbol</th><th>Side</th><th>Px</th><th>Qty</th><th>Status</th><th></th></tr></thead><tbody></tbody></table>
+      </section>
+      <section style="grid-column: 1 / span 2;">
+        <h2>Equity</h2>
+        <canvas id="equity" height="160"></canvas>
+      </section>
+    </main>
+    <footer>
+      <div>API: <code id="api">http://127.0.0.1:9000</code></div>
+      <div>© Splitstar Development</div>
+    </footer>
+    <script>
+      const API = 'http://127.0.0.1:9000';
+      let equityChart = null;
+      async function loadConfig() {
+        try {
+          const conf = await fetch(API + '/config').then(r => r.json());
+          const reg = await fetch(API + '/models/registry').then(r => r.json());
+          const tags = Object.keys(reg || {});
+          const sel = document.getElementById('tag');
+          sel.innerHTML = tags.map(t => `<option ${conf.active_tag===t?'selected':''}>${t}</option>`).join('');
+          const thr = (conf.gate_threshold ?? 0.55);
+          document.getElementById('th').value = thr;
+          document.getElementById('thv').textContent = parseFloat(thr).toFixed(2);
+          document.getElementById('strat').value = JSON.stringify(conf.strategy || {}, null, 2);
+        } catch(e) {}
+      }
+      async function saveConfig() {
+        const body = {
+          active_tag: document.getElementById('tag').value,
+          gate_threshold: parseFloat(document.getElementById('th').value),
+          strategy: (()=>{try{return JSON.parse(document.getElementById('strat').value||'{}')}catch(e){return {}}})()
+        };
+        await fetch(API + '/config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+      }
+      function renderEquity(rows) {
+        const labels = rows.map(r => r.timestamp);
+        const vals = rows.map(r => parseFloat(r.equity));
+        const ctx = document.getElementById('equity').getContext('2d');
+        if (equityChart) equityChart.destroy();
+        equityChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Equity', data: vals, borderColor: '#6ee7ff', tension: 0.2, borderWidth: 2, pointRadius: 0 }]}, options: { plugins:{ legend:{ display:false }}, scales:{ x:{ display:false }, y:{ grid:{ color:'#1f2a44'} } } } });
+      }
+      async function load() {
+        try {
+          const h = await fetch(API + '/health').then(r => r.json());
+          document.getElementById('health').textContent = JSON.stringify(h, null, 2);
+        } catch (e) { document.getElementById('health').textContent = 'health error: ' + e; }
+        try {
+          const m = await fetch(API + '/diagnostics/metrics').then(r => r.json());
+          document.getElementById('metrics').textContent = JSON.stringify(m, null, 2);
+        } catch (e) { document.getElementById('metrics').textContent = 'metrics error: ' + e; }
+        try {
+          const t = await fetch(API + '/diagnostics/trades').then(r => r.json());
+          document.getElementById('trades').textContent = JSON.stringify(t.rows, null, 2);
+        } catch (e) { document.getElementById('metrics').textContent = 'metrics error: ' + e; }
+        try {
+          const lg = await fetch(API + '/logs?file='+document.getElementById('logsrc').value+'&limit=120').then(r => r.json());
+          document.getElementById('logs').textContent = (lg.lines || []).join('');
+        } catch (e) { document.getElementById('logs').textContent = 'logs error: ' + e; }
+        try {
+          const eq = await fetch(API + '/diagnostics/equity').then(r => r.json());
+          renderEquity(eq.rows || []);
+        } catch (e) {}
+        loadConfig().catch(()=>{});
+      }
+      document.getElementById('refresh').onclick = load;
+      document.getElementById('saveCfg').onclick = async () => { await saveConfig(); await load(); };
+      document.getElementById('th').oninput = (e)=>{ document.getElementById('thv').textContent = parseFloat(e.target.value).toFixed(2); };
+      document.getElementById('start').onclick = async () => {
+        await fetch(API + '/control/start', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({})});
+        load();
+      };
+      document.getElementById('stop').onclick = async () => {
+        await fetch(API + '/control/stop', {method:'POST'});
+        load();
+      };
+      try { const ws = new WebSocket('ws://127.0.0.1:9000/ws'); ws.onmessage = (ev)=>{ try { const msg = JSON.parse(ev.data); if (msg.event==='metrics_update') { document.getElementById('metrics').textContent = JSON.stringify(msg.metrics, null, 2); } } catch(e){} }; } catch(e){}
+      load();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </body>
 </html>

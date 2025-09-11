@@ -171,20 +171,39 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
     high_arr = data["high"].astype(float).values
     low_arr = data["low"].astype(float).values
 
+    # Prebind frequently used config values to locals (micro-optimizations)
+    fees_bps = float(cfg.fees_bps)
+    slip_bps = float(cfg.slip_bps)
+    break_even_mult = float(getattr(cfg, 'break_even_atr_mult', 0.0) or 0.0)
+    trail_method = (getattr(cfg, 'trail_method', 'atr') or 'atr').lower()
+    trail_ref_best = ((getattr(cfg, 'trail_ref', 'best') or 'best').lower() == 'best')
+    trail_atr_mult = float(getattr(cfg, 'trail_atr_mult', 0.0) or 0.0)
+    donch_mid_n = int(getattr(cfg, 'donch_mid_n', 0) or 0)
+    tp_r_multiple = float(getattr(cfg, 'tp_r_multiple', 0.0) or 0.0)
+    partial_tp_frac = float(getattr(cfg, 'partial_tp_frac', 0.0) or 0.0)
+    lock_in_r_after_tp = float(getattr(cfg, 'lock_in_r_after_tp', 0.0) or 0.0)
+    pullback_ema_len = int(getattr(cfg, 'pullback_ema_len', 0) or 0)
+    pullback_atr_mult = float(getattr(cfg, 'pullback_atr_mult', 0.0) or 0.0)
+    pullback_confirm = int(getattr(cfg, 'pullback_confirm', 0) or 0)
+    min_rr_n = int(getattr(cfg, 'min_rr_by_bars_n', 0) or 0)
+    min_rr_r = float(getattr(cfg, 'min_rr_by_bars_r', 0.0) or 0.0)
+    max_bars_cfg = int(getattr(cfg, 'max_bars', 0) or 0)
+    allow_short_cfg = bool(getattr(cfg, 'allow_short', False))
+
     # ATR for sizing/optional exits
     atr_ser = _atr(data, cfg.atr_period).fillna(0.0)
     atr = atr_ser.values
     # Optional EMA for pullback detection
-    if int(getattr(cfg, 'pullback_ema_len', 0) or 0) > 0:
-        ema_len = int(cfg.pullback_ema_len)
+    if pullback_ema_len > 0:
+        ema_len = pullback_ema_len
         ema_ser = data["close"].ewm(span=ema_len, adjust=False, min_periods=ema_len).mean()
         ema = ema_ser.values
     else:
         ema = None
     # Optional Donchian midline for trailing
-    if getattr(cfg, 'donch_mid_n', 0) and int(cfg.donch_mid_n) > 0:
+    if donch_mid_n > 0:
         import numpy as _np
-        n = int(cfg.donch_mid_n)
+        n = donch_mid_n
         roll_high = data["high"].rolling(n, min_periods=n).max()
         roll_low = data["low"].rolling(n, min_periods=n).min()
         donch_mid = ((roll_high + roll_low) / 2.0).values
@@ -251,8 +270,8 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
                 else:
                     best_price = min(best_price, px)
             # Check min-R-by-N momentum requirement
-            if (not hit_half_R) and r_frac_entry > 0.0 and int(getattr(cfg, 'min_rr_by_bars_n', 0) or 0) > 0 and float(getattr(cfg, 'min_rr_by_bars_r', 0.0) or 0.0) > 0.0:
-                target_r = float(cfg.min_rr_by_bars_r)
+            if (not hit_half_R) and r_frac_entry > 0.0 and min_rr_n > 0 and min_rr_r > 0.0:
+                target_r = min_rr_r
                 # price move in R units relative to entry
                 move_frac = (px / entry_price - 1.0) * position
                 rr = move_frac / r_frac_entry
@@ -260,25 +279,25 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
                     hit_half_R = True
 
             # Arm break-even when threshold reached (based on ATR at entry)
-            if (not be_armed) and cfg.break_even_atr_mult > 0.0 and atr_entry > 0.0:
+            if (not be_armed) and break_even_mult > 0.0 and atr_entry > 0.0:
                 move = (px - entry_price) if position == 1 else (entry_price - px)
-                if move >= cfg.break_even_atr_mult * atr_entry:
+                if move >= break_even_mult * atr_entry:
                     stop_price = entry_price
                     be_armed = True
 
             # Apply trailing stop update by method
-            if (cfg.trail_method or "atr").lower() == "atr":
-                if cfg.trail_atr_mult > 0.0 and at > 0.0:
-                    trail_dist = cfg.trail_atr_mult * at
+            if trail_method == "atr":
+                if trail_atr_mult > 0.0 and at > 0.0:
+                    trail_dist = trail_atr_mult * at
                     # Choose reference price for trailing: best favorable price (default) or current close
-                    ref = best_price if (getattr(cfg, 'trail_ref', 'best') or 'best').lower() == 'best' else px
+                    ref = best_price if trail_ref_best else px
                     if position == 1:
                         candidate = ref - trail_dist
                         stop_price = max(stop_price if stop_price is not None else -float('inf'), candidate)
                     else:
                         candidate = ref + trail_dist  # for shorts, stop trails above reference
                         stop_price = min(stop_price if stop_price is not None else float('inf'), candidate)
-            elif (cfg.trail_method or "atr").lower() == "donchian":
+            elif trail_method == "donchian":
                 if donch_mid is not None:
                     dm_val = donch_mid[i]
                     if dm_val == dm_val:  # not NaN
@@ -290,17 +309,17 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
 
             # Check dynamic stop first
             # Check partial take-profit at R-multiple (payday) before stops/TP/SL
-            if (not partial_taken) and cfg.partial_tp_frac > 0.0 and cfg.tp_r_multiple > 0.0 and r_frac_entry > 0.0:
+            if (not partial_taken) and partial_tp_frac > 0.0 and tp_r_multiple > 0.0 and r_frac_entry > 0.0:
                 # Compute payday price target and check intrabar extremes
                 if position == 1:
-                    payday_px = entry_price * (1.0 + cfg.tp_r_multiple * r_frac_entry)
+                    payday_px = entry_price * (1.0 + tp_r_multiple * r_frac_entry)
                     hit = high_arr[i] >= payday_px
                 else:
-                    payday_px = entry_price * (1.0 - cfg.tp_r_multiple * r_frac_entry)
+                    payday_px = entry_price * (1.0 - tp_r_multiple * r_frac_entry)
                     hit = low_arr[i] <= payday_px
                 if hit:
                     # Execute partial exit
-                    pf = float(max(0.0, min(cfg.partial_tp_frac, 1.0)))
+                    pf = float(max(0.0, min(partial_tp_frac, 1.0)))
                     if pf > 0.0 and f_notional > 0.0:
                         fill_exit = _apply_cost(payday_px, cfg.fees_bps, cfg.slip_bps, side=-position)
                         ret_frac = (fill_exit / entry_price - 1.0) * position
@@ -320,8 +339,8 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
                         f_notional = float(max(0.0, f_notional - delta_f))
                         partial_taken = True
                         # Lock stop to BE + X*R (or BE-X*R for short)
-                        if cfg.lock_in_r_after_tp >= 0.0:
-                            lock = cfg.lock_in_r_after_tp * r_frac_entry
+                        if lock_in_r_after_tp >= 0.0:
+                            lock = lock_in_r_after_tp * r_frac_entry
                             if position == 1:
                                 candidate = entry_price * (1.0 + lock)
                                 stop_price = max(stop_price if stop_price is not None else -float('inf'), candidate)
@@ -331,9 +350,9 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
                             be_armed = True
 
             # Optional pullback-confirm exit using EMA +/- k*ATR bands with stateful count
-            if (ema is not None) and cfg.pullback_atr_mult > 0.0 and int(cfg.pullback_confirm) > 0 and position != 0:
-                k = float(cfg.pullback_atr_mult)
-                need = int(cfg.pullback_confirm)
+            if (ema is not None) and pullback_atr_mult > 0.0 and pullback_confirm > 0 and position != 0:
+                k = pullback_atr_mult
+                need = pullback_confirm
                 e = ema[i]
                 if e == e:  # not NaN
                     band = (e - k * at) if position == 1 else (e + k * at)
@@ -355,10 +374,10 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
                     maybe_exit(i, px, reason="tp")
                 elif _sl_hit(entry_price, px, position, at, cfg):
                     maybe_exit(i, px, reason="sl")
-                elif cfg.max_bars > 0 and bars_in_trade >= int(cfg.max_bars):
+                elif max_bars_cfg > 0 and bars_in_trade >= max_bars_cfg:
                     maybe_exit(i, px, reason="timeout")
                 # Momentum timeout: didn’t hit target R within N bars from entry
-                elif (int(getattr(cfg, 'min_rr_by_bars_n', 0) or 0) > 0) and (bars_in_trade >= int(cfg.min_rr_by_bars_n)) and (not hit_half_R):
+                elif (min_rr_n > 0) and (bars_in_trade >= min_rr_n) and (not hit_half_R):
                     maybe_exit(i, px, reason="timebox_missed_halfR")
 
         # Flip/flat exit
@@ -366,7 +385,7 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
             maybe_exit(i, px, reason="flip")
 
         # Entry (after exits)
-        if position == 0 and desired != 0 and (desired != -1 or cfg.allow_short):
+        if position == 0 and desired != 0 and (desired != -1 or allow_short_cfg):
             fill_entry = _apply_cost(px, cfg.fees_bps, cfg.slip_bps, side=desired)
             # compute stop distance fraction for sizing
             sl_frac = _sl_frac_from_cfg(fill_entry, at, cfg)
