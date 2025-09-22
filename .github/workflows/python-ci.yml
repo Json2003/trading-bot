@@ -29,3 +29,9 @@ jobs:
       - name: Run tests
         run: |
           python -m pytest -q
+      - name: Test readiness checker
+        run: |
+          python test_readiness_checker.py
+      - name: Run trading readiness check
+        run: |
+          python check_trading_readiness.py --verbose || true

@@ -101,3 +101,6 @@ secrets.json
 models/checkpoints/
 *.pt
 *.pth
+
+# Trading readiness reports
+trading_readiness_report_*.json
