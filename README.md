@@ -70,3 +70,27 @@ artifacts/
 
 Only keep lightweight samples in the repository itself; all high-volume data
 remains in these local folders to keep clones fast and commits reviewable.
+
+## Trading Readiness Check
+
+Before using the trading bot, run the comprehensive readiness checker:
+
+```bash
+python check_trading_readiness.py --verbose
+```
+
+This validates:
+- Environment setup and dependencies
+- Configuration and safety settings  
+- Data availability and quality
+- Model validation results
+- Risk management settings
+- Trading safety mechanisms
+
+For quick setup assistance:
+
+```bash
+python quick_setup.py --install-deps
+```
+
+See [TRADING_READINESS.md](TRADING_READINESS.md) for detailed information.
