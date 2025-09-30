@@ -20,14 +20,37 @@ def max_drawdown(equity):
     equity: pandas Series-like numeric sequence.
     Returns float in [-1, 0].
     """
-    arr = np.asarray(equity, dtype=float)
-    if arr.size == 0:
+    values = []
+    if hasattr(equity, "_values"):
+        values = [float(v) for v in equity._values if v is not None]
+    elif hasattr(equity, "values"):
+        try:
+            values = [float(v) for v in list(equity.values)]
+        except Exception:
+            values = [float(v) for v in equity]
+    else:
+        values = [float(v) for v in equity]
+    if not values:
         return 0.0
-    roll_max = np.maximum.accumulate(arr)
-    # avoid divide by zero
-    roll_max = np.where(roll_max == 0, np.nan, roll_max)
-    dd = arr / roll_max - 1.0
-    return float(np.nanmin(dd))
+    peak = values[0]
+    worst = 0.0
+    for v in values:
+        if v > peak:
+            peak = v
+        if peak > 0:
+            drawdown = (v / peak) - 1.0
+            if drawdown < worst:
+                worst = drawdown
+    return float(worst)
+
+
+def _to_float_list(values):
+    if hasattr(values, "_values"):
+        return [float(v) for v in values._values if v is not None]
+    try:
+        return [float(v) for v in values]
+    except TypeError:
+        return [float(values)]
 
 
 def sharpe_ratio(returns, periods_per_year: int = 365) -> float:
@@ -35,13 +58,14 @@ def sharpe_ratio(returns, periods_per_year: int = 365) -> float:
 
     Uses population std (ddof=0) to match many backtesting libs.
     """
-    arr = np.asarray(returns, dtype=float)
-    if arr.size == 0:
+    vals = _to_float_list(returns)
+    if not vals:
         return 0.0
-    std = float(np.std(arr, ddof=0))
+    mean = sum(vals) / len(vals)
+    variance = sum((x - mean) ** 2 for x in vals) / len(vals)
+    std = math.sqrt(variance)
     if std == 0.0 or math.isclose(std, 0.0):
         return 0.0
-    mean = float(np.mean(arr))
     return float((mean * periods_per_year) / (std * math.sqrt(periods_per_year)))
 
 
@@ -64,14 +88,19 @@ def profit_factor(trade_pnls: Iterable[float]) -> float:
 
 def sortino_ratio(returns, periods_per_year: int = 365) -> float:
     """Annualized Sortino ratio from periodic returns sequence/Series."""
-    arr = np.asarray(returns, dtype=float)
-    if arr.size == 0:
+    vals = _to_float_list(returns)
+    if not vals:
         return 0.0
-    downside = arr[arr < 0]
-    down_std = float(np.std(downside, ddof=0))
+    downside = [x for x in vals if x < 0]
+    if not downside:
+        return 0.0
+    mean = sum(vals) / len(vals)
+    down_mean = sum(downside) / len(downside)
+    down_variance = sum((x - down_mean) ** 2 for x in downside) / len(downside)
+    down_std = math.sqrt(down_variance)
     if down_std == 0.0 or math.isclose(down_std, 0.0):
         return 0.0
-    mean_annual = float(np.mean(arr)) * periods_per_year
+    mean_annual = mean * periods_per_year
     down_std_annual = down_std * math.sqrt(periods_per_year)
     return float(mean_annual / down_std_annual)
 
