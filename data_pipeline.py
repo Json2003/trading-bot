@@ -52,6 +52,8 @@ def drop_anomalies(df: pd.DataFrame) -> pd.DataFrame:
         (df["high"] >= df["low"]) &
         (df["volume"] >= 0)
     )
+    body_at_low = (df["open"] == df["close"]) & (df["close"] == df["low"])
+    mask &= ~body_at_low
     return df[mask].copy()
 
 

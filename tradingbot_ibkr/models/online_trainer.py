@@ -1,12 +1,55 @@
-"""Online incremental trainer using River.
+"""Online incremental trainer using River with a pure-Python fallback."""
 
-This trainer accepts feature dicts per bar and incrementally updates a classifier/regressor.
-It exposes predict() and learn() methods and logs predictions to disk for evaluation.
-"""
-from river import linear_model, preprocessing
-import pickle
 from pathlib import Path
 import logging
+import pickle
+import math
+
+try:  # pragma: no cover - exercised in tests via fallback
+    from river import linear_model, preprocessing  # type: ignore
+    _HAS_RIVER = True
+except Exception:  # pragma: no cover - offline environments
+    _HAS_RIVER = False
+
+
+class _FallbackLogReg:
+    """Very small logistic regression trained with gradient descent."""
+
+    def __init__(self, lr: float = 0.1):
+        self.lr = lr
+        self.bias = 0.0
+        self.weights: dict[str, float] = {}
+
+    def _sigmoid(self, z: float) -> float:
+        z = max(-60.0, min(60.0, z))
+        return 1.0 / (1.0 + math.exp(-z))
+
+    def predict_proba_one(self, x: dict) -> dict[int, float]:
+        z = self.bias
+        for key, value in x.items():
+            z += self.weights.get(key, 0.0) * float(value)
+        prob = self._sigmoid(z)
+        return {1: prob, 0: 1.0 - prob}
+
+    def learn_one(self, x: dict, y: int):
+        prob = self.predict_proba_one(x)[1]
+        error = float(y) - prob
+        for key, value in x.items():
+            self.weights[key] = self.weights.get(key, 0.0) + self.lr * error * float(value)
+        self.bias += self.lr * error
+        return self
+
+
+class _FallbackPipeline:
+    def __init__(self):
+        self.model = _FallbackLogReg()
+
+    def predict_proba_one(self, x: dict) -> dict[int, float]:
+        return self.model.predict_proba_one(x)
+
+    def learn_one(self, x: dict, y: int):
+        self.model.learn_one(x, y)
+        return self
 
 MODEL_DIR = Path(__file__).resolve().parents[1] / 'model_store'
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
@@ -14,7 +57,10 @@ MODEL_DIR.mkdir(parents=True, exist_ok=True)
 class OnlineTrainer:
     def __init__(self):
         # simple logistic regression pipeline for a binary up/down label
-        self.model = preprocessing.StandardScaler() | linear_model.LogisticRegression()
+        if _HAS_RIVER:
+            self.model = preprocessing.StandardScaler() | linear_model.LogisticRegression()
+        else:
+            self.model = _FallbackPipeline()
         self.path = MODEL_DIR / 'online_model.pkl'
 
     def predict_proba(self, x: dict) -> float:
