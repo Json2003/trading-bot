@@ -76,6 +76,14 @@ def to_numpy(df: pl.DataFrame, feature_columns: Sequence[str], label_column: str
     filtered = df.drop_nulls()
     X = filtered.select(feature_columns).to_numpy()
     y_series = filtered.get_column(label_column)
+    # Expect binary labels encoded as 0 (negative class) and 1 (positive class).
+    # Validate label encoding.
+    unique_labels = set(y_series.unique().to_list())
+    if not unique_labels.issubset({0, 1}):
+        raise ValueError(
+            f"Label column '{label_column}' contains non-binary values: {unique_labels}. "
+            "Expected only 0 and 1."
+        )
     y = (y_series == 1).to_numpy().astype(np.uint8)
     return X, y
 
