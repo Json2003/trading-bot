@@ -94,3 +94,8 @@ python quick_setup.py --install-deps
 ```
 
 See [TRADING_READINESS.md](TRADING_READINESS.md) for detailed information.
+
+## Systematic Trading Principles
+
+For guidance on data hygiene, modeling discipline, validation practices, and production defenses, see the [Systematic Trading Model Principles](docs/systematic_trading_principles.md) guide. It also lists practical thresholds and quick recipes you can adopt immediately.
+
