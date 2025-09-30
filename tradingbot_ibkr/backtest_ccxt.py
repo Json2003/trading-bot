@@ -30,20 +30,15 @@ logger = logging.getLogger(__name__)
 
 # Use package-relative imports with error handling
 try:
-    from .money_engine import choose_position_size, fixed_fractional, round_qty, round_price
+    from .money_engine import choose_position_size, round_qty
 except ImportError:
     logger.warning("Money engine not available, using simplified position sizing")
+
     def choose_position_size(balance, risk_pct, entry_price, stop_price, leverage=1.0, min_qty=0.0):
         return balance * risk_pct / abs(entry_price - stop_price), balance * risk_pct
 
-try:
-    from .models.online_trainer import OnlineTrainer
-except ImportError:
-    logger.warning("Online trainer not available, adaptive learning disabled")
-    class OnlineTrainer:
-        def load(self): pass
-        def predict_proba(self, features): return 0.5
-        def learn_one(self, features, outcome): pass
+from .feature_extraction import fundamental_indicators, orderflow_features
+from .signal_prediction import FundamentalFilter, SignalEnsemble, SignalPredictor
 
 load_dotenv()
 EXCHANGE = os.getenv('EXCHANGE', 'binance')
@@ -334,14 +329,14 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
     
     # Volatility and ATR indicators
     df['vol20'] = df['ret1'].rolling(20).std().fillna(0.0)
-    
+
     # True Range and ATR calculation (vectorized)
     high_low = df['high'] - df['low']
     high_close_prev = (df['high'] - df['close'].shift(1)).abs()
     low_close_prev = (df['low'] - df['close'].shift(1)).abs()
     tr = pd.concat([high_low, high_close_prev, low_close_prev], axis=1).max(axis=1)
     df['atr14'] = tr.rolling(14, min_periods=1).mean()
-    
+
     # RSI calculation (vectorized)
     delta = df['close'].diff()
     up = delta.clip(lower=0)
@@ -350,6 +345,15 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
     roll_down = down.rolling(14, min_periods=1).mean()
     rs = roll_up / roll_down.replace(0, 1e-8)
     df['rsi14'] = 100.0 - (100.0 / (1.0 + rs))
+
+    # Fundamental and order-flow features used by ensemble/fundamental filter
+    fundamentals_df = fundamental_indicators(df)
+    for column in fundamentals_df.columns:
+        df[column] = fundamentals_df[column]
+
+    orderflow_df = orderflow_features(df)
+    for column in orderflow_df.columns:
+        df[column] = orderflow_df[column]
     
     # Initialize trading variables
     trades = []
@@ -364,9 +368,31 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
     if risk_per_trade is None:
         risk_per_trade = 0.01
         
-    # Adaptive learning setup
-    trainer = OnlineTrainer()
-    trainer.load()
+    # Machine learning ensemble with supervised models
+    ensemble = SignalEnsemble(
+        predictors={
+            'gbm': SignalPredictor(
+                model_type='gbm',
+                input_keys=[
+                    'close', 'high', 'low', 'volume', 'ret1', 'ma3', 'mom5', 'mom10',
+                    'vol20', 'vol_ratio', 'atr14', 'rsi14',
+                    'pe_ratio', 'earnings_growth', 'earnings_surprise', 'fundamental_score'
+                ]
+            ),
+            'lstm': SignalPredictor(
+                model_type='lstm',
+                sequence_length=16,
+                input_keys=['close', 'ma3', 'mom5', 'mom10', 'atr14', 'rsi14', 'vol20']
+            ),
+            'transformer': SignalPredictor(
+                model_type='transformer_orderflow',
+                sequence_length=16,
+                input_keys=['order_imbalance', 'flow_velocity', 'liquidity_ratio', 'order_flow_trend', 'vol_ratio']
+            ),
+        },
+        fundamental_filter=FundamentalFilter(),
+        min_confidence=0.6,
+    )
     
     # Trading statistics
     stats = {
@@ -375,6 +401,7 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
         'entries_filtered_trend': 0,
         'entries_filtered_vol': 0,
         'entries_filtered_ml': 0,
+        'entries_filtered_fundamental': 0,
         'exits_tp': 0,
         'exits_sl': 0,
         'exits_trailing': 0,
@@ -384,6 +411,7 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
     holding = 0
     last_features = None
     last_outcome = None
+    last_fundamentals = None
     peak_price = 0
     trailing_stop_price = None
     
@@ -397,27 +425,59 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
             'high': float(row['high']),
             'low': float(row['low']),
             'volume': float(row.get('volume', 1)),
-            'ret1': float(row['ret1']),
-            'ma3': float(row['ma3']),
-            'mom5': float(row['mom5']),
-            'mom10': float(row['mom10']),
-            'vol20': float(row['vol20']),
-            'vol_ratio': float(row['vol_ratio']),
-            'atr14': float(row['atr14']),
-            'rsi14': float(row['rsi14'])
+            'ret1': float(row.get('ret1', 0.0)),
+            'ma3': float(row.get('ma3', row['close'])),
+            'mom5': float(row.get('mom5', 0.0)),
+            'mom10': float(row.get('mom10', 0.0)),
+            'vol20': float(row.get('vol20', 0.0)),
+            'vol_ratio': float(row.get('vol_ratio', 0.0)),
+            'atr14': float(row.get('atr14', 0.0)),
+            'rsi14': float(row.get('rsi14', 50.0)),
+            'pe_ratio': float(row.get('pe_ratio', 0.0)),
+            'earnings_growth': float(row.get('earnings_growth', 0.0)),
+            'earnings_surprise': float(row.get('earnings_surprise', 0.0)),
+            'fundamental_score': float(row.get('fundamental_score', 0.0)),
+            'order_imbalance': float(row.get('order_imbalance', 0.0)),
+            'flow_velocity': float(row.get('flow_velocity', 0.0)),
+            'liquidity_ratio': float(row.get('liquidity_ratio', 0.0)),
+            'order_flow_trend': float(row.get('order_flow_trend', 0.0)),
         }
+
+        fundamentals = {
+            'pe_ratio': float(row.get('pe_ratio', np.nan)),
+            'earnings_growth': float(row.get('earnings_growth', 0.0)),
+            'earnings_surprise': float(row.get('earnings_surprise', 0.0)),
+            'fundamental_score': float(row.get('fundamental_score', 0.0)),
+            'earnings_yield': float(row.get('earnings_yield', 0.0)),
+        }
+
+        ensemble.observe(features, fundamentals)
         
         if position is None:
             # Check for entry signal
             if not pd.isna(row['rolling_high']) and row['close'] > row['rolling_high']:
                 stats['entries_attempted'] += 1
                 
-                # ML-based filtering
-                prob = trainer.predict_proba(features)
-                if prob < 0.6:
+                # ML-based filtering with ensemble agreement
+                decision = ensemble.evaluate(features, fundamentals)
+                if not decision.ml_agreement:
                     stats['entries_filtered_ml'] += 1
                     if enable_logging and i % 100 == 0:
-                        logger.debug(f"Entry filtered by ML at {timestamp}: prob={prob:.3f}")
+                        logger.debug(
+                            "Entry filtered by ML ensemble at %s: probs=%s",
+                            timestamp,
+                            decision.probabilities,
+                        )
+                    continue
+
+                if not decision.fundamentals_pass:
+                    stats['entries_filtered_fundamental'] += 1
+                    if enable_logging and i % 100 == 0:
+                        logger.debug(
+                            "Entry blocked by fundamental filter at %s: fundamentals=%s",
+                            timestamp,
+                            fundamentals,
+                        )
                     continue
                 
                 # Trend filter
@@ -468,14 +528,17 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
                     'entry_time': timestamp,
                     'entry_price': entry_price,
                     'qty': qty,
-                    'ml_prob': prob,
-                    'features': features.copy()
+                    'ml_probabilities': decision.probabilities,
+                    'consensus_prob': decision.consensus,
+                    'features': features.copy(),
+                    'fundamentals': fundamentals.copy(),
                 })
                 
                 holding = 0
                 peak_price = entry_price
                 trailing_stop_price = None
                 last_features = features
+                last_fundamentals = fundamentals
                 stats['entries_executed'] += 1
                 
                 if enable_logging and len(trades) <= 5:  # Log first few trades in detail
@@ -575,8 +638,8 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
                     })
                 
                 # ML learning
-                if last_features is not None and last_outcome is not None:
-                    trainer.learn_one(last_features, last_outcome)
+                if last_features is not None and last_outcome is not None and last_fundamentals is not None:
+                    ensemble.learn(last_features, last_fundamentals, last_outcome)
                 
                 # Reset position
                 position = None
@@ -585,6 +648,7 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
                 holding = 0
                 last_features = None
                 last_outcome = None
+                last_fundamentals = None
                 
                 if enable_logging and len(detailed_trades) <= 5:  # Log first few trades in detail
                     logger.info(f"EXIT #{len(detailed_trades)}: {timestamp} @ {exit_price:.4f}, {exit_type}, PnL={trade_pnl:.2f} ({trade_pnl/(qty*entry_price)*100:.2f}%), hold={holding} bars")
@@ -634,172 +698,6 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
         logger.info("="*60)
     
     return results
-    rs = roll_up / roll_down
-    df['rsi14'] = 100.0 - (100.0 / (1.0 + rs))
-
-    for i in range(len(df)):
-        row = df.iloc[i]
-        features = {col: float(row[col]) for col in ['close','high','low','volume','ret1','ma3','mom5','mom10','vol20','vol_ratio','atr14','rsi14'] if col in row}
-        if position is None:
-            # entry condition: breakout
-            if not pd.isna(row['rolling_high']) and row['close'] > row['rolling_high']:
-                # Adaptive filter: only enter if model predicts high probability
-                prob = trainer.predict_proba(features)
-                if prob < 0.6:
-                    continue
-                # optional trend filter: only enter if ema_fast > ema_slow
-                if trend_filter:
-                    if pd.isna(row.get('ema_fast')) or pd.isna(row.get('ema_slow')):
-                        continue
-                    if row['ema_fast'] <= row['ema_slow']:
-                        continue
-                if vol_filter:
-                    vol = row.get('vol', None)
-                    if vol is None or pd.isna(vol):
-                        continue
-                    med = df['vol'].median()
-                    if med == 0 or vol < med * vol_multiplier:
-                        continue
-
-                position = 'long'
-                entry_idx = row.name
-                entry_price = row['close']
-                raw_qty, notional = choose_position_size(balance, risk_per_trade, entry_price, entry_price * (1 - stop_loss_pct), leverage=leverage, min_qty=min_qty)
-                # round quantity to exchange lot and enforce minimums
-                qty = round_qty(raw_qty, step=0.0001, min_qty=min_qty)
-                notional = qty * entry_price
-                trades.append({'type': 'entry', 'time': entry_idx, 'price': entry_price, 'qty': qty, 'notional': notional})
-                holding = 0
-                peak_price = entry_price
-                trailing_stop_price = None
-                last_features = features
-        else:
-            holding += 1
-            if trailing_stop_pct is not None:
-                if row['high'] > peak_price:
-                    peak_price = row['high']
-                trailing_stop_price = peak_price * (1 - trailing_stop_pct)
-
-            # check TP/SL/trailing
-            trade_closed = False
-            if row['high'] >= entry_price * (1 + take_profit_pct):
-                exit_price = entry_price * (1 + take_profit_pct)
-                trades.append({'type': 'exit_tp', 'time': row.name, 'price': exit_price, 'qty': qty})
-                last_outcome = 1  # Win
-                trade_closed = True
-            elif row['low'] <= entry_price * (1 - stop_loss_pct):
-                exit_price = entry_price * (1 - stop_loss_pct)
-                trades.append({'type': 'exit_sl', 'time': row.name, 'price': exit_price, 'qty': qty})
-                last_outcome = 0  # Loss
-                trade_closed = True
-            elif trailing_stop_pct is not None and row['low'] <= trailing_stop_price:
-                exit_price = trailing_stop_price
-                trades.append({'type': 'exit_trail', 'time': row.name, 'price': exit_price, 'qty': qty})
-                last_outcome = 1 if exit_price > entry_price else 0
-                trade_closed = True
-            elif holding >= max_holding_bars:
-                exit_price = row['close']
-                trades.append({'type': 'exit_hold', 'time': row.name, 'price': exit_price, 'qty': qty})
-                last_outcome = 1 if exit_price > entry_price else 0
-                trade_closed = True
-
-            if trade_closed:
-                # Learn from the outcome
-                if last_features is not None and last_outcome is not None:
-                    trainer.learn_one(last_features, last_outcome)
-                position = None
-                entry_idx = None
-                entry_price = None
-                holding = 0
-                last_features = None
-                last_outcome = None
-                position = None
-            elif row['low'] <= entry_price * (1 - stop_loss_pct):
-                exit_price = entry_price * (1 - stop_loss_pct)
-                trades.append({'type': 'exit_sl', 'time': row.name, 'price': exit_price, 'qty': qty})
-                position = None
-            elif trailing_stop_pct is not None and trailing_stop_price is not None and row['low'] <= trailing_stop_price:
-                exit_price = trailing_stop_price
-                trades.append({'type': 'exit_trail', 'time': row.name, 'price': exit_price, 'qty': qty})
-                position = None
-            elif holding >= max_holding_bars:
-                exit_price = row['close']
-                trades.append({'type': 'exit_time', 'time': row.name, 'price': exit_price, 'qty': qty})
-                position = None
-
-    # pair entries and exits into trade-level results and build equity curve
-    entries = [t for t in trades if t['type'] == 'entry']
-    exits = [t for t in trades if t['type'].startswith('exit')]
-    n = min(len(entries), len(exits))
-    wins = 0
-    total = n
-    pnl = 0.0
-    trade_pairs = []
-    equity = []
-    bal = balance
-
-    for i in range(n):
-        e = entries[i]
-        x = exits[i]
-        qty = e.get('qty', 0.0)
-        # ensure qty is rounded and non-negative
-        qty = round_qty(qty, step=0.0001, min_qty=min_qty)
-        # apply slippage: assume worse execution on entry and exit
-        entry_px = e['price'] * (1 + slippage_pct)
-        exit_px = x['price'] * (1 - slippage_pct)
-        # optionally increase slippage when trade notional relative to recent volume is large
-        if slippage_vs_volume:
-            # attempt to read nearby vol_mean20 if present in df
-            try:
-                # use time index to lookup volume mean; fall back to simple average
-                idx_time = pd.to_datetime(e['time'])
-                if 'volume' in df.columns:
-                    # compute a simple recent avg volume per bar (20-bar) if not present
-                    vol_mean20 = df['volume'].rolling(20).mean()
-                    if idx_time in vol_mean20.index:
-                        recent_vol = float(vol_mean20.loc[idx_time]) if not pd.isna(vol_mean20.loc[idx_time]) else float(vol_mean20.mean())
-                    else:
-                        recent_vol = float(vol_mean20.mean())
-                else:
-                    recent_vol = 1.0
-            except Exception:
-                recent_vol = 1.0
-            # avoid div by zero
-            eps = 1e-8
-            extra = slippage_k * (qty / max(recent_vol, eps))
-            extra = min(extra, slippage_cap)
-            entry_px = e['price'] * (1 + slippage_pct + extra)
-            exit_px = x['price'] * (1 - slippage_pct - extra)
-        trade_pnl_price = exit_px - entry_px
-        # trade PnL before fees
-        trade_pnl = trade_pnl_price * qty
-        # fees: assume fee_pct applied to notional on both sides
-        fee_cost = (entry_px * qty + exit_px * qty) * fee_pct
-        trade_pnl = trade_pnl - fee_cost
-        pnl += trade_pnl
-        bal += trade_pnl
-        if trade_pnl > 0:
-            wins += 1
-        trade_pairs.append({
-            'entry_time': str(e['time']),
-            'exit_time': str(x['time']),
-            'entry_price': e['price'],
-            'exit_price': x['price'],
-            'qty': qty,
-            'pnl': trade_pnl
-        })
-        equity.append({'time': str(x['time']), 'balance': bal})
-
-    win_rate = (wins / total * 100) if total > 0 else 0.0
-    return {
-        'trades': total,
-        'wins': wins,
-        'win_rate_pct': win_rate,
-        'pnl': pnl,
-        'details': {'entries': len(entries), 'exits': len(exits)},
-        'trade_list': trade_pairs,
-        'equity_curve': equity,
-    }
 
 def main():
     """
