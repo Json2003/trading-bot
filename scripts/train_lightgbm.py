@@ -111,8 +111,8 @@ def run_time_series_cv(
             verbose_eval=False,
         )
 
-        best_iter = int(booster.best_iteration or num_boost_round)
-        best_iterations.append(best_iter)
+        best_iter = int((booster.best_iteration or num_boost_round) - 1)
+        best_iterations.append(best_iter + 1)  # Store 1-indexed value for reporting
         preds = booster.predict(X[valid_idx], num_iteration=best_iter)
         ap = average_precision_score(y[valid_idx], preds)
         f1 = f1_score(y[valid_idx], (preds > threshold).astype(int))
