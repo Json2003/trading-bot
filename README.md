@@ -115,6 +115,19 @@ The command writes the trade blotter, equity curve, and metrics beneath
 `artifacts/`.  A copy of the latest run is kept under
 `backtest/sample_results/` for reference.
 
+## Quick SMA Crossover Demo
+
+If you want to experiment with the third-party ``backtesting`` package, run the
+standalone moving-average example that ships with the repository:
+
+```bash
+python scripts/backtesting_sma_cross_example.py
+```
+
+The script prints summary statistics to the console and, when a display backend
+is available, pops up an interactive equity-curve plot.
+
+
 ## Trading Readiness Check
 
 Before using the trading bot, run the comprehensive readiness checker:
