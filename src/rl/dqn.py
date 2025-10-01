@@ -1,4 +1,4 @@
-"""Reinforcement-learning helpers built around Stable Baselines3 DQN."""
+"""Reinforcement-learning helpers built around Stable Baselines3 PPO."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -168,15 +168,15 @@ def prepare_rl_features(
 def train_rl_agent(
     data: pd.DataFrame,
     *,
-    model_path: str | Path = "artifacts/rl_dqn_model.zip",
+    model_path: str | Path = "artifacts/rl_ppo_model.zip",
     total_timesteps: int = 100_000,
     env_kwargs: dict[str, Any] | None = None,
-    dqn_kwargs: dict[str, Any] | None = None,
+    ppo_kwargs: dict[str, Any] | None = None,
     feature_kwargs: dict[str, Any] | None = None,
 ):
-    """Train a DQN agent on OHLCV data and persist the checkpoint."""
+    """Train a PPO agent on OHLCV data and persist the checkpoint."""
 
-    from stable_baselines3 import DQN
+    from stable_baselines3 import PPO
     from stable_baselines3.common.vec_env import DummyVecEnv
 
     features = prepare_rl_features(data, **(feature_kwargs or {}))
@@ -186,7 +186,7 @@ def train_rl_agent(
         return TradingEnv(features, **env_args)
 
     vec_env = DummyVecEnv([_make_env])
-    model = DQN("MlpPolicy", vec_env, verbose=1, **(dqn_kwargs or {}))
+    model = PPO("MlpPolicy", vec_env, verbose=1, **(ppo_kwargs or {}))
     model.learn(total_timesteps=total_timesteps)
 
     model_path = Path(model_path)
@@ -204,12 +204,12 @@ def generate_signals_rl(
 ) -> pd.DataFrame:
     """Run inference with a trained agent and emit buy/sell signals."""
 
-    from stable_baselines3 import DQN
+    from stable_baselines3 import PPO
 
     features = prepare_rl_features(data, **(feature_kwargs or {}))
     env = TradingEnv(features, **(env_kwargs or {}))
 
-    model = DQN.load(str(model_path))
+    model = PPO.load(str(model_path))
     obs, _ = env.reset()
 
     signals = pd.Series(0, index=features.index, dtype=int)
