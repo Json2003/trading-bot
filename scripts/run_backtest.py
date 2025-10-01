@@ -199,7 +199,8 @@ def run_backtest(args: argparse.Namespace) -> dict:
     # Preload real libs to avoid repo-local stubs interfering
     _import_site('requests')
     _import_site('pandas')
-    _import_site('ccxt')
+    if args.source == 'ccxt':
+        _import_site('ccxt')
     
     # Decide path: modern engine when strategy/exits/risk flags are used
     def _is_modern(a: argparse.Namespace) -> bool:
