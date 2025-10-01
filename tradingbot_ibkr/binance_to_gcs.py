@@ -80,6 +80,17 @@ def download_and_upload(bucket_name: str, symbols: List[str], intervals: List[st
                     "taker_buy_base", "taker_buy_quote", "ignore",
                 ]
                 df = pd.DataFrame(klines, columns=cols)
+                timestamps = pd.to_datetime(df["open_time"], unit="ms")
+                expected_delta = pd.to_timedelta(INTERVAL_MS[interval], unit="ms")
+                gaps = timestamps.diff() > expected_delta
+                if gaps.any():
+                    logging.warning(
+                        "Data gaps detected for %s %s %s at %s",
+                        market,
+                        symbol,
+                        interval,
+                        timestamps[gaps].dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ").tolist(),
+                    )
                 data_str = df.to_csv(index=False)
                 blob_name = (
                     f"{dest_path}/{market}/{symbol}/{interval}/"
