@@ -136,9 +136,17 @@ Before using the trading bot, run the comprehensive readiness checker:
 python check_trading_readiness.py --verbose
 ```
 
+To let the checker automatically remedy common issues (install critical
+dependencies, create a `.env` file, and seed sample market data), add the
+`--fix-issues` flag:
+
+```bash
+python check_trading_readiness.py --fix-issues --verbose
+```
+
 This validates:
 - Environment setup and dependencies
-- Configuration and safety settings  
+- Configuration and safety settings
 - Data availability and quality
 - Model validation results
 - Risk management settings

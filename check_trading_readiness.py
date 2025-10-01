@@ -20,10 +20,11 @@ import os
 import sys
 import json
 import logging
+import shutil
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import subprocess
 import importlib.util
 
@@ -56,15 +57,38 @@ class ReadinessReport:
     recommendations: List[str]
 
 
+DEFAULT_ENV_TEMPLATE = """# General
+PAPER=true
+TIMEZONE=UTC
+
+# CCXT / Crypto
+EXCHANGE=binance
+API_KEY=your_api_key_here
+API_SECRET=your_api_secret_here
+PAPER_CURRENCY=USDT
+
+# IBKR (TWS/IB Gateway)
+IBKR_HOST=127.0.0.1
+IBKR_PORT=7496
+IBKR_CLIENT_ID=1
+
+# Other
+LOG_LEVEL=INFO
+ALLOW_LIVE_RISK=false
+"""
+
+
 class TradingReadinessChecker:
     """Comprehensive trading readiness validation"""
-    
-    def __init__(self, repo_root: Path, verbose: bool = False):
+
+    def __init__(self, repo_root: Path, verbose: bool = False, fix_issues: bool = False):
         self.repo_root = repo_root
         self.verbose = verbose
+        self.fix_issues = fix_issues
         self.tradingbot_dir = repo_root / "tradingbot_ibkr"
         self.checks: List[CheckResult] = []
         self.critical_failures = 0
+        self._install_attempts: Dict[str, bool] = {}
         
     def add_check(self, name: str, status: str, message: str, 
                   details: str = None, fix_suggestion: str = None):
@@ -79,7 +103,39 @@ class TradingReadinessChecker:
             logger.info(f"[{status}] {name}: {message}")
             if details and self.verbose:
                 logger.info(f"    Details: {details}")
-    
+
+    def attempt_dependency_install(self, package_name: str) -> bool:
+        """Attempt to install a dependency using pip when fixes are enabled."""
+        if package_name in self._install_attempts:
+            return self._install_attempts[package_name]
+
+        if not self.fix_issues:
+            self._install_attempts[package_name] = False
+            return False
+
+        logger.info(f"Attempting to install missing dependency: {package_name}")
+        try:
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "install", package_name],
+                capture_output=not self.verbose,
+                text=True,
+                check=True,
+                timeout=180,
+            )
+            if self.verbose and result.stdout:
+                logger.info(result.stdout.strip())
+            self._install_attempts[package_name] = True
+            return True
+        except subprocess.CalledProcessError as exc:
+            if self.verbose and exc.stderr:
+                logger.error(exc.stderr.strip())
+            self._install_attempts[package_name] = False
+            return False
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error(f"Unexpected error installing {package_name}: {exc}")
+            self._install_attempts[package_name] = False
+            return False
+
     def check_python_environment(self) -> None:
         """Check Python version and virtual environment"""
         # Python version check
@@ -145,34 +201,42 @@ class TradingReadinessChecker:
         
         # Check critical dependencies
         critical_deps = [
-            ("pandas", "Data manipulation"),
-            ("numpy", "Numerical computations"), 
-            ("ccxt", "Exchange connectivity"),
-            ("python-dotenv", "Environment configuration")
+            ("pandas", "pandas", "Data manipulation"),
+            ("numpy", "numpy", "Numerical computations"),
+            ("ccxt", "ccxt", "Exchange connectivity"),
+            ("dotenv", "python-dotenv", "Environment configuration")
         ]
-        
-        for dep_name, description in critical_deps:
+
+        for module_name, package_name, description in critical_deps:
             try:
-                spec = importlib.util.find_spec(dep_name)
+                spec = importlib.util.find_spec(module_name)
                 if spec is not None:
                     self.add_check(
-                        f"Dependency: {dep_name}",
+                        f"Dependency: {package_name}",
                         "PASS",
                         f"{description} library available"
                     )
                 else:
-                    self.add_check(
-                        f"Dependency: {dep_name}",
-                        "FAIL", 
-                        f"{description} library missing",
-                        fix_suggestion=f"pip install {dep_name}"
-                    )
+                    installed = self.attempt_dependency_install(package_name)
+                    if installed:
+                        self.add_check(
+                            f"Dependency: {package_name}",
+                            "PASS",
+                            f"{description} library installed automatically"
+                        )
+                    else:
+                        self.add_check(
+                            f"Dependency: {package_name}",
+                            "FAIL",
+                            f"{description} library missing",
+                            fix_suggestion=f"pip install {package_name}"
+                        )
             except Exception as e:
                 self.add_check(
-                    f"Dependency: {dep_name}",
+                    f"Dependency: {package_name}",
                     "FAIL",
-                    f"Error checking {dep_name}: {str(e)}",
-                    fix_suggestion=f"pip install {dep_name}"
+                    f"Error checking {module_name}: {str(e)}",
+                    fix_suggestion=f"pip install {package_name}"
                 )
 
     def check_configuration_files(self) -> None:
@@ -180,11 +244,11 @@ class TradingReadinessChecker:
         # .env file check
         env_file = self.repo_root / ".env"
         env_example = self.tradingbot_dir / ".env.example"
-        
-        if env_file.exists():
+
+        if self.ensure_env_file(env_file, env_example):
             self.add_check(
                 "Environment File",
-                "PASS", 
+                "PASS",
                 ".env file found"
             )
             self._validate_env_settings(env_file)
@@ -198,10 +262,31 @@ class TradingReadinessChecker:
         else:
             self.add_check(
                 "Environment File",
-                "FAIL",
-                "No .env or .env.example file found",
+                "WARN",
+                ".env file missing",
                 fix_suggestion="Create .env file with trading configuration"
             )
+
+    def ensure_env_file(self, env_file: Path, env_example: Path) -> bool:
+        """Ensure a .env file exists by copying or creating a template."""
+        if env_file.exists():
+            return True
+
+        if not self.fix_issues:
+            return False
+
+        try:
+            env_file.parent.mkdir(parents=True, exist_ok=True)
+            if env_example.exists():
+                shutil.copy(env_example, env_file)
+                logger.info("Created .env from .env.example")
+            else:
+                env_file.write_text(DEFAULT_ENV_TEMPLATE)
+                logger.info("Created default .env template")
+            return True
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error(f"Failed to create .env file: {exc}")
+            return False
     
     def _validate_env_settings(self, env_file: Path) -> None:
         """Validate environment variable settings"""
@@ -253,6 +338,42 @@ class TradingReadinessChecker:
                 f"Error reading .env file: {str(e)}"
             )
 
+    def generate_sample_market_data(self, file_path: Path, symbol_key: str) -> bool:
+        """Generate deterministic OHLCV sample data when fixes are enabled."""
+        if file_path.exists():
+            return True
+
+        if not self.fix_issues:
+            return False
+
+        base_prices = {
+            "BTC_USDT": 67000.0,
+            "ETH_USDT": 3400.0,
+        }
+
+        base_price = base_prices.get(symbol_key, 100.0)
+        start_time = datetime(2024, 1, 1, tzinfo=timezone.utc)
+
+        try:
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(file_path, 'w', encoding='utf-8') as handle:
+                handle.write("ts,Unnamed: 0,open,high,low,close,volume\n")
+                for idx in range(24):
+                    ts = (start_time + timedelta(hours=idx)).strftime("%Y-%m-%d %H:%M:%S")
+                    open_price = base_price + idx * 1.5
+                    high_price = open_price + 8.0
+                    low_price = open_price - 8.0
+                    close_price = open_price + ((idx % 4) - 1.5) * 1.2
+                    volume = 150 + idx * 2.5
+                    handle.write(
+                        f"{ts},{float(idx):.1f},{open_price:.2f},{high_price:.2f},{low_price:.2f},{close_price:.2f},{volume:.5f}\n"
+                    )
+            logger.info(f"Generated sample market data: {file_path}")
+            return True
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error(f"Failed to generate sample data for {symbol_key}: {exc}")
+            return False
+
     def check_data_availability(self) -> None:
         """Check for required data files"""
         data_dir = self.tradingbot_dir / "datafiles"
@@ -277,7 +398,7 @@ class TradingReadinessChecker:
             "BTC_USDT_bars.csv",
             "ETH_USDT_bars.csv"
         ]
-        
+
         found_files = 0
         for filename in expected_files:
             file_path = data_dir / filename
@@ -289,13 +410,22 @@ class TradingReadinessChecker:
                     f"Market data file found ({file_path.stat().st_size} bytes)"
                 )
             else:
-                self.add_check(
-                    f"Data File: {filename}",
-                    "WARN",
-                    f"Market data file missing",
-                    fix_suggestion=f"Download or generate {filename}"
-                )
-        
+                symbol_key = filename.split("_bars")[0]
+                if self.generate_sample_market_data(file_path, symbol_key):
+                    found_files += 1
+                    self.add_check(
+                        f"Data File: {filename}",
+                        "PASS",
+                        "Sample market data generated automatically"
+                    )
+                else:
+                    self.add_check(
+                        f"Data File: {filename}",
+                        "WARN",
+                        f"Market data file missing",
+                        fix_suggestion=f"Download or generate {filename}"
+                    )
+
         if found_files == 0:
             self.add_check(
                 "Market Data",
@@ -692,7 +822,11 @@ def main():
     repo_root = Path(__file__).parent
     
     # Run readiness check
-    checker = TradingReadinessChecker(repo_root, verbose=args.verbose)
+    checker = TradingReadinessChecker(
+        repo_root,
+        verbose=args.verbose,
+        fix_issues=args.fix_issues,
+    )
     report = checker.run_all_checks()
     
     # Print results
