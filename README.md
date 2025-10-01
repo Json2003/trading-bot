@@ -94,6 +94,27 @@ python scripts/fetch_daily_market_data.py --days 365 --out custom_dir/daily
 The command prints a short manifest with the saved files for quick inspection
 and leaves the manifest in the chosen output directory.
 
+## Sample backtest workflow
+
+For a quick smoke-test of the modern execution engine without relying on live
+data downloads, a synthetic OHLCV sample is bundled at
+`backtest/sample_data/sample_ohlcv.csv`.  Run a backtest of the default
+SMA-filtered strategy against this dataset with:
+
+```
+python scripts/run_backtest.py \
+  --source csv --path backtest/sample_data/sample_ohlcv.csv \
+  --strategy backtest.strategies.sma_filtered:generate_signals \
+  --strategy_args fast=8,slow=34,trend_fast=55,trend_slow=144 \
+  --fees_bps 5 --slip_bps 2 --tp_bps 60 --sl_bps 40 \
+  --max_bars 18 --notional 1.0 --risk_per_trade 0.01 \
+  --out_prefix artifacts/sample_backtest
+```
+
+The command writes the trade blotter, equity curve, and metrics beneath
+`artifacts/`.  A copy of the latest run is kept under
+`backtest/sample_results/` for reference.
+
 ## Trading Readiness Check
 
 Before using the trading bot, run the comprehensive readiness checker:
