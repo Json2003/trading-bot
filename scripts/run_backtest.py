@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""
 """Backtest Harness CLI.
 
 Usage examples:
