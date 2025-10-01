@@ -11,7 +11,7 @@ brokers.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Mapping
 
 import numpy as np
 import pandas as pd
@@ -127,5 +127,137 @@ def generate_basis_signals(data: Any, config: ArbitrageConfig | None = None) -> 
     return result
 
 
-__all__ = ["ArbitrageConfig", "generate_basis_signals"]
+def check_live_basis(
+    symbol: str = "BTC/USDT",
+    threshold: float = 0.005,
+    *,
+    exchange: Any | None = None,
+) -> dict[str, float | int]:
+    """Check the basis between spot and futures prices in real time.
+
+    Parameters
+    ----------
+    symbol:
+        Base trading pair to evaluate on the spot market.
+    threshold:
+        Minimum absolute fractional difference between futures and spot prices
+        required to emit a trading signal.
+    exchange:
+        Optional pre-configured CCXT exchange instance.  When omitted the
+        function instantiates :class:`ccxt.binance` lazily.  Passing an
+        instance makes the function easier to test and avoids repeated logins
+        in production code.
+
+    Returns
+    -------
+    dict
+        Mapping with ``signal`` (``1`` = buy spot / sell futures, ``-1`` = the
+        opposite, ``0`` = no trade), ``diff`` (fractional basis), and the
+        ``spot``/``futures`` prices that produced the reading.
+    """
+
+    if threshold < 0:
+        raise ValueError("threshold must be non-negative")
+
+    if exchange is None:
+        try:  # pragma: no cover - exercised via dependency injection in tests
+            import ccxt  # type: ignore
+        except ImportError as exc:  # pragma: no cover - requires missing dep
+            raise RuntimeError("ccxt is required to fetch live market data") from exc
+        exchange = ccxt.binance()
+
+    spot_ticker: Mapping[str, Any] = exchange.fetch_ticker(symbol)
+    futures_symbol = symbol if ":USDT" in symbol else f"{symbol}:USDT"
+    futures_ticker: Mapping[str, Any] = exchange.fetch_ticker(futures_symbol)
+
+    spot_price = float(spot_ticker.get("last"))
+    futures_price = float(futures_ticker.get("last"))
+    if spot_price == 0:
+        raise ValueError("Spot price returned by exchange must be non-zero")
+
+    diff = (futures_price - spot_price) / spot_price
+    signal = 0
+    if abs(diff) > threshold:
+        signal = 1 if diff > 0 else -1
+
+    return {
+        "signal": signal,
+        "diff": diff,
+        "spot": spot_price,
+        "futures": futures_price,
+    }
+
+
+def generate_threshold_signals(
+    data_spot: pd.DataFrame,
+    data_futures: pd.DataFrame,
+    *,
+    threshold: float = 0.005,
+    price_column: str = "Close",
+) -> pd.DataFrame:
+    """Generate spot/futures arbitrage signals on historical data.
+
+    The helper merges two OHLCV-style DataFrames on their ``timestamp`` column,
+    computes the fractional basis, and emits long/short instructions whenever
+    the absolute basis exceeds ``threshold``.
+    """
+
+    if threshold < 0:
+        raise ValueError("threshold must be non-negative")
+
+    required_cols = {"timestamp", price_column}
+    missing_spot = required_cols - set(data_spot.columns)
+    missing_futures = required_cols - set(data_futures.columns)
+    if missing_spot:
+        raise ValueError(f"Spot data missing required columns: {sorted(missing_spot)}")
+    if missing_futures:
+        raise ValueError(
+            f"Futures data missing required columns: {sorted(missing_futures)}"
+        )
+
+    spot_records = {
+        timestamp: price
+        for timestamp, price in zip(
+            data_spot["timestamp"], data_spot[price_column]
+        )
+    }
+    futures_records = {
+        timestamp: price
+        for timestamp, price in zip(
+            data_futures["timestamp"], data_futures[price_column]
+        )
+    }
+
+    common_timestamps = sorted(set(spot_records) & set(futures_records))
+    rows: list[dict[str, Any]] = []
+    for ts in common_timestamps:
+        spot_close = float(spot_records[ts])
+        futures_close = float(futures_records[ts])
+        if spot_close == 0:
+            raise ValueError("Spot prices must be non-zero to compute basis")
+        basis = (futures_close - spot_close) / spot_close
+        signal = 0
+        if basis > threshold:
+            signal = 1
+        elif basis < -threshold:
+            signal = -1
+        rows.append(
+            {
+                "timestamp": ts,
+                "spot_close": spot_close,
+                "futures_close": futures_close,
+                "basis": basis,
+                "signal": signal,
+            }
+        )
+
+    return pd.DataFrame(rows)
+
+
+__all__ = [
+    "ArbitrageConfig",
+    "generate_basis_signals",
+    "check_live_basis",
+    "generate_threshold_signals",
+]
 
