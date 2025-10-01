@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-Backtest Harness CLI
+"""Backtest Harness CLI.
 
 Usage examples:
   python scripts/run_backtest.py --source csv --path data/BTCUSDT-1h.csv
-  python scripts/run_backtest.py --source ccxt --exchange binance --symbol "BTC/USDT" --timeframe 1h --since 2023-01-01 --until 2025-08-31
+  python scripts/run_backtest.py --source ccxt --exchange binance --symbol "BTC/USDT" --timeframe 1h --history_years 5
 """
 from __future__ import annotations
 import os
 import sys
 import json
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -66,6 +66,37 @@ def parse_date(d: str) -> datetime:
         raise argparse.ArgumentTypeError(f"Invalid date: {d}. Use YYYY-MM-DD or epoch ms/seconds")
 
 
+def walk_forward_validation(df, strategy_fn, cfg, engine_run, summarizer, *, folds: int = 3):
+    """Split the DataFrame into contiguous folds and evaluate OOS performance."""
+
+    folds = int(max(folds, 0))
+    if folds <= 1:
+        return []
+    n = len(df)
+    if n == 0:
+        return []
+    step = max(n // folds, 1)
+    results = []
+    for idx in range(folds):
+        start = idx * step
+        end = (idx + 1) * step if idx < folds - 1 else n
+        if end - start < max(int(getattr(cfg, "atr_period", 14)) * 3, 50):
+            continue
+        sub = df.iloc[start:end].reset_index(drop=True)
+        try:
+            trades, equity, bar_ret = engine_run(sub, strategy_fn, cfg)
+            metrics = summarizer(trades, equity, bar_ret)
+            metrics.update({
+                "fold": idx + 1,
+                "start": str(sub["timestamp"].iloc[0]),
+                "end": str(sub["timestamp"].iloc[-1]),
+            })
+        except Exception as exc:  # pragma: no cover - diagnostic path
+            metrics = {"fold": idx + 1, "error": str(exc)}
+        results.append(metrics)
+    return results
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Run a minimal OHLCV backtest")
     p.add_argument("--source", choices=["csv", "ccxt"], required=True, help="Data source")
@@ -75,6 +106,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--timeframe", default="1h", help="Timeframe, e.g., 1m, 1h, 4h, 1d")
     p.add_argument("--since", type=parse_date, help="Start date YYYY-MM-DD or epoch (s/ms)")
     p.add_argument("--until", type=parse_date, help="End date YYYY-MM-DD or epoch (s/ms)")
+    p.add_argument(
+        "--history_years",
+        type=int,
+        default=5,
+        help="Minimum number of years to request when --since is omitted",
+    )
     # Modern engine: strategy + sizing/exits (optional)
     p.add_argument("--strategy", help="Strategy spec module:function, e.g., backtest.strategies.sma_filtered:generate_signals")
     p.add_argument("--strategy_args", default="", help="Comma-separated key=value pairs passed to strategy, e.g. fast=8,slow=21")
@@ -118,8 +155,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--max_notional_frac", type=float, default=1.0, help="Cap on position notional fraction of equity")
     p.add_argument("--allow_short", action="store_true", help="Allow short entries if strategy emits -1 signals")
     p.add_argument("--max_bars", type=int, default=0, help="Modern engine: exit after N bars in trade (0=disabled)")
+    p.add_argument("--dynamic_risk", action="store_true", help="Enable ATR percentile position scaling")
+    p.add_argument("--risk_vol_lookback", type=int, default=150, help="Lookback for volatility baseline")
+    p.add_argument("--risk_vol_floor", type=float, default=0.4, help="Lower bound on risk scaling multiplier")
+    p.add_argument("--risk_vol_cap", type=float, default=1.6, help="Upper bound on risk scaling multiplier")
+    p.add_argument("--vol_stop_mult", type=float, default=0.0, help="ATR multiple for volatility-based stop floor (0 disables)")
+    p.add_argument("--vol_stop_window", type=int, default=200, help="Window for ATR percentile stop logic")
+    p.add_argument("--vol_stop_pctile", type=float, default=0.35, help="ATR percentile threshold for volatility stops")
     p.add_argument("--out", default=None, help="Path to save JSON report (default auto)")
     p.add_argument("--out_prefix", default=None, help="If set, save trades/equity/metrics with this prefix (e.g., prefix_trades.csv)")
+    p.add_argument("--walk_forward", type=int, default=0, help="Number of walk-forward folds (0 disables)")
     return p
 
 
@@ -225,11 +270,15 @@ def run_backtest(args: argparse.Namespace) -> dict:
                 raise SystemExit("--path is required for --source csv")
             df = _bx_load_csv(args.path)
         else:
-            if not (args.exchange and args.symbol and args.timeframe and args.since and args.until):
-                raise SystemExit("--exchange, --symbol, --timeframe, --since, --until are required for --source ccxt")
-            # Reuse the original since/until datetime to string for fetch
-            since_str = args.since.strftime('%Y-%m-%d') if hasattr(args.since, 'strftime') else str(args.since)
-            until_str = args.until.strftime('%Y-%m-%d') if hasattr(args.until, 'strftime') else str(args.until)
+            if not (args.exchange and args.symbol and args.timeframe):
+                raise SystemExit("--exchange, --symbol, --timeframe are required for --source ccxt")
+            until_dt = args.until or datetime.now(timezone.utc)
+            years = max(int(args.history_years or 1), 1)
+            since_dt = args.since or until_dt - timedelta(days=365 * years)
+            if since_dt >= until_dt:
+                raise SystemExit("Resolved --since must be before --until")
+            since_str = since_dt.strftime('%Y-%m-%d')
+            until_str = until_dt.strftime('%Y-%m-%d')
             df = _bx_fetch(args.exchange, args.symbol, args.timeframe, since_str, until_str)
 
         # Strategy
@@ -282,10 +331,21 @@ def run_backtest(args: argparse.Namespace) -> dict:
             max_notional_frac=float(args.max_notional_frac or 1.0),
             allow_short=bool(args.allow_short),
             max_bars=int(args.max_bars or 0),
+            dynamic_risk_scaling=bool(args.dynamic_risk),
+            risk_vol_lookback=int(args.risk_vol_lookback or 0),
+            risk_vol_floor=float(args.risk_vol_floor or 0.0),
+            risk_vol_cap=float(args.risk_vol_cap or 0.0),
+            volatility_stop_multiplier=float(args.vol_stop_mult or 0.0),
+            volatility_stop_window=int(args.vol_stop_window or 0),
+            volatility_stop_percentile=float(args.vol_stop_pctile or 0.0),
         )
 
         trades, equity, bar_ret = _engine_run(df, strat, cfg)
         metrics = _summarize(trades, equity, bar_ret)
+
+        if args.walk_forward and len(df) > 0:
+            wf = walk_forward_validation(df, strat, cfg, _engine_run, _summarize, folds=int(args.walk_forward))
+            metrics["walk_forward"] = wf
 
         # Save artifacts: prefer out_prefix if provided
         try:
@@ -316,7 +376,14 @@ def run_backtest(args: argparse.Namespace) -> dict:
             raise SystemExit("--path is required for --source csv")
         df = load_csv(args.path)
     else:
-        df = fetch_ccxt(args.exchange, args.symbol, args.timeframe, args.since, args.until)
+        if not (args.exchange and args.symbol and args.timeframe):
+            raise SystemExit("--exchange, --symbol, --timeframe are required for --source ccxt")
+        until_dt = args.until or datetime.now(timezone.utc)
+        years = max(int(args.history_years or 1), 1)
+        since_dt = args.since or until_dt - timedelta(days=365 * years)
+        if since_dt >= until_dt:
+            raise SystemExit("Resolved --since must be before --until")
+        df = fetch_ccxt(args.exchange, args.symbol, args.timeframe, since_dt, until_dt)
 
     # Map bps convenience flags to fractions if provided
     tp_frac = args.tp_bps / 10_000.0 if getattr(args, 'tp_bps', None) is not None else args.tp
@@ -347,7 +414,7 @@ def run_backtest(args: argparse.Namespace) -> dict:
         json.dump(stats, f, indent=2, default=str)
 
     summary_keys = [
-        'total_trades','win_rate_pct','profit_factor','sharpe_ratio','max_drawdown_pct','total_return_pct'
+        'total_trades','win_rate_pct','profit_factor','sharpe_ratio','sortino_ratio','max_drawdown_pct','total_return_pct'
     ]
     compact = {k: stats.get(k) for k in summary_keys if k in stats}
     print("Saved report:", out_path)

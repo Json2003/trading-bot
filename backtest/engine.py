@@ -1,8 +1,11 @@
-"""Signal execution engine with ATR-based exits and risk-based sizing.
+"""Signal execution engine with ATR-based exits and adaptive risk scaling.
 
 Includes:
-- ExecConfig dataclass for costs, exits (bps or ATR multiples), and sizing.
-- run_backtest() supporting TP/SL by bps or ATR, risk-per-trade sizing, max_bars timeout.
+- ExecConfig dataclass for costs, exits (bps or ATR multiples), sizing and
+  volatility-aware risk controls.
+- run_backtest() supporting TP/SL by bps or ATR, risk-per-trade sizing, dynamic
+  ATR trailing, walk-forward friendly equity stats, and volatility-weighted
+  stop sizing.
 
 Pandas import is guarded to avoid local pandas.py shadows in the repo.
 """
@@ -56,6 +59,14 @@ class ExecConfig:
 
     # trade management
     max_bars: int = 0             # 0 = disabled; otherwise force exit after N bars
+    # adaptive risk and volatility handling
+    dynamic_risk_scaling: bool = False
+    risk_vol_lookback: int = 100
+    risk_vol_floor: float = 0.5
+    risk_vol_cap: float = 1.5
+    volatility_stop_multiplier: float = 0.0
+    volatility_stop_window: int = 150
+    volatility_stop_percentile: float = 0.5
     # dynamic risk management
     break_even_atr_mult: float = 0.0  # when unrealized move >= this * ATR(entry), move stop to entry (0=disabled)
     trail_atr_mult: float = 0.0       # trail stop by this * ATR(current) from best price (0=disabled)
@@ -96,6 +107,13 @@ def recommended_exec_config() -> ExecConfig:
         min_rr_by_bars_r=0.5,
         min_rr_by_bars_n=6,
         max_bars=16,
+        dynamic_risk_scaling=True,
+        risk_vol_lookback=150,
+        risk_vol_floor=0.4,
+        risk_vol_cap=1.6,
+        volatility_stop_multiplier=1.25,
+        volatility_stop_window=200,
+        volatility_stop_percentile=0.35,
     )
 
 
@@ -159,6 +177,8 @@ def _sl_hit(entry_px: float, px: float, position: int, atr_val: float, cfg: Exec
 
 
 def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg: ExecConfig) -> Tuple["pd.DataFrame", "pd.DataFrame", "pd.Series"]:
+    import numpy as np
+
     pd = _pd()
     data = pd.DataFrame(df).reset_index(drop=True)
     out = signals_fn(data).copy()
@@ -193,6 +213,46 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
     # ATR for sizing/optional exits
     atr_ser = _atr(data, cfg.atr_period).fillna(0.0)
     atr = atr_ser.values
+    close_arr = data["close"].astype(float).values
+    atr_norm = np.array([
+        (atr[idx] / close_arr[idx]) if close_arr[idx] else 0.0
+        for idx in range(len(atr))
+    ], dtype=float)
+
+    dyn_risk_enabled = bool(getattr(cfg, "dynamic_risk_scaling", False))
+    if dyn_risk_enabled:
+        lookback = max(int(getattr(cfg, "risk_vol_lookback", 0) or 0), 1)
+        median_series = pd.Series(atr_norm).rolling(lookback, min_periods=lookback).median()
+        median_series = median_series.fillna(method="bfill").fillna(method="ffill")
+        med_val = float(np.nanmedian(atr_norm))
+        if not np.isfinite(med_val) or med_val <= 0:
+            med_val = 1e-6
+        dyn_baseline = median_series.replace(0.0, np.nan).fillna(med_val).values
+        risk_floor = float(getattr(cfg, "risk_vol_floor", 0.0) or 0.0)
+        risk_cap = float(getattr(cfg, "risk_vol_cap", 0.0) or 0.0)
+        if risk_floor <= 0:
+            risk_floor = 0.25
+        if risk_cap <= 0:
+            risk_cap = 2.0
+    else:
+        dyn_baseline = None
+        risk_floor = 1.0
+        risk_cap = 1.0
+
+    vol_stop_mult = float(getattr(cfg, "volatility_stop_multiplier", 0.0) or 0.0)
+    if vol_stop_mult > 0.0:
+        vol_window = max(int(getattr(cfg, "volatility_stop_window", 0) or cfg.atr_period), 1)
+        vol_rank = (
+            pd.Series(atr_norm)
+            .rolling(vol_window, min_periods=vol_window)
+            .rank(pct=True)
+            .fillna(0.0)
+            .values
+        )
+        vol_pctile = float(getattr(cfg, "volatility_stop_percentile", 0.5) or 0.5)
+    else:
+        vol_rank = None
+        vol_pctile = 0.0
     # Optional EMA for pullback detection
     if pullback_ema_len > 0:
         ema_len = pullback_ema_len
@@ -389,9 +449,20 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
             fill_entry = _apply_cost(px, cfg.fees_bps, cfg.slip_bps, side=desired)
             # compute stop distance fraction for sizing
             sl_frac = _sl_frac_from_cfg(fill_entry, at, cfg)
+            if vol_stop_mult > 0.0:
+                dyn_sl = vol_stop_mult * atr_norm[i]
+                if vol_rank is None or vol_rank[i] >= vol_pctile:
+                    sl_frac = max(sl_frac, dyn_sl)
             sl_frac = max(sl_frac, 1e-5)
             # risk-based fraction of equity deployed
             f = float(cfg.risk_per_trade) / sl_frac
+            if dyn_risk_enabled and dyn_baseline is not None:
+                baseline = float(dyn_baseline[i])
+                current = float(atr_norm[i])
+                if baseline > 0 and current > 0:
+                    scalar = baseline / current
+                    scalar = max(min(scalar, risk_cap), risk_floor)
+                    f *= scalar
             f = float(min(max(f, 0.0), float(cfg.max_notional_frac)))
             entry_price = float(fill_entry)
             entry_price = float(fill_entry)
