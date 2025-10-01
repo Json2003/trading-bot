@@ -13,6 +13,8 @@ import argparse
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+import numpy as np
+
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 # Move repo root to end to avoid shadowing site-packages, and drop empty path
 sys.path = [p for p in sys.path if p not in ('', REPO_ROOT)] + [REPO_ROOT]
@@ -341,6 +343,17 @@ def run_backtest(args: argparse.Namespace) -> dict:
 
         trades, equity, bar_ret = _engine_run(df, strat, cfg)
         metrics = _summarize(trades, equity, bar_ret)
+
+        # Compute and display Sortino ratio from per-bar strategy returns
+        pd_mod = _import_site('pandas')
+        data = pd_mod.Series(bar_ret, name="StrategyReturn").to_frame()
+        returns = data["StrategyReturn"].dropna()
+        downside_std = returns[returns < 0].std()
+        if downside_std is not None and np.isfinite(downside_std) and not np.isclose(downside_std, 0.0):
+            sortino = returns.mean() / downside_std * np.sqrt(252)
+        else:
+            sortino = 0.0
+        print(f"Sortino Ratio: {sortino:.2f}")
 
         if args.walk_forward and len(df) > 0:
             wf = walk_forward_validation(df, strat, cfg, _engine_run, _summarize, folds=int(args.walk_forward))
