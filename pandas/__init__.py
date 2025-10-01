@@ -118,6 +118,20 @@ class Series:
             for pos in positions:
                 self._values[pos] = value
             return
+        if hasattr(key, "_values") and hasattr(key, "index"):
+            try:
+                flags = list(key._values)
+            except TypeError:
+                flags = None
+            else:
+                if flags is not None and len(flags) == len(self._values):
+                    updated = False
+                    for pos, flag in enumerate(flags):
+                        if bool(flag):
+                            self._values[pos] = value
+                            updated = True
+                    if updated:
+                        return
         if isinstance(key, list):
             for k, v in zip(key, value if isinstance(value, list) else [value] * len(key)):
                 self._values[k] = v
