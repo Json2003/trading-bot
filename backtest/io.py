@@ -3,10 +3,10 @@
 Implements:
 - load_csv(path): read OHLCV CSV and parse timestamp
 - fetch_ccxt(exchange, symbol, timeframe, since, until): fetch OHLCV via CCXT
+  with built-in pagination to cover multi-year ranges.
 
 Notes:
 - Uses safe third-party imports to avoid local pandas stub shadowing.
-- The CCXT fetch is a single-call example; for long ranges, add pagination.
 """
 from __future__ import annotations
 
@@ -65,13 +65,26 @@ def fetch_ccxt(exchange: str, symbol: str, timeframe: str, since: str, until: st
     ex = getattr(ccxt, exchange)({"enableRateLimit": True})
     since_ms = int(pd.Timestamp(dparser.parse(since)).timestamp() * 1000)
     until_ms = int(pd.Timestamp(dparser.parse(until)).timestamp() * 1000)
-    # Simple single-call fetch; for long ranges, implement pagination with while-loop
-    rows = ex.fetch_ohlcv(symbol, timeframe=timeframe, since=since_ms)
+
+    limit = 1000
+    cursor = since_ms
+    rows = []
+    while True:
+        batch = ex.fetch_ohlcv(symbol, timeframe=timeframe, since=cursor, limit=limit)
+        if not batch:
+            break
+        rows.extend(batch)
+        cursor = batch[-1][0] + 1
+        if len(batch) < limit:
+            break
+        if until_ms and cursor >= until_ms:
+            break
+
+    if not rows:
+        raise RuntimeError("No OHLCV fetched from exchange")
+
     df = pd.DataFrame(rows, columns=["timestamp","open","high","low","close","volume"])
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
-    # Optional clip to until_ms if present
-    try:
+    if until_ms:
         df = df[df["timestamp"] <= pd.to_datetime(until_ms, unit='ms')]
-    except Exception:
-        pass
-    return df
+    return df.reset_index(drop=True)
