@@ -71,6 +71,29 @@ artifacts/
 Only keep lightweight samples in the repository itself; all high-volume data
 remains in these local folders to keep clones fast and commits reviewable.
 
+## Daily market data fetcher
+
+To generate a lightweight daily dataset for both equities and crypto assets,
+use the `scripts/fetch_daily_market_data.py` helper.  The script reads
+`configs/daily_data.yaml` to determine the timezone, asset universe, lookback
+window, and output location.  By default it downloads the assets listed in the
+config (AAPL, MSFT, NVDA, SPY, QQQ along with Bitcoin, Ethereum, Solana,
+Binance Coin, and Ripple) and writes timezone-aware parquet files beneath
+`data/daily/`.
+
+```
+python scripts/fetch_daily_market_data.py
+```
+
+Override the lookback window or destination directory at runtime if needed:
+
+```
+python scripts/fetch_daily_market_data.py --days 365 --out custom_dir/daily
+```
+
+The command prints a short manifest with the saved files for quick inspection
+and leaves the manifest in the chosen output directory.
+
 ## Trading Readiness Check
 
 Before using the trading bot, run the comprehensive readiness checker:
