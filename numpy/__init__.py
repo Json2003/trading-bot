@@ -32,6 +32,37 @@ import math
 import random as _stdlib_random
 from typing import Iterable, Iterator, List, Sequence, Tuple, Union, overload
 
+__all__ = [
+    "__version__",
+    "array",
+    "asarray",
+    "ndarray",
+    "zeros",
+    "zeros_like",
+    "ones",
+    "mean",
+    "std",
+    "sum",
+    "sqrt",
+    "exp",
+    "tanh",
+    "clip",
+    "sign",
+    "where",
+    "maximum",
+    "concatenate",
+    "abs",
+    "random",
+]
+
+# ``pandas`` queries ``numpy.__version__`` during import to adjust behaviour for
+# specific releases.  The light-weight stub historically omitted the attribute
+# which caused ``AttributeError`` when pandas (and therefore our test suite)
+# attempted to import.  Providing a modern sentinel version string keeps the
+# import contract intact while remaining explicit that this is a compatibility
+# shim.
+__version__ = "1.26.0"
+
 Number = Union[int, float]
 
 
