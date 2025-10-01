@@ -69,6 +69,9 @@ report_*.json
 *.tmp
 *.checkpoint.json
 datafiles/
+!tradingbot_ibkr/datafiles/
+tradingbot_ibkr/datafiles/*
+!tradingbot_ibkr/datafiles/ETH_USDT_bars.csv
 data/
 model_store/
 *.bak
@@ -84,6 +87,7 @@ server.pid
 *.h5
 *.hdf5
 !**/sample_*.csv
+!tradingbot_ibkr/datafiles/ETH_USDT_bars.csv
 !**/requirements.txt
 
 # API keys and secrets
