@@ -1,0 +1,13 @@
+env: live
+base_currency: USD
+risk:
+  max_daily_loss_pct: 2.0
+  max_position_risk_pct: 0.5
+  kill_switch_drawdown_pct: 5.0
+execution:
+  slippage_bps: 1
+  commission_bps: 1
+universe:
+  - BTC/USDT
+  - ETH/USDT
+  - SOL/USDT
