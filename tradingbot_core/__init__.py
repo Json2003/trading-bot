@@ -4,6 +4,15 @@ from .config import ConfigBundle, load_config
 from .logging_setup import setup_logging
 from .backtest_save import save_backtest_results, load_backtest_results
 from .results import deps_fingerprint, save_results
+from .reconciliation import (
+    BacktestEvaluation,
+    BacktestProfile,
+    BacktestProfileNotFoundError,
+    BacktestReconciler,
+    MetricEvaluation,
+    MetricExpectation,
+    load_backtest_profiles,
+)
 
 __all__ = [
     "ConfigBundle",
@@ -13,4 +22,11 @@ __all__ = [
     "load_backtest_results",
     "deps_fingerprint",
     "save_results",
+    "BacktestEvaluation",
+    "BacktestProfile",
+    "BacktestProfileNotFoundError",
+    "BacktestReconciler",
+    "MetricEvaluation",
+    "MetricExpectation",
+    "load_backtest_profiles",
 ]
