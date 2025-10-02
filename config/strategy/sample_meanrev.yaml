@@ -1,0 +1,11 @@
+name: sample_meanrev
+parameters:
+  lookback: 20
+  entry_threshold: 1.5
+  exit_threshold: 0.5
+risk:
+  stop_loss_pct: 0.02
+  take_profit_pct: 0.04
+position_sizing:
+  mode: volatility
+  max_trades: 3

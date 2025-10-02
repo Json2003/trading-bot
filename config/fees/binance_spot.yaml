@@ -1,0 +1,4 @@
+name: binance_spot
+maker: 0.001
+taker: 0.001
+notes: Maker/taker fees expressed as decimal percentages.
