@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import math
+import pathlib
+
 import pytest
 
 from tradingbot_core.config import ConfigBundle, load_config
@@ -13,6 +16,42 @@ def test_load_config_returns_expected_sections() -> None:
     assert bundle.strategy["name"] == "sample_meanrev"
     assert bundle.fees["name"] == "binance_spot"
     assert "runtime" in bundle.as_dict()
+
+
+def test_fee_config_accepts_basis_points(tmp_path: pathlib.Path) -> None:
+    config_dir = tmp_path
+    env_dir = config_dir / "env"
+    strategy_dir = config_dir / "strategy"
+    fees_dir = config_dir / "fees"
+
+    env_dir.mkdir()
+    strategy_dir.mkdir()
+    fees_dir.mkdir()
+
+    (env_dir / "custom.yaml").write_text(
+        """
+name: custom
+fees_profile: custom_fee
+""".strip()
+    )
+
+    (strategy_dir / "custom.yaml").write_text("name: custom\n")
+
+    (fees_dir / "custom_fee.yaml").write_text(
+        """
+name: custom_fee
+vip_tier: 0
+maker_bps: 8
+taker_bps: 10
+notes: Sample configuration expressed in basis points.
+""".strip()
+    )
+
+    bundle = load_config("custom", "custom", config_dir=config_dir)
+
+    assert math.isclose(bundle.fees["maker"], 0.0008, rel_tol=0, abs_tol=1e-9)
+    assert math.isclose(bundle.fees["taker"], 0.001, rel_tol=0, abs_tol=1e-9)
+    assert bundle.fees["vip_tier"] == 0
 
 
 def test_runtime_overrides_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
