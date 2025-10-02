@@ -83,12 +83,17 @@ server.pid
 
 # Large data files (keep sample files)
 *.csv
+*.csv.gz
 *.parquet
 *.h5
 *.hdf5
+*.feather
 !**/sample_*.csv
 !tradingbot_ibkr/datafiles/ETH_USDT_bars.csv
 !**/requirements.txt
+
+# Reports
+reports/
 
 # API keys and secrets
 config.py
