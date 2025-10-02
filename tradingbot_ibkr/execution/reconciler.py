@@ -1,11 +1,54 @@
-"""Utilities to compare local state with broker state."""
+"""Utilities to compare local state with broker state and enforce risk limits."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Iterable, Mapping, MutableMapping
+from typing import Iterable, Mapping, MutableMapping, Sequence
+import logging
 
 from .broker_base import BrokerBase, Order, Position
+
+
+@dataclass(frozen=True)
+class RiskLimits:
+    """Container describing the risk thresholds enforced by the reconciler."""
+
+    max_daily_loss_pct: float
+    kill_switch_drawdown_pct: float
+    max_position_risk_pct: float
+
+    def __post_init__(self) -> None:  # pragma: no cover - small validation helper
+        for name, value in (
+            ("max_daily_loss_pct", self.max_daily_loss_pct),
+            ("kill_switch_drawdown_pct", self.kill_switch_drawdown_pct),
+            ("max_position_risk_pct", self.max_position_risk_pct),
+        ):
+            if value < 0:
+                raise ValueError(f"{name} must be non-negative")
+
+    def as_dict(self) -> dict[str, float]:
+        return {
+            "max_daily_loss_pct": self.max_daily_loss_pct,
+            "kill_switch_drawdown_pct": self.kill_switch_drawdown_pct,
+            "max_position_risk_pct": self.max_position_risk_pct,
+        }
+
+
+@dataclass(frozen=True)
+class RiskEvaluation:
+    """Outcome of assessing account state against configured risk limits."""
+
+    daily_loss_pct: float
+    drawdown_pct: float
+    position_risk_pct: float
+    breached_limits: Sequence[str] = ()
+
+    @property
+    def kill_switch_triggered(self) -> bool:
+        return any(
+            limit in {"max_daily_loss_pct", "kill_switch_drawdown_pct"}
+            for limit in self.breached_limits
+        )
 
 
 @dataclass(frozen=True)
@@ -22,9 +65,18 @@ class ReconciliationReport:
 
 
 class Reconciler:
-    def __init__(self, broker: BrokerBase, *, quantity_tolerance: float = 1e-6) -> None:
+    def __init__(
+        self,
+        broker: BrokerBase,
+        *,
+        quantity_tolerance: float = 1e-6,
+        limits: RiskLimits | None = None,
+        logger: logging.Logger | None = None,
+    ) -> None:
         self._broker = broker
         self._quantity_tolerance = quantity_tolerance
+        self._limits = limits
+        self._logger = logger or logging.getLogger(__name__)
 
     def _coerce_orders(self, orders: Iterable[Order] | Mapping[str, Order]) -> MutableMapping[str, Order]:
         if isinstance(orders, Mapping):
@@ -75,5 +127,43 @@ class Reconciler:
             position_deltas=position_deltas,
         )
 
+    def evaluate_risk(
+        self,
+        *,
+        daily_loss_pct: float,
+        drawdown_pct: float,
+        position_risk_pct: float,
+    ) -> RiskEvaluation:
+        """Compare metrics against configured limits and log any breaches."""
 
-__all__ = ["ReconciliationReport", "Reconciler"]
+        limits = self._limits
+        breached: list[str] = []
+
+        if limits:
+            if daily_loss_pct > limits.max_daily_loss_pct:
+                breached.append("max_daily_loss_pct")
+            if drawdown_pct > limits.kill_switch_drawdown_pct:
+                breached.append("kill_switch_drawdown_pct")
+            if position_risk_pct > limits.max_position_risk_pct:
+                breached.append("max_position_risk_pct")
+
+            if breached:
+                self._logger.warning(
+                    "Risk limits breached",
+                    extra={
+                        "breached_limits": tuple(breached),
+                        "daily_loss_pct": daily_loss_pct,
+                        "drawdown_pct": drawdown_pct,
+                        "position_risk_pct": position_risk_pct,
+                    },
+                )
+
+        return RiskEvaluation(
+            daily_loss_pct=daily_loss_pct,
+            drawdown_pct=drawdown_pct,
+            position_risk_pct=position_risk_pct,
+            breached_limits=tuple(breached),
+        )
+
+
+__all__ = ["RiskLimits", "RiskEvaluation", "ReconciliationReport", "Reconciler"]

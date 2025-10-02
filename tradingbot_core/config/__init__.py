@@ -1,14 +1,26 @@
-"""Configuration loader that stitches together environment, strategy, and fee profiles."""
+"""Configuration helpers used by services across the trading bot platform."""
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 import os
 
 import yaml
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_CONFIG_ROOT = Path(__file__).resolve().parents[2] / "config"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_CONFIG_ROOT = _REPO_ROOT / "config"
+
+
+class AppSettings(BaseSettings):
+    """Typed runtime settings sourced from environment variables."""
+
+    TB_MODE: Literal["paper", "live"] = "paper"
+    BROKER: str = "IBKR"
+    LOG_LEVEL: str = "INFO"
+
+    model_config = SettingsConfigDict(env_file=_REPO_ROOT / ".env", case_sensitive=False)
 
 
 def _coerce_int(value: str | None) -> int | str | None:
@@ -141,4 +153,4 @@ def load_config(env_name: str, strategy_name: str, *, config_dir: str | Path | N
     return ConfigBundle(env=env_config, strategy=strategy_config, fees=fees_config, runtime=runtime)
 
 
-__all__ = ["ConfigBundle", "load_config"]
+__all__ = ["AppSettings", "ConfigBundle", "load_config"]
