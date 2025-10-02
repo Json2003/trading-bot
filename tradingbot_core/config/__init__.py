@@ -95,6 +95,33 @@ def _runtime_overrides() -> dict[str, Any]:
     return runtime
 
 
+def _normalise_fees_config(fees: Mapping[str, Any]) -> dict[str, Any]:
+    """Return a normalised copy of a fee configuration mapping.
+
+    Binance (and some other exchanges) express maker/taker fees in basis
+    points rather than decimal percentages.  The legacy configuration format
+    in this project stores the decimal representation under ``maker`` and
+    ``taker`` keys.  To keep backwards compatibility while allowing the more
+    human-friendly basis point inputs, we derive the decimal values when
+    ``maker_bps``/``taker_bps`` are supplied.
+    """
+
+    if not fees:
+        return dict(fees)
+
+    normalised = dict(fees)
+
+    maker_bps = normalised.get("maker_bps")
+    if "maker" not in normalised and maker_bps is not None:
+        normalised["maker"] = float(maker_bps) / 10_000.0
+
+    taker_bps = normalised.get("taker_bps")
+    if "taker" not in normalised and taker_bps is not None:
+        normalised["taker"] = float(taker_bps) / 10_000.0
+
+    return normalised
+
+
 def load_config(env_name: str, strategy_name: str, *, config_dir: str | Path | None = None) -> ConfigBundle:
     """Load configuration sections for a given environment and strategy."""
 
@@ -106,7 +133,8 @@ def load_config(env_name: str, strategy_name: str, *, config_dir: str | Path | N
     fees_profile = env_config.get("fees_profile") or strategy_config.get("fees_profile")
     fees_config: dict[str, Any] = {}
     if fees_profile:
-        fees_config = _load_yaml(base_dir / "fees" / f"{fees_profile}.yaml")
+        fees_raw = _load_yaml(base_dir / "fees" / f"{fees_profile}.yaml")
+        fees_config = _normalise_fees_config(fees_raw)
 
     runtime = _runtime_overrides()
 
