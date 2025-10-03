@@ -19,6 +19,22 @@ install.bat
 
 This creates a `venv` directory and installs packages from `tradingbot_ibkr/requirements.txt`.
 
+## Working inside GitHub Actions workspaces
+
+When running automation steps in GitHub Actions, the repository is checked out
+to the directory pointed at by the `$GITHUB_WORKSPACE` environment variable.
+Many reusable workflows begin by ensuring all subsequent commands operate from
+that directory:
+
+```bash
+pushd "$GITHUB_WORKSPACE" >/dev/null
+# ... git commands ...
+popd >/dev/null
+```
+
+Using `pushd`/`popd` keeps the automation logic self-contained while restoring
+the previous directory after any Git operations complete.
+
 ## Asset classes
 
 The bot supports multiple asset classes including forex, options, futures,
