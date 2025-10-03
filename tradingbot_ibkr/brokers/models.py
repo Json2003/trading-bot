@@ -67,6 +67,8 @@ class OrderStatus:
     submitted_at: Optional[datetime] = None
     updated_at: datetime = field(default_factory=datetime.utcnow)
     message: Optional[str] = None
+    client_order_id: Optional[str] = None
+    symbol: Optional[str] = None
 
 
 @dataclass(slots=True)

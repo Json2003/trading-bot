@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pytest
 
+pytest.importorskip("yaml")
+
 from tradingbot_core.reconciliation import (
     BacktestEvaluation,
     BacktestProfile,

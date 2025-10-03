@@ -9,6 +9,20 @@ import pytest
 from tradingbot_ibkr.execution import PaperBroker, Reconciler, RiskEvaluation, RiskLimits
 
 
+class MonitorSpy:
+    def __init__(self) -> None:
+        self.kill_switch_payloads: list[dict[str, object]] = []
+
+    def record_fill(self, **_: object) -> None:  # pragma: no cover - not used in tests
+        pass
+
+    def record_error(self, **_: object) -> None:  # pragma: no cover - not used in tests
+        pass
+
+    def record_kill_switch(self, **payload: object) -> None:
+        self.kill_switch_payloads.append(payload)
+
+
 def test_risk_limits_validate_inputs() -> None:
     with pytest.raises(ValueError):
         RiskLimits(max_daily_loss_pct=-1.0, kill_switch_drawdown_pct=5.0, max_position_risk_pct=1.0)
@@ -17,7 +31,13 @@ def test_risk_limits_validate_inputs() -> None:
 def test_evaluate_risk_triggers_breaches(caplog: pytest.LogCaptureFixture) -> None:
     broker = PaperBroker()
     limits = RiskLimits(max_daily_loss_pct=3.0, kill_switch_drawdown_pct=8.0, max_position_risk_pct=1.0)
-    reconciler = Reconciler(broker, limits=limits, logger=logging.getLogger("test.reconciler"))
+    monitor = MonitorSpy()
+    reconciler = Reconciler(
+        broker,
+        limits=limits,
+        logger=logging.getLogger("test.reconciler"),
+        monitor=monitor,
+    )
 
     with caplog.at_level(logging.WARNING, logger="test.reconciler"):
         evaluation = reconciler.evaluate_risk(
@@ -30,6 +50,7 @@ def test_evaluate_risk_triggers_breaches(caplog: pytest.LogCaptureFixture) -> No
     assert evaluation.breached_limits == ("max_daily_loss_pct",)
     assert evaluation.kill_switch_triggered
     assert "Risk limits breached" in caplog.text
+    assert monitor.kill_switch_payloads
 
 
 def test_evaluate_risk_without_limits() -> None:
