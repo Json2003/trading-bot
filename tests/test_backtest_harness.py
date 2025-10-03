@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import platform
 from pathlib import Path
 
 from tradingbot_core.backtest_harness import BacktestContext, BacktestHarness
@@ -37,13 +38,20 @@ def test_backtest_harness_persists_metrics(tmp_path: Path) -> None:
 
     payload = json.loads(output_path.read_text())
 
-    assert payload["metadata"]["strategy"] == "mean_reversion"
-    assert payload["metadata"]["fees"] == {"maker": 0.0005}
-    assert payload["metadata"]["seed"] == 1337
-    assert payload["metadata"]["captured_at"] == 123.0
+    assert payload["meta"]["git_sha"] == "<local>"
+    assert payload["meta"]["python"] == platform.python_version()
+    assert isinstance(payload["meta"]["deps"], str)
+    assert payload["meta"]["timestamp"].endswith("Z") or payload["meta"]["timestamp"].endswith("+00:00")
 
-    metrics = payload["result"]["metrics"]
+    results = payload["results"]
+
+    assert results["metadata"]["strategy"] == "mean_reversion"
+    assert results["metadata"]["fees"] == {"maker": 0.0005}
+    assert results["metadata"]["seed"] == 1337
+    assert results["metadata"]["captured_at"] == 123.0
+
+    metrics = results["result"]["metrics"]
     assert set(metrics.keys()) == {"sharpe", "sortino", "max_drawdown", "cvar_95"}
     assert metrics["max_drawdown"] >= 0
 
-    assert payload["fees_paid"] == 12.5
+    assert results["fees_paid"] == 12.5

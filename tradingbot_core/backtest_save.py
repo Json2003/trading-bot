@@ -3,8 +3,12 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, MutableMapping
 import json
+import os
+import platform
+
+from .results import deps_fingerprint
 
 
 def _default_serializer(value: Any) -> Any:
@@ -36,8 +40,20 @@ def save_backtest_results(
     filename = f"{prefix}_{ts.strftime('%Y%m%dT%H%M%SZ')}.json"
     target = output_dir / filename
 
+    env_meta: MutableMapping[str, Any] = {
+        "git_sha": os.getenv("GITHUB_SHA", "<local>"),
+        "python": platform.python_version(),
+        "deps": deps_fingerprint(),
+        "timestamp": ts.isoformat(),
+    }
+
+    payload = {
+        "meta": dict(env_meta),
+        "results": dict(results),
+    }
+
     with target.open("w", encoding="utf-8") as handle:
-        json.dump(results, handle, default=_default_serializer, indent=2, sort_keys=True)
+        json.dump(payload, handle, default=_default_serializer, indent=2, sort_keys=True)
         handle.write("\n")
 
     return target
