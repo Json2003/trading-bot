@@ -3,8 +3,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Iterable, Mapping, MutableMapping, Sequence
+from typing import TYPE_CHECKING, Callable, Iterable, Mapping, MutableMapping, Sequence
 import logging
+import time
+
+if TYPE_CHECKING:
+    from tradingbot_core.monitoring import MonitoringHub
 
 from .broker_base import BrokerBase, Order, Position
 
@@ -57,6 +61,7 @@ class ReconciliationReport:
     unexpected_orders: tuple[Order, ...] = ()
     quantity_mismatches: Mapping[str, float] = field(default_factory=dict)
     position_deltas: Mapping[str, float] = field(default_factory=dict)
+    partially_filled_orders: tuple[str, ...] = ()
     generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @property
@@ -72,11 +77,13 @@ class Reconciler:
         quantity_tolerance: float = 1e-6,
         limits: RiskLimits | None = None,
         logger: logging.Logger | None = None,
+        monitor: "MonitoringHub" | None = None,
     ) -> None:
         self._broker = broker
         self._quantity_tolerance = quantity_tolerance
         self._limits = limits
         self._logger = logger or logging.getLogger(__name__)
+        self._monitor = monitor
 
     def _coerce_orders(self, orders: Iterable[Order] | Mapping[str, Order]) -> MutableMapping[str, Order]:
         if isinstance(orders, Mapping):
@@ -104,12 +111,15 @@ class Reconciler:
         unexpected_orders = tuple(broker_orders[oid] for oid in broker_orders.keys() - local_orders_map.keys())
 
         quantity_mismatches: dict[str, float] = {}
+        partials: list[str] = []
         for order_id in broker_orders.keys() & local_orders_map.keys():
             broker_order = broker_orders[order_id]
             local_order = local_orders_map[order_id]
             delta = broker_order.remaining() - local_order.remaining()
             if abs(delta) > self._quantity_tolerance:
                 quantity_mismatches[order_id] = delta
+            if 0.0 < broker_order.filled_quantity < broker_order.quantity:
+                partials.append(order_id)
 
         position_deltas: dict[str, float] = {}
         symbols = broker_positions.keys() | local_positions_map.keys()
@@ -125,7 +135,42 @@ class Reconciler:
             unexpected_orders=unexpected_orders,
             quantity_mismatches=quantity_mismatches,
             position_deltas=position_deltas,
+            partially_filled_orders=tuple(sorted(partials)),
         )
+
+    def reconcile_with_retry(
+        self,
+        *,
+        local_orders: Iterable[Order] | Mapping[str, Order],
+        local_positions: Mapping[str, float] | Iterable[Position],
+        attempts: int = 3,
+        backoff: float = 1.0,
+        sleeper: Callable[[float], None] = time.sleep,
+    ) -> ReconciliationReport:
+        """Retry reconciliation with exponential backoff when mismatches remain."""
+
+        if attempts < 1:
+            raise ValueError("attempts must be at least 1")
+        if backoff <= 0:
+            raise ValueError("backoff must be positive")
+
+        for attempt in range(1, attempts + 1):
+            report = self.reconcile(local_orders=local_orders, local_positions=local_positions)
+            if report.is_clean or attempt == attempts:
+                return report
+            sleep_for = backoff * attempt
+            self._logger.debug(
+                "Reconciliation mismatch detected, retrying",
+                extra={
+                    "attempt": attempt,
+                    "sleep": sleep_for,
+                    "missing_orders": report.missing_orders,
+                    "quantity_mismatches": dict(report.quantity_mismatches),
+                },
+            )
+            sleeper(sleep_for)
+
+        return report  # pragma: no cover - loop always returns earlier
 
     def evaluate_risk(
         self,
@@ -157,6 +202,19 @@ class Reconciler:
                         "position_risk_pct": position_risk_pct,
                     },
                 )
+                if self._monitor:
+                    kill_switch_limits = {
+                        limit: getattr(limits, limit)
+                        for limit in breached
+                        if limit in {"max_daily_loss_pct", "kill_switch_drawdown_pct"}
+                    }
+                    if kill_switch_limits:
+                        self._monitor.record_kill_switch(
+                            breached_limits=kill_switch_limits,
+                            daily_loss_pct=daily_loss_pct,
+                            drawdown_pct=drawdown_pct,
+                            position_risk_pct=position_risk_pct,
+                        )
 
         return RiskEvaluation(
             daily_loss_pct=daily_loss_pct,

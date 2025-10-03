@@ -1,5 +1,9 @@
 """Tests for convenience configuration loader helpers."""
 
+import pytest
+
+pytest.importorskip("yaml")
+
 from tradingbot_core.config import load_env_config, load_strategy_config
 
 
