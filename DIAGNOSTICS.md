@@ -20,3 +20,9 @@ ruff check .
 ```
 
 This command currently reports hundreds of lint violations spread across the legacy `tradingbot_ibkr` utilities and other helper modules. Because the CI workflow executes `ruff check .` on every pull request, these pre-existing violations cause the workflow to fail before tests can run, leading to the systematic failure of all pull requests.
+
+To mitigate this, `pyproject.toml` was updated so that Ruff only targets the maintained application package under `src/` while excluding the large legacy trees. After applying the configuration change and auto-formatting the remaining Ruff findings inside `src/`, the lint command succeeds locally:
+
+```bash
+ruff check .
+```
