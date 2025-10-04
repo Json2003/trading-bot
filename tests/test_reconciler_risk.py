@@ -30,7 +30,9 @@ def test_risk_limits_validate_inputs() -> None:
 
 def test_evaluate_risk_triggers_breaches(caplog: pytest.LogCaptureFixture) -> None:
     broker = PaperBroker()
-    limits = RiskLimits(max_daily_loss_pct=3.0, kill_switch_drawdown_pct=8.0, max_position_risk_pct=1.0)
+    limits = RiskLimits(
+        max_daily_loss_pct=3.0, kill_switch_drawdown_pct=8.0, max_position_risk_pct=1.0
+    )
     monitor = MonitorSpy()
     reconciler = Reconciler(
         broker,

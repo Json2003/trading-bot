@@ -93,7 +93,9 @@ def _load_existing_frames(base_dir: Path) -> List[MarketSnapshot]:
             df["timestamp"] = ts_values
             if "symbol" not in df.columns:
                 df["symbol"] = parquet.stem.upper()
-            snapshots.append(MarketSnapshot(df.reset_index(drop=True), df["symbol"].iloc[0], asset_class))
+            snapshots.append(
+                MarketSnapshot(df.reset_index(drop=True), df["symbol"].iloc[0], asset_class)
+            )
     return snapshots
 
 
@@ -163,7 +165,19 @@ def _compute_macd(close: pd.Series) -> pd.Series:
 def _prepare_snapshot(snapshot: MarketSnapshot) -> pd.DataFrame:
     records = [row for row in snapshot.frame.to_dict("records") if row.get("timestamp") is not None]
     if not records:
-        return pd.DataFrame([], columns=["ts", "date", "symbol", "asset_class", "close", "rsi_14", "macd_hist", "vol_20d"])
+        return pd.DataFrame(
+            [],
+            columns=[
+                "ts",
+                "date",
+                "symbol",
+                "asset_class",
+                "close",
+                "rsi_14",
+                "macd_hist",
+                "vol_20d",
+            ],
+        )
 
     records.sort(key=lambda row: row["timestamp"])
     ts_values = _ensure_timezone([row["timestamp"] for row in records])
@@ -195,7 +209,19 @@ def _prepare_snapshot(snapshot: MarketSnapshot) -> pd.DataFrame:
 
 def _append_trends_from_fetch(entries: Sequence[dict]) -> pd.DataFrame:
     if not entries:
-        return pd.DataFrame([], columns=["ts", "date", "symbol", "asset_class", "close", "rsi_14", "macd_hist", "vol_20d"])
+        return pd.DataFrame(
+            [],
+            columns=[
+                "ts",
+                "date",
+                "symbol",
+                "asset_class",
+                "close",
+                "rsi_14",
+                "macd_hist",
+                "vol_20d",
+            ],
+        )
     today = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
     records = []
     for idx, entry in enumerate(entries):
@@ -231,7 +257,19 @@ def build_market_trends(base_dir: Path = DATA_DIR) -> pd.DataFrame:
         records.extend(frame.to_dict("records"))
 
     if not records:
-        return pd.DataFrame([], columns=["ts", "date", "symbol", "asset_class", "close", "rsi_14", "macd_hist", "vol_20d"])
+        return pd.DataFrame(
+            [],
+            columns=[
+                "ts",
+                "date",
+                "symbol",
+                "asset_class",
+                "close",
+                "rsi_14",
+                "macd_hist",
+                "vol_20d",
+            ],
+        )
 
     records.sort(key=lambda row: row["ts"])
     return pd.DataFrame(records)

@@ -1,4 +1,5 @@
 """Abstract base class defining the broker integration contract."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

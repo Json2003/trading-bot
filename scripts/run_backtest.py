@@ -5,6 +5,7 @@ Usage examples:
   python scripts/run_backtest.py --source csv --path data/BTCUSDT-1h.csv
   python scripts/run_backtest.py --source ccxt --exchange binance --symbol "BTC/USDT" --timeframe 1h --history_years 5
 """
+
 from __future__ import annotations
 import os
 import sys
@@ -17,13 +18,13 @@ import numpy as np
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 # Move repo root to end to avoid shadowing site-packages, and drop empty path
-sys.path = [p for p in sys.path if p not in ('', REPO_ROOT)] + [REPO_ROOT]
+sys.path = [p for p in sys.path if p not in ("", REPO_ROOT)] + [REPO_ROOT]
 
 # Purge shadowed modules if already imported
 for _name in ("requests", "pandas", "ccxt"):
     _m = sys.modules.get(_name)
     if _m is not None:
-        _file = getattr(_m, '__file__', '') or ''
+        _file = getattr(_m, "__file__", "") or ""
         try:
             if REPO_ROOT in os.path.abspath(_file):
                 del sys.modules[_name]
@@ -33,10 +34,11 @@ for _name in ("requests", "pandas", "ccxt"):
 
 def _import_site(mod_name: str):
     import importlib
+
     # Purge repo-local shadow modules
     mod = sys.modules.get(mod_name)
     if mod is not None:
-        mod_file = getattr(mod, '__file__', '') or ''
+        mod_file = getattr(mod, "__file__", "") or ""
         try:
             if REPO_ROOT in os.path.abspath(mod_file):
                 del sys.modules[mod_name]
@@ -87,11 +89,13 @@ def walk_forward_validation(df, strategy_fn, cfg, engine_run, summarizer, *, fol
         try:
             trades, equity, bar_ret = engine_run(sub, strategy_fn, cfg)
             metrics = summarizer(trades, equity, bar_ret)
-            metrics.update({
-                "fold": idx + 1,
-                "start": str(sub["timestamp"].iloc[0]),
-                "end": str(sub["timestamp"].iloc[-1]),
-            })
+            metrics.update(
+                {
+                    "fold": idx + 1,
+                    "start": str(sub["timestamp"].iloc[0]),
+                    "end": str(sub["timestamp"].iloc[-1]),
+                }
+            )
         except Exception as exc:  # pragma: no cover - diagnostic path
             metrics = {"fold": idx + 1, "error": str(exc)}
         results.append(metrics)
@@ -114,78 +118,188 @@ def build_parser() -> argparse.ArgumentParser:
         help="Minimum number of years to request when --since is omitted",
     )
     # Modern engine: strategy + sizing/exits (optional)
-    p.add_argument("--strategy", help="Strategy spec module:function, e.g., backtest.strategies.sma_filtered:generate_signals")
-    p.add_argument("--strategy_args", default="", help="Comma-separated key=value pairs passed to strategy, e.g. fast=8,slow=21")
+    p.add_argument(
+        "--strategy",
+        help="Strategy spec module:function, e.g., backtest.strategies.sma_filtered:generate_signals",
+    )
+    p.add_argument(
+        "--strategy_args",
+        default="",
+        help="Comma-separated key=value pairs passed to strategy, e.g. fast=8,slow=21",
+    )
     p.add_argument("--tp", type=float, default=0.004, help="Take profit fraction (0.004=0.4%%)")
     p.add_argument("--sl", type=float, default=0.002, help="Stop loss fraction (0.002=0.2%%)")
     # Convenience bps flags (mapped to fraction); if provided, override --tp/--sl
-    p.add_argument("--tp_bps", type=float, default=None, help="Take profit in bps, e.g., 40 for 0.40%%")
-    p.add_argument("--sl_bps", type=float, default=None, help="Stop loss in bps, e.g., 20 for 0.20%%")
+    p.add_argument(
+        "--tp_bps", type=float, default=None, help="Take profit in bps, e.g., 40 for 0.40%%"
+    )
+    p.add_argument(
+        "--sl_bps", type=float, default=None, help="Stop loss in bps, e.g., 20 for 0.20%%"
+    )
     p.add_argument("--hold", type=int, default=12, help="Max holding bars")
     p.add_argument("--fees", type=float, default=0.0, help="Fee per side fraction")
     p.add_argument("--slippage", type=float, default=0.0, help="Slippage fraction")
     # Convenience bps flags for fees/slippage (mapped to fraction); override --fees/--slippage
-    p.add_argument("--fees_bps", type=float, default=None, help="Fees per side in bps, e.g., 10 = 0.10%%")
-    p.add_argument("--slip_bps", type=float, default=None, help="Slippage per side in bps, e.g., 5 = 0.05%%")
+    p.add_argument(
+        "--fees_bps", type=float, default=None, help="Fees per side in bps, e.g., 10 = 0.10%%"
+    )
+    p.add_argument(
+        "--slip_bps", type=float, default=None, help="Slippage per side in bps, e.g., 5 = 0.05%%"
+    )
     p.add_argument("--start-balance", type=float, default=10_000.0, help="Starting balance")
     p.add_argument("--trend", action="store_true", help="Enable EMA trend filter (50/200)")
     p.add_argument("--vol", action="store_true", help="Enable volatility filter")
     # Modern engine exits (bps or ATR), risk/sizing, and trade management
-    p.add_argument("--tp_atr_mult", type=float, default=0.0, help="ATR-based TP multiple (0 disables)")
-    p.add_argument("--sl_atr_mult", type=float, default=0.0, help="ATR-based SL multiple (0 disables)")
-    p.add_argument("--atr_period", type=int, default=14, help="ATR period for ATR-based exits/sizing")
+    p.add_argument(
+        "--tp_atr_mult", type=float, default=0.0, help="ATR-based TP multiple (0 disables)"
+    )
+    p.add_argument(
+        "--sl_atr_mult", type=float, default=0.0, help="ATR-based SL multiple (0 disables)"
+    )
+    p.add_argument(
+        "--atr_period", type=int, default=14, help="ATR period for ATR-based exits/sizing"
+    )
     # dynamic stops
-    p.add_argument("--break_even_atr", type=float, default=0.0, help="Move stop to entry after +X*ATR in favor")
-    p.add_argument("--trail_atr_mult", type=float, default=0.0, help="Trail stop by X*ATR (0 disables)")
-    p.add_argument("--trail_method", choices=["atr","donchian"], default="atr", help="Trailing stop method")
-    p.add_argument("--trail_ref", choices=["best","close"], default="best", help="Reference for ATR trailing distance")
-    p.add_argument("--donch_mid_n", type=int, default=0, help="Donchian midline window if using --trail_method donchian (0 disables)")
+    p.add_argument(
+        "--break_even_atr", type=float, default=0.0, help="Move stop to entry after +X*ATR in favor"
+    )
+    p.add_argument(
+        "--trail_atr_mult", type=float, default=0.0, help="Trail stop by X*ATR (0 disables)"
+    )
+    p.add_argument(
+        "--trail_method", choices=["atr", "donchian"], default="atr", help="Trailing stop method"
+    )
+    p.add_argument(
+        "--trail_ref",
+        choices=["best", "close"],
+        default="best",
+        help="Reference for ATR trailing distance",
+    )
+    p.add_argument(
+        "--donch_mid_n",
+        type=int,
+        default=0,
+        help="Donchian midline window if using --trail_method donchian (0 disables)",
+    )
     # partial TP / payday management
     p.add_argument("--tp_r_multiple", type=float, default=0.0, help="Payday at k*R (0 disables)")
-    p.add_argument("--partial_tp_frac", type=float, default=0.0, help="Fraction to close at payday (0 disables)")
-    p.add_argument("--lock_in_r_after_tp", type=float, default=0.0, help="After payday, lock stop to BE+X*R (0 keeps at BE)")
+    p.add_argument(
+        "--partial_tp_frac",
+        type=float,
+        default=0.0,
+        help="Fraction to close at payday (0 disables)",
+    )
+    p.add_argument(
+        "--lock_in_r_after_tp",
+        type=float,
+        default=0.0,
+        help="After payday, lock stop to BE+X*R (0 keeps at BE)",
+    )
     # pullback/structure exit
-    p.add_argument("--pullback_ema_len", type=int, default=0, help="EMA length for pullback bands (0 disables)")
-    p.add_argument("--pullback_atr_mult", type=float, default=0.0, help="ATR band depth around EMA (0 disables)")
-    p.add_argument("--pullback_confirm", type=int, default=0, help="Bars to confirm beyond band before exit")
+    p.add_argument(
+        "--pullback_ema_len", type=int, default=0, help="EMA length for pullback bands (0 disables)"
+    )
+    p.add_argument(
+        "--pullback_atr_mult",
+        type=float,
+        default=0.0,
+        help="ATR band depth around EMA (0 disables)",
+    )
+    p.add_argument(
+        "--pullback_confirm", type=int, default=0, help="Bars to confirm beyond band before exit"
+    )
     # momentum/timebox guard
-    p.add_argument("--min_rr_by_bars_r", type=float, default=0.0, help="Must reach this R multiple by N bars (0 disables)")
-    p.add_argument("--min_rr_by_bars_n", type=int, default=0, help="Bars deadline for min-R guard (0 disables)")
-    p.add_argument("--notional", type=float, default=1.0, help="Starting equity units for modern engine")
-    p.add_argument("--risk_per_trade", type=float, default=0.005, help="Risk per trade (fraction of equity), e.g. 0.005 = 0.5%%")
-    p.add_argument("--max_notional_frac", type=float, default=1.0, help="Cap on position notional fraction of equity")
-    p.add_argument("--allow_short", action="store_true", help="Allow short entries if strategy emits -1 signals")
-    p.add_argument("--max_bars", type=int, default=0, help="Modern engine: exit after N bars in trade (0=disabled)")
-    p.add_argument("--dynamic_risk", action="store_true", help="Enable ATR percentile position scaling")
-    p.add_argument("--risk_vol_lookback", type=int, default=150, help="Lookback for volatility baseline")
-    p.add_argument("--risk_vol_floor", type=float, default=0.4, help="Lower bound on risk scaling multiplier")
-    p.add_argument("--risk_vol_cap", type=float, default=1.6, help="Upper bound on risk scaling multiplier")
-    p.add_argument("--vol_stop_mult", type=float, default=0.0, help="ATR multiple for volatility-based stop floor (0 disables)")
-    p.add_argument("--vol_stop_window", type=int, default=200, help="Window for ATR percentile stop logic")
-    p.add_argument("--vol_stop_pctile", type=float, default=0.35, help="ATR percentile threshold for volatility stops")
+    p.add_argument(
+        "--min_rr_by_bars_r",
+        type=float,
+        default=0.0,
+        help="Must reach this R multiple by N bars (0 disables)",
+    )
+    p.add_argument(
+        "--min_rr_by_bars_n", type=int, default=0, help="Bars deadline for min-R guard (0 disables)"
+    )
+    p.add_argument(
+        "--notional", type=float, default=1.0, help="Starting equity units for modern engine"
+    )
+    p.add_argument(
+        "--risk_per_trade",
+        type=float,
+        default=0.005,
+        help="Risk per trade (fraction of equity), e.g. 0.005 = 0.5%%",
+    )
+    p.add_argument(
+        "--max_notional_frac",
+        type=float,
+        default=1.0,
+        help="Cap on position notional fraction of equity",
+    )
+    p.add_argument(
+        "--allow_short",
+        action="store_true",
+        help="Allow short entries if strategy emits -1 signals",
+    )
+    p.add_argument(
+        "--max_bars",
+        type=int,
+        default=0,
+        help="Modern engine: exit after N bars in trade (0=disabled)",
+    )
+    p.add_argument(
+        "--dynamic_risk", action="store_true", help="Enable ATR percentile position scaling"
+    )
+    p.add_argument(
+        "--risk_vol_lookback", type=int, default=150, help="Lookback for volatility baseline"
+    )
+    p.add_argument(
+        "--risk_vol_floor", type=float, default=0.4, help="Lower bound on risk scaling multiplier"
+    )
+    p.add_argument(
+        "--risk_vol_cap", type=float, default=1.6, help="Upper bound on risk scaling multiplier"
+    )
+    p.add_argument(
+        "--vol_stop_mult",
+        type=float,
+        default=0.0,
+        help="ATR multiple for volatility-based stop floor (0 disables)",
+    )
+    p.add_argument(
+        "--vol_stop_window", type=int, default=200, help="Window for ATR percentile stop logic"
+    )
+    p.add_argument(
+        "--vol_stop_pctile",
+        type=float,
+        default=0.35,
+        help="ATR percentile threshold for volatility stops",
+    )
     p.add_argument("--out", default=None, help="Path to save JSON report (default auto)")
-    p.add_argument("--out_prefix", default=None, help="If set, save trades/equity/metrics with this prefix (e.g., prefix_trades.csv)")
-    p.add_argument("--walk_forward", type=int, default=0, help="Number of walk-forward folds (0 disables)")
+    p.add_argument(
+        "--out_prefix",
+        default=None,
+        help="If set, save trades/equity/metrics with this prefix (e.g., prefix_trades.csv)",
+    )
+    p.add_argument(
+        "--walk_forward", type=int, default=0, help="Number of walk-forward folds (0 disables)"
+    )
     return p
 
 
 def load_csv(path: str):
-    pd = _import_site('pandas')
+    pd = _import_site("pandas")
     if not os.path.exists(path):
         raise FileNotFoundError(path)
     df = pd.read_csv(path)
-    if 'ts' in df.columns:
+    if "ts" in df.columns:
         try:
-            df['ts'] = pd.to_datetime(df['ts'], utc=True)
+            df["ts"] = pd.to_datetime(df["ts"], utc=True)
         except Exception:
-            df['ts'] = pd.to_datetime(df['ts'], unit='ms', utc=True, errors='coerce')
-        df = df.set_index('ts')
+            df["ts"] = pd.to_datetime(df["ts"], unit="ms", utc=True, errors="coerce")
+        df = df.set_index("ts")
     elif df.index.name:
         df.index = pd.to_datetime(df.index, utc=True)
     else:
         raise ValueError("CSV must include 'ts' column or datetime index")
     cols = {c.lower(): c for c in df.columns}
-    required = ['open', 'high', 'low', 'close']
+    required = ["open", "high", "low", "close"]
     missing = [c for c in required if c not in cols]
     if missing:
         lower_cols = {c.lower(): c for c in df.columns}
@@ -194,22 +308,24 @@ def load_csv(path: str):
         df = df.rename(columns=lower_cols)
     else:
         df = df.rename(columns=cols)
-    keep = ['open','high','low','close','volume']
+    keep = ["open", "high", "low", "close", "volume"]
     present = [c for c in keep if c in df.columns]
     return df[present]
 
 
-def fetch_ccxt(exchange: str, symbol: str, timeframe: str, since: Optional[datetime], until: Optional[datetime]):
+def fetch_ccxt(
+    exchange: str, symbol: str, timeframe: str, since: Optional[datetime], until: Optional[datetime]
+):
     # Ensure real requests is loaded before ccxt (avoid local requests.py)
-    _import_site('requests')
-    ccxt = _import_site('ccxt')
-    pd = _import_site('pandas')
+    _import_site("requests")
+    ccxt = _import_site("ccxt")
+    pd = _import_site("pandas")
     ex_cls = getattr(ccxt, exchange)
-    ex = ex_cls({'enableRateLimit': True})
+    ex = ex_cls({"enableRateLimit": True})
     limit = 1000
     all_rows = []
-    since_ms = int(since.timestamp()*1000) if since else None
-    until_ms = int(until.timestamp()*1000) if until else None
+    since_ms = int(since.timestamp() * 1000) if since else None
+    until_ms = int(until.timestamp() * 1000) if until else None
     while True:
         batch = ex.fetch_ohlcv(symbol, timeframe=timeframe, since=since_ms, limit=limit)
         if not batch:
@@ -222,41 +338,42 @@ def fetch_ccxt(exchange: str, symbol: str, timeframe: str, since: Optional[datet
             break
     if not all_rows:
         raise RuntimeError("No OHLCV fetched")
-    df = pd.DataFrame(all_rows, columns=['ts','open','high','low','close','volume'])
-    df['ts'] = pd.to_datetime(df['ts'], unit='ms', utc=True)
-    df = df.set_index('ts')
+    df = pd.DataFrame(all_rows, columns=["ts", "open", "high", "low", "close", "volume"])
+    df["ts"] = pd.to_datetime(df["ts"], unit="ms", utc=True)
+    df = df.set_index("ts")
     return df
 
 
 def _load_aggressive_strategy():
     # Load module directly from file to avoid importing tradingbot_ibkr/__init__.py
     import importlib.util
-    mod_path = os.path.join(REPO_ROOT, 'tradingbot_ibkr', 'backtest_ccxt.py')
-    spec = importlib.util.spec_from_file_location('backtest_ccxt_local', mod_path)
+
+    mod_path = os.path.join(REPO_ROOT, "tradingbot_ibkr", "backtest_ccxt.py")
+    spec = importlib.util.spec_from_file_location("backtest_ccxt_local", mod_path)
     if spec is None or spec.loader is None:
-        raise ImportError(f'Cannot load module from {mod_path}')
+        raise ImportError(f"Cannot load module from {mod_path}")
     mod = importlib.util.module_from_spec(spec)
-    sys.modules['backtest_ccxt_local'] = mod
+    sys.modules["backtest_ccxt_local"] = mod
     spec.loader.exec_module(mod)
-    return getattr(mod, 'aggressive_strategy_backtest')
+    return getattr(mod, "aggressive_strategy_backtest")
 
 
 def run_backtest(args: argparse.Namespace) -> dict:
     # Preload real libs to avoid repo-local stubs interfering
-    _import_site('requests')
-    _import_site('pandas')
-    if args.source == 'ccxt':
-        _import_site('ccxt')
-    
+    _import_site("requests")
+    _import_site("pandas")
+    if args.source == "ccxt":
+        _import_site("ccxt")
+
     # Decide path: modern engine when strategy/exits/risk flags are used
     def _is_modern(a: argparse.Namespace) -> bool:
         return (
-            bool(a.strategy) or
-            (a.tp_atr_mult and a.tp_atr_mult > 0.0) or
-            (a.sl_atr_mult and a.sl_atr_mult > 0.0) or
-            (a.max_bars and a.max_bars > 0) or
-            (a.tp_bps is not None and a.tp_bps == 0) or
-            (a.sl_bps is not None and a.sl_bps == 0)
+            bool(a.strategy)
+            or (a.tp_atr_mult and a.tp_atr_mult > 0.0)
+            or (a.sl_atr_mult and a.sl_atr_mult > 0.0)
+            or (a.max_bars and a.max_bars > 0)
+            or (a.tp_bps is not None and a.tp_bps == 0)
+            or (a.sl_bps is not None and a.sl_bps == 0)
         )
 
     if _is_modern(args):
@@ -266,7 +383,7 @@ def run_backtest(args: argparse.Namespace) -> dict:
         from backtest.metrics import summarize as _summarize
 
         # Load data
-        if args.source == 'csv':
+        if args.source == "csv":
             if not args.path:
                 raise SystemExit("--path is required for --source csv")
             df = _bx_load_csv(args.path)
@@ -278,24 +395,26 @@ def run_backtest(args: argparse.Namespace) -> dict:
             since_dt = args.since or until_dt - timedelta(days=365 * years)
             if since_dt >= until_dt:
                 raise SystemExit("Resolved --since must be before --until")
-            since_str = since_dt.strftime('%Y-%m-%d')
-            until_str = until_dt.strftime('%Y-%m-%d')
+            since_str = since_dt.strftime("%Y-%m-%d")
+            until_str = until_dt.strftime("%Y-%m-%d")
             df = _bx_fetch(args.exchange, args.symbol, args.timeframe, since_str, until_str)
 
         # Strategy
         spec = args.strategy or "backtest.strategies.sma_filtered:generate_signals"
         import importlib as _il
+
         mod_name, fn_name = spec.split(":")
         fn = getattr(_il.import_module(mod_name), fn_name)
         kwargs = {}
         if args.strategy_args:
-            for pair in args.strategy_args.split(','):
-                if not pair or '=' not in pair:
+            for pair in args.strategy_args.split(","):
+                if not pair or "=" not in pair:
                     continue
-                k, v = pair.split('=', 1)
-                k = k.strip(); v = v.strip()
+                k, v = pair.split("=", 1)
+                k = k.strip()
+                v = v.strip()
                 try:
-                    v_cast = float(v) if ('.' in v or 'e' in v.lower() or '-' in v) else int(v)
+                    v_cast = float(v) if ("." in v or "e" in v.lower() or "-" in v) else int(v)
                 except ValueError:
                     v_cast = v
                 kwargs[k] = v_cast
@@ -345,18 +464,24 @@ def run_backtest(args: argparse.Namespace) -> dict:
         metrics = _summarize(trades, equity, bar_ret)
 
         # Compute and display Sortino ratio from per-bar strategy returns
-        pd_mod = _import_site('pandas')
+        pd_mod = _import_site("pandas")
         data = pd_mod.Series(bar_ret, name="StrategyReturn").to_frame()
         returns = data["StrategyReturn"].dropna()
         downside_std = returns[returns < 0].std()
-        if downside_std is not None and np.isfinite(downside_std) and not np.isclose(downside_std, 0.0):
+        if (
+            downside_std is not None
+            and np.isfinite(downside_std)
+            and not np.isclose(downside_std, 0.0)
+        ):
             sortino = returns.mean() / downside_std * np.sqrt(252)
         else:
             sortino = 0.0
         print(f"Sortino Ratio: {sortino:.2f}")
 
         if args.walk_forward and len(df) > 0:
-            wf = walk_forward_validation(df, strat, cfg, _engine_run, _summarize, folds=int(args.walk_forward))
+            wf = walk_forward_validation(
+                df, strat, cfg, _engine_run, _summarize, folds=int(args.walk_forward)
+            )
             metrics["walk_forward"] = wf
 
         # Save artifacts: prefer out_prefix if provided
@@ -366,7 +491,9 @@ def run_backtest(args: argparse.Namespace) -> dict:
                 outdir = os.path.dirname(pref) or "."
                 os.makedirs(outdir, exist_ok=True)
                 trades.to_csv(f"{pref}_trades.csv", index=False)
-                equity.rename(columns={"equity": "equity"}).to_csv(f"{pref}_equity.csv", index=False)
+                equity.rename(columns={"equity": "equity"}).to_csv(
+                    f"{pref}_equity.csv", index=False
+                )
                 with open(f"{pref}_metrics.json", "w") as f:
                     json.dump(metrics, f, indent=2, sort_keys=True)
             else:
@@ -383,7 +510,7 @@ def run_backtest(args: argparse.Namespace) -> dict:
 
     aggressive_strategy_backtest = _load_aggressive_strategy()
 
-    if args.source == 'csv':
+    if args.source == "csv":
         if not args.path:
             raise SystemExit("--path is required for --source csv")
         df = load_csv(args.path)
@@ -398,10 +525,14 @@ def run_backtest(args: argparse.Namespace) -> dict:
         df = fetch_ccxt(args.exchange, args.symbol, args.timeframe, since_dt, until_dt)
 
     # Map bps convenience flags to fractions if provided
-    tp_frac = args.tp_bps / 10_000.0 if getattr(args, 'tp_bps', None) is not None else args.tp
-    sl_frac = args.sl_bps / 10_000.0 if getattr(args, 'sl_bps', None) is not None else args.sl
-    fee_frac = args.fees_bps / 10_000.0 if getattr(args, 'fees_bps', None) is not None else args.fees
-    slip_frac = args.slip_bps / 10_000.0 if getattr(args, 'slip_bps', None) is not None else args.slippage
+    tp_frac = args.tp_bps / 10_000.0 if getattr(args, "tp_bps", None) is not None else args.tp
+    sl_frac = args.sl_bps / 10_000.0 if getattr(args, "sl_bps", None) is not None else args.sl
+    fee_frac = (
+        args.fees_bps / 10_000.0 if getattr(args, "fees_bps", None) is not None else args.fees
+    )
+    slip_frac = (
+        args.slip_bps / 10_000.0 if getattr(args, "slip_bps", None) is not None else args.slippage
+    )
 
     stats = aggressive_strategy_backtest(
         df,
@@ -419,14 +550,20 @@ def run_backtest(args: argparse.Namespace) -> dict:
     if args.out:
         out_path = args.out
     else:
-        base = f"backtest_{args.source}_{args.symbol.replace('/','_') if args.source=='ccxt' else os.path.basename(args.path).split('.')[0]}_{args.timeframe if args.source=='ccxt' else 'csv'}_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
+        base = f"backtest_{args.source}_{args.symbol.replace('/', '_') if args.source == 'ccxt' else os.path.basename(args.path).split('.')[0]}_{args.timeframe if args.source == 'ccxt' else 'csv'}_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
         out_path = os.path.join(REPO_ROOT, f"{base}.json")
 
-    with open(out_path, 'w') as f:
+    with open(out_path, "w") as f:
         json.dump(stats, f, indent=2, default=str)
 
     summary_keys = [
-        'total_trades','win_rate_pct','profit_factor','sharpe_ratio','sortino_ratio','max_drawdown_pct','total_return_pct'
+        "total_trades",
+        "win_rate_pct",
+        "profit_factor",
+        "sharpe_ratio",
+        "sortino_ratio",
+        "max_drawdown_pct",
+        "total_return_pct",
     ]
     compact = {k: stats.get(k) for k in summary_keys if k in stats}
     print("Saved report:", out_path)
@@ -439,5 +576,6 @@ def main(argv=None):
     args = parser.parse_args(argv)
     run_backtest(args)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

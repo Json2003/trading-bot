@@ -1,4 +1,5 @@
 """FastAPI application exposing health and metadata endpoints."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -100,9 +101,7 @@ def create_app(
         strategy_name = strategy or app.state.default_strategy
 
         overrides: dict[str, object] = {}
-        limits_for_payload = (
-            app.state.risk_limits.as_dict() if app.state.risk_limits else None
-        )
+        limits_for_payload = app.state.risk_limits.as_dict() if app.state.risk_limits else None
         if limits_for_payload:
             overrides.setdefault("risk_limits", limits_for_payload)
 

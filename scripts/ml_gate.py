@@ -19,8 +19,13 @@ import numpy as np
 import requests
 
 
-def infer_gate(seq_df, url: str = "http://127.0.0.1:8000", threshold: float = 0.55, tag: Optional[str] = None,
-               timeout: float = 1.0) -> Tuple[bool, float, Optional[str]]:
+def infer_gate(
+    seq_df,
+    url: str = "http://127.0.0.1:8000",
+    threshold: float = 0.55,
+    tag: Optional[str] = None,
+    timeout: float = 1.0,
+) -> Tuple[bool, float, Optional[str]]:
     try:
         X = np.asarray(seq_df.values, dtype=float)
         if X.ndim != 2:
@@ -38,4 +43,3 @@ def infer_gate(seq_df, url: str = "http://127.0.0.1:8000", threshold: float = 0.
 
 
 __all__ = ["infer_gate"]
-

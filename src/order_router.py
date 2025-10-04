@@ -1,8 +1,20 @@
 """Utilities for routing order requests to the correct broker implementation."""
+
 from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
-from typing import Any, Dict, Iterable, List, Mapping, MutableMapping, Protocol, Sequence, Tuple, runtime_checkable
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    MutableMapping,
+    Protocol,
+    Sequence,
+    Tuple,
+    runtime_checkable,
+)
 
 from .models import OrderRequest
 
@@ -43,10 +55,14 @@ class SupportsToDict(Protocol):
 class BrokerLike(Protocol):
     """Structural protocol describing the broker operations the router requires."""
 
-    def place_order(self, account_id: str, req: OrderRequest) -> Any:  # pragma: no cover - protocol definition
+    def place_order(
+        self, account_id: str, req: OrderRequest
+    ) -> Any:  # pragma: no cover - protocol definition
         """Submit an order to the broker."""
 
-    def get_positions(self, account_id: str) -> Iterable[Any]:  # pragma: no cover - protocol definition
+    def get_positions(
+        self, account_id: str
+    ) -> Iterable[Any]:  # pragma: no cover - protocol definition
         """Return the open positions for ``account_id``."""
 
     def list_accounts(self) -> Iterable[str]:  # pragma: no cover - protocol definition

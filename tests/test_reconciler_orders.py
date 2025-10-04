@@ -26,7 +26,9 @@ def test_reconcile_identifies_partial_fills() -> None:
     reconciler = Reconciler(broker)
 
     report = reconciler.reconcile(
-        local_orders={"1": Order(id="1", symbol="BTC", side="buy", quantity=1.0, filled_quantity=0.4)},
+        local_orders={
+            "1": Order(id="1", symbol="BTC", side="buy", quantity=1.0, filled_quantity=0.4)
+        },
         local_positions={},
     )
 

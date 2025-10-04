@@ -5,10 +5,12 @@ This file exists only to document prior behavior when a repo-local
 codebase. If imported directly, it forwards to site-packages pandas,
 and falls back to a tiny stub for offline docs/tests.
 """
+
 from __future__ import annotations
 
 try:
     import pandas as _pd  # type: ignore
+
     globals().update(_pd.__dict__)
 except Exception:  # pragma: no cover
     # Extremely small fallback to avoid import crashes if pandas is missing
@@ -28,6 +30,7 @@ except Exception:  # pragma: no cover
     class _Loc:
         def __init__(self, df: "DataFrame"):
             self._df = df
+
         def __getitem__(self, key):
             row, col = key
             return self._df._rows[row][col]
@@ -54,13 +57,17 @@ except Exception:  # pragma: no cover
                 raise TypeError("Unsupported data type for DataFrame")
             if columns:
                 self.columns = columns
+
         def __len__(self) -> int:
             return len(self._rows)
+
         def __getitem__(self, key: str) -> Series:
             return Series([row.get(key) for row in self._rows])
+
         @property
         def loc(self) -> _Loc:
             return _Loc(self)
+
         def to_csv(self, path: Any, index: bool = False, header: bool = True, mode: str = "w"):
             with open(path, mode, newline="") as f:
                 fieldnames = self.columns or (list(self._rows[0].keys()) if self._rows else [])
@@ -69,12 +76,16 @@ except Exception:  # pragma: no cover
                     writer.writeheader()
                 for row in self._rows:
                     writer.writerow(row)
+
         def to_dict(self) -> List[Dict[str, Any]]:
             return [dict(r) for r in self._rows]
 
     def DataFrame_from_records(records: Iterable[Dict[str, Any]]) -> DataFrame:
         return DataFrame(list(records))
-    def read_csv(path: Any, parse_dates: Optional[List[str]] = None, index_col: Optional[str] = None) -> DataFrame:
+
+    def read_csv(
+        path: Any, parse_dates: Optional[List[str]] = None, index_col: Optional[str] = None
+    ) -> DataFrame:
         with open(path, newline="") as f:
             reader = csv.DictReader(f)
             rows: List[Dict[str, Any]] = []
@@ -93,5 +104,5 @@ except Exception:  # pragma: no cover
                             new_row[k] = v
                 rows.append(new_row)
         return DataFrame(rows)
-    DataFrame.from_records = staticmethod(DataFrame_from_records)
 
+    DataFrame.from_records = staticmethod(DataFrame_from_records)

@@ -7,6 +7,7 @@ Implements helpers to enforce a leakage-safe research pipeline:
 - Build labels for multiple horizons without peeking past t.
 - Simple feature-store writer stub aligned with the BigQuery schema.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -48,16 +49,15 @@ def canonicalize_ohlcv(df: pd.DataFrame, freq: str, session_tz: str = "UTC") -> 
 
 def drop_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     """Drop bars with broken OHLCV or negative volume."""
-    mask = (
-        (df["high"] >= df["low"]) &
-        (df["volume"] >= 0)
-    )
+    mask = (df["high"] >= df["low"]) & (df["volume"] >= 0)
     body_at_low = (df["open"] == df["close"]) & (df["close"] == df["low"])
     mask &= ~body_at_low
     return df[mask].copy()
 
 
-def attach_cost_columns(df: pd.DataFrame, commission: float, spread: float, slippage: float) -> pd.DataFrame:
+def attach_cost_columns(
+    df: pd.DataFrame, commission: float, spread: float, slippage: float
+) -> pd.DataFrame:
     """Attach transaction cost columns for later backtests."""
     df = df.copy()
     df["commission"] = commission
@@ -107,13 +107,21 @@ def triple_barrier_label(close: pd.Series, horizon: int, upper: float, lower: fl
             out.iloc[i] = 0
             continue
         diff = window - start
-        hit_upper = (diff >= math.log(1 + upper)).idxmax() if (diff >= math.log(1 + upper)).any() else None
-        hit_lower = (diff <= -math.log(1 + lower)).idxmax() if (diff <= -math.log(1 + lower)).any() else None
+        hit_upper = (
+            (diff >= math.log(1 + upper)).idxmax() if (diff >= math.log(1 + upper)).any() else None
+        )
+        hit_lower = (
+            (diff <= -math.log(1 + lower)).idxmax()
+            if (diff <= -math.log(1 + lower)).any()
+            else None
+        )
         first_hit = None
         if hit_upper is not None:
             first_hit = hit_upper
             label = 1
-        if hit_lower is not None and (first_hit is None or window.index.get_loc(hit_lower) < window.index.get_loc(first_hit)):
+        if hit_lower is not None and (
+            first_hit is None or window.index.get_loc(hit_lower) < window.index.get_loc(first_hit)
+        ):
             first_hit = hit_lower
             label = -1
         out.iloc[i] = label if first_hit is not None else 0
@@ -123,10 +131,18 @@ def triple_barrier_label(close: pd.Series, horizon: int, upper: float, lower: fl
 @dataclass
 class FeatureStore:
     """Very small BigQuery-oriented feature store stub."""
+
     dataset: str = "market_fs"
     table: str = "features_ohlcv_min"
 
-    def write(self, df: pd.DataFrame, feature_version: str, source_hash: str, *, project: Optional[str] = None) -> Tuple[str, str]:
+    def write(
+        self,
+        df: pd.DataFrame,
+        feature_version: str,
+        source_hash: str,
+        *,
+        project: Optional[str] = None,
+    ) -> Tuple[str, str]:
         """Write features to BigQuery or, if unavailable, to a local CSV.
 
         Returns the destination (dataset.table) and path written.
@@ -134,6 +150,7 @@ class FeatureStore:
         dest = f"{self.dataset}.{self.table}"
         try:
             from pandas_gbq import to_gbq  # type: ignore
+
             to_gbq(df, dest, project_id=project, if_exists="append")
             return dest, "bigquery"
         except Exception:
@@ -144,7 +161,9 @@ class FeatureStore:
             return dest, path
 
 
-def purged_kfold(n_splits: int, embargo: int, n_samples: int) -> Iterator[Tuple[Iterable[int], Iterable[int]]]:
+def purged_kfold(
+    n_splits: int, embargo: int, n_samples: int
+) -> Iterator[Tuple[Iterable[int], Iterable[int]]]:
     """Yield purged train/validation indices with embargo.
 
     This generator splits [0, n_samples) into ``n_splits`` folds. For each

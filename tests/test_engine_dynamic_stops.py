@@ -19,18 +19,20 @@ from backtest.engine import ExecConfig, run_backtest
 def make_df():
     # synthetic rising market with small pullbacks
     ts = pd.date_range("2024-01-01", periods=60, freq="H", tz="UTC")
-    close = pd.Series([100 + i*0.5 + (3 if i % 10 == 0 else 0) for i in range(60)], index=ts)
+    close = pd.Series([100 + i * 0.5 + (3 if i % 10 == 0 else 0) for i in range(60)], index=ts)
     high = close + 1
     low = close - 1
     open_ = close
-    df = pd.DataFrame({
-        "timestamp": ts,
-        "open": open_,
-        "high": high,
-        "low": low,
-        "close": close,
-        "volume": 1,
-    })
+    df = pd.DataFrame(
+        {
+            "timestamp": ts,
+            "open": open_,
+            "high": high,
+            "low": low,
+            "close": close,
+            "volume": 1,
+        }
+    )
     return df
 
 
@@ -41,13 +43,18 @@ def sig_all_long(df):  # always long regime
 def test_break_even_and_trail_exit():
     df = make_df()
     cfg = ExecConfig(
-        fees_bps=0, slip_bps=0,
-        tp_bps=0, sl_bps=0,
-        tp_atr_mult=0, sl_atr_mult=10,  # very wide SL so BE/trail triggers first
+        fees_bps=0,
+        slip_bps=0,
+        tp_bps=0,
+        sl_bps=0,
+        tp_atr_mult=0,
+        sl_atr_mult=10,  # very wide SL so BE/trail triggers first
         atr_period=14,
         notional=1.0,
-        risk_per_trade=0.01, max_notional_frac=1.0,
-        break_even_atr_mult=0.1, trail_atr_mult=0.1,
+        risk_per_trade=0.01,
+        max_notional_frac=1.0,
+        break_even_atr_mult=0.1,
+        trail_atr_mult=0.1,
         max_bars=0,
     )
     trades, equity, bar_ret = run_backtest(df, sig_all_long, cfg)

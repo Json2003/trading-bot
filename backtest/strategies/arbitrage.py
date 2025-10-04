@@ -211,21 +211,15 @@ def generate_threshold_signals(
     if missing_spot:
         raise ValueError(f"Spot data missing required columns: {sorted(missing_spot)}")
     if missing_futures:
-        raise ValueError(
-            f"Futures data missing required columns: {sorted(missing_futures)}"
-        )
+        raise ValueError(f"Futures data missing required columns: {sorted(missing_futures)}")
 
     spot_records = {
         timestamp: price
-        for timestamp, price in zip(
-            data_spot["timestamp"], data_spot[price_column]
-        )
+        for timestamp, price in zip(data_spot["timestamp"], data_spot[price_column])
     }
     futures_records = {
         timestamp: price
-        for timestamp, price in zip(
-            data_futures["timestamp"], data_futures[price_column]
-        )
+        for timestamp, price in zip(data_futures["timestamp"], data_futures[price_column])
     }
 
     common_timestamps = sorted(set(spot_records) & set(futures_records))
@@ -260,4 +254,3 @@ __all__ = [
     "check_live_basis",
     "generate_threshold_signals",
 ]
-

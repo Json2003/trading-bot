@@ -6,6 +6,7 @@ lightweight implementations below focus on capturing the behaviour required by
 the reconciler tests while remaining convenient to use in the in-memory paper
 broker used throughout the suite.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

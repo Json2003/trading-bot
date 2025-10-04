@@ -48,11 +48,7 @@ def normalize_equity(equity: Sequence) -> List[float]:
 
 def equity_to_returns(equity: Sequence[float]) -> List[float]:
     """Convert equity curve to simple period returns."""
-    return [
-        (equity[i] / equity[i - 1] - 1.0)
-        for i in range(1, len(equity))
-        if equity[i - 1] > 0
-    ]
+    return [(equity[i] / equity[i - 1] - 1.0) for i in range(1, len(equity)) if equity[i - 1] > 0]
 
 
 def max_drawdown(equity: Sequence[float]) -> float:
@@ -183,9 +179,7 @@ def parse_args() -> argparse.Namespace:
 def summarize_backtests(args: argparse.Namespace) -> List[dict]:
     files = collect_files(args.patterns)
     if not files:
-        print(
-            "No backtest JSONs found (looking for {})".format(", ".join(args.patterns))
-        )
+        print("No backtest JSONs found (looking for {})".format(", ".join(args.patterns)))
         raise SystemExit(1)
 
     rows = []
@@ -246,6 +240,7 @@ def summarize_backtests(args: argparse.Namespace) -> List[dict]:
             print(f"[ERROR] reading {path}: {exc}")
 
     if args.sort:
+
         def sort_key(row: dict):
             value = row.get(args.sort)
             if value is None:

@@ -6,6 +6,7 @@ artifacts.  It handles bookkeeping such as capturing the git revision, storing
 configured broker fees and random seeds and computing a small set of portfolio
 metrics that most of our dashboards expect.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -27,10 +28,9 @@ def _detect_git_sha() -> str:
         return env_sha
 
     try:
-        sha = (
-            subprocess.check_output(["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL)
-            .strip()
-        )
+        sha = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
     except Exception:
         return "<unknown>"
     return sha or "<unknown>"
@@ -116,7 +116,9 @@ class BacktestHarness:
         trades = payload.get("trades") or []
 
         stats = compute_portfolio_stats(returns)
-        result = BacktestResult(equity_curve=equity_curve, returns=returns, trades=trades, stats=stats)
+        result = BacktestResult(
+            equity_curve=equity_curve, returns=returns, trades=trades, stats=stats
+        )
 
         meta: MutableMapping[str, Any] = {
             "git_sha": _detect_git_sha(),

@@ -62,4 +62,3 @@ def load_strategy_config(name: str) -> dict[str, Any]:
 
 
 __all__ = ["AppSettings", "load_env_config", "load_strategy_config"]
-
