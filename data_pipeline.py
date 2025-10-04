@@ -10,11 +10,17 @@ Implements helpers to enforce a leakage-safe research pipeline:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Iterable, Iterator, Optional, Tuple
 
 import math
 
 import pandas as pd
+
+try:  # pragma: no cover - fallback branch exercised when zoneinfo missing
+    from zoneinfo import ZoneInfo
+except Exception:  # pragma: no cover
+    ZoneInfo = None  # type: ignore
 
 
 def canonicalize_ohlcv(df: pd.DataFrame, freq: str, session_tz: str = "UTC") -> pd.DataFrame:
@@ -32,18 +38,56 @@ def canonicalize_ohlcv(df: pd.DataFrame, freq: str, session_tz: str = "UTC") -> 
     if "timestamp" not in df:
         raise KeyError("missing 'timestamp' column")
 
-    ts = pd.to_datetime(df["timestamp"]).dt.tz_convert(session_tz)
-    ts_utc = ts.dt.tz_convert("UTC")
+    ts_series = pd.to_datetime(df["timestamp"])
+
+    def _resolve_tz(name: str):
+        if ZoneInfo is None:
+            return timezone.utc
+        try:
+            return ZoneInfo(name)
+        except Exception:
+            if name.upper() == "UTC":
+                return timezone.utc
+            try:
+                return ZoneInfo("UTC")
+            except Exception:
+                return timezone.utc
+
+    session_tzinfo = _resolve_tz(session_tz)
+    utc_values = []
+    for value in ts_series._values:
+        if not isinstance(value, datetime):
+            try:
+                value = datetime.fromisoformat(str(value))
+            except Exception:
+                utc_values.append(value)
+                continue
+        if value.tzinfo is None:
+            localized = value.replace(tzinfo=session_tzinfo)
+        else:
+            localized = value.astimezone(session_tzinfo)
+        utc_values.append(localized.astimezone(timezone.utc))
+
     df = df.copy()
-    df["timestamp"] = ts_utc
+    df["timestamp"] = utc_values
+
+    valid_times = [ts for ts in utc_values if isinstance(ts, datetime)]
+    if not valid_times:
+        raise ValueError("timestamp column must contain datetime-like values")
 
     # Reindex to expected frequency and forward fill within the session
-    start, end = ts_utc.min(), ts_utc.max()
+    start, end = min(valid_times), max(valid_times)
     full_range = pd.date_range(start=start, end=end, freq=freq, tz="UTC")
     df = df.set_index("timestamp").reindex(full_range)
     df = df.ffill()
     df.index.name = "timestamp"
-    return df.reset_index()
+
+    records = []
+    for row in df.reset_index().to_dict("records"):
+        if "index" in row:
+            row["timestamp"] = row.pop("index")
+        records.append(row)
+    return pd.DataFrame(records)
 
 
 def drop_anomalies(df: pd.DataFrame) -> pd.DataFrame:
