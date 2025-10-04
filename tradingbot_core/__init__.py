@@ -11,6 +11,7 @@ from .backtest_save import save_backtest_results, load_backtest_results
 from .backtest_harness import BacktestHarness, BacktestContext, BacktestResult
 from .results import deps_fingerprint, save_results
 from .monitoring import AlertConfig, MonitoringHub
+from .strategy import Bar, OrderIntent, Strategy
 
 try:  # pragma: no cover - optional dependency guard
     from .reconciliation import (
@@ -39,6 +40,9 @@ __all__ = [
     "load_backtest_results",
     "deps_fingerprint",
     "save_results",
+    "Bar",
+    "OrderIntent",
+    "Strategy",
     "BacktestEvaluation",
     "BacktestProfile",
     "BacktestProfileNotFoundError",
