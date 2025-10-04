@@ -81,8 +81,12 @@ class OrderRequest:
             side=Side(payload["side"]),
             qty=float(payload["qty"]),
             order_type=OrderType(payload["order_type"]),
-            limit_price=(None if payload.get("limit_price") is None else float(payload["limit_price"])),
-            stop_price=(None if payload.get("stop_price") is None else float(payload["stop_price"])),
+            limit_price=(
+                None if payload.get("limit_price") is None else float(payload["limit_price"])
+            ),
+            stop_price=(
+                None if payload.get("stop_price") is None else float(payload["stop_price"])
+            ),
             tif=TimeInForce(payload.get("tif", TimeInForce.DAY.value)),
             client_order_id=payload.get("client_order_id"),
             meta=payload.get("meta"),

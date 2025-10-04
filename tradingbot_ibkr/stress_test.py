@@ -2,11 +2,13 @@
 
 Outputs a JSON report with per-event returns, max drawdown, volatility, and a short summary.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 from pathlib import Path
+
 try:  # pragma: no cover - optional for tests
     import pandas as pd  # type: ignore
 except Exception:  # pragma: no cover
@@ -64,11 +66,13 @@ def run_report(annotated_csv: Path, out_json: Path):
             if len(w_df) < 2:
                 continue
             m = compute_metrics(w_df)
-            report["events"].append({
-                "event": ev,
-                "window": window,
-                "metrics": m,
-            })
+            report["events"].append(
+                {
+                    "event": ev,
+                    "window": window,
+                    "metrics": m,
+                }
+            )
 
     with open(out_json, "w", encoding="utf8") as f:
         json.dump(report, f, indent=2)
@@ -78,8 +82,14 @@ def run_report(annotated_csv: Path, out_json: Path):
 
 def main():
     p = argparse.ArgumentParser(description="Run stress test on annotated bars CSV")
-    p.add_argument("--annotated", required=True, help="annotated CSV path produced by event_labeler")
-    p.add_argument("--out", default="tradingbot_ibkr/datafiles/stress_report.json", help="output JSON report path")
+    p.add_argument(
+        "--annotated", required=True, help="annotated CSV path produced by event_labeler"
+    )
+    p.add_argument(
+        "--out",
+        default="tradingbot_ibkr/datafiles/stress_report.json",
+        help="output JSON report path",
+    )
     args = p.parse_args()
 
     run_report(Path(args.annotated), Path(args.out))

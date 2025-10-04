@@ -1,4 +1,5 @@
 """Minimal package init for tradingbot_ibkr."""
+
 from . import (
     notifier,
     feature_extraction,

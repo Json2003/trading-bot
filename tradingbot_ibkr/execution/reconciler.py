@@ -1,4 +1,5 @@
 """Utilities to compare local state with broker state and enforce risk limits."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -66,7 +67,12 @@ class ReconciliationReport:
 
     @property
     def is_clean(self) -> bool:
-        return not (self.missing_orders or self.unexpected_orders or self.quantity_mismatches or self.position_deltas)
+        return not (
+            self.missing_orders
+            or self.unexpected_orders
+            or self.quantity_mismatches
+            or self.position_deltas
+        )
 
 
 class Reconciler:
@@ -85,12 +91,16 @@ class Reconciler:
         self._logger = logger or logging.getLogger(__name__)
         self._monitor = monitor
 
-    def _coerce_orders(self, orders: Iterable[Order] | Mapping[str, Order]) -> MutableMapping[str, Order]:
+    def _coerce_orders(
+        self, orders: Iterable[Order] | Mapping[str, Order]
+    ) -> MutableMapping[str, Order]:
         if isinstance(orders, Mapping):
             return dict(orders)
         return {order.id: order for order in orders}
 
-    def _coerce_positions(self, positions: Mapping[str, float] | Iterable[Position]) -> MutableMapping[str, float]:
+    def _coerce_positions(
+        self, positions: Mapping[str, float] | Iterable[Position]
+    ) -> MutableMapping[str, float]:
         if isinstance(positions, Mapping):
             return dict(positions)
         return {pos.symbol: pos.quantity for pos in positions}
@@ -102,13 +112,19 @@ class Reconciler:
         local_positions: Mapping[str, float] | Iterable[Position],
     ) -> ReconciliationReport:
         broker_orders = {order.id: order for order in self._broker.list_open_orders()}
-        broker_positions = {position.symbol: position.quantity for position in self._broker.list_positions()}
+        broker_positions = {
+            position.symbol: position.quantity for position in self._broker.list_positions()
+        }
 
         local_orders_map = self._coerce_orders(local_orders)
         local_positions_map = self._coerce_positions(local_positions)
 
-        missing_orders = tuple(sorted(order_id for order_id in local_orders_map.keys() - broker_orders.keys()))
-        unexpected_orders = tuple(broker_orders[oid] for oid in broker_orders.keys() - local_orders_map.keys())
+        missing_orders = tuple(
+            sorted(order_id for order_id in local_orders_map.keys() - broker_orders.keys())
+        )
+        unexpected_orders = tuple(
+            broker_orders[oid] for oid in broker_orders.keys() - local_orders_map.keys()
+        )
 
         quantity_mismatches: dict[str, float] = {}
         partials: list[str] = []

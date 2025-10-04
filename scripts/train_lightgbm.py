@@ -18,21 +18,18 @@ def load_join() -> pl.DataFrame:
     for sym in SYMS:
         features = pl.scan_parquet(f"{FEAT}/symbol={sym}/date=*/part.parquet")
         labels = pl.scan_parquet(f"{LAB}/symbol={sym}/labels.parquet")
-        df = (
-            features.join(labels, on=["symbol", "ts"], how="inner")
-            .select(
-                [
-                    "symbol",
-                    "ts",
-                    "close",
-                    "ret_5m",
-                    "ret_30m",
-                    "vol_realized_30m",
-                    "zscore_30m",
-                    "rsi_14",
-                    "y",
-                ]
-            )
+        df = features.join(labels, on=["symbol", "ts"], how="inner").select(
+            [
+                "symbol",
+                "ts",
+                "close",
+                "ret_5m",
+                "ret_30m",
+                "vol_realized_30m",
+                "zscore_30m",
+                "rsi_14",
+                "y",
+            ]
         )
         dfs.append(df)
     return pl.concat(dfs).sort(["ts", "symbol"]).collect()
@@ -58,9 +55,7 @@ if __name__ == "__main__":
             min_data_in_leaf=50,
             metric="auc",
         )
-        model = lgb.train(
-            params, dtr, num_boost_round=200, valid_sets=[dva], verbose_eval=False
-        )
+        model = lgb.train(params, dtr, num_boost_round=200, valid_sets=[dva], verbose_eval=False)
         preds = model.predict(X[va])
         aps.append(average_precision_score(y[va], preds))
         f1s.append(f1_score(y[va], (preds > 0.6).astype(int)))

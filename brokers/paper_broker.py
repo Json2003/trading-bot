@@ -1,4 +1,5 @@
 """Simple in-memory broker implementation for demos and tests."""
+
 from __future__ import annotations
 
 import time
@@ -63,9 +64,7 @@ class PaperBroker(Broker):
         if client_order_id and client_order_id in self._orders_by_client_id:
             broker_order_id = self._orders_by_client_id[client_order_id]
             if self._order_accounts.get(broker_order_id) != account_id:
-                raise KeyError(
-                    f"Order {broker_order_id} not found for account {account_id}"
-                )
+                raise KeyError(f"Order {broker_order_id} not found for account {account_id}")
             return self._orders_by_broker_id[broker_order_id]
 
         broker_order_id = uuid.uuid4().hex
@@ -130,11 +129,7 @@ class PaperBroker(Broker):
 
     def get_positions(self, account_id: str) -> Sequence[Position]:
         account_id = str(account_id)
-        return [
-            position
-            for (acct, _), position in self._positions.items()
-            if acct == account_id
-        ]
+        return [position for (acct, _), position in self._positions.items() if acct == account_id]
 
     def get_cash(self, account_id: str) -> float:
         account_id = str(account_id)
@@ -162,12 +157,21 @@ class PaperBroker(Broker):
             self._positions.pop(key, None)
         else:
             fill_price = status.avg_price if status.avg_price is not None else self._default_price
-            if position is None or current_qty == 0 or (current_qty > 0 > new_qty) or (current_qty < 0 < new_qty):
+            if (
+                position is None
+                or current_qty == 0
+                or (current_qty > 0 > new_qty)
+                or (current_qty < 0 < new_qty)
+            ):
                 avg_price = fill_price
             elif direction > 0 and new_qty > 0:
-                avg_price = self._weighted_average(position.avg_price, current_qty, fill_price, qty_delta)
+                avg_price = self._weighted_average(
+                    position.avg_price, current_qty, fill_price, qty_delta
+                )
             elif direction < 0 and new_qty < 0:
-                avg_price = self._weighted_average(position.avg_price, current_qty, fill_price, qty_delta)
+                avg_price = self._weighted_average(
+                    position.avg_price, current_qty, fill_price, qty_delta
+                )
             else:
                 avg_price = position.avg_price
 

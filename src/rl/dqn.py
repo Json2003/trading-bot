@@ -1,4 +1,5 @@
 """Reinforcement-learning helpers built around Stable Baselines3 PPO."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -94,7 +95,9 @@ class TradingEnv(gym.Env):
 
     def _get_metrics(self, price: float) -> TradingMetrics:
         portfolio_value = self.balance + self.position * price
-        return TradingMetrics(portfolio_value=portfolio_value, balance=self.balance, position=self.position)
+        return TradingMetrics(
+            portfolio_value=portfolio_value, balance=self.balance, position=self.position
+        )
 
     def step(self, action: int):  # type: ignore[override]
         if action not in (0, 1, 2):

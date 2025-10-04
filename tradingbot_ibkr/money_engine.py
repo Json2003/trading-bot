@@ -10,9 +10,18 @@ Functions
 These helpers are intentionally simple and should be adapted to real exchange
 contract sizes, minimums, and margin/leverage rules before live use.
 """
+
 from typing import Tuple
 
-def choose_position_size(balance: float, risk_pct: float, entry_price: float, stop_loss_price: float, leverage: float = 1.0, min_qty: float = 0.0) -> Tuple[float, float]:
+
+def choose_position_size(
+    balance: float,
+    risk_pct: float,
+    entry_price: float,
+    stop_loss_price: float,
+    leverage: float = 1.0,
+    min_qty: float = 0.0,
+) -> Tuple[float, float]:
     """Calculate quantity sized so that potential loss equals balance * risk_pct.
 
     Args:
@@ -40,7 +49,7 @@ def choose_position_size(balance: float, risk_pct: float, entry_price: float, st
         return 0.0, 0.0
 
     qty = risk_amount / per_unit_risk
-    # apply leverage: with leverage, notional exposure can be larger; quantity remains same but 
+    # apply leverage: with leverage, notional exposure can be larger; quantity remains same but
     # effective exposure = qty * entry_price * leverage. We return qty unchanged but caller can
     # interpret notional including leverage.
     notional = qty * entry_price
@@ -90,6 +99,7 @@ def round_qty(qty: float, step: float = 0.0001, min_qty: float = 0.0) -> float:
         return 0.0
     # round down to be safe
     import math
+
     steps = math.floor(qty / step)
     q = steps * step
     if q < min_qty:
@@ -100,4 +110,5 @@ def round_qty(qty: float, step: float = 0.0001, min_qty: float = 0.0) -> float:
 def round_price(price: float, tick: float = 0.01) -> float:
     """Round price to nearest tick (round down)."""
     import math
+
     return math.floor(price / tick) * tick

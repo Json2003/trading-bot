@@ -339,7 +339,11 @@ def _annualised_stats(returns: Iterable[float], periods_per_year: int = 252) -> 
         sortino = float("nan")
     else:
         downside_std = _std_dev(downside)
-        sortino = float("nan") if downside_std == 0 else math.sqrt(periods_per_year) * mean_ret / downside_std
+        sortino = (
+            float("nan")
+            if downside_std == 0
+            else math.sqrt(periods_per_year) * mean_ret / downside_std
+        )
     return sharpe, sortino
 
 
@@ -353,7 +357,9 @@ def _replace_nan_with_none(values: Dict[str, object]) -> Dict[str, object]:
     return cleaned
 
 
-def summarise(trades: List[TradeRecord], daily: List[DailyRecord], initial_capital: float) -> Dict[str, object]:
+def summarise(
+    trades: List[TradeRecord], daily: List[DailyRecord], initial_capital: float
+) -> Dict[str, object]:
     total_trades = len(trades)
     wins = sum(1 for trade in trades if trade.pnl > 0)
     total_pnl = sum(trade.pnl for trade in trades)
@@ -431,7 +437,9 @@ def _write_trades_csv(path: Path, trades: List[TradeRecord]) -> None:
             writer.writerow(row)
 
 
-def evaluate(trades_path: Path, benchmark_path: Path, out_dir: Path, initial_capital: float) -> EvaluationResults:
+def evaluate(
+    trades_path: Path, benchmark_path: Path, out_dir: Path, initial_capital: float
+) -> EvaluationResults:
     trades = load_trade_log(trades_path, initial_capital)
     benchmark = load_benchmark(benchmark_path)
     daily = build_daily_records(trades, benchmark, initial_capital)
@@ -447,10 +455,18 @@ def evaluate(trades_path: Path, benchmark_path: Path, out_dir: Path, initial_cap
 
 
 def parse_args(args: Optional[Sequence[str]] = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Evaluate live trading results against a benchmark.")
-    parser.add_argument("--trades", required=True, type=Path, help="Path to the trade log CSV file.")
-    parser.add_argument("--benchmark", required=True, type=Path, help="Path to the benchmark CSV file.")
-    parser.add_argument("--out", required=True, type=Path, help="Directory where reports will be written.")
+    parser = argparse.ArgumentParser(
+        description="Evaluate live trading results against a benchmark."
+    )
+    parser.add_argument(
+        "--trades", required=True, type=Path, help="Path to the trade log CSV file."
+    )
+    parser.add_argument(
+        "--benchmark", required=True, type=Path, help="Path to the benchmark CSV file."
+    )
+    parser.add_argument(
+        "--out", required=True, type=Path, help="Directory where reports will be written."
+    )
     parser.add_argument(
         "--initial-capital",
         type=float,

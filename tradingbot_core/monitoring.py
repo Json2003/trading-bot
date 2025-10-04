@@ -1,4 +1,5 @@
 """Monitoring utilities for recording metrics and dispatching alerts."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -6,9 +7,11 @@ from typing import Mapping, MutableMapping
 import logging
 
 import requests
+
 try:  # pragma: no cover - optional dependency guard
     from prometheus_client import CollectorRegistry, Counter
 except ModuleNotFoundError:  # pragma: no cover - executed when prometheus_client missing
+
     class CollectorRegistry:  # type: ignore[override]
         def __init__(self, *_: object, **__: object) -> None:
             pass
