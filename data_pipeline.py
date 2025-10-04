@@ -73,22 +73,46 @@ def canonicalize_ohlcv(df: pd.DataFrame, freq: str, session_tz: str = "UTC") -> 
     df["timestamp"] = utc_values
 
     valid_times = [ts for ts in utc_values if isinstance(ts, datetime)]
+    if len(valid_times) != len(df):
+        raise ValueError("timestamp column must contain datetime-like values")
     if not valid_times:
         raise ValueError("timestamp column must contain datetime-like values")
 
-    # Reindex to expected frequency and forward fill within the session
-    start, end = min(valid_times), max(valid_times)
-    full_range = pd.date_range(start=start, end=end, freq=freq, tz="UTC")
-    df = df.set_index("timestamp").reindex(full_range)
-    df = df.ffill()
-    df.index.name = "timestamp"
+    session_dates = [
+        ts.astimezone(session_tzinfo).date() if isinstance(ts, datetime) else None
+        for ts in utc_values
+    ]
+    df["_session_date"] = session_dates
 
-    records = []
-    for row in df.reset_index().to_dict("records"):
-        if "index" in row:
-            row["timestamp"] = row.pop("index")
-        records.append(row)
-    return pd.DataFrame(records)
+    grouped_records: dict = {}
+    for record in df.to_dict("records"):
+        key = record.get("_session_date")
+        grouped_records.setdefault(key, []).append(record)
+
+    output_records = []
+    for key in sorted(grouped_records):
+        rows = grouped_records[key]
+        if not rows:
+            continue
+        rows.sort(key=lambda row: row["timestamp"])
+        start = rows[0]["timestamp"]
+        end = rows[-1]["timestamp"]
+        session_df = pd.DataFrame(rows)
+        session_df = session_df.set_index("timestamp")
+        session_range = pd.date_range(start=start, end=end, freq=freq, tz="UTC")
+        reindexed = session_df.reindex(session_range)
+        reindexed = reindexed.ffill()
+        session_records = reindexed.reset_index().to_dict("records")
+        for row in session_records:
+            row.pop("_session_date", None)
+            if "index" in row:
+                row["timestamp"] = row.pop("index")
+            output_records.append(row)
+
+    if not output_records:
+        raise ValueError("timestamp column must contain datetime-like values")
+
+    return pd.DataFrame(output_records)
 
 
 def drop_anomalies(df: pd.DataFrame) -> pd.DataFrame:
