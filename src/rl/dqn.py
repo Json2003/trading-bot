@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
+import gymnasium as gym
 import numpy as np
 import pandas as pd
-import gymnasium as gym
 
 
 def _lowercase_columns(df: pd.DataFrame) -> pd.DataFrame:

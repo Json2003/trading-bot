@@ -8,7 +8,6 @@ from typing import Any, Literal
 import yaml
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 # The repository root is two levels up from this file (``src/settings.py``).
 ROOT = Path(__file__).resolve().parents[1]
 

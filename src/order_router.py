@@ -2,17 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from dataclasses import asdict, is_dataclass
 from typing import (
     Any,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    MutableMapping,
     Protocol,
-    Sequence,
-    Tuple,
     runtime_checkable,
 )
 
@@ -48,7 +42,7 @@ class UnknownBrokerError(RouterError):
 class SupportsToDict(Protocol):
     """Protocol describing objects that can be serialized via ``to_dict``."""
 
-    def to_dict(self) -> Dict[str, Any]:  # pragma: no cover - protocol definition
+    def to_dict(self) -> dict[str, Any]:  # pragma: no cover - protocol definition
         """Return a dictionary representation of the object."""
 
 
@@ -126,7 +120,7 @@ class OrderRouter:
     # ------------------------------------------------------------------
     # Operational helpers
     # ------------------------------------------------------------------
-    def _resolve_broker(self, broker_hint: str | None) -> Tuple[str, BrokerLike]:
+    def _resolve_broker(self, broker_hint: str | None) -> tuple[str, BrokerLike]:
         """Return the broker name and instance for ``broker_hint``.
 
         Falls back to the default broker when ``broker_hint`` is ``None``.
@@ -158,17 +152,17 @@ class OrderRouter:
         account_id: str,
         *,
         broker_hint: str | None = None,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """Return serialized positions for ``account_id`` from the resolved broker."""
 
         _, broker = self._resolve_broker(broker_hint)
         positions = broker.get_positions(account_id)
         return [self._serialize(position) for position in positions]
 
-    def accounts(self) -> List[Dict[str, Any]]:
+    def accounts(self) -> list[dict[str, Any]]:
         """Return metadata about the configured brokers and their accounts."""
 
-        payload: List[Dict[str, Any]] = []
+        payload: list[dict[str, Any]] = []
         for name, broker in self.brokers.items():
             accounts = self._collect_accounts(broker)
             payload.append(
@@ -184,7 +178,7 @@ class OrderRouter:
     # ------------------------------------------------------------------
     # Internal utilities
     # ------------------------------------------------------------------
-    def _collect_accounts(self, broker: BrokerLike) -> List[str]:
+    def _collect_accounts(self, broker: BrokerLike) -> list[str]:
         raw_accounts: Iterable[str]
         try:
             raw_accounts = broker.list_accounts()
@@ -200,7 +194,9 @@ class OrderRouter:
             return asdict(value)
         if isinstance(value, Mapping):
             return dict(value)
-        if isinstance(value, Iterable) and not isinstance(value, (str, bytes, bytearray)):
+        if isinstance(value, Iterable) and not isinstance(
+            value, str | bytes | bytearray
+        ):
             return [self._serialize(item) for item in value]
         return value
 

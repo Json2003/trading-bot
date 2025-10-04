@@ -29,15 +29,14 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import List, Sequence, Tuple
 
 import duckdb
 import numpy as np
 import pandas as pd
-
 from scripts.fetch_daily_trends import fetch_daily_trends_safe
 
 DATA_DIR = Path("data/daily")
@@ -55,8 +54,8 @@ class MarketSnapshot:
     asset_class: str
 
 
-def _ensure_timezone(values: Sequence) -> List[datetime]:
-    normalised: List[datetime] = []
+def _ensure_timezone(values: Sequence) -> list[datetime]:
+    normalised: list[datetime] = []
     for val in values:
         if isinstance(val, datetime):
             dt_val = val
@@ -74,8 +73,8 @@ def _ensure_timezone(values: Sequence) -> List[datetime]:
     return normalised
 
 
-def _load_existing_frames(base_dir: Path) -> List[MarketSnapshot]:
-    snapshots: List[MarketSnapshot] = []
+def _load_existing_frames(base_dir: Path) -> list[MarketSnapshot]:
+    snapshots: list[MarketSnapshot] = []
     for subdir, asset_class in (("equities", "equity"), ("crypto", "crypto")):
         path = base_dir / subdir
         if not path.exists():
@@ -127,7 +126,7 @@ def _synthetic_series(symbol: str, *, asset_class: str, periods: int = 30) -> Ma
     return MarketSnapshot(frame, symbol=symbol, asset_class=asset_class)
 
 
-def _bootstrap_snapshots(base_dir: Path) -> List[MarketSnapshot]:
+def _bootstrap_snapshots(base_dir: Path) -> list[MarketSnapshot]:
     existing = _load_existing_frames(base_dir)
     if existing:
         return existing
@@ -252,7 +251,7 @@ def build_market_trends(base_dir: Path = DATA_DIR) -> pd.DataFrame:
     if trend_frame.to_dict("records"):
         frames.append(trend_frame)
 
-    records: List[dict] = []
+    records: list[dict] = []
     for frame in frames:
         records.extend(frame.to_dict("records"))
 
@@ -323,7 +322,7 @@ def _write_duckdb(df: pd.DataFrame, db_path: Path) -> None:
             )
 
 
-def main() -> Tuple[Path, Path]:
+def main() -> tuple[Path, Path]:
     """Entry point used by the Makefile and manual executions."""
 
     combined = build_market_trends(DATA_DIR)
