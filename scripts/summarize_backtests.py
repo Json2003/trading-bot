@@ -3,6 +3,7 @@ import csv
 import json
 import math
 import statistics
+from collections.abc import Sequence as SequenceABC
 from pathlib import Path
 from typing import Iterable, List, Sequence
 
@@ -10,6 +11,39 @@ from typing import Iterable, List, Sequence
 def load_json(path: Path):
     with open(path, "r") as f:
         return json.load(f)
+
+
+NUMERIC_KEYS = ("equity", "balance", "value", "net_value")
+
+
+def _coerce_float(value):
+    """Best-effort conversion of a value that may represent a numeric amount."""
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, dict):
+        for key in NUMERIC_KEYS:
+            if key in value and isinstance(value[key], (int, float)):
+                return float(value[key])
+    return None
+
+
+def normalize_equity(equity: Sequence) -> List[float]:
+    """Return a list of floats from a variety of equity curve formats."""
+    if isinstance(equity, (int, float)):
+        iterable = [equity]
+    elif isinstance(equity, dict):
+        iterable = [equity]
+    elif isinstance(equity, (str, bytes)) or not isinstance(equity, SequenceABC):
+        iterable = []
+    else:
+        iterable = equity
+
+    normalized = []
+    for point in iterable:
+        coerced = _coerce_float(point)
+        if coerced is not None:
+            normalized.append(coerced)
+    return normalized
 
 
 def equity_to_returns(equity: Sequence[float]) -> List[float]:
@@ -42,14 +76,22 @@ def sortino(returns: Sequence[float], rf: float = 0.0) -> float:
     if not returns:
         return 0.0
     downside = [r for r in returns if r < 0]
-    dd = statistics.pstdev(downside) or 1e-12
     mu = statistics.mean(returns) - rf
+    if not downside:
+        return float("inf") if mu > 0 else 0.0
+    dd = statistics.pstdev(downside) or 1e-12
     return mu / dd
 
 
 def profit_factor(trades: Sequence[dict]) -> float:
-    gains = sum(t.get("pnl", 0) for t in trades if t.get("pnl", 0) > 0)
-    losses = sum(-t.get("pnl", 0) for t in trades if t.get("pnl", 0) < 0)
+    def pnl_value(trade: dict) -> float:
+        pnl = trade.get("pnl", 0)
+        coerced = _coerce_float(pnl)
+        return coerced if coerced is not None else 0.0
+
+    pnls = [pnl_value(t) for t in trades]
+    gains = sum(p for p in pnls if p > 0)
+    losses = sum(-p for p in pnls if p < 0)
     return (gains / losses) if losses > 0 else float("inf")
 
 
@@ -153,14 +195,19 @@ def summarize_backtests(args: argparse.Namespace) -> List[dict]:
         try:
             data = load_json(path)
             results = data.get("results", {})
-            equity = (
+            equity_raw = (
                 results.get("equity_curve")
                 or data.get("equity_curve")
                 or data.get("equity")
                 or data.get("equity_series")
                 or []
             )
-            trades = results.get("trades") or data.get("trades") or []
+            equity = normalize_equity(equity_raw)
+            trades_raw = results.get("trades") or data.get("trades") or []
+            if isinstance(trades_raw, (str, bytes)) or not isinstance(trades_raw, SequenceABC):
+                trades = []
+            else:
+                trades = list(trades_raw)
             start = results.get("start") or data.get("start")
             end = results.get("end") or data.get("end")
 
