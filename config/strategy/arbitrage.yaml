@@ -1,0 +1,6 @@
+primary_market_key: binance:BTC/USDT
+hedge_market_key: kraken:BTC/USDT
+trade_size: 0.25
+min_edge: 0.002
+fee_rate: 0.0005
+symbol: BTC/USDT

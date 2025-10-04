@@ -1,0 +1,17 @@
+base_currency: USD
+total_capital: 100000
+portfolio_limits:
+  max_symbol_notional: 120000
+strategies:
+  grid:
+    capital: 30000
+    max_position_notional: 60000
+  momentum:
+    capital: 25000
+    max_position_notional: 50000
+  dca:
+    capital: 20000
+    max_position_notional: 45000
+  arbitrage:
+    capital: 25000
+    max_position_notional: 75000

@@ -1,0 +1,7 @@
+symbol: BTC/USDT
+venue: binance
+market_key: binance:BTC/USDT
+fast_window: 12
+slow_window: 26
+threshold: 0.0015
+order_size: 0.05
