@@ -1,0 +1,7 @@
+symbol: BTC/USDT
+venue: binance
+market_key: binance:BTC/USDT
+lower_bound: 25000
+upper_bound: 35000
+levels: 9
+base_order_size: 0.02
