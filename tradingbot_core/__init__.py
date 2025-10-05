@@ -12,6 +12,7 @@ from .backtest_harness import BacktestHarness, BacktestContext, BacktestResult
 from .results import deps_fingerprint, save_results
 from .monitoring import AlertConfig, MonitoringHub
 from .strategy import Bar, OrderIntent, Strategy
+from .strategies import GridConfig, GridStrategy
 
 try:  # pragma: no cover - optional dependency guard
     from .reconciliation import (
@@ -43,6 +44,8 @@ __all__ = [
     "Bar",
     "OrderIntent",
     "Strategy",
+    "GridConfig",
+    "GridStrategy",
     "BacktestEvaluation",
     "BacktestProfile",
     "BacktestProfileNotFoundError",
