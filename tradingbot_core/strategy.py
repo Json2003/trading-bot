@@ -8,7 +8,7 @@ trading, and simulation environments.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Protocol
 
 
@@ -57,8 +57,18 @@ class OrderIntent:
     limit_price: Optional[float] = None
     """Limit price for limit orders; ignored for market orders."""
 
-    meta: Dict[str, Any] = field(default_factory=dict)
-    """Additional metadata useful for downstream processing."""
+    meta: Dict[str, Any] | None = None
+    """Additional metadata useful for downstream processing.
+
+    When left as ``None`` during construction the field is replaced with an
+    empty dict so each instance gets an independent container.
+    """
+
+    def __post_init__(self) -> None:
+        """Normalise metadata so every instance gets its own mapping."""
+
+        if self.meta is None:
+            self.meta = {}
 
 
 class Strategy(Protocol):
