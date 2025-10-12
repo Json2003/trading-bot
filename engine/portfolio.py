@@ -8,6 +8,7 @@ from collections import defaultdict
 import logging
 
 from tradingbot_ibkr.execution.broker_base import BrokerBase
+from tradingbot_ibkr.execution.broker_base import Position
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,14 @@ class OrderFill:
         return self.quantity * self.price
 
 
+@dataclass
+class _TrackedPosition:
+    """Internal helper tracking cost basis per strategy and symbol."""
+
+    quantity: float = 0.0
+    average_price: float = 0.0
+
+
 @dataclass(frozen=True)
 class StrategyState:
     """Current capital and exposures for a strategy."""
@@ -99,6 +108,9 @@ class Portfolio:
         self._allocations = {alloc.name: alloc for alloc in allocations}
         self._cash_balances = {alloc.name: alloc.capital for alloc in allocations}
         self._realised_pnl = defaultdict(float)
+        self._position_tracker: dict[str, dict[str, _TrackedPosition]] = {
+            alloc.name: {} for alloc in allocations
+        }
         self._broker = broker
         self._base_currency = base_currency
         self._log = log or logger
@@ -108,17 +120,71 @@ class Portfolio:
 
     def apply_fills(self, strategy: str, fills: Iterable[OrderFill]) -> None:
         cash = self._cash_balances[strategy]
+        positions = self._position_tracker[strategy]
+        realised = self._realised_pnl[strategy]
         for fill in fills:
             notional = fill.notional
             if fill.side.lower() == "buy":
                 cash -= notional + fill.fee
+                quantity_change = abs(fill.quantity)
             else:
                 cash += notional - fill.fee
-                self._realised_pnl[strategy] += notional - fill.fee
+                quantity_change = -abs(fill.quantity)
+
+            if quantity_change == 0:
+                continue
+
+            tracker = positions.get(fill.symbol)
+            if tracker is None:
+                tracker = _TrackedPosition()
+                positions[fill.symbol] = tracker
+
+            existing_qty = tracker.quantity
+            avg_price = tracker.average_price
+
+            if existing_qty == 0:
+                tracker.quantity = quantity_change
+                tracker.average_price = float(fill.price)
+            elif (existing_qty > 0 and quantity_change > 0) or (
+                existing_qty < 0 and quantity_change < 0
+            ):
+                total_qty = existing_qty + quantity_change
+                tracker.quantity = total_qty
+                tracker.average_price = (
+                    (
+                        abs(existing_qty) * avg_price
+                        + abs(quantity_change) * float(fill.price)
+                    )
+                    / abs(total_qty)
+                    if total_qty
+                    else 0.0
+                )
+            else:
+                closing_qty = min(abs(existing_qty), abs(quantity_change))
+                realised += closing_qty * (float(fill.price) - avg_price) * (
+                    1 if existing_qty > 0 else -1
+                )
+                remaining_qty = existing_qty + quantity_change
+                tracker.quantity = remaining_qty
+                if remaining_qty == 0:
+                    tracker.average_price = 0.0
+                    positions.pop(fill.symbol, None)
+                elif (existing_qty > 0 and remaining_qty > 0) or (
+                    existing_qty < 0 and remaining_qty < 0
+                ):
+                    tracker.average_price = avg_price
+                else:
+                    tracker.average_price = float(fill.price)
+
+        self._realised_pnl[strategy] = realised
         self._cash_balances[strategy] = cash
 
     def snapshot(self, mark_prices: Mapping[str, float] | None = None) -> PortfolioSnapshot:
-        positions = list(self._broker.list_positions())
+        broker_positions = {
+            position.symbol: position
+            for position in self._broker.list_positions()
+        }
+        mark_prices = dict(mark_prices or {})
 
         states: dict[str, StrategyState] = {}
         total_equity = 0.0
@@ -126,24 +192,27 @@ class Portfolio:
             cash = self._cash_balances[name]
             held_positions: list[PositionView] = []
             unrealised = 0.0
-            for position in positions:
-                mark = None
-                if mark_prices and position.symbol in mark_prices:
-                    mark = mark_prices[position.symbol]
-                elif position.average_price is not None:
-                    mark = position.average_price
-                if mark is None:
+            for symbol, tracker in self._position_tracker[name].items():
+                quantity = tracker.quantity
+                if quantity == 0:
                     continue
+                mark = mark_prices.get(symbol)
+                if mark is None:
+                    broker_position: Position | None = broker_positions.get(symbol)
+                    if broker_position and broker_position.average_price is not None:
+                        mark = broker_position.average_price
+                    else:
+                        mark = tracker.average_price
                 position_view = PositionView(
-                    symbol=position.symbol,
-                    quantity=position.quantity,
+                    symbol=symbol,
+                    quantity=quantity,
                     average_price=mark,
                 )
                 held_positions.append(position_view)
-                unrealised += (mark - (position.average_price or mark)) * position.quantity
+                unrealised += (mark - tracker.average_price) * quantity
 
             pnl = StrategyPnL(realised=self._realised_pnl[name], unrealised=unrealised)
-            equity = cash + sum(p.market_value for p in held_positions) + pnl.realised + pnl.unrealised
+            equity = cash + sum(p.market_value for p in held_positions)
             total_equity += equity
             states[name] = StrategyState(
                 allocation=allocation,
