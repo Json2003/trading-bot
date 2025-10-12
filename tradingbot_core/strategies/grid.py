@@ -45,6 +45,22 @@ class GridStrategy(Strategy):
         self._geometric = config.geometric
         self._prices = self._build_price_levels()
 
+    @staticmethod
+    def _format_level(level: float) -> str:
+        """Return a stable textual representation for grid levels.
+
+        ``str(0.1)`` style formatting can leak floating point artefacts like
+        ``"0.30000000000000004"`` which end up embedded in idempotency keys.
+        Trimming the representation keeps the keys predictable while
+        maintaining a trailing decimal digit so that legacy behaviour where
+        levels were rendered as ``"100.0"`` is preserved.
+        """
+
+        text = format(level, ".10f").rstrip("0")
+        if text.endswith("."):
+            text += "0"
+        return text
+
     def _build_price_levels(self) -> List[float]:
         if self._geometric:
             ratio = (self._upper / self._lower) ** (1 / (self._levels - 1))
@@ -66,7 +82,7 @@ class GridStrategy(Strategy):
             if price < level:
                 intents.append(
                     OrderIntent(
-                        idemp_key=f"grid-b-{level}",
+                        idemp_key=f"grid-b-{self._format_level(level)}",
                         symbol=self.symbol,
                         side="buy",
                         qty=self._qty,
@@ -77,7 +93,7 @@ class GridStrategy(Strategy):
             elif price > level:
                 intents.append(
                     OrderIntent(
-                        idemp_key=f"grid-s-{level}",
+                        idemp_key=f"grid-s-{self._format_level(level)}",
                         symbol=self.symbol,
                         side="sell",
                         qty=self._qty,
