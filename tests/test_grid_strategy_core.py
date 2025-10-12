@@ -27,6 +27,15 @@ def test_arithmetic_grid_orders(sample_bar: Bar) -> None:
     assert all(intent.type == "limit" for intent in intents)
 
 
+def test_idempotency_key_formatting(sample_bar: Bar) -> None:
+    config = GridConfig(symbol="BTC/USDT", lower=100, upper=200, levels=5, quantity=0.5, geometric=False)
+    strategy = GridStrategy(config)
+
+    intents = strategy.on_bar({"BTC/USDT": sample_bar})
+    id_keys = {intent.idemp_key for intent in intents}
+    assert id_keys == {"grid-b-175.0", "grid-b-200.0", "grid-s-100.0", "grid-s-125.0"}
+
+
 def test_geometric_grid_prices() -> None:
     config = GridConfig(symbol="ETH/USDT", lower=100, upper=800, levels=4, quantity=1, geometric=True)
     strategy = GridStrategy(config)
