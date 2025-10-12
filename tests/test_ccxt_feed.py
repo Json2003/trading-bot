@@ -50,6 +50,20 @@ def test_latest_bars_prefers_latest_timestamp_for_any_key() -> None:
     assert bars["kraken:BTC/USDT"].close == 21
 
 
+def test_latest_bars_updates_any_key_on_equal_timestamp() -> None:
+    exchange_a = DummyExchange({
+        "BTC/USDT": [[1, 10, 12, 9, 11, 100]],
+    })
+    exchange_b = DummyExchange({
+        "BTC/USDT": [[1, 20, 22, 19, 21, 200]],
+    })
+    feed = CCXTFeed({"binance": exchange_a, "kraken": exchange_b}, ["BTC/USDT"])
+
+    bars = feed.latest_bars()
+
+    assert bars["BTC/USDT"].close == 21
+
+
 def test_latest_bars_skips_failed_requests() -> None:
     ok_exchange = DummyExchange({"ETH/USDT": [[3, 30, 31, 29, 30.5, 300]]})
     failing_exchange = DummyExchange({}, raises=True)

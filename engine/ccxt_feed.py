@@ -87,11 +87,14 @@ class CCXTFeed:
                     )
                     continue
                 key = f"{ex_name}:{symbol}"
-                bars[key] = Bar(bar.ts, bar.open, bar.high, bar.low, bar.close, bar.volume)
+                converted_bar = Bar(
+                    bar.ts, bar.open, bar.high, bar.low, bar.close, bar.volume
+                )
+                bars[key] = converted_bar
 
                 existing = bars.get(symbol)
-                if existing is None or existing.ts < bar.ts:
-                    bars[symbol] = Bar(bar.ts, bar.open, bar.high, bar.low, bar.close, bar.volume)
+                if existing is None or existing.ts <= bar.ts:
+                    bars[symbol] = converted_bar
 
         return bars
 
