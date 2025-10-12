@@ -1,5 +1,6 @@
 """Execution agnostic orchestration primitives for the trading bot."""
 
+from .ccxt_feed import CCXTFeed
 from .datafeed import MarketData, MarketInstrument, UnifiedDataFeed
 from .portfolio import (
     OrderFill,
@@ -16,6 +17,7 @@ __all__ = [
     "MarketData",
     "MarketInstrument",
     "UnifiedDataFeed",
+    "CCXTFeed",
     "OrderFill",
     "Portfolio",
     "PortfolioSnapshot",
