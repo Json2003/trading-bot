@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 from enum import Enum
-from math import isclose
+from math import isclose, isfinite
 from typing import Any, Dict, Mapping, MutableMapping, Optional
 
 __all__ = [
@@ -271,5 +271,12 @@ class PortfolioBook:
         if strategy not in self.strategy_equity:
             raise KeyError(f"unknown strategy '{strategy}'")
 
-        self.strategy_equity[strategy] += pnl
+        if not isinstance(pnl, (int, float)):
+            raise TypeError("pnl must be a numeric value")
+
+        pnl_value = float(pnl)
+        if not isfinite(pnl_value):
+            raise ValueError("pnl must be a finite value")
+
+        self.strategy_equity[strategy] += pnl_value
         self._equity_curve.append(self.total_equity)

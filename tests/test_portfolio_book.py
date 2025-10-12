@@ -1,3 +1,4 @@
+import math
 from math import isclose
 
 import pytest
@@ -45,3 +46,20 @@ def test_credit_pnl_unknown_strategy():
 
     with pytest.raises(KeyError):
         book.credit_pnl("momentum", 100)
+
+
+def test_credit_pnl_rejects_non_numeric_values():
+    alloc = Allocation({"arbitrage": 0.5, "grid": 0.5})
+    book = PortfolioBook(5_000, alloc)
+
+    with pytest.raises(TypeError):
+        book.credit_pnl("arbitrage", "not-a-number")
+
+
+@pytest.mark.parametrize("invalid_pnl", [math.nan, math.inf, -math.inf])
+def test_credit_pnl_rejects_non_finite_numbers(invalid_pnl):
+    alloc = Allocation({"arbitrage": 0.5, "grid": 0.5})
+    book = PortfolioBook(5_000, alloc)
+
+    with pytest.raises(ValueError):
+        book.credit_pnl("arbitrage", invalid_pnl)
