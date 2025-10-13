@@ -5,7 +5,7 @@ import math
 import statistics
 from collections.abc import Sequence as SequenceABC
 from pathlib import Path
-from typing import Iterable, List, Sequence
+from typing import Iterable, List, Optional, Sequence
 
 
 def load_json(path: Path):
@@ -49,6 +49,25 @@ def normalize_equity(equity: Sequence) -> List[float]:
 def equity_to_returns(equity: Sequence[float]) -> List[float]:
     """Convert equity curve to simple period returns."""
     return [(equity[i] / equity[i - 1] - 1.0) for i in range(1, len(equity)) if equity[i - 1] > 0]
+
+
+def _normalize_ratio(value, assume_percent: bool = False) -> Optional[float]:
+    """Return a ratio in decimal form when possible.
+
+    Some backtest exports provide metrics either as decimals (0.12 == 12%)
+    or percentages (12.0 == 12%).  To make the summary resilient, we treat
+    anything whose absolute value is greater than 2 as a percentage and scale
+    it back to decimal form.  When ``assume_percent`` is true we always apply
+    this scaling when the value is greater than ``1``.
+    """
+
+    coerced = _coerce_float(value)
+    if coerced is None:
+        return None
+    threshold = 1.0 if assume_percent else 2.0
+    if abs(coerced) > threshold:
+        return coerced / 100.0
+    return coerced
 
 
 def max_drawdown(equity: Sequence[float]) -> float:
@@ -105,8 +124,13 @@ def annualized_return(returns: Sequence[float], periods_per_year: int) -> float:
 
 
 def pct(value: float, precision: int = 2) -> str:
-    if value is None or (isinstance(value, float) and math.isnan(value)):
+    if value is None:
         return "n/a"
+    if isinstance(value, float):
+        if math.isnan(value):
+            return "n/a"
+        if math.isinf(value):
+            return "∞%" if value > 0 else "-∞%"
     return f"{100 * value:.{precision}f}%"
 
 
@@ -197,30 +221,100 @@ def summarize_backtests(args: argparse.Namespace) -> List[dict]:
                 or []
             )
             equity = normalize_equity(equity_raw)
-            trades_raw = results.get("trades") or data.get("trades") or []
-            if isinstance(trades_raw, (str, bytes)) or not isinstance(trades_raw, SequenceABC):
-                trades = []
-            else:
-                trades = list(trades_raw)
+            trades_raw_candidates = [
+                results.get("trades"),
+                data.get("trades"),
+                results.get("trade_list"),
+                data.get("trade_list"),
+            ]
+            trades = []
+            for candidate in trades_raw_candidates:
+                if candidate is None:
+                    continue
+                if isinstance(candidate, dict) and "trades" in candidate:
+                    candidate = candidate["trades"]
+                if isinstance(candidate, (str, bytes)):
+                    continue
+                if isinstance(candidate, SequenceABC):
+                    trades = list(candidate)
+                    break
             start = results.get("start") or data.get("start")
             end = results.get("end") or data.get("end")
 
-            if len(equity) < 2:
-                print(f"[WARN] {path}: no equity curve found; skipping.")
-                continue
-
-            rets = equity_to_returns(equity)
-            total_pnl = equity[-1] / equity[0] - 1.0 if equity[0] else float("nan")
-            ann_pnl = annualized_return(rets, args.annualization)
-            mdd = max_drawdown(equity)
-            sh = sharpe(rets, rf_daily)
-            so = sortino(rets, rf_daily)
-            wr = (
-                sum(1 for t in trades if t.get("pnl", 0) > 0) / len(trades)
-                if trades
-                else float("nan")
+            metrics = (
+                results.get("performance_metrics")
+                or data.get("performance_metrics")
+                or {}
             )
-            pf = profit_factor(trades) if trades else float("nan")
+
+            if len(equity) >= 2 and equity[0]:
+                rets = equity_to_returns(equity)
+                total_pnl = equity[-1] / equity[0] - 1.0
+                ann_pnl = annualized_return(rets, args.annualization)
+                mdd = max_drawdown(equity)
+                sh = sharpe(rets, rf_daily)
+                so = sortino(rets, rf_daily)
+            else:
+                rets = []
+                total_pnl = ann_pnl = mdd = sh = so = float("nan")
+
+            total_pnl = (
+                total_pnl
+                if not math.isnan(total_pnl)
+                else _normalize_ratio(metrics.get("total_return_pct"), assume_percent=True)
+            )
+            if total_pnl is None:
+                total_pnl = _normalize_ratio(metrics.get("total_return"))
+
+            ann_pnl = (
+                ann_pnl
+                if not math.isnan(ann_pnl)
+                else _normalize_ratio(metrics.get("annualized_return_pct"), assume_percent=True)
+            )
+            if ann_pnl is None:
+                ann_pnl = _normalize_ratio(metrics.get("annualized_return"))
+
+            if math.isnan(mdd):
+                mdd = _normalize_ratio(metrics.get("max_drawdown_pct"), assume_percent=True)
+            if mdd is None:
+                mdd = _normalize_ratio(metrics.get("max_drawdown"))
+
+            if math.isnan(sh):
+                sh = _coerce_float(metrics.get("sharpe_ratio"))
+            if math.isnan(so):
+                so = _coerce_float(metrics.get("sortino_ratio"))
+            if sh is None:
+                sh = float("nan")
+            if so is None:
+                so = float("nan")
+
+            def trade_pnl(trade: dict) -> float:
+                pnl_value = _coerce_float(trade.get("pnl", 0))
+                return pnl_value if pnl_value is not None else 0.0
+
+            wr = (
+                sum(1 for t in trades if trade_pnl(t) > 0) / len(trades)
+                if trades
+                else None
+            )
+            if wr is None:
+                wr = _normalize_ratio(metrics.get("win_rate"))
+            if wr is None:
+                wr = _normalize_ratio(metrics.get("win_rate_pct"), assume_percent=True)
+
+            pf = profit_factor(trades) if trades else None
+            if pf is None:
+                pf = _coerce_float(metrics.get("profit_factor"))
+
+            trades_count = len(trades)
+            if not trades_count:
+                trades_metric = _coerce_float(metrics.get("total_trades"))
+                if trades_metric is not None:
+                    trades_count = int(trades_metric)
+            if not trades_count:
+                trades_metric = data.get("trades")
+                if isinstance(trades_metric, (int, float)):
+                    trades_count = int(trades_metric)
 
             rows.append(
                 {
@@ -233,7 +327,7 @@ def summarize_backtests(args: argparse.Namespace) -> List[dict]:
                     "sortino": so,
                     "win_rate": wr,
                     "profit_factor": pf,
-                    "trades": len(trades),
+                    "trades": trades_count,
                 }
             )
         except Exception as exc:  # pragma: no cover - defensive logging
@@ -264,11 +358,12 @@ def render_summary(rows: Sequence[dict], precision: int) -> None:
         print(
             f"  MaxDD: {pct(row['mdd'], precision)} | Sharpe: {row['sharpe']:.2f} | Sortino: {row['sortino']:.2f}"
         )
-        pf = (
-            f"| ProfitFactor: {row['profit_factor']:.2f}"
-            if isinstance(row["profit_factor"], float) and not math.isnan(row["profit_factor"])
-            else ""
-        )
+        pf = ""
+        if isinstance(row["profit_factor"], float):
+            if math.isinf(row["profit_factor"]):
+                pf = "| ProfitFactor: ∞"
+            elif not math.isnan(row["profit_factor"]):
+                pf = f"| ProfitFactor: {row['profit_factor']:.2f}"
         win_rate = pct(row["win_rate"], precision) if isinstance(row["win_rate"], float) else "n/a"
         print(f"  Win-rate: {win_rate} {pf}")
         print(f"  Trades: {row['trades']}\n")
