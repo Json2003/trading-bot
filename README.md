@@ -180,3 +180,10 @@ See [TRADING_READINESS.md](TRADING_READINESS.md) for detailed information.
 
 For guidance on data hygiene, modeling discipline, validation practices, and production defenses, see the [Systematic Trading Model Principles](docs/systematic_trading_principles.md) guide. It also lists practical thresholds and quick recipes you can adopt immediately.
 
+## Upgrade Roadmap
+
+The prioritized engineering backlog for the next wave of improvements lives in
+[docs/upgrade_plan.md](docs/upgrade_plan.md). It captures the enhanced
+backtesting, risk-sizing, arbitrage, and reconciler initiatives alongside the
+latest repository health check results.
+
