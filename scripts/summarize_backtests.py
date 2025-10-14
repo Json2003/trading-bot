@@ -192,6 +192,11 @@ def parse_args() -> argparse.Namespace:
         help="Optional path to write the summary as a CSV file.",
     )
     parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path to write a markdown summary.",
+    )
+    parser.add_argument(
         "--precision",
         type=int,
         default=2,
@@ -348,14 +353,15 @@ def summarize_backtests(args: argparse.Namespace) -> List[dict]:
     return rows
 
 
-def render_summary(rows: Sequence[dict], precision: int) -> None:
-    print("\n=== Backtest Summary ===")
+def format_summary_text(rows: Sequence[dict], precision: int) -> str:
+    lines = ["=== Backtest Summary ==="]
     for row in rows:
-        print(f"- {row['file']} {row['period']}")
-        print(
+        period = f" {row['period']}" if row["period"] else ""
+        lines.append(f"- {row['file']}{period}")
+        lines.append(
             f"  PnL: {pct(row['total_pnl'], precision)}  | Annualized: {pct(row['ann_pnl'], precision)}"
         )
-        print(
+        lines.append(
             f"  MaxDD: {pct(row['mdd'], precision)} | Sharpe: {row['sharpe']:.2f} | Sortino: {row['sortino']:.2f}"
         )
         pf = ""
@@ -365,8 +371,52 @@ def render_summary(rows: Sequence[dict], precision: int) -> None:
             elif not math.isnan(row["profit_factor"]):
                 pf = f"| ProfitFactor: {row['profit_factor']:.2f}"
         win_rate = pct(row["win_rate"], precision) if isinstance(row["win_rate"], float) else "n/a"
-        print(f"  Win-rate: {win_rate} {pf}")
-        print(f"  Trades: {row['trades']}\n")
+        lines.append(f"  Win-rate: {win_rate} {pf}")
+        lines.append(f"  Trades: {row['trades']}")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def format_summary_markdown(rows: Sequence[dict], precision: int) -> str:
+    lines = ["# Backtest Summary", ""]
+    for row in rows:
+        period = f" ({row['period']})" if row["period"] else ""
+        lines.append(f"## {row['file']}{period}")
+        lines.append(
+            " | ".join(
+                [
+                    f"PnL: {pct(row['total_pnl'], precision)}",
+                    f"Annualized: {pct(row['ann_pnl'], precision)}",
+                    f"MaxDD: {pct(row['mdd'], precision)}",
+                    f"Sharpe: {row['sharpe']:.2f}",
+                    f"Sortino: {row['sortino']:.2f}",
+                ]
+            )
+        )
+        win_rate = (
+            pct(row["win_rate"], precision)
+            if isinstance(row["win_rate"], float)
+            else "n/a"
+        )
+        if isinstance(row["profit_factor"], float):
+            if math.isinf(row["profit_factor"]):
+                profit_factor = "∞"
+            elif math.isnan(row["profit_factor"]):
+                profit_factor = "n/a"
+            else:
+                profit_factor = f"{row['profit_factor']:.2f}"
+        else:
+            profit_factor = "n/a"
+        lines.append(f"Win-rate: {win_rate} | ProfitFactor: {profit_factor}")
+        lines.append(f"Trades: {row['trades']}")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def render_summary(rows: Sequence[dict], precision: int) -> str:
+    summary = format_summary_text(rows, precision)
+    print(summary)
+    return summary
 
 
 def write_csv(rows: Sequence[dict], csv_path: Path) -> None:
@@ -395,6 +445,13 @@ def main() -> None:
     args = parse_args()
     rows = summarize_backtests(args)
     render_summary(rows, args.precision)
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        markdown = format_summary_markdown(rows, args.precision)
+        if not markdown.endswith("\n"):
+            markdown += "\n"
+        args.output.write_text(markdown, encoding="utf-8")
+        print(f"Markdown summary written to {args.output}")
     if args.csv:
         write_csv(rows, args.csv)
 
