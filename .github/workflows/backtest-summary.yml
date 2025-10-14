@@ -13,6 +13,10 @@ on:
       - "pyproject.toml"
       - "requirements*.txt"
 
+concurrency:
+  group: backtest-summary-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
