@@ -66,9 +66,30 @@ def run_backtest(args: argparse.Namespace) -> None:
     if args.max_bars:
         df = df.iloc[: args.max_bars].copy()
 
+    market_df = df.copy()
+
     strat_args = parse_key_value_args(args.strategy_args)
     strategy_fn = resolve_strategy(args.strategy)
-    df = strategy_fn(df, **strat_args)
+    df = strategy_fn(df.copy(), **strat_args)
+    if not isinstance(df, pd.DataFrame):  # pragma: no cover - defensive guard
+        raise TypeError("Strategy must return a pandas DataFrame")
+
+    if not df.index.equals(market_df.index):
+        df = df.reindex(market_df.index)
+
+    if "close" not in df.columns:
+        if "close" not in market_df.columns:
+            raise KeyError("Input data is missing required 'close' column")
+        df = df.copy()
+        df["close"] = market_df["close"]
+
+    signal_col = None
+    for candidate in ("signal", "signals"):
+        if candidate in df.columns:
+            signal_col = candidate
+            break
+    if signal_col is None:
+        raise KeyError("Strategy output must include a 'signal' or 'signals' column")
 
     positions = []
     equity = [float(args.notional)]
@@ -80,7 +101,9 @@ def run_backtest(args: argparse.Namespace) -> None:
     slip_fraction = args.slip_bps / 10_000 if args.slip_bps else 0.0
 
     for timestamp, row in df.iterrows():
-        signal = row.get("signal", 0)
+        signal = row.get(signal_col, 0)
+        if pd.isna(signal):
+            signal = 0
         price = float(row["close"])
         fees = fee_fraction * price
         slip = slip_fraction * price
