@@ -136,6 +136,7 @@ PY
           path: summary-latest.md
 
       - name: Commit summary to repo (optional)
+        if: github.event_name == 'push' && endsWith(github.ref, github.event.repository.default_branch)
         run: |
           set -euxo pipefail
           git config user.name "github-actions[bot]"
