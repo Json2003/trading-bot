@@ -11,7 +11,9 @@ on:
       - "strategies/**"
       - "config/**"
       - "backtest*.json"
+      - "**/backtest*.json"
       - "report_*.json"
+      - "**/report_*.json"
       - "pyproject.toml"
       - "requirements*.txt"
 
@@ -60,14 +62,14 @@ jobs:
       - name: Generate PnL summary (Markdown)
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          files=(backtest*.json report_*.json)
+          shopt -s nullglob globstar
+          mapfile -t files < <(printf '%s\n' backtest*.json report_*.json **/backtest*.json **/report_*.json | sort -u)
 
           # If you already have scripts/summarize_backtests.py, prefer it.
           if [ ${#files[@]} -gt 0 ]; then
             if [ -f scripts/summarize_backtests.py ]; then
-              python scripts/summarize_backtests.py --output summary-latest.md || \
-                python scripts/summarize_backtests.py | tee summary-latest.md
+              python scripts/summarize_backtests.py "${files[@]}" --output summary-latest.md || \
+                python scripts/summarize_backtests.py "${files[@]}" | tee summary-latest.md
             else
               # Inline fallback summarizer (handles common schemas)
               python - <<'PY' | tee summary-latest.md
@@ -82,7 +84,12 @@ def mdd(eq):
     return worst
 
 print("# Backtest Summary\n")
-paths = sorted(glob.glob("backtest*.json")+glob.glob("report_*.json"))
+paths = sorted(set(
+    glob.glob("backtest*.json")
+    + glob.glob("report_*.json")
+    + glob.glob("**/backtest*.json", recursive=True)
+    + glob.glob("**/report_*.json", recursive=True)
+))
 if not paths:
     print("_No backtest results found._")
 else:
