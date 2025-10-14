@@ -29,6 +29,12 @@
   Win-rate: 0.00% | ProfitFactor: ∞
   Trades: 0
 
+- backtest_portfolio_multi_strategy.json 1704067200000 → 1704927600000
+  PnL: -23.64%  | Annualized: -24.66%
+  MaxDD: 24.38% | Sharpe: -0.62 | Sortino: -0.62
+  Win-rate: n/a 
+  Trades: 0
+
 - report_BTC_USDT_2024-08-30.json
   PnL: 8.08%  | Annualized: 45.73%
   MaxDD: 4.85% | Sharpe: 0.11 | Sortino: 8.71
