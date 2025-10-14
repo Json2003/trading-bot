@@ -139,6 +139,13 @@ PY
           name: backtest-summary
           path: summary-latest.md
 
+      - name: Publish summary to job summary
+        if: always()
+        run: |
+          if [ -f summary-latest.md ]; then
+            cat summary-latest.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Commit summary to repo (optional)
         if: github.event_name == 'push' && endsWith(github.ref, github.event.repository.default_branch)
         run: |
