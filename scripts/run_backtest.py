@@ -288,16 +288,31 @@ def load_csv(path: str):
     if not os.path.exists(path):
         raise FileNotFoundError(path)
     df = pd.read_csv(path)
-    if "ts" in df.columns:
+
+    # Identify a timestamp column if present.  Many sample files ship with a
+    # ``timestamp`` header instead of ``ts``; fall back to common alternatives
+    # before requiring an already-indexed dataframe.
+    ts_col = None
+    for candidate in ("ts", "timestamp", "datetime", "date"):
+        if candidate in df.columns:
+            ts_col = candidate
+            break
+
+    if ts_col is not None:
         try:
-            df["ts"] = pd.to_datetime(df["ts"], utc=True)
+            df[ts_col] = pd.to_datetime(df[ts_col], utc=True)
         except Exception:
-            df["ts"] = pd.to_datetime(df["ts"], unit="ms", utc=True, errors="coerce")
-        df = df.set_index("ts")
+            # Some datasets use epoch integers.  ``errors='coerce'`` leaves
+            # unparsable rows as NaT so that downstream validation can surface
+            # issues instead of silently returning incorrect timestamps.
+            df[ts_col] = pd.to_datetime(
+                df[ts_col], unit="ms", utc=True, errors="coerce"
+            )
+        df = df.set_index(ts_col)
     elif df.index.name:
         df.index = pd.to_datetime(df.index, utc=True)
     else:
-        raise ValueError("CSV must include 'ts' column or datetime index")
+        raise ValueError("CSV must include a timestamp column or datetime index")
     cols = {c.lower(): c for c in df.columns}
     required = ["open", "high", "low", "close"]
     missing = [c for c in required if c not in cols]
