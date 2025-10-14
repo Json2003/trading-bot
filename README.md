@@ -19,6 +19,26 @@ install.bat
 
 This creates a `venv` directory and installs packages from `tradingbot_ibkr/requirements.txt`.
 
+### Manual virtual environment setup
+
+If you prefer to manage the environment yourself, create and activate it with
+the standard `venv` module:
+
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+On Windows PowerShell, activate with:
+
+```powershell
+venv\Scripts\Activate.ps1
+```
+
+This mirrors the automated scripts while giving you full control over when the
+environment is created and refreshed.
+
 ## Working inside GitHub Actions workspaces
 
 When running automation steps in GitHub Actions, the repository is checked out
