@@ -133,6 +133,23 @@ The command writes the trade blotter, equity curve, and metrics beneath
 to exercise the exact same workflow on one-minute candles.  A copy of the
 latest run is kept under `backtest/sample_results/` for reference.
 
+### Minimal CSV-only CLI
+
+If you prefer a lightweight wrapper that works with local CSV files only and
+skips the more advanced CCXT integration, use the helper script below:
+
+```bash
+python scripts/simple_backtest_cli.py \
+  --source csv --path backtest/sample_data/sample_ohlcv.csv \
+  --strategy_args fast=8 slow=34 trend_fast=55 trend_slow=144 \
+  --fees_bps 5 --slip_bps 2 --tp_bps 60 --sl_bps 40 \
+  --max_bars 18 --notional 1.0 --risk_per_trade 0.01 \
+  --out_prefix artifacts/sample_backtest_simple
+```
+
+The script writes the same trio of outputs—blotter, equity curve, and metrics—
+to the requested directory.
+
 ## Quick SMA Crossover Demo
 
 If you want to experiment with the third-party ``backtesting`` package, run the
