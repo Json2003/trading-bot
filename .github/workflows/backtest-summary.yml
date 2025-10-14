@@ -5,17 +5,11 @@ on:
   push:
     paths:
       - "scripts/**"
-      - "tradingbot_**/**"
       - "engine/**"
       - "strategies/**"
       - "config/**"
-      - "backtest/**"
-      - "pyproject.toml"
-      - "requirements*.txt"
-
-concurrency:
-  group: backtest-summary-${{ github.ref }}
-  cancel-in-progress: true
+      - "backtest*.json"
+      - "report_*.json"
 
 permissions:
   contents: write
@@ -25,137 +19,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install deps
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f pyproject.toml ]; then
-            pip install ".[dev]" || pip install .
-          elif [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          fi
-          # summarizer needs these even if not in your deps
           pip install numpy pandas
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run backtests (best-effort)
+      - name: Summarize backtests
         run: |
-          set -euxo pipefail
-          # Run whichever exists; ignore if absent
-          if [ -f scripts/multi_strategy_backtest.py ]; then
-            python scripts/multi_strategy_backtest.py || true
-          fi
-          if [ -f scripts/backtest_portfolio.py ]; then
-            python scripts/backtest_portfolio.py || true
-          fi
-
-      - name: Generate summary markdown
-        id: pnl
-        run: |
-          set -euo pipefail
           shopt -s nullglob
           files=(backtest*.json report_*.json)
-          echo "found=${#files[@]}" >> $GITHUB_OUTPUT
-
           if [ ${#files[@]} -eq 0 ]; then
-            cat > summary-latest.md <<'MD'
-# Backtest Summary
-
-_No backtest JSONs found in the repository (looking for `backtest*.json` or `report_*.json`)._
-Push backtest artifacts or ensure a backtest script writes results to the repo root.
-MD
+            echo "# Backtest Summary" > summary-latest.md
+            echo "_No backtest results found yet._" >> summary-latest.md
           else
-            # If your repo has scripts/summarize_backtests.py, use it; otherwise inline quick roll-up.
-            if [ -f scripts/summarize_backtests.py ]; then
-              if ! python scripts/summarize_backtests.py --output summary-latest.md; then
-                echo "Custom summarizer failed, falling back to inline summary."
-                python - <<'PY' | tee summary-latest.md
-import glob, json, statistics as st
-def pct(x): return f"{100*x:.2f}%"
-def eq_to_rets(eq): return [(eq[i]/eq[i-1]-1) for i in range(1,len(eq)) if eq[i-1]>0]
-def mdd(eq):
-    peak=0; m=0.0
-    for v in eq:
-        peak=max(peak,v)
-        if peak>0: m=max(m,1-v/peak)
-    return m
-print("# Backtest Summary\n")
-for fp in sorted(glob.glob("backtest*.json")+glob.glob("report_*.json")):
-    try:
-        with open(fp) as f: data=json.load(f)
-        res=data.get("results",data)
-        eq=res.get("equity_curve") or res.get("equity") or data.get("equity_series") or []
-        if len(eq)<2:
-            print(f"- {fp}: _no equity curve_\n"); continue
-        rets=eq_to_rets(eq)
-        total=eq[-1]/eq[0]-1
-        ann=((1+(st.mean(rets) if rets else 0))**252)-1
-        dd=mdd(eq)
-        sh=( (st.mean(rets) if rets else 0) / (st.pstdev(rets) or 1e-12) ) if rets else 0.0
-        print(f"## {fp}\nPnL: {pct(total)} | Annualized: {pct(ann)} | MaxDD: {pct(dd)} | Sharpe: {sh:.2f}\n")
-    except Exception as e:
-        print(f"- {fp}: _error parsing: {e}_\n")
-PY
-              fi
-            else
-              python - <<'PY' | tee summary-latest.md
-import glob, json, statistics as st
-def pct(x): return f"{100*x:.2f}%"
-def eq_to_rets(eq): return [(eq[i]/eq[i-1]-1) for i in range(1,len(eq)) if eq[i-1]>0]
-def mdd(eq):
-    peak=0; m=0.0
-    for v in eq:
-        peak=max(peak,v)
-        if peak>0: m=max(m,1-v/peak)
-    return m
-print("# Backtest Summary\n")
-for fp in sorted(glob.glob("backtest*.json")+glob.glob("report_*.json")):
-    try:
-        with open(fp) as f: data=json.load(f)
-        res=data.get("results",data)
-        eq=res.get("equity_curve") or res.get("equity") or data.get("equity_series") or []
-        if len(eq)<2:
-            print(f"- {fp}: _no equity curve_\n"); continue
-        rets=eq_to_rets(eq)
-        total=eq[-1]/eq[0]-1
-        ann=((1+(st.mean(rets) if rets else 0))**252)-1
-        dd=mdd(eq)
-        sh=( (st.mean(rets) if rets else 0) / (st.pstdev(rets) or 1e-12) ) if rets else 0.0
-        print(f"## {fp}\nPnL: {pct(total)} | Annualized: {pct(ann)} | MaxDD: {pct(dd)} | Sharpe: {sh:.2f}\n")
-    except Exception as e:
-        print(f"- {fp}: _error parsing: {e}_\n")
-PY
-            fi
+            python scripts/summarize_backtests.py | tee summary-latest.md
           fi
 
-      - name: Upload summary artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: backtest-summary
-          path: summary-latest.md
-
-      - name: Publish summary to job summary
-        if: always()
+      - name: Commit summary to repo
         run: |
-          if [ -f summary-latest.md ]; then
-            cat summary-latest.md >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-      - name: Commit summary to repo (optional)
-        if: github.event_name == 'push' && endsWith(github.ref, github.event.repository.default_branch)
-        run: |
-          set -euxo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add summary-latest.md || true
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-            exit 0
-          fi
-          git commit -m "chore: update backtest summary"
-          git push
+          git commit -m "update backtest summary" || true
+          git push || true
