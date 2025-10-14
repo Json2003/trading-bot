@@ -11,6 +11,7 @@ import os
 import sys
 import json
 import argparse
+import shlex
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -124,8 +125,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--strategy_args",
-        default="",
-        help="Comma-separated key=value pairs passed to strategy, e.g. fast=8,slow=21",
+        nargs="*",
+        default=(),
+        help=(
+            "Key=value pairs passed to the strategy. Accepts comma-separated or "
+            "whitespace-separated values, e.g. fast=8,slow=21 or fast=8 slow=21"
+        ),
     )
     p.add_argument("--tp", type=float, default=0.004, help="Take profit fraction (0.004=0.4%%)")
     p.add_argument("--sl", type=float, default=0.002, help="Stop loss fraction (0.002=0.2%%)")
@@ -422,7 +427,16 @@ def run_backtest(args: argparse.Namespace) -> dict:
         fn = getattr(_il.import_module(mod_name), fn_name)
         kwargs = {}
         if args.strategy_args:
-            for pair in args.strategy_args.split(","):
+            # Support comma and/or whitespace separated key=value assignments while
+            # preserving quoted values. This allows invocations such as
+            # ``--strategy_args fast=8 slow=34`` in addition to the legacy
+            # comma-delimited form.
+            if isinstance(args.strategy_args, str):
+                parts = [args.strategy_args]
+            else:
+                parts = list(args.strategy_args)
+            normalized = " ".join(parts).replace(",", " ")
+            for pair in shlex.split(normalized):
                 if not pair or "=" not in pair:
                     continue
                 k, v = pair.split("=", 1)
