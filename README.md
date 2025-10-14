@@ -113,9 +113,10 @@ and leaves the manifest in the chosen output directory.
 ## Sample backtest workflow
 
 For a quick smoke-test of the modern execution engine without relying on live
-data downloads, a synthetic OHLCV sample is bundled at
-`backtest/sample_data/sample_ohlcv.csv`.  Run a backtest of the default
-SMA-filtered strategy against this dataset with:
+data downloads, the repository bundles deterministic OHLCV samples at
+`backtest/sample_data/sample_ohlcv.csv` (hourly bars) and
+`backtest/sample_data/sample_ohlcv_1m.csv` (one-minute bars).  Run a backtest of
+the default SMA-filtered strategy against the hourly dataset with:
 
 ```
 python scripts/run_backtest.py \
@@ -128,8 +129,9 @@ python scripts/run_backtest.py \
 ```
 
 The command writes the trade blotter, equity curve, and metrics beneath
-`artifacts/`.  A copy of the latest run is kept under
-`backtest/sample_results/` for reference.
+`artifacts/`.  Swap the `--path` argument to `backtest/sample_data/sample_ohlcv_1m.csv`
+to exercise the exact same workflow on one-minute candles.  A copy of the
+latest run is kept under `backtest/sample_results/` for reference.
 
 ## Quick SMA Crossover Demo
 
