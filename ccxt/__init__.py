@@ -48,17 +48,22 @@ class Exchange:
         raise NotImplementedError
 
 
-def _dataset_path() -> Path:
-    """Return the path to the bundled sample OHLCV dataset."""
+def _dataset_path(timeframe: str) -> Path:
+    """Return the path to the bundled sample OHLCV dataset for ``timeframe``."""
 
-    return Path(__file__).resolve().parents[1] / "backtest" / "sample_data" / "sample_ohlcv.csv"
+    root = Path(__file__).resolve().parents[1] / "backtest" / "sample_data"
+    if timeframe == "1h":
+        return root / "sample_ohlcv.csv"
+    if timeframe == "1m":
+        return root / "sample_ohlcv_1m.csv"
+    raise ValueError(f"Stub exchange has no dataset for timeframe {timeframe!r}")
 
 
-def _load_sample_rows() -> List[tuple[int, float, float, float, float, float]]:
+def _load_sample_rows(timeframe: str) -> List[tuple[int, float, float, float, float, float]]:
     """Parse the canonical sample dataset into OHLCV tuples."""
 
     rows: List[tuple[int, float, float, float, float, float]] = []
-    with _dataset_path().open("r", encoding="utf-8") as handle:
+    with _dataset_path(timeframe).open("r", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         for rec in reader:
             dt = datetime.fromisoformat(rec["timestamp"])
@@ -85,8 +90,8 @@ def _transform(rows: Iterable[Sequence[float]], factor: float) -> List[List[floa
     return out
 
 
-_BASE_SERIES = _load_sample_rows()
-_SERIES_CACHE: Dict[str, List[List[float]]] = {}
+_BASE_SERIES = {tf: _load_sample_rows(tf) for tf in ("1h", "1m")}
+_SERIES_CACHE: Dict[tuple[str, str], List[List[float]]] = {}
 
 
 class _BinanceStub(Exchange):
@@ -104,16 +109,17 @@ class _BinanceStub(Exchange):
         since: int | None = None,
         limit: int = 1000,
     ) -> List[List[float]]:
-        if timeframe != "1h":
-            raise ValueError("Stub exchange only supports 1h candles")
+        if timeframe not in _BASE_SERIES:
+            raise ValueError("Stub exchange only supports 1h and 1m candles")
 
         if symbol not in self._SCALE:
             raise ValueError(f"Stub exchange has no data for symbol {symbol!r}")
 
-        if symbol not in _SERIES_CACHE:
-            _SERIES_CACHE[symbol] = _transform(_BASE_SERIES, self._SCALE[symbol])
+        key = (symbol, timeframe)
+        if key not in _SERIES_CACHE:
+            _SERIES_CACHE[key] = _transform(_BASE_SERIES[timeframe], self._SCALE[symbol])
 
-        series = _SERIES_CACHE[symbol]
+        series = _SERIES_CACHE[key]
         start = 0
         if since is not None:
             # ``since`` is inclusive in the real API.  We find the first index
