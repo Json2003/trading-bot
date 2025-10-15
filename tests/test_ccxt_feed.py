@@ -93,3 +93,31 @@ def test_requires_exchanges_and_symbols() -> None:
         CCXTFeed({}, ["BTC/USDT"])
     with pytest.raises(ValueError):
         CCXTFeed({"binance": DummyExchange({})}, [])
+
+
+def test_atr_and_history_are_updated() -> None:
+    exchange = DummyExchange({
+        "BTC/USDT": [[1, 10, 13, 9, 12, 100]],
+    })
+    feed = CCXTFeed({"binance": exchange}, ["BTC/USDT"], atr_window=3)
+
+    feed.latest_bars()
+
+    assert feed.atr("BTC/USDT") == 4.0
+    assert feed.history("BTC/USDT") == [(1, 10.0, 13.0, 9.0, 12.0, 100.0)]
+
+
+def test_history_limit_and_missing_symbol() -> None:
+    exchange = DummyExchange({"ETH/USDT": [[1, 1, 2, 0.5, 1.5, 10], [2, 1.5, 2.5, 1.0, 2.0, 20]]})
+    feed = CCXTFeed({"binance": exchange}, ["ETH/USDT"], atr_window=5)
+
+    feed.latest_bars()
+
+    assert feed.history("UNKNOWN") == []
+    assert feed.history("ETH/USDT", limit=1) == [(2, 1.5, 2.5, 1.0, 2.0, 20.0)]
+    assert feed.history("ETH/USDT", limit=0) == []
+
+
+def test_requires_positive_atr_window() -> None:
+    with pytest.raises(ValueError):
+        CCXTFeed({"binance": DummyExchange({})}, ["BTC/USDT"], atr_window=0)
