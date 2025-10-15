@@ -1,9 +1,6 @@
 name: Backtest Summary
-
 on:
-  # Manual run button in the Actions tab
   workflow_dispatch:
-  # Auto-run whenever code or result files change
   push:
     paths:
       - "scripts/**"
@@ -11,126 +8,31 @@ on:
       - "strategies/**"
       - "config/**"
       - "backtest*.json"
-      - "**/backtest*.json"
       - "report_*.json"
-      - "**/report_*.json"
-      - "pyproject.toml"
-      - "requirements*.txt"
-
-# Needed so the bot can commit summary-latest.md back to the repo
 permissions:
   contents: write
-
 jobs:
   summarize:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0          # not strictly required, but avoids shallow-clone edge cases
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: |
           python -m pip install --upgrade pip
-          # Your project deps (if present)
-          if [ -f pyproject.toml ]; then
-            pip install . || true
-          elif [ -f requirements.txt ]; then
-            pip install -r requirements.txt || true
-          fi
-          # Ensure summarizer deps are available
           pip install numpy pandas
-
-      # Optional: run your backtests if you want CI to produce fresh JSONs
-      - name: Run backtests (best-effort)
+          if [ -f pyproject.toml ]; then pip install . || true; fi
+      # (Optional) re-run your backtests here if desired
+      - name: Generate portfolio report
         run: |
-          set -euxo pipefail
-          if [ -f scripts/backtest_portfolio.py ]; then
-            python scripts/backtest_portfolio.py || true
-          fi
-          if [ -f scripts/multi_strategy_backtest.py ]; then
-            python scripts/multi_strategy_backtest.py || true
-          fi
-
-      - name: Generate PnL summary (Markdown)
-        run: |
-          set -euo pipefail
-          shopt -s nullglob globstar
-          mapfile -t files < <(printf '%s\n' backtest*.json report_*.json **/backtest*.json **/report_*.json | sort -u)
-
-          # If you already have scripts/summarize_backtests.py, prefer it.
-          if [ ${#files[@]} -gt 0 ]; then
-            if [ -f scripts/summarize_backtests.py ]; then
-              python scripts/summarize_backtests.py "${files[@]}" --output summary-latest.md || \
-                python scripts/summarize_backtests.py "${files[@]}" | tee summary-latest.md
-            else
-              # Inline fallback summarizer (handles common schemas)
-              python - <<'PY' | tee summary-latest.md
-import glob, json, statistics as st
-def pct(x): return f"{100*x:.2f}%"
-def rets(eq): return [(eq[i]/eq[i-1]-1) for i in range(1,len(eq)) if eq[i-1]>0]
-def mdd(eq):
-    peak=0; worst=0.0
-    for v in eq:
-        peak=max(peak,v)
-        if peak>0: worst=max(worst,1-v/peak)
-    return worst
-
-print("# Backtest Summary\n")
-paths = sorted(set(
-    glob.glob("backtest*.json")
-    + glob.glob("report_*.json")
-    + glob.glob("**/backtest*.json", recursive=True)
-    + glob.glob("**/report_*.json", recursive=True)
-))
-if not paths:
-    print("_No backtest results found._")
-else:
-    for p in paths:
-        try:
-            with open(p) as f: data=json.load(f)
-            res=data.get("results", data)
-            eq = res.get("equity_curve") or res.get("equity") or data.get("equity_series") or []
-            if len(eq) < 2:
-                print(f"## {p}\n_No equity curve found_\n"); continue
-            r = rets(eq)
-            total = eq[-1]/eq[0]-1
-            ann = ((1 + (st.mean(r) if r else 0))**252) - 1
-            dd  = mdd(eq)
-            sh  = ((st.mean(r) if r else 0) / (st.pstdev(r) or 1e-12)) if r else 0.0
-            print(f"## {p}\nPnL: {pct(total)} | Annualized: {pct(ann)} | MaxDD: {pct(dd)} | Sharpe: {sh:.2f}\n")
-        except Exception as e:
-            print(f"## {p}\n_Error parsing: {e}_\n")
-PY
-            fi
-          else
-            # No JSONs yet—still create a summary file so I can read it on request
-            printf "# Backtest Summary\n\n_No backtest results found yet._\n" > summary-latest.md
-          fi
-
-      - name: Upload summary artifact (for quick download from the run)
-        uses: actions/upload-artifact@v4
-        with:
-          name: backtest-summary
-          path: summary-latest.md
-
+          python scripts/portfolio_report.py | tee summary-latest.md
+      - uses: actions/upload-artifact@v4
+        with: { name: backtest-summary, path: summary-latest.md }
       - name: Commit summary to repo
         run: |
-          set -euxo pipefail
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add summary-latest.md || true
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-            exit 0
-          fi
-          git commit -m "chore: update backtest summary"
-          # If branch is protected, this push will no-op (that’s fine).
+          git commit -m "chore: update backtest summary" || true
           git push || true
