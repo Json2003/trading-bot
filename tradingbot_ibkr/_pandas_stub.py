@@ -1,14 +1,15 @@
-"""A tiny subset of pandas used for unit tests.
-This stub implements only the features required by the tests.
-"""
-from __future__ import annotations
+"""Minimal pandas-like fallback used only when real pandas isn't available.
 
-import csv
+This provides just enough surface area for unit tests that don't require the
+full pandas implementation. It's intentionally tiny and only used as a last
+resort in CI or minimal environments.
+"""
 from typing import Any, Dict, Iterable, List, Optional
+import csv
 
 
 class Series(list):
-    """Minimal list-like series supporting dtype attribute."""
+    """Minimal list-like series supporting a dtype property."""
 
     @property
     def dtype(self):
@@ -78,6 +79,7 @@ class DataFrame:
 
 # module level helpers
 
+
 def DataFrame_from_records(records: Iterable[Dict[str, Any]]) -> DataFrame:
     return DataFrame(list(records))
 
@@ -102,7 +104,6 @@ def read_csv(path: Any, parse_dates: Optional[List[str]] = None, index_col: Opti
             rows.append(new_row)
     return DataFrame(rows)
 
-DataFrame.from_records = staticmethod(DataFrame_from_records)
-# Ensure static attribute exists for type checkers
-setattr(DataFrame, "from_records", staticmethod(DataFrame_from_records))
 
+DataFrame.from_records = staticmethod(DataFrame_from_records)
+setattr(DataFrame, "from_records", staticmethod(DataFrame_from_records))

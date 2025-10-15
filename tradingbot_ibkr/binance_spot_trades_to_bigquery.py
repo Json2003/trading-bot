@@ -1,27 +1,27 @@
 from __future__ import annotations
+
 """Download Binance spot trades, upload to GCS as Parquet, and register a
 BigQuery external table.
 
 The script discovers USDT trading pairs listed in the Binance Vision daily
-trade index.  For each symbol and month in the requested date range it fetches
+trade index. For each symbol and month in the requested date range it fetches
 compressed CSV trade dumps, converts them to a normalized Parquet file, and
-uploads the file to the specified Google Cloud Storage bucket.  After data is
+uploads the file to the specified Google Cloud Storage bucket. After data is
 uploaded an external BigQuery table pointing at the bucket is created (or
 replaced).
 
 Example:
-    python binance_spot_trades_to_bigquery.py \
-            --bucket my-bucket \
-            --project my-project \
-            --dataset binance \
-            --table spot_trades \
-            --region us-central1
+  python binance_spot_trades_to_bigquery.py \
+      --bucket my-bucket \
+      --project my-project \
+      --dataset binance \
+      --table spot_trades \
+      --region us-central1
 """
 
 import argparse
 import calendar
 import io
-import os
 import re
 import zipfile
 from datetime import datetime
@@ -32,6 +32,7 @@ DAILY_INDEX = "/data/spot/daily/trades/"
 MONTHLY_TMPL = "/data/spot/monthly/trades/{symbol}/{symbol}-trades-{yyyy}-{mm}.zip"
 DAILY_TMPL = "/data/spot/daily/trades/{symbol}/{yyyy}/{mm}/{symbol}-trades-{yyyy}-{mm}-{dd}.zip"
 
+
 def month_iter(since: str, until: str) -> Iterable[Tuple[str, str]]:
     """Yield year/month strings between two YYYY-MM values inclusive."""
     sy, sm = [int(x) for x in since.split("-")]
@@ -39,45 +40,73 @@ def month_iter(since: str, until: str) -> Iterable[Tuple[str, str]]:
     y, m = sy, sm
     while (y, m) <= (ey, em):
         yield f"{y:04d}", f"{m:02d}"
-        """Download Binance spot trades, upload to GCS as Parquet, and register a
-        BigQuery external table.
+        if m == 12:
+            y += 1
+            m = 1
+        else:
+            m += 1
 
-        The script discovers USDT trading pairs listed in the Binance Vision daily
-        trade index.  For each symbol and month in the requested date range it fetches
-        compressed CSV trade dumps, converts them to a normalized Parquet file, and
-        uploads the file to the specified Google Cloud Storage bucket.  After data is
-        uploaded an external BigQuery table pointing at the bucket is created (or
-        replaced).
 
-        Example:
-            python binance_spot_trades_to_bigquery.py \
-                    --bucket my-bucket \
-                    --project my-project \
-                    --dataset binance \
-                    --table spot_trades \
-                    --region us-central1
-        """
-        from __future__ import annotations
+def month_days(yyyy: str, mm: str) -> Iterable[str]:
+    _, ndays = calendar.monthrange(int(yyyy), int(mm))
+    for d in range(1, ndays + 1):
+        yield f"{d:02d}"
 
-        import argparse
-        import calendar
-        import io
-        import os
-        import re
-        import zipfile
-        from datetime import datetime
-        from typing import Iterable, Tuple
 
-        BASE = "https://data.binance.vision"
-        DAILY_INDEX = "/data/spot/daily/trades/"
-        MONTHLY_TMPL = "/data/spot/monthly/trades/{symbol}/{symbol}-trades-{yyyy}-{mm}.zip"
-        DAILY_TMPL = "/data/spot/daily/trades/{symbol}/{yyyy}/{mm}/{symbol}-trades-{yyyy}-{mm}-{dd}.zip"
-    df.dropna(subset=["time"], inplace=True)
+def http_head(url: str) -> bool:
+    try:
+        import requests
+
+        r = requests.head(url, timeout=20)
+        return r.status_code == 200
+    except Exception:
+        return False
+
+
+def list_symbols_usdt() -> list[str]:
+    import requests
+
+    url = BASE + DAILY_INDEX
+    html = requests.get(url, timeout=60).text
+    syms = set(re.findall(r'href="/data/spot/daily/trades/([A-Z0-9]+)/"', html))
+    return sorted([s for s in syms if s.endswith("USDT")])
+
+
+def upload_parquet(df, bucket, symbol: str, year: str, month: str) -> None:
+    import pandas as pd
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    if df is None or df.empty:
+        return
+
+    df = df.copy()
+    df["symbol"] = symbol
+    # Binance trade dumps usually have a millisecond unix epoch column named 'time'.
+    # Try to convert robustly and drop malformed rows.
+    if "time" in df.columns:
+        df["time"] = pd.to_datetime(df["time"], unit="ms", utc=True, errors="coerce")
+        df.dropna(subset=["time"], inplace=True)
+
     for col in ("price", "qty"):
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
-    df.dropna(subset=["price", "qty"], inplace=True)
-    cols = [c for c in ["time", "price", "qty", "quoteQty", "isBuyerMaker", "isBestMatch", "tradeId", "symbol"] if c in df.columns]
+    df.dropna(subset=[c for c in ("price", "qty") if c in df.columns], inplace=True)
+
+    cols = [
+        c
+        for c in (
+            "time",
+            "price",
+            "qty",
+            "quoteQty",
+            "isBuyerMaker",
+            "isBestMatch",
+            "tradeId",
+            "symbol",
+        )
+        if c in df.columns
+    ]
     if not cols:
         return
     df = df[cols]
@@ -88,6 +117,7 @@ def month_iter(since: str, until: str) -> Iterable[Tuple[str, str]]:
     pq.write_table(table, buf)
     buf.seek(0)
     bucket.blob(path).upload_from_file(buf, content_type="application/octet-stream")
+
 
 def process_symbol(bucket, symbol: str, since: str, until: str) -> None:
     import pandas as pd
@@ -115,6 +145,7 @@ def process_symbol(bucket, symbol: str, since: str, until: str) -> None:
                         df = pd.read_csv(f)
                         upload_parquet(df, bucket, symbol, yyyy, mm)
 
+
 def create_external_table(project: str, dataset: str, table: str, bucket: str, region: str, connection: str) -> None:
     from google.cloud import bigquery
 
@@ -132,6 +163,7 @@ def create_external_table(project: str, dataset: str, table: str, bucket: str, r
     table_obj.external_data_configuration = external_config
     bq_client.create_table(table_obj, exists_ok=True)
 
+
 def ensure_gcs_connection(project: str, region: str, connection_id: str) -> None:
     """Create a BigQuery Cloud Resource connection if it does not already exist."""
     from google.api_core.exceptions import NotFound
@@ -147,6 +179,7 @@ def ensure_gcs_connection(project: str, region: str, connection_id: str) -> None
             cloud_resource=bigquery_connection_v1.Connection.CloudResourceProperties(),
         )
         client.create_connection(parent=parent, connection_id=connection_id, connection=conn)
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -174,6 +207,7 @@ def main() -> None:
         process_symbol(bucket, sym, args.since, args.until)
 
     create_external_table(args.project, args.dataset, args.table, args.bucket, args.region, args.connection)
+
 
 if __name__ == "__main__":
     main()

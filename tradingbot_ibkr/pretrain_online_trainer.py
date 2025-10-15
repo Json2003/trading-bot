@@ -7,13 +7,13 @@ Usage (PowerShell):
 python pretrain_online_trainer.py --files datafiles/*.csv --epochs 2 --max-samples 100000
 """
 import argparse
+from typing import Optional
 from pathlib import Path
 import pandas as pd
 from models.online_trainer import OnlineTrainer
 from river import ensemble, preprocessing, tree
 import json
 import time
-from tradingbot_ibkr.data import store
 from tradingbot_ibkr.data import store
 
 
@@ -91,7 +91,7 @@ def label_examples_with_horizon(df, examples, horizon=12, profit_pct=0.01):
     
 
 
-def run_pretrain(paths, epochs=1, max_samples=None, threshold=0.5, feature_cols=None, horizon=12, profit_pct=0.01, job_file: str = None):
+def run_pretrain(paths, epochs=1, max_samples=None, threshold=0.5, feature_cols=None, horizon=12, profit_pct=0.01, job_file: Optional[str] = None):
     """Programmatic pretrain entry. Writes progress/status to job_file (if provided).
 
     paths: list of CSV file paths

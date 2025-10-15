@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 import time
 
-from backtest_ccxt import aggressive_strategy_backtest
+from tradingbot_ibkr.backtest_ccxt import aggressive_strategy_backtest
 
 HERE = Path(__file__).resolve().parent
 

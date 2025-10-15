@@ -44,7 +44,10 @@ def create_job(job_id: str, job_file: str):
     conn.close()
 
 
-def update_job_status(job_id: str, status: str, progress: float = None, result: dict = None):
+from typing import Optional, Any
+
+
+def update_job_status(job_id: str, status: str, progress: Optional[float] = None, result: Optional[dict] = None):
     conn = _get_conn()
     cur = conn.cursor()
     now = datetime.now(timezone.utc).isoformat()

@@ -85,7 +85,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def load_csv(path: str):
-    pd = import_third_party('pandas')
+    from typing import Any
+    pd: Any = import_third_party('pandas')
     if not os.path.exists(path):
         raise FileNotFoundError(path)
     df = pd.read_csv(path)
@@ -123,7 +124,8 @@ def load_csv(path: str):
 
 def fetch_ccxt(exchange: str, symbol: str, timeframe: str, since: Optional[datetime], until: Optional[datetime]):
     ccxt = import_third_party('ccxt')
-    pd = import_third_party('pandas')
+    from typing import Any
+    pd: Any = import_third_party('pandas')
 
     ex_cls = getattr(ccxt, exchange)
     ex = ex_cls()

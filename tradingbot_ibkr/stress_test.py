@@ -7,14 +7,16 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any, Optional, Dict
+
 try:  # pragma: no cover - optional for tests
     import pandas as pd  # type: ignore
 except Exception:  # pragma: no cover
-    pd = None
+    pd: Optional[Any] = None
 try:  # pragma: no cover
     import numpy as np  # type: ignore
 except Exception:  # pragma: no cover
-    np = None
+    np: Optional[Any] = None
 
 
 def compute_metrics(df: pd.DataFrame):
@@ -50,7 +52,7 @@ def run_report(annotated_csv: Path, out_json: Path):
         df["ts"] = pd.to_datetime(df.iloc[:, 0])
 
     events = [None] + sorted(df["event_name"].dropna().unique().tolist())
-    report = {"events": []}
+    report: Dict[str, Any] = {"events": []}
 
     # overall
     overall = compute_metrics(df)

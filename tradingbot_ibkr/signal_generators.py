@@ -7,7 +7,7 @@ that can be used with the backtesting framework.
 
 import sys
 import importlib
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 # Import third-party pandas properly to avoid local file shadowing
 def import_third_party(mod_name: str):
@@ -21,8 +21,8 @@ def import_third_party(mod_name: str):
     finally:
         sys.path = original
 
-pd = import_third_party('pandas')
-np = import_third_party('numpy')
+pd: Any = import_third_party('pandas')
+np: Any = import_third_party('numpy')
 
 def generate_signals(df) -> 'pd.DataFrame':
     """
@@ -125,7 +125,7 @@ def generate_breakout_signals(df,
     
     return out[["signals", "rolling_high", "rolling_low"]]
 
-def get_signal_generator(strategy: str = "sma_cross") -> callable:
+def get_signal_generator(strategy: str = "sma_cross") -> Any:
     """
     Get signal generator function by name.
     

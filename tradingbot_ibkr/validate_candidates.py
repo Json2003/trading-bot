@@ -10,7 +10,7 @@ import math
 
 import pandas as pd
 
-from backtest_ccxt import aggressive_strategy_backtest
+from tradingbot_ibkr.backtest_ccxt import aggressive_strategy_backtest
 
 HERE = Path(__file__).resolve().parent
 

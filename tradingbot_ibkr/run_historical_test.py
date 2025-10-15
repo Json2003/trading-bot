@@ -50,7 +50,7 @@ def run(symbol='BTC/USDT'):
         print('No data fetched')
         return
 
-    from backtest_ccxt import aggressive_strategy_backtest
+    from tradingbot_ibkr.backtest_ccxt import aggressive_strategy_backtest
     stats = aggressive_strategy_backtest(df)
     out_path = f'report_{symbol.replace("/","_")}_{start.date()}.json'
     with open(out_path, 'w') as f:

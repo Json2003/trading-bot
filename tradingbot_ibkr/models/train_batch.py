@@ -210,8 +210,8 @@ class OptimizedModelTrainer:
         self.use_optuna = use_optuna and optuna_available
         self.n_trials = n_trials
         self.cv_folds = cv_folds
-        self.results = {}
-        self.best_models = {}
+        self.results: Dict[str, Any] = {}
+        self.best_models: Dict[str, Any] = {}
         
     def optimize_hyperparameters_optuna(self, model_name: str, X: pd.DataFrame, y: pd.Series) -> Dict:
         """Optimize hyperparameters using Optuna."""
