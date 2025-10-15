@@ -11,7 +11,7 @@ This script provides advanced backtesting capabilities including:
 import os
 import logging
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any, TYPE_CHECKING
 from dotenv import load_dotenv
 import ccxt
 import pandas as pd
@@ -33,17 +33,22 @@ try:
     from .money_engine import choose_position_size, fixed_fractional, round_qty, round_price
 except ImportError:
     logger.warning("Money engine not available, using simplified position sizing")
-    def choose_position_size(balance, risk_pct, entry_price, stop_price, leverage=1.0, min_qty=0.0):
-        return balance * risk_pct / abs(entry_price - stop_price), balance * risk_pct
+    def choose_position_size(balance: float, risk_pct: float, entry_price: float, stop_loss_price: float, leverage: float = 1.0, min_qty: float = 0.0) -> Tuple[float, float]:
+        # simplistic fallback: return qty estimate and notional
+        qty = balance * (risk_pct if risk_pct else 0.0) / (abs(entry_price - stop_loss_price) if entry_price != stop_loss_price else 1.0)
+        return qty, balance * (risk_pct if risk_pct else 0.0)
 
-try:
-    from .models.online_trainer import OnlineTrainer
-except ImportError:
-    logger.warning("Online trainer not available, adaptive learning disabled")
-    class OnlineTrainer:
-        def load(self): pass
-        def predict_proba(self, features): return 0.5
-        def learn_one(self, features, outcome): pass
+if TYPE_CHECKING:
+    from .models.online_trainer import OnlineTrainer  # type: ignore
+else:
+    try:
+        from .models.online_trainer import OnlineTrainer  # type: ignore
+    except ImportError:
+        logger.warning("Online trainer not available, adaptive learning disabled")
+        class OnlineTrainer:  # runtime fallback
+            def load(self) -> None: pass
+            def predict_proba(self, features: Any) -> float: return 0.5
+            def learn_one(self, features: Any, outcome: Any) -> None: pass
 
 load_dotenv()
 EXCHANGE = os.getenv('EXCHANGE', 'binance')
@@ -578,16 +583,27 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
                 if last_features is not None and last_outcome is not None:
                     trainer.learn_one(last_features, last_outcome)
                 
-                # Reset position
-                position = None
-                entry_idx = None
-                entry_price = None
-                holding = 0
-                last_features = None
-                last_outcome = None
-                
-                if enable_logging and len(detailed_trades) <= 5:  # Log first few trades in detail
-                    logger.info(f"EXIT #{len(detailed_trades)}: {timestamp} @ {exit_price:.4f}, {exit_type}, PnL={trade_pnl:.2f} ({trade_pnl/(qty*entry_price)*100:.2f}%), hold={holding} bars")
+                    # Prepare values for logging before resetting
+                    prev_entry_price = entry_price
+                    prev_qty = qty
+
+                    # Reset position
+                    position = None
+                    entry_idx = None
+                    entry_price = None
+                    holding = 0
+                    last_features = None
+                    last_outcome = None
+
+                    if enable_logging and len(detailed_trades) <= 5:  # Log first few trades in detail
+                        try:
+                            if prev_qty is None or prev_entry_price is None or prev_qty == 0 or prev_entry_price == 0:
+                                pnl_pct = 0.0
+                            else:
+                                pnl_pct = (float(trade_pnl) / (float(prev_qty) * float(prev_entry_price))) * 100
+                        except Exception:
+                            pnl_pct = 0.0
+                        logger.info(f"EXIT #{len(detailed_trades)}: {timestamp} @ {exit_price:.4f}, {exit_type}, PnL={trade_pnl:.2f} ({pnl_pct:.2f}%), hold={holding} bars")
     
     # Calculate final performance metrics
     execution_time = time.time() - start_time

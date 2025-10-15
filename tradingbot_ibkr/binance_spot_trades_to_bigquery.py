@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Download Binance spot trades, upload to GCS as Parquet, and register a
 BigQuery external table.
 
@@ -9,14 +10,13 @@ uploaded an external BigQuery table pointing at the bucket is created (or
 replaced).
 
 Example:
-  python binance_spot_trades_to_bigquery.py \
-      --bucket my-bucket \
-      --project my-project \
-      --dataset binance \
-      --table spot_trades \
-      --region us-central1
+    python binance_spot_trades_to_bigquery.py \
+            --bucket my-bucket \
+            --project my-project \
+            --dataset binance \
+            --table spot_trades \
+            --region us-central1
 """
-from __future__ import annotations
 
 import argparse
 import calendar
@@ -39,40 +39,39 @@ def month_iter(since: str, until: str) -> Iterable[Tuple[str, str]]:
     y, m = sy, sm
     while (y, m) <= (ey, em):
         yield f"{y:04d}", f"{m:02d}"
-        if m == 12:
-            y += 1
-            m = 1
-        else:
-            m += 1
+        """Download Binance spot trades, upload to GCS as Parquet, and register a
+        BigQuery external table.
 
-def month_days(yyyy: str, mm: str) -> Iterable[str]:
-    _, ndays = calendar.monthrange(int(yyyy), int(mm))
-    for d in range(1, ndays + 1):
-        yield f"{d:02d}"
+        The script discovers USDT trading pairs listed in the Binance Vision daily
+        trade index.  For each symbol and month in the requested date range it fetches
+        compressed CSV trade dumps, converts them to a normalized Parquet file, and
+        uploads the file to the specified Google Cloud Storage bucket.  After data is
+        uploaded an external BigQuery table pointing at the bucket is created (or
+        replaced).
 
-def http_head(url: str) -> bool:
-    try:
-        import requests
-        r = requests.head(url, timeout=20)
-        return r.status_code == 200
-    except Exception:
-        return False
+        Example:
+            python binance_spot_trades_to_bigquery.py \
+                    --bucket my-bucket \
+                    --project my-project \
+                    --dataset binance \
+                    --table spot_trades \
+                    --region us-central1
+        """
+        from __future__ import annotations
 
-def list_symbols_usdt() -> list[str]:
-    import requests
-    url = BASE + DAILY_INDEX
-    html = requests.get(url, timeout=60).text
-    syms = set(re.findall(r'href="/data/spot/daily/trades/([A-Z0-9]+)/"', html))
-    return sorted([s for s in syms if s.endswith("USDT")])
+        import argparse
+        import calendar
+        import io
+        import os
+        import re
+        import zipfile
+        from datetime import datetime
+        from typing import Iterable, Tuple
 
-def upload_parquet(df, bucket, symbol: str, year: str, month: str) -> None:
-    import pandas as pd
-    import pyarrow as pa
-    import pyarrow.parquet as pq
-
-    df = df.copy()
-    df["symbol"] = symbol
-    df["time"] = pd.to_datetime(df["time"], unit="ms", utc=True, errors="coerce")
+        BASE = "https://data.binance.vision"
+        DAILY_INDEX = "/data/spot/daily/trades/"
+        MONTHLY_TMPL = "/data/spot/monthly/trades/{symbol}/{symbol}-trades-{yyyy}-{mm}.zip"
+        DAILY_TMPL = "/data/spot/daily/trades/{symbol}/{yyyy}/{mm}/{symbol}-trades-{yyyy}-{mm}-{dd}.zip"
     df.dropna(subset=["time"], inplace=True)
     for col in ("price", "qty"):
         if col in df.columns:

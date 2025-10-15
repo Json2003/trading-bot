@@ -128,36 +128,35 @@ def main():
         files = files[:args.limit_files]
     if not files:
         print('No files found in', inp)
-        sys.exit(0)
-    # compute size estimate for progress
-    total_bytes = sum([p.stat().st_size for p in files])
-    processed_bytes = 0
-    processed_lock = threading.Lock()
-    # determine worker count: CLI flag > env var > default 4
-    if args.workers is not None:
-        max_workers = max(1, int(args.workers))
-    else:
-        try:
-            max_workers = int(os.getenv('INGEST_WORKERS', '4'))
-        except Exception:
-            max_workers = 4
-    # if user passed via env var INGEST_WORKERS it will be used; otherwise default 4
+        #!/usr/bin/env python3
+        """Ingest Binance trade dump files (tick-level) and optionally aggregate to OHLCV.
 
-    state_path = inp / args.state_file
-    processed = set()
-    if state_path.exists():
-        try:
-            processed = set(json.loads(state_path.read_text()))
-        except Exception:
-            processed = set()
+        Usage examples (PowerShell):
+            # parse all CSV/JSON files in a directory, save ticks and 1m OHLCV
+            python binance_trade_dump_ingest.py --input-dir ./downloads --symbol BTC/USDT --out-dir ./datafiles --to-ohlcv 1m
 
-    # configure logging
-    logger = logging.getLogger('binance_ingest')
-    logger.setLevel(logging.INFO)
-    fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    if args.log_file:
-        fh = logging.FileHandler(args.log_file)
-        fh.setFormatter(fmt)
+            # just normalize ticks and append
+            python binance_trade_dump_ingest.py --input-dir ./downloads --symbol BTC/USDT
+
+        The script supports CSV or JSON-lines where each record is a trade with at least
+        timestamp, price, and quantity fields. It will attempt to auto-detect common
+        Binance field names (e.g., 'tradeTime','time','T' for timestamp; 'price','p' for
+        price; 'qty','q','quantity' for quantity).
+        """
+        import argparse
+        from pathlib import Path
+        import csv
+        import json
+        import sys
+        from typing import List
+        import hashlib
+        import os
+
+        # use the very small local pandas stub if the real library is missing
+        try:  # pragma: no cover - exercised in tests via stub
+                import pandas as pd  # type: ignore
+        except Exception:  # pragma: no cover - if pandas is truly missing
+                import pandas as pd  # type: ignore
         logger.addHandler(fh)
     else:
         sh = logging.StreamHandler(sys.stdout)

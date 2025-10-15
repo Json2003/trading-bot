@@ -15,21 +15,52 @@ import time
 import json
 import logging
 from pathlib import Path
-from typing import Optional, Dict, List, Union
+from typing import Any, Optional, Dict, List, Union
 from datetime import datetime, timedelta
 import pandas as pd
 
-# Enhanced networking imports
+# Networking imports: declare names first to keep types stable for mypy
+requests: Any = None
+HTTPAdapter: Any = None
+RequestException: Any = None
+ConnectionError: Any = None
+Timeout: Any = None
+HTTPError: Any = None
+TooManyRedirects: Any = None
+Retry: Any = None
+requests_available = False
 try:
-    import requests
-    from requests.adapters import HTTPAdapter
-    from requests.exceptions import (
-        RequestException, ConnectionError, Timeout, 
-        HTTPError, TooManyRedirects
-    )
-    from urllib3.util.retry import Retry
+    import importlib
+    _req = importlib.import_module('requests')
+    requests = _req
+    # import names we use; if absent, keep as Any
+    try:
+        from requests.adapters import HTTPAdapter as _HTTPAdapter  # type: ignore
+        HTTPAdapter = _HTTPAdapter
+    except Exception:
+        HTTPAdapter = None
+    try:
+        from requests.exceptions import (
+            RequestException as _RequestException,
+            ConnectionError as _ConnectionError,
+            Timeout as _Timeout,
+            HTTPError as _HTTPError,
+            TooManyRedirects as _TooManyRedirects,
+        )
+        RequestException = _RequestException
+        ConnectionError = _ConnectionError
+        Timeout = _Timeout
+        HTTPError = _HTTPError
+        TooManyRedirects = _TooManyRedirects
+    except Exception:
+        RequestException = ConnectionError = Timeout = HTTPError = TooManyRedirects = None
+    try:
+        from urllib3.util.retry import Retry as _Retry  # type: ignore
+        Retry = _Retry
+    except Exception:
+        Retry = None
     requests_available = True
-except ImportError:
+except Exception:
     requests_available = False
 
 # Configure logging

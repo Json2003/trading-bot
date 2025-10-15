@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
+#!/usr/bin/env python3
 """
-binance_vision_full_download.py — Download historical trade CSVs for one symbol
+binance_vision_full_download.py  Download historical trade CSVs for one symbol
 from Binance's official archive (https://data.binance.vision).
 
 Example:
-  python binance_vision_full_download.py --symbol BTCUSDT --since 2017-01 --until 2025-08 --out ./raw_trades
+    python binance_vision_full_download.py --symbol BTCUSDT --since 2017-01 --until 2025-08 --out ./raw_trades
 """
 
 import argparse
@@ -19,13 +20,22 @@ from dateutil.relativedelta import relativedelta
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from tqdm import tqdm
+try:
+    from tqdm import tqdm
+except Exception:
+    # fallback dummy
+    class _Dummy:
+        def __init__(self, *a, **k):
+            pass
+        def update(self, n):
+            pass
+        def close(self):
+            pass
+    tqdm = _Dummy
 
 BASE = "https://data.binance.vision"
 SPOT_MONTHLY = "/data/spot/monthly/trades/{symbol}/{symbol}-trades-{yyyy}-{mm}.zip"
 SPOT_DAILY   = "/data/spot/daily/trades/{symbol}/{yyyy}/{mm}/{symbol}-trades-{yyyy}-{mm}-{dd}.zip"
-
-
 def yyyymm_iter(start, end):
     cur = datetime.strptime(start, "%Y-%m")
     last = datetime.strptime(end, "%Y-%m")

@@ -10,6 +10,7 @@ import requests
 import smtplib
 from email.message import EmailMessage
 from datetime import datetime
+from typing import Dict, Any, List
 
 
 def send_webhook(alerts):
@@ -49,14 +50,7 @@ def send_email(alerts, subject='TradingBot Alerts'):
         return False
 
 
-def notify(alerts):
-    sent = False
-    if send_webhook(alerts):
-        sent = True
-    if send_email(alerts):
-        sent = True
-    # Slack can be covered by webhook
-    return sent
+# note: unified notify implementation is below (supports Slack/webhook/email)
 
 
 def send_slack_block(job_alert: dict):
@@ -74,8 +68,11 @@ def send_slack_block(job_alert: dict):
     model_version = result.get('summary', {}).get('model_version') if isinstance(result.get('summary'), dict) else None
     log_path = result.get('log_path')
 
-    blocks = [
-        {"type": "section", "text": {"type": "mrkdwn", "text": f"*Job {job_id}* - Status: *{status.upper()}*"}},
+    job_id_str = str(job_id) if job_id is not None else 'unknown'
+    status_str = str(status).upper() if status is not None else 'UNKNOWN'
+    blocks: List[Dict[str, Any]] = [
+        {"type": "section", "text": {"type": "mrkdwn", "text": f"*Job:* {job_id}"}},
+        {"type": "section", "text": {"type": "mrkdwn", "text": f"*Status:* {status}"}},
     ]
     if model_version:
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"Model version: `{model_version}`"}})
@@ -84,6 +81,7 @@ def send_slack_block(job_alert: dict):
     if log_path:
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"Log: `{log_path}`"}})
 
+    job_alert: Dict[str, Any] = {"blocks": blocks}
     payload = {"blocks": blocks}
     try:
         r = requests.post(url, json=payload, timeout=10)
@@ -101,7 +99,7 @@ def notify(alerts):
     if isinstance(alerts, dict) and 'job_id' in alerts:
         if send_slack_block(alerts):
             sent = True
-    # generic webhook
+    # generic webhook/email
     if send_webhook(alerts):
         sent = True
     if send_email(alerts):
