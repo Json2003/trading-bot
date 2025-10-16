@@ -1,4 +1,5 @@
 """Centralised logging helpers used across services and scripts."""
+
 from __future__ import annotations
 
 import json
@@ -43,6 +44,7 @@ class JsonFormatter(Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         payload: dict[str, Any] = {
+            "timestamp": self.formatTime(record),
             "level": record.levelname,
             "name": record.name,
             "msg": record.getMessage(),

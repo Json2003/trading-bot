@@ -7,6 +7,7 @@ import math
 
 try:  # pragma: no cover - exercised in tests via fallback
     from river import linear_model, preprocessing  # type: ignore
+
     _HAS_RIVER = True
 except Exception:  # pragma: no cover - offline environments
     _HAS_RIVER = False
@@ -51,8 +52,10 @@ class _FallbackPipeline:
         self.model.learn_one(x, y)
         return self
 
-MODEL_DIR = Path(__file__).resolve().parents[1] / 'model_store'
+
+MODEL_DIR = Path(__file__).resolve().parents[1] / "model_store"
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
+
 
 class OnlineTrainer:
     def __init__(self):
@@ -61,7 +64,7 @@ class OnlineTrainer:
             self.model = preprocessing.StandardScaler() | linear_model.LogisticRegression()
         else:
             self.model = _FallbackPipeline()
-        self.path = MODEL_DIR / 'online_model.pkl'
+        self.path = MODEL_DIR / "online_model.pkl"
 
     def predict_proba(self, x: dict) -> float:
         try:
@@ -69,17 +72,17 @@ class OnlineTrainer:
             # return probability of positive class if present
             return p.get(1, 0.0) if isinstance(p, dict) else 0.0
         except Exception:
-            logging.exception('predict failed')
+            logging.exception("predict failed")
             return 0.0
 
     def learn_one(self, x: dict, y: int):
         self.model.learn_one(x, y)
 
     def save(self):
-        with open(self.path, 'wb') as f:
+        with open(self.path, "wb") as f:
             pickle.dump(self.model, f)
 
     def load(self):
         if self.path.exists():
-            with open(self.path, 'rb') as f:
+            with open(self.path, "rb") as f:
                 self.model = pickle.load(f)

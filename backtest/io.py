@@ -8,12 +8,14 @@ Implements:
 Notes:
 - Uses safe third-party imports to avoid local pandas stub shadowing.
 """
+
 from __future__ import annotations
 
 import os, sys
 from typing import Optional
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
 
 def _tp(mod_name: str):
     """Import a third-party module robustly.
@@ -22,6 +24,7 @@ def _tp(mod_name: str):
     retry with site-packages prioritized.
     """
     import importlib, sys as _sys
+
     # First attempt: normal import
     try:
         mod = importlib.import_module(mod_name)
@@ -34,7 +37,9 @@ def _tp(mod_name: str):
     # Fallback: prioritize site/dist-packages
     original = _sys.path.copy()
     try:
-        site = [p for p in original if ("site-packages" in (p or "")) or ("dist-packages" in (p or ""))]
+        site = [
+            p for p in original if ("site-packages" in (p or "")) or ("dist-packages" in (p or ""))
+        ]
         rest = [p for p in original if p not in site]
         _sys.path[:] = site + rest
         if mod_name in _sys.modules:
@@ -46,21 +51,21 @@ def _tp(mod_name: str):
 
 
 def load_csv(path: str):
-    pd = _tp('pandas')
+    pd = _tp("pandas")
     df = pd.read_csv(path)
     try:
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
     except Exception:
-        df["timestamp"] = pd.to_datetime(df["timestamp"]) 
-    return df[["timestamp","open","high","low","close","volume"]]
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+    return df[["timestamp", "open", "high", "low", "close", "volume"]]
 
 
 def fetch_ccxt(exchange: str, symbol: str, timeframe: str, since: str, until: str):
     # Use guarded imports that prioritize site-packages
-    pd = _tp('pandas')
-    dparser = _tp('dateutil.parser')
-    _ = _tp('requests')  # ensure real requests is loaded
-    ccxt = _tp('ccxt')
+    pd = _tp("pandas")
+    dparser = _tp("dateutil.parser")
+    _ = _tp("requests")  # ensure real requests is loaded
+    ccxt = _tp("ccxt")
 
     ex = getattr(ccxt, exchange)({"enableRateLimit": True})
     since_ms = int(pd.Timestamp(dparser.parse(since)).timestamp() * 1000)
@@ -83,8 +88,8 @@ def fetch_ccxt(exchange: str, symbol: str, timeframe: str, since: str, until: st
     if not rows:
         raise RuntimeError("No OHLCV fetched from exchange")
 
-    df = pd.DataFrame(rows, columns=["timestamp","open","high","low","close","volume"])
+    df = pd.DataFrame(rows, columns=["timestamp", "open", "high", "low", "close", "volume"])
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
     if until_ms:
-        df = df[df["timestamp"] <= pd.to_datetime(until_ms, unit='ms')]
+        df = df[df["timestamp"] <= pd.to_datetime(until_ms, unit="ms")]
     return df.reset_index(drop=True)

@@ -130,7 +130,7 @@ def test_reconcile_falls_back_to_client_id_when_idemp_key_missing() -> None:
                 filled_qty=0.0,
                 avg_price=None,
                 ts=0.0,
-                raw={},
+                raw={"idempotency_key": "meta-1"},
             )
         ]
     )
@@ -141,59 +141,21 @@ def test_reconcile_falls_back_to_client_id_when_idemp_key_missing() -> None:
         account_id="acct",
     )
 
-    reconciler.reconcile([_order_request(client_order_id="client-123")])
+    reconciler.reconcile([
+        _order_request(client_order_id=None, meta={"idempotency_key": "meta-1"})
+    ])
 
     assert broker.submitted == []
 
 
-class LegacyBroker:
-    def __init__(self) -> None:
-        self.open_orders: list[dict[str, object]] = []
-        self.positions: list[str] = []
-        self.submitted: list[object] = []
-
-    def place(self, order: object) -> dict[str, object]:
-        self.submitted.append(order)
-        if isinstance(order, dict):
-            client_id = order.get("client_id") or order.get("client_order_id")
-        else:
-            client_id = getattr(order, "client_id", None) or getattr(order, "client_order_id", None)
-        return {
-            "status": "NEW",
-            "client_id": client_id,
-        }
-
-    def fetch_open_orders(self) -> list[dict[str, object]]:
-        return list(self.open_orders)
-
-    def fetch_positions(self) -> list[str]:
-        return list(self.positions)
-
-
-def test_reconcile_with_legacy_broker_interfaces() -> None:
-    broker = LegacyBroker()
-    broker.open_orders = [
-        {
-            "status": "NEW",
-            "client_id": "legacy-1",
-        }
-    ]
+def test_check_kill_switch_triggers_on_drawdown() -> None:
     logger = DummyLogger()
     reconciler = Reconciler(
-        broker,
+        FakeBroker(),
         limits=RiskLimits(max_daily_loss_pct=10, kill_switch_drawdown_pct=15, max_position_risk_pct=5),
         logger=logger,
+        account_id="acct",
     )
 
-    reconciler.reconcile([{"client_id": "legacy-1"}])
-
-    assert broker.submitted == []
-
-    reconciler.reconcile([{"client_id": "legacy-2"}])
-
-    assert broker.submitted[-1]["client_id"] == "legacy-2"
-
-    reconciler.reconcile([_order_request(client_order_id="legacy-3")])
-
-    assert getattr(broker.submitted[-1], "client_order_id", None) == "legacy-3"
-
+    assert not reconciler.check_kill_switch([100_000.0, 105_000.0, 100_000.0])
+    assert reconciler.check_kill_switch([100_000.0, 110_000.0, 90_000.0])

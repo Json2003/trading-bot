@@ -1,13 +1,15 @@
 """Reinforcement-learning helpers built around Stable Baselines3 PPO."""
+
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
+import gymnasium as gym
 import numpy as np
 import pandas as pd
-import gymnasium as gym
 
 
 def _lowercase_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -94,7 +96,9 @@ class TradingEnv(gym.Env):
 
     def _get_metrics(self, price: float) -> TradingMetrics:
         portfolio_value = self.balance + self.position * price
-        return TradingMetrics(portfolio_value=portfolio_value, balance=self.balance, position=self.position)
+        return TradingMetrics(
+            portfolio_value=portfolio_value, balance=self.balance, position=self.position
+        )
 
     def step(self, action: int):  # type: ignore[override]
         if action not in (0, 1, 2):
