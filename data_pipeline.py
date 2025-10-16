@@ -146,9 +146,40 @@ def directional_return_label(close: pd.Series, horizon: int) -> pd.Series:
 
 
 def magnitude_bucket_label(close: pd.Series, horizon: int, q: int = 3) -> pd.Series:
-    """Quantile-bucket future returns."""
+    """Quantile-bucket future returns.
+
+    ``pandas.qcut`` raises when it cannot build ``q`` unique bins (e.g. flat
+    price series).  The stub pandas implementation shipped with the project has
+    similar limitations, so we implement a small fallback that deterministically
+    buckets the available distinct returns.
+    """
     ret = _future_return(close, horizon)
-    return pd.qcut(ret, q, labels=False)
+    values = list(ret._values) if hasattr(ret, "_values") else list(ret)
+    index = ret.index[:] if hasattr(ret, "index") else list(range(len(values)))
+
+    valid_positions = [i for i, value in enumerate(values) if not pd.isna(value)]
+    if not valid_positions:
+        return pd.Series([math.nan] * len(values), index=index)
+
+    unique_values = sorted({values[i] for i in valid_positions})
+    if len(unique_values) == 1:
+        result = [math.nan] * len(values)
+        for pos in valid_positions:
+            result[pos] = 0
+        return pd.Series(result, index=index)
+
+    bucket_count = min(q, len(unique_values))
+    step = len(unique_values) / bucket_count
+    bucket_map = {}
+    for idx, value in enumerate(unique_values):
+        bucket = min(bucket_count - 1, int(idx / step))
+        bucket_map[value] = bucket
+
+    result = [math.nan] * len(values)
+    for pos in valid_positions:
+        value = values[pos]
+        result[pos] = bucket_map[value]
+    return pd.Series(result, index=index)
 
 
 def triple_barrier_label(close: pd.Series, horizon: int, upper: float, lower: float) -> pd.Series:
