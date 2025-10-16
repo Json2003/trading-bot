@@ -120,7 +120,9 @@ def run_backtest(args: argparse.Namespace) -> None:
     slip_fraction = args.slip_bps / 10_000 if args.slip_bps else 0.0
 
     for timestamp, row in df.iterrows():
-        signal = row.get("signal", 0)
+        signal = row.get(signal_col, 0)
+        if pd.isna(signal):
+            signal = 0
         price = float(row["close"])
         fees = fee_fraction * price
         slip = slip_fraction * price
