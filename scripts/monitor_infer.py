@@ -26,7 +26,7 @@ from typing import Optional, Tuple
 
 # Ensure repo root on sys.path and avoid local shadows
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path = [p for p in sys.path if p not in ('', REPO_ROOT)] + [REPO_ROOT]
+sys.path = [p for p in sys.path if p not in ("", REPO_ROOT)] + [REPO_ROOT]
 
 # Avoid local requests.py by using urllib
 import urllib.request
@@ -47,8 +47,11 @@ def load_active_symbol_tf() -> Tuple[str, str]:
 
 def fetch_features(symbol: str, timeframe: str, lookback: int = 64):
     from data.feature_store import get_supervised_dataset
+
     # Use any wide range; take last 64 rows for the request
-    X, _ = get_supervised_dataset(symbol, timeframe, "2021-01-01", "2024-01-01", lookback, 1, cache=True, source="local")
+    X, _ = get_supervised_dataset(
+        symbol, timeframe, "2021-01-01", "2024-01-01", lookback, 1, cache=True, source="local"
+    )
     seq = X.tail(lookback).values.astype(float).tolist()
     return seq
 
@@ -86,7 +89,8 @@ def main():
         symbol = symbol or s
         timeframe = timeframe or t
 
-    log_dir = Path("artifacts"); log_dir.mkdir(parents=True, exist_ok=True)
+    log_dir = Path("artifacts")
+    log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / "ml_monitor.log"
 
     n = 0
@@ -102,7 +106,9 @@ def main():
         # /infer
         try:
             seq = fetch_features(symbol, timeframe, 64)
-            infer = post_json(args.url.rstrip("/") + "/infer", {"features": seq, "threshold": args.threshold})
+            infer = post_json(
+                args.url.rstrip("/") + "/infer", {"features": seq, "threshold": args.threshold}
+            )
         except Exception as e:
             infer = {"error": str(e)}
 

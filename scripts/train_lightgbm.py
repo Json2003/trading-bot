@@ -64,7 +64,7 @@ def load_dataset(
     if not frames:
         raise DataLoadError("No symbols provided for dataset loading.")
 
-    df = pl.concat(frames).sort(list(JOIN_KEYS)).collect()
+    df = pl.concat(frames).sort(["ts", "symbol"]).collect()
     if df.height == 0:
         raise DataLoadError(
             "Loaded dataframe is empty. Verify parquet inputs and symbol names."
@@ -76,14 +76,6 @@ def to_numpy(df: pl.DataFrame, feature_columns: Sequence[str], label_column: str
     filtered = df.drop_nulls()
     X = filtered.select(feature_columns).to_numpy()
     y_series = filtered.get_column(label_column)
-    # Expect binary labels encoded as 0 (negative class) and 1 (positive class).
-    # Validate label encoding.
-    unique_labels = set(y_series.unique().to_list())
-    if not unique_labels.issubset({0, 1}):
-        raise ValueError(
-            f"Label column '{label_column}' contains non-binary values: {unique_labels}. "
-            "Expected only 0 and 1."
-        )
     y = (y_series == 1).to_numpy().astype(np.uint8)
     return X, y
 
@@ -119,8 +111,8 @@ def run_time_series_cv(
             verbose_eval=False,
         )
 
-        best_iter = int((booster.best_iteration or num_boost_round) - 1)
-        best_iterations.append(best_iter + 1)  # Store 1-indexed value for reporting
+        best_iter = int(booster.best_iteration or num_boost_round)
+        best_iterations.append(best_iter)
         preds = booster.predict(X[valid_idx], num_iteration=best_iter)
         ap = average_precision_score(y[valid_idx], preds)
         f1 = f1_score(y[valid_idx], (preds > threshold).astype(int))
@@ -215,22 +207,9 @@ def main() -> None:
         args.early_stopping_rounds,
     )
 
-    # Split the data into train/validation sets for final early stopping
-    split_idx = int(len(X) * 0.8)
-    X_train, X_val = X[:split_idx], X[split_idx:]
-    y_train, y_val = y[:split_idx], y[split_idx:]
-    lgb_train = lgb.Dataset(X_train, y_train)
-    lgb_val = lgb.Dataset(X_val, y_val, reference=lgb_train)
-    final_model = lgb.train(
-        params,
-        lgb_train,
-        num_boost_round=args.num_boost_round,
-        valid_sets=[lgb_val],
-        valid_names=["valid"],
-        early_stopping_rounds=args.early_stopping_rounds,
-        verbose_eval=False,
-    )
-    best_iter = final_model.best_iteration if final_model.best_iteration is not None else args.num_boost_round
+    best_iter = int(round(float(np.mean(best_iters)))) if best_iters else args.num_boost_round
+    best_iter = max(1, min(best_iter, args.num_boost_round))
+    final_model = train_full_model(X, y, params, best_iter)
 
     os.makedirs(args.outdir, exist_ok=True)
     tag = args.tag or sanitize_tag(

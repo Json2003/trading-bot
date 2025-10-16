@@ -14,6 +14,7 @@ for shadow in ("pandas", "requests", "ccxt"):
 # Preload real 'requests' early to prevent accidental import of repo-local requests.py
 try:
     import importlib.util as _ilut
+
     _req_spec = _ilut.find_spec("requests")
     if _req_spec is not None and getattr(_req_spec, "origin", "").endswith("requests.py"):
         raise ImportError("Local requests.py shadowing detected")
@@ -38,7 +39,7 @@ def dynamic_strategy(spec: str):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--source", choices=["csv","ccxt"], required=True)
+    p.add_argument("--source", choices=["csv", "ccxt"], required=True)
     p.add_argument("--path")
     p.add_argument("--exchange")
     p.add_argument("--symbol")
@@ -46,7 +47,11 @@ def main():
     p.add_argument("--since")
     p.add_argument("--until")
     p.add_argument("--strategy", default="backtest.strategies.sample_strategy:generate_signals")
-    p.add_argument("--strategy_args", default="", help="Comma-separated key=value pairs passed to strategy, e.g. fast=5,slow=20")
+    p.add_argument(
+        "--strategy_args",
+        default="",
+        help="Comma-separated key=value pairs passed to strategy, e.g. fast=5,slow=20",
+    )
     p.add_argument("--fees_bps", type=float, default=10.0)
     p.add_argument("--slip_bps", type=float, default=5.0)
     p.add_argument("--notional", type=float, default=1.0)
@@ -57,10 +62,14 @@ def main():
     p.add_argument("--sl_atr_mult", type=float, default=0.0)
     p.add_argument("--atr_period", type=int, default=14)
     # dynamic stops
-    p.add_argument("--break_even_atr", type=float, default=0.0, help="Move stop to entry after +X*ATR in favor")
-    p.add_argument("--trail_atr_mult", type=float, default=0.0, help="Trail stop by X*ATR (0 disables)")
-    p.add_argument("--trail_method", choices=["atr","donchian"], default="atr")
-    p.add_argument("--trail_ref", choices=["best","close"], default="best")
+    p.add_argument(
+        "--break_even_atr", type=float, default=0.0, help="Move stop to entry after +X*ATR in favor"
+    )
+    p.add_argument(
+        "--trail_atr_mult", type=float, default=0.0, help="Trail stop by X*ATR (0 disables)"
+    )
+    p.add_argument("--trail_method", choices=["atr", "donchian"], default="atr")
+    p.add_argument("--trail_ref", choices=["best", "close"], default="best")
     p.add_argument("--donch_mid_n", type=int, default=0)
     # partial TP / payday
     p.add_argument("--tp_r_multiple", type=float, default=0.0)
@@ -77,33 +86,38 @@ def main():
     p.add_argument("--risk_per_trade", type=float, default=0.005)
     p.add_argument("--max_notional_frac", type=float, default=1.0)
     p.add_argument("--allow_short", action="store_true")
-    p.add_argument("--max_bars", type=int, default=0, help="Exit after N bars in trade (0=disabled)")
+    p.add_argument(
+        "--max_bars", type=int, default=0, help="Exit after N bars in trade (0=disabled)"
+    )
     args = p.parse_args()
 
-    if args.source=="csv":
+    if args.source == "csv":
         if not args.path:
             raise SystemExit("--path is required for --source csv")
         df = load_csv(args.path)
     else:
         for name in (args.exchange, args.symbol, args.timeframe, args.since, args.until):
             if not name:
-                raise SystemExit("--exchange, --symbol, --timeframe, --since, --until are required for --source ccxt")
-        df = fetch_ccxt(args.exchange,args.symbol,args.timeframe,args.since,args.until)
+                raise SystemExit(
+                    "--exchange, --symbol, --timeframe, --since, --until are required for --source ccxt"
+                )
+        df = fetch_ccxt(args.exchange, args.symbol, args.timeframe, args.since, args.until)
 
     fn = dynamic_strategy(args.strategy)
     # Parse strategy args into kwargs
     kwargs = {}
     if args.strategy_args:
-        for pair in args.strategy_args.split(','):
+        for pair in args.strategy_args.split(","):
             if not pair:
                 continue
-            if '=' not in pair:
+            if "=" not in pair:
                 raise SystemExit(f"Invalid --strategy_args item: {pair}")
-            k, v = pair.split('=', 1)
-            k = k.strip(); v = v.strip()
+            k, v = pair.split("=", 1)
+            k = k.strip()
+            v = v.strip()
             # try to cast to int/float where possible
             try:
-                if '.' in v:
+                if "." in v:
                     v_cast = float(v)
                 else:
                     v_cast = int(v)
@@ -142,8 +156,10 @@ def main():
     )
     # Wrap strategy to inject kwargs if provided
     if kwargs:
+
         def _fn(df_):
             return fn(df_, **kwargs)
+
         strat = _fn
     else:
         strat = fn
@@ -159,5 +175,5 @@ def main():
     print(json.dumps(metrics, indent=2))
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()

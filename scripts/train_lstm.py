@@ -16,7 +16,10 @@ from data.feature_store import get_supervised_dataset
 
 # Guarded pandas import to avoid repo-local stub (pandas.py)
 import sys as _sys, os as _os, importlib as _importlib
+
 _REPO_ROOT = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), ".."))
+
+
 def _pd():
     mod = _sys.modules.get("pandas")
     if mod is not None:
@@ -43,8 +46,12 @@ class SeqDataset(Dataset):
     def __init__(self, X: np.ndarray, y: np.ndarray):
         self.X = X.astype(np.float32)
         self.y = y.astype(np.float32)
-    def __len__(self): return len(self.X)
-    def __getitem__(self, i): return self.X[i], self.y[i]
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, i):
+        return self.X[i], self.y[i]
 
 
 class LSTMClassifier(nn.Module):
@@ -63,6 +70,7 @@ class LSTMClassifier(nn.Module):
             nn.Dropout(dropout),
             nn.Linear(hidden, 1),
         )
+
     def forward(self, x):
         # x: (B, T, F)
         out, _ = self.lstm(x)
@@ -101,7 +109,8 @@ def train_loop(model, train_loader, val_loader, epochs=15, lr=1e-3):
             opt.zero_grad()
             logits = model(xb)
             loss = criterion(logits, yb)
-            loss.backward(); opt.step()
+            loss.backward()
+            opt.step()
         # val
         model.eval()
         with torch.no_grad():
@@ -156,13 +165,17 @@ def main():
     )
     X, y, scaler = build_sequences(X_df, y, args.lookback)
     if len(X) < 10:
-        raise RuntimeError("Not enough sequences after preprocessing. Increase date range or lower lookback.")
+        raise RuntimeError(
+            "Not enough sequences after preprocessing. Increase date range or lower lookback."
+        )
     (Xtr, ytr), (Xv, yv) = split_train_val(X, y)
     train_ds, val_ds = SeqDataset(Xtr, ytr), SeqDataset(Xv, yv)
     tl = DataLoader(train_ds, batch_size=args.batch, shuffle=True, drop_last=True)
     vl = DataLoader(val_ds, batch_size=args.batch, shuffle=False, drop_last=False)
 
-    model = LSTMClassifier(n_feat=X.shape[-1], hidden=args.hidden, layers=args.layers, dropout=args.dropout)
+    model = LSTMClassifier(
+        n_feat=X.shape[-1], hidden=args.hidden, layers=args.layers, dropout=args.dropout
+    )
     model, val_acc = train_loop(model, tl, vl, epochs=args.epochs)
 
     tag = args.tag or f"lstm_{args.symbol.replace('/', '-')}_{args.timeframe}_{int(time.time())}"
@@ -181,6 +194,7 @@ def main():
 
     # save scaler
     import joblib
+
     scaler_path = os.path.join(args.outdir, f"{tag}.scaler.gz")
     joblib.dump(scaler, scaler_path)
 
@@ -201,9 +215,13 @@ def main():
     }
     with open(reg_path, "w") as f:
         json.dump(reg, f, indent=2)
-    print(json.dumps({"tag": tag, "val_acc": float(val_acc), "ckpt": ckpt_path, "scaler": scaler_path}, indent=2))
+    print(
+        json.dumps(
+            {"tag": tag, "val_acc": float(val_acc), "ckpt": ckpt_path, "scaler": scaler_path},
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":
     main()
-

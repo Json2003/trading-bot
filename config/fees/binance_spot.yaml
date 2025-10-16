@@ -1,0 +1,5 @@
+name: binance_spot
+vip_tier: 0
+maker_bps: 8
+taker_bps: 10
+notes: Maker/taker fees expressed in basis points for VIP tier 0.

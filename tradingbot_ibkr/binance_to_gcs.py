@@ -5,6 +5,7 @@ Example usage:
       --intervals 1m,5m --markets spot,um \
       --start 2024-01-01T00:00:00 --end 2024-01-01T01:00:00
 """
+
 import argparse
 import datetime as dt
 import io
@@ -59,9 +60,15 @@ def fetch_klines(symbol: str, interval: str, start: int, end: int, market: str) 
     return out
 
 
-def download_and_upload(bucket_name: str, symbols: List[str], intervals: List[str],
-                        markets: List[str], start: dt.datetime, end: dt.datetime,
-                        dest_path: str = "raw/binance"):
+def download_and_upload(
+    bucket_name: str,
+    symbols: List[str],
+    intervals: List[str],
+    markets: List[str],
+    start: dt.datetime,
+    end: dt.datetime,
+    dest_path: str = "raw/binance",
+):
     client = storage.Client()
     bucket = client.bucket(bucket_name)
     start_ms = int(start.timestamp() * 1000)
@@ -75,11 +82,31 @@ def download_and_upload(bucket_name: str, symbols: List[str], intervals: List[st
                     logging.warning("No data for %s %s %s", market, symbol, interval)
                     continue
                 cols = [
-                    "open_time", "open", "high", "low", "close", "volume",
-                    "close_time", "quote_volume", "trades",
-                    "taker_buy_base", "taker_buy_quote", "ignore",
+                    "open_time",
+                    "open",
+                    "high",
+                    "low",
+                    "close",
+                    "volume",
+                    "close_time",
+                    "quote_volume",
+                    "trades",
+                    "taker_buy_base",
+                    "taker_buy_quote",
+                    "ignore",
                 ]
                 df = pd.DataFrame(klines, columns=cols)
+                timestamps = pd.to_datetime(df["open_time"], unit="ms")
+                expected_delta = pd.to_timedelta(INTERVAL_MS[interval], unit="ms")
+                gaps = timestamps.diff() > expected_delta
+                if gaps.any():
+                    logging.warning(
+                        "Data gaps detected for %s %s %s at %s",
+                        market,
+                        symbol,
+                        interval,
+                        timestamps[gaps].dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ").tolist(),
+                    )
                 data_str = df.to_csv(index=False)
                 blob_name = (
                     f"{dest_path}/{market}/{symbol}/{interval}/"
@@ -92,18 +119,16 @@ def download_and_upload(bucket_name: str, symbols: List[str], intervals: List[st
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--bucket", required=True, help="GCS bucket name")
-    ap.add_argument("--symbols", required=True,
-                    help="Comma-separated symbols, e.g. BTCUSDT,ETHUSDT")
-    ap.add_argument("--intervals", required=True,
-                    help="Comma-separated intervals, e.g. 1m,5m")
-    ap.add_argument("--markets", default="spot",
-                    help="Comma-separated markets: spot or um (futures)")
-    ap.add_argument("--start", required=True,
-                    help="Start time YYYY-MM-DDTHH:MM:SS (UTC)")
-    ap.add_argument("--end", required=True,
-                    help="End time YYYY-MM-DDTHH:MM:SS (UTC)")
-    ap.add_argument("--dest-path", default="raw/binance",
-                    help="Destination path prefix in bucket")
+    ap.add_argument(
+        "--symbols", required=True, help="Comma-separated symbols, e.g. BTCUSDT,ETHUSDT"
+    )
+    ap.add_argument("--intervals", required=True, help="Comma-separated intervals, e.g. 1m,5m")
+    ap.add_argument(
+        "--markets", default="spot", help="Comma-separated markets: spot or um (futures)"
+    )
+    ap.add_argument("--start", required=True, help="Start time YYYY-MM-DDTHH:MM:SS (UTC)")
+    ap.add_argument("--end", required=True, help="End time YYYY-MM-DDTHH:MM:SS (UTC)")
+    ap.add_argument("--dest-path", default="raw/binance", help="Destination path prefix in bucket")
     ap.add_argument("--log", default="INFO", help="Logging level")
     args = ap.parse_args()
     logging.basicConfig(level=getattr(logging, args.log.upper()))
