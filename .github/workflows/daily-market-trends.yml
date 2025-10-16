@@ -27,6 +27,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Authenticate to target repo
+        run: |
+          git remote set-url origin "https://x-access-token:${{ secrets.PAT_DATA_PUSH }}@github.com/${{ github.repository }}.git"
+
       - name: Fetch daily trends
         run: |
           python scripts/fetch_daily_trends.py

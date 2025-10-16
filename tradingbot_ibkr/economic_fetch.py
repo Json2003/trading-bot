@@ -4,6 +4,7 @@ Usage: set environment variable FRED_API_KEY or pass --api-key. The script will 
 of high-value series (CPI, Unemployment rate, GDP) as a starter and write CSVs to
 `tradingbot_ibkr/datafiles/econ/`.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -20,17 +21,17 @@ import random
 from logging.handlers import RotatingFileHandler
 
 # module logger (configured at runtime via configure_logger)
-logger = logging.getLogger('economic_fetch')
+logger = logging.getLogger("economic_fetch")
 
 
-def configure_logger(level: str = 'INFO', log_file: Optional[str] = None):
+def configure_logger(level: str = "INFO", log_file: Optional[str] = None):
     """Configure the module logger. Call from main to honor CLI flags."""
     lvl = getattr(logging, level.upper(), logging.INFO)
     logger.setLevel(lvl)
     # clear existing handlers
     for h in list(logger.handlers):
         logger.removeHandler(h)
-    fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    fmt = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
     ch = logging.StreamHandler()
     ch.setFormatter(fmt)
     logger.addHandler(ch)
@@ -38,16 +39,21 @@ def configure_logger(level: str = 'INFO', log_file: Optional[str] = None):
         try:
             logpath = Path(log_file)
             logpath.parent.mkdir(parents=True, exist_ok=True)
-            fh = RotatingFileHandler(str(logpath), maxBytes=5 * 1024 * 1024, backupCount=5, encoding='utf-8')
+            fh = RotatingFileHandler(
+                str(logpath), maxBytes=5 * 1024 * 1024, backupCount=5, encoding="utf-8"
+            )
             fh.setFormatter(fmt)
             logger.addHandler(fh)
         except Exception:
-            logger.exception('Failed to create log file handler; continuing with console logger')
+            logger.exception("Failed to create log file handler; continuing with console logger")
+
+
 # load .env if present (development convenience)
 try:
     from dotenv import load_dotenv
     from pathlib import Path as _Path
-    _env_path = _Path(__file__).resolve().parents[0] / '.env'
+
+    _env_path = _Path(__file__).resolve().parents[0] / ".env"
     if _env_path.exists():
         load_dotenv(_env_path)
 except Exception:
@@ -59,12 +65,19 @@ ALFRED_BASE = "https://api.stlouisfed.org/alfred"
 
 DEFAULT_SERIES = [
     "CPIAUCSL",  # CPI: All Urban Consumers, U.S. city average
-    "UNRATE",   # Unemployment rate
-    "GDP",      # Gross Domestic Product
+    "UNRATE",  # Unemployment rate
+    "GDP",  # Gross Domestic Product
 ]
 
 
-def _get(url: str, params: dict, retries: int = 3, backoff_base: float = 2.0, timeout: int = 30, jitter_max: float = 0.0) -> dict:
+def _get(
+    url: str,
+    params: dict,
+    retries: int = 3,
+    backoff_base: float = 2.0,
+    timeout: int = 30,
+    jitter_max: float = 0.0,
+) -> dict:
     """HTTP GET with simple retry/backoff and limited timeout.
 
     Raises requests.HTTPError on final failure.
@@ -77,23 +90,35 @@ def _get(url: str, params: dict, retries: int = 3, backoff_base: float = 2.0, ti
             # handle rate limiting explicitly
             if r.status_code == 429:
                 # try to respect Retry-After header
-                ra = r.headers.get('Retry-After')
-                base_wait = int(ra) if ra and ra.isdigit() else backoff_base ** attempt
+                ra = r.headers.get("Retry-After")
+                base_wait = int(ra) if ra and ra.isdigit() else backoff_base**attempt
                 jitter = random.uniform(0, jitter_max) if jitter_max and jitter_max > 0 else 0.0
                 wait = base_wait + jitter
-                logger.warning('Rate limited on %s; sleeping %.1f seconds (includes jitter %.2f)', url, wait, jitter)
+                logger.warning(
+                    "Rate limited on %s; sleeping %.1f seconds (includes jitter %.2f)",
+                    url,
+                    wait,
+                    jitter,
+                )
                 time.sleep(wait)
-                raise requests.HTTPError('429')
+                raise requests.HTTPError("429")
             r.raise_for_status()
             return r.json()
         except Exception as e:
             if attempt >= retries:
-                logger.exception('Failed HTTP GET %s after %d attempts', url, attempt)
+                logger.exception("Failed HTTP GET %s after %d attempts", url, attempt)
                 raise
-            base_wait = backoff_base ** attempt
+            base_wait = backoff_base**attempt
             jitter = random.uniform(0, jitter_max) if jitter_max and jitter_max > 0 else 0.0
             wait = base_wait + jitter
-            logger.warning('HTTP GET failed (attempt %d/%d): %s; retrying in %.1fs (jitter %.2f)', attempt, retries, e, wait, jitter)
+            logger.warning(
+                "HTTP GET failed (attempt %d/%d): %s; retrying in %.1fs (jitter %.2f)",
+                attempt,
+                retries,
+                e,
+                wait,
+                jitter,
+            )
             time.sleep(wait)
 
 
@@ -131,13 +156,22 @@ def main(api_key: Optional[str] = None):
     p.add_argument("--api-key", help="FRED API key (overrides FRED_API_KEY env)")
     p.add_argument("--out-dir", default="tradingbot_ibkr/datafiles/econ", help="output dir")
     p.add_argument("--series", nargs="*", help="series ids to fetch (default set)")
-    p.add_argument('--retries', type=int, default=3, help='HTTP retries per request')
-    p.add_argument('--backoff-base', type=float, default=2.0, help='exponential backoff base')
-    p.add_argument('--timeout', type=int, default=30, help='HTTP timeout seconds')
-    p.add_argument('--jitter-max', type=float, default=0.0, help='max jitter seconds to add to backoff')
-    p.add_argument('--cooldown-minutes', type=float, default=0.0, help='if >0, sleep this many minutes when a series fails repeatedly')
-    p.add_argument('--log-level', type=str, default='INFO', help='logging level (DEBUG/INFO/WARNING/ERROR)')
-    p.add_argument('--log-file', type=str, default=None, help='optional path for rotating log file')
+    p.add_argument("--retries", type=int, default=3, help="HTTP retries per request")
+    p.add_argument("--backoff-base", type=float, default=2.0, help="exponential backoff base")
+    p.add_argument("--timeout", type=int, default=30, help="HTTP timeout seconds")
+    p.add_argument(
+        "--jitter-max", type=float, default=0.0, help="max jitter seconds to add to backoff"
+    )
+    p.add_argument(
+        "--cooldown-minutes",
+        type=float,
+        default=0.0,
+        help="if >0, sleep this many minutes when a series fails repeatedly",
+    )
+    p.add_argument(
+        "--log-level", type=str, default="INFO", help="logging level (DEBUG/INFO/WARNING/ERROR)"
+    )
+    p.add_argument("--log-file", type=str, default=None, help="optional path for rotating log file")
     args = p.parse_args()
 
     api_key = args.api_key or os.environ.get("FRED_API_KEY")
@@ -157,21 +191,21 @@ def main(api_key: Optional[str] = None):
             fetch_series(api_key, s, out_dir)
             fetch_alfred_vintages(api_key, s, out_dir)
         except Exception as e:
-            logger.exception('Failed to fetch %s: %s', s, e)
+            logger.exception("Failed to fetch %s: %s", s, e)
             if args.cooldown_minutes and args.cooldown_minutes > 0:
                 # persist cooldown metadata and exit non-blocking with a small non-zero code
                 try:
                     meta = {
-                        'failed_series': s,
-                        'failed_at': datetime.now(timezone.utc).isoformat(),
-                        'cooldown_minutes': args.cooldown_minutes,
+                        "failed_series": s,
+                        "failed_at": datetime.now(timezone.utc).isoformat(),
+                        "cooldown_minutes": args.cooldown_minutes,
                     }
-                    cd_path = Path(args.out_dir) / 'cooldown.json'
+                    cd_path = Path(args.out_dir) / "cooldown.json"
                     Path(args.out_dir).mkdir(parents=True, exist_ok=True)
                     cd_path.write_text(json.dumps(meta))
-                    logger.info('Wrote cooldown metadata to %s and exiting', cd_path)
+                    logger.info("Wrote cooldown metadata to %s and exiting", cd_path)
                 except Exception:
-                    logger.exception('Failed to write cooldown metadata')
+                    logger.exception("Failed to write cooldown metadata")
                 # exit non-blocking: raise SystemExit with non-zero code
                 raise SystemExit(2)
             # continue to next series after cooldown

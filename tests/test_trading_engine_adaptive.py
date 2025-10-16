@@ -10,7 +10,10 @@ def _build_sample_data(rows: int = 60) -> pd.DataFrame:
     high = close + 0.5
     low = close - 0.5
     volume = pd.Series(1000.0, index=index)
-    return pd.DataFrame({"close": close.values, "high": high.values, "low": low.values, "volume": volume.values}, index=index)
+    return pd.DataFrame(
+        {"close": close.values, "high": high.values, "low": low.values, "volume": volume.values},
+        index=index,
+    )
 
 
 def test_online_learning_updates_probability() -> None:

@@ -211,28 +211,35 @@ def generate_threshold_signals(
     if missing_spot:
         raise ValueError(f"Spot data missing required columns: {sorted(missing_spot)}")
     if missing_futures:
-        raise ValueError(
-            f"Futures data missing required columns: {sorted(missing_futures)}"
-        )
+        raise ValueError(f"Futures data missing required columns: {sorted(missing_futures)}")
+
+    spot = pd.DataFrame(data_spot).copy()
+    futures = pd.DataFrame(data_futures).copy()
+
+    if len(set(spot["timestamp"])) != len(spot):
+        raise ValueError("Spot data contains duplicate timestamps")
+    if len(set(futures["timestamp"])) != len(futures):
+        raise ValueError("Futures data contains duplicate timestamps")
 
     spot_records = {
-        timestamp: price
-        for timestamp, price in zip(
-            data_spot["timestamp"], data_spot[price_column]
-        )
+        timestamp: float(price)
+        for timestamp, price in zip(spot["timestamp"], spot[price_column])
     }
     futures_records = {
-        timestamp: price
-        for timestamp, price in zip(
-            data_futures["timestamp"], data_futures[price_column]
-        )
+        timestamp: float(price)
+        for timestamp, price in zip(futures["timestamp"], futures[price_column])
     }
 
     common_timestamps = sorted(set(spot_records) & set(futures_records))
+    if not common_timestamps:
+        return pd.DataFrame(
+            columns=["timestamp", "spot_close", "futures_close", "basis", "signal"]
+        )
+
     rows: list[dict[str, Any]] = []
     for ts in common_timestamps:
-        spot_close = float(spot_records[ts])
-        futures_close = float(futures_records[ts])
+        spot_close = spot_records[ts]
+        futures_close = futures_records[ts]
         if spot_close == 0:
             raise ValueError("Spot prices must be non-zero to compute basis")
         basis = (futures_close - spot_close) / spot_close
@@ -251,7 +258,10 @@ def generate_threshold_signals(
             }
         )
 
-    return pd.DataFrame(rows)
+    return pd.DataFrame(
+        rows,
+        columns=["timestamp", "spot_close", "futures_close", "basis", "signal"],
+    )
 
 
 __all__ = [
@@ -260,4 +270,3 @@ __all__ = [
     "check_live_basis",
     "generate_threshold_signals",
 ]
-

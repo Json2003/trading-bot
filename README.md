@@ -19,6 +19,26 @@ install.bat
 
 This creates a `venv` directory and installs packages from `tradingbot_ibkr/requirements.txt`.
 
+### Manual virtual environment setup
+
+If you prefer to manage the environment yourself, create and activate it with
+the standard `venv` module:
+
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+On Windows PowerShell, activate with:
+
+```powershell
+venv\Scripts\Activate.ps1
+```
+
+This mirrors the automated scripts while giving you full control over when the
+environment is created and refreshed.
+
 ## Working inside GitHub Actions workspaces
 
 When running automation steps in GitHub Actions, the repository is checked out
@@ -113,9 +133,10 @@ and leaves the manifest in the chosen output directory.
 ## Sample backtest workflow
 
 For a quick smoke-test of the modern execution engine without relying on live
-data downloads, a synthetic OHLCV sample is bundled at
-`backtest/sample_data/sample_ohlcv.csv`.  Run a backtest of the default
-SMA-filtered strategy against this dataset with:
+data downloads, the repository bundles deterministic OHLCV samples at
+`backtest/sample_data/sample_ohlcv.csv` (hourly bars) and
+`backtest/sample_data/sample_ohlcv_1m.csv` (one-minute bars).  Run a backtest of
+the default SMA-filtered strategy against the hourly dataset with:
 
 ```
 python scripts/run_backtest.py \
@@ -128,8 +149,26 @@ python scripts/run_backtest.py \
 ```
 
 The command writes the trade blotter, equity curve, and metrics beneath
-`artifacts/`.  A copy of the latest run is kept under
-`backtest/sample_results/` for reference.
+`artifacts/`.  Swap the `--path` argument to `backtest/sample_data/sample_ohlcv_1m.csv`
+to exercise the exact same workflow on one-minute candles.  A copy of the
+latest run is kept under `backtest/sample_results/` for reference.
+
+### Minimal CSV-only CLI
+
+If you prefer a lightweight wrapper that works with local CSV files only and
+skips the more advanced CCXT integration, use the helper script below:
+
+```bash
+python scripts/simple_backtest_cli.py \
+  --source csv --path backtest/sample_data/sample_ohlcv.csv \
+  --strategy_args fast=8 slow=34 trend_fast=55 trend_slow=144 \
+  --fees_bps 5 --slip_bps 2 --tp_bps 60 --sl_bps 40 \
+  --max_bars 18 --notional 1.0 --risk_per_trade 0.01 \
+  --out_prefix artifacts/sample_backtest_simple
+```
+
+The script writes the same trio of outputs—blotter, equity curve, and metrics—
+to the requested directory.
 
 ## Quick SMA Crossover Demo
 
@@ -179,4 +218,11 @@ See [TRADING_READINESS.md](TRADING_READINESS.md) for detailed information.
 ## Systematic Trading Principles
 
 For guidance on data hygiene, modeling discipline, validation practices, and production defenses, see the [Systematic Trading Model Principles](docs/systematic_trading_principles.md) guide. It also lists practical thresholds and quick recipes you can adopt immediately.
+
+## Upgrade Roadmap
+
+The prioritized engineering backlog for the next wave of improvements lives in
+[docs/upgrade_plan.md](docs/upgrade_plan.md). It captures the enhanced
+backtesting, risk-sizing, arbitrage, and reconciler initiatives alongside the
+latest repository health check results.
 

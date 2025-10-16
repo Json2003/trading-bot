@@ -1,4 +1,5 @@
 """Data structures shared by broker integrations."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

@@ -9,6 +9,7 @@ Includes:
 
 Pandas import is guarded to avoid local pandas.py shadows in the repo.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -17,15 +18,17 @@ import os, sys
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
+
 def _pd():
     import importlib
+
     # If a repo-local pandas stub is already imported, remove it so we can load real pandas
-    mod = sys.modules.get('pandas')
+    mod = sys.modules.get("pandas")
     if mod is not None:
-        mod_file = getattr(mod, '__file__', '') or ''
+        mod_file = getattr(mod, "__file__", "") or ""
         try:
             if REPO_ROOT in os.path.abspath(mod_file):
-                del sys.modules['pandas']
+                del sys.modules["pandas"]
         except Exception:
             pass
     original = sys.path.copy()
@@ -33,7 +36,7 @@ def _pd():
         repo_paths = {p for p in original if REPO_ROOT in os.path.abspath(p)}
         non_repo = [p for p in original if p not in repo_paths]
         sys.path = non_repo + [p for p in original if p in repo_paths]
-        return importlib.import_module('pandas')
+        return importlib.import_module("pandas")
     finally:
         sys.path = original
 
@@ -41,24 +44,24 @@ def _pd():
 @dataclass
 class ExecConfig:
     # costs
-    fees_bps: float = 10.0        # per fill
-    slip_bps: float = 5.0         # per fill
+    fees_bps: float = 10.0  # per fill
+    slip_bps: float = 5.0  # per fill
 
     # exits (choose either fixed bps OR ATR multiples)
-    tp_bps: float = 0.0           # 0 disables fixed-bps TP
-    sl_bps: float = 0.0           # 0 disables fixed-bps SL
-    tp_atr_mult: float = 0.0      # 0 disables ATR TP
-    sl_atr_mult: float = 0.0      # 0 disables ATR SL
-    atr_period: int = 14          # for ATR-based exits/sizing
+    tp_bps: float = 0.0  # 0 disables fixed-bps TP
+    sl_bps: float = 0.0  # 0 disables fixed-bps SL
+    tp_atr_mult: float = 0.0  # 0 disables ATR TP
+    sl_atr_mult: float = 0.0  # 0 disables ATR SL
+    atr_period: int = 14  # for ATR-based exits/sizing
 
     # risk & sizing
-    notional: float = 1.0         # starting equity units
-    risk_per_trade: float = 0.005 # risk % of equity per trade (e.g., 0.005 = 0.5%)
-    max_notional_frac: float = 1.0# cap: position notional / equity (acts like max leverage)
+    notional: float = 1.0  # starting equity units
+    risk_per_trade: float = 0.005  # risk % of equity per trade (e.g., 0.005 = 0.5%)
+    max_notional_frac: float = 1.0  # cap: position notional / equity (acts like max leverage)
     allow_short: bool = False
 
     # trade management
-    max_bars: int = 0             # 0 = disabled; otherwise force exit after N bars
+    max_bars: int = 0  # 0 = disabled; otherwise force exit after N bars
     # adaptive risk and volatility handling
     dynamic_risk_scaling: bool = False
     risk_vol_lookback: int = 100
@@ -68,24 +71,26 @@ class ExecConfig:
     volatility_stop_window: int = 150
     volatility_stop_percentile: float = 0.5
     # dynamic risk management
-    break_even_atr_mult: float = 0.0  # when unrealized move >= this * ATR(entry), move stop to entry (0=disabled)
-    trail_atr_mult: float = 0.0       # trail stop by this * ATR(current) from best price (0=disabled)
-    trail_method: str = "atr"        # "atr" | "donchian"
-    trail_ref: str = "best"          # reference for ATR trailing: "best" | "close"
+    break_even_atr_mult: float = (
+        0.0  # when unrealized move >= this * ATR(entry), move stop to entry (0=disabled)
+    )
+    trail_atr_mult: float = 0.0  # trail stop by this * ATR(current) from best price (0=disabled)
+    trail_method: str = "atr"  # "atr" | "donchian"
+    trail_ref: str = "best"  # reference for ATR trailing: "best" | "close"
 
     # R-multiple partial take-profit logic
     # R is defined by initial stop distance fraction (from _sl_frac_from_cfg at entry)
-    tp_r_multiple: float = 1.0        # payday at k*R (e.g., 1.0–1.5R). 0 disables.
-    partial_tp_frac: float = 0.5      # fraction of position to close at payday (0 disables)
+    tp_r_multiple: float = 1.0  # payday at k*R (e.g., 1.0–1.5R). 0 disables.
+    partial_tp_frac: float = 0.5  # fraction of position to close at payday (0 disables)
     lock_in_r_after_tp: float = 0.25  # after payday, move stop to BE + X*R (0 keeps at BE)
     # Pullback/structure-based exit
-    pullback_ema_len: int = 0         # 0 disables; fast structure EMA length
-    pullback_atr_mult: float = 0.0    # band depth in ATRs (0 disables)
-    pullback_confirm: int = 0         # bars to confirm below/above band
-    donch_mid_n: int = 0              # if using Donchian trailing, midline window (0 disables)
+    pullback_ema_len: int = 0  # 0 disables; fast structure EMA length
+    pullback_atr_mult: float = 0.0  # band depth in ATRs (0 disables)
+    pullback_confirm: int = 0  # bars to confirm below/above band
+    donch_mid_n: int = 0  # if using Donchian trailing, midline window (0 disables)
     # Momentum guard: must achieve R multiple within N bars from entry
-    min_rr_by_bars_r: float = 0.0     # e.g., 0.5 means must reach 0.5R; 0 disables
-    min_rr_by_bars_n: int = 0         # bars deadline; 0 disables
+    min_rr_by_bars_r: float = 0.0  # e.g., 0.5 means must reach 0.5R; 0 disables
+    min_rr_by_bars_n: int = 0  # bars deadline; 0 disables
 
 
 def recommended_exec_config() -> ExecConfig:
@@ -123,7 +128,7 @@ def _apply_cost(price: float, fees_bps: float, slip_bps: float, side: int) -> fl
     side: +1 for buy (enter long), -1 for sell (enter short or exit long),
           +1 on short-exit (buy to cover), -1 on long-exit (sell)
     """
-    fee  = float(price) * (fees_bps / 10_000.0)
+    fee = float(price) * (fees_bps / 10_000.0)
     slip = float(price) * (slip_bps / 10_000.0) * side
     return float(price + fee + slip)
 
@@ -132,11 +137,9 @@ def _atr(df, period: int):
     pd = _pd()
     high, low, close = df["high"], df["low"], df["close"]
     prev_close = close.shift(1)
-    tr = pd.concat([
-        (high - low),
-        (high - prev_close).abs(),
-        (low - prev_close).abs()
-    ], axis=1).max(axis=1)
+    tr = pd.concat([(high - low), (high - prev_close).abs(), (low - prev_close).abs()], axis=1).max(
+        axis=1
+    )
     return tr.rolling(period, min_periods=period).mean()
 
 
@@ -176,7 +179,9 @@ def _sl_hit(entry_px: float, px: float, position: int, atr_val: float, cfg: Exec
     return False
 
 
-def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg: ExecConfig) -> Tuple["pd.DataFrame", "pd.DataFrame", "pd.Series"]:
+def run_backtest(
+    df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg: ExecConfig
+) -> Tuple["pd.DataFrame", "pd.DataFrame", "pd.Series"]:
     import numpy as np
 
     pd = _pd()
@@ -194,30 +199,30 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
     # Prebind frequently used config values to locals (micro-optimizations)
     fees_bps = float(cfg.fees_bps)
     slip_bps = float(cfg.slip_bps)
-    break_even_mult = float(getattr(cfg, 'break_even_atr_mult', 0.0) or 0.0)
-    trail_method = (getattr(cfg, 'trail_method', 'atr') or 'atr').lower()
-    trail_ref_best = ((getattr(cfg, 'trail_ref', 'best') or 'best').lower() == 'best')
-    trail_atr_mult = float(getattr(cfg, 'trail_atr_mult', 0.0) or 0.0)
-    donch_mid_n = int(getattr(cfg, 'donch_mid_n', 0) or 0)
-    tp_r_multiple = float(getattr(cfg, 'tp_r_multiple', 0.0) or 0.0)
-    partial_tp_frac = float(getattr(cfg, 'partial_tp_frac', 0.0) or 0.0)
-    lock_in_r_after_tp = float(getattr(cfg, 'lock_in_r_after_tp', 0.0) or 0.0)
-    pullback_ema_len = int(getattr(cfg, 'pullback_ema_len', 0) or 0)
-    pullback_atr_mult = float(getattr(cfg, 'pullback_atr_mult', 0.0) or 0.0)
-    pullback_confirm = int(getattr(cfg, 'pullback_confirm', 0) or 0)
-    min_rr_n = int(getattr(cfg, 'min_rr_by_bars_n', 0) or 0)
-    min_rr_r = float(getattr(cfg, 'min_rr_by_bars_r', 0.0) or 0.0)
-    max_bars_cfg = int(getattr(cfg, 'max_bars', 0) or 0)
-    allow_short_cfg = bool(getattr(cfg, 'allow_short', False))
+    break_even_mult = float(getattr(cfg, "break_even_atr_mult", 0.0) or 0.0)
+    trail_method = (getattr(cfg, "trail_method", "atr") or "atr").lower()
+    trail_ref_best = (getattr(cfg, "trail_ref", "best") or "best").lower() == "best"
+    trail_atr_mult = float(getattr(cfg, "trail_atr_mult", 0.0) or 0.0)
+    donch_mid_n = int(getattr(cfg, "donch_mid_n", 0) or 0)
+    tp_r_multiple = float(getattr(cfg, "tp_r_multiple", 0.0) or 0.0)
+    partial_tp_frac = float(getattr(cfg, "partial_tp_frac", 0.0) or 0.0)
+    lock_in_r_after_tp = float(getattr(cfg, "lock_in_r_after_tp", 0.0) or 0.0)
+    pullback_ema_len = int(getattr(cfg, "pullback_ema_len", 0) or 0)
+    pullback_atr_mult = float(getattr(cfg, "pullback_atr_mult", 0.0) or 0.0)
+    pullback_confirm = int(getattr(cfg, "pullback_confirm", 0) or 0)
+    min_rr_n = int(getattr(cfg, "min_rr_by_bars_n", 0) or 0)
+    min_rr_r = float(getattr(cfg, "min_rr_by_bars_r", 0.0) or 0.0)
+    max_bars_cfg = int(getattr(cfg, "max_bars", 0) or 0)
+    allow_short_cfg = bool(getattr(cfg, "allow_short", False))
 
     # ATR for sizing/optional exits
     atr_ser = _atr(data, cfg.atr_period).fillna(0.0)
     atr = atr_ser.values
     close_arr = data["close"].astype(float).values
-    atr_norm = np.array([
-        (atr[idx] / close_arr[idx]) if close_arr[idx] else 0.0
-        for idx in range(len(atr))
-    ], dtype=float)
+    atr_norm = np.array(
+        [(atr[idx] / close_arr[idx]) if close_arr[idx] else 0.0 for idx in range(len(atr))],
+        dtype=float,
+    )
 
     dyn_risk_enabled = bool(getattr(cfg, "dynamic_risk_scaling", False))
     if dyn_risk_enabled:
@@ -263,6 +268,7 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
     # Optional Donchian midline for trailing
     if donch_mid_n > 0:
         import numpy as _np
+
         n = donch_mid_n
         roll_high = data["high"].rolling(n, min_periods=n).max()
         roll_low = data["low"].rolling(n, min_periods=n).min()
@@ -270,13 +276,13 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
     else:
         donch_mid = None
 
-    position = 0       # -1,0,1
+    position = 0  # -1,0,1
     entry_price = 0.0
-    f_notional = 0.0   # position notional fraction of equity (like leverage fraction)
+    f_notional = 0.0  # position notional fraction of equity (like leverage fraction)
     bars_in_trade = 0
     hit_half_R = False
     atr_entry = 0.0
-    r_frac_entry = 0.0   # initial stop distance fraction (R) at entry
+    r_frac_entry = 0.0  # initial stop distance fraction (R) at entry
     stop_price = None  # dynamic stop (break-even / trailing)
     best_price = None  # peak (long) or trough (short)
     be_armed = False
@@ -289,25 +295,35 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
 
     def maybe_exit(i: int, px: float, reason: str) -> bool:
         nonlocal position, entry_price, equity, f_notional, bars_in_trade
-        nonlocal atr_entry, stop_price, best_price, be_armed, r_frac_entry, partial_taken, pullback_count, hit_half_R
+        nonlocal \
+            atr_entry, \
+            stop_price, \
+            best_price, \
+            be_armed, \
+            r_frac_entry, \
+            partial_taken, \
+            pullback_count, \
+            hit_half_R
         if position == 0:
             return False
         # closing side is opposite of position
         fill_exit = _apply_cost(px, cfg.fees_bps, cfg.slip_bps, side=-position)
         ret_frac = (fill_exit / entry_price - 1.0) * position  # price move
         # equity change scaled by notional fraction
-        equity *= (1.0 + f_notional * ret_frac)
-        trades.append({
-            "exit_ts": ts[i],
-            "side": "long" if position == 1 else "short",
-            "entry_price": float(entry_price),
-            "exit_price": float(fill_exit),
-            "notional_frac": float(f_notional),
-            "ret_price": float(ret_frac),
-            "pnl": float(f_notional * ret_frac),
-            "reason": reason,
-            "bars": bars_in_trade,
-        })
+        equity *= 1.0 + f_notional * ret_frac
+        trades.append(
+            {
+                "exit_ts": ts[i],
+                "side": "long" if position == 1 else "short",
+                "entry_price": float(entry_price),
+                "exit_price": float(fill_exit),
+                "notional_frac": float(f_notional),
+                "ret_price": float(ret_frac),
+                "pnl": float(f_notional * ret_frac),
+                "reason": reason,
+                "bars": bars_in_trade,
+            }
+        )
         position, entry_price, f_notional, bars_in_trade = 0, 0.0, 0.0, 0
         atr_entry, stop_price, best_price, be_armed = 0.0, None, None, False
         r_frac_entry, partial_taken = 0.0, False
@@ -353,23 +369,36 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
                     ref = best_price if trail_ref_best else px
                     if position == 1:
                         candidate = ref - trail_dist
-                        stop_price = max(stop_price if stop_price is not None else -float('inf'), candidate)
+                        stop_price = max(
+                            stop_price if stop_price is not None else -float("inf"), candidate
+                        )
                     else:
                         candidate = ref + trail_dist  # for shorts, stop trails above reference
-                        stop_price = min(stop_price if stop_price is not None else float('inf'), candidate)
+                        stop_price = min(
+                            stop_price if stop_price is not None else float("inf"), candidate
+                        )
             elif trail_method == "donchian":
                 if donch_mid is not None:
                     dm_val = donch_mid[i]
                     if dm_val == dm_val:  # not NaN
                         dm = float(dm_val)
                         if position == 1:
-                            stop_price = max(stop_price if stop_price is not None else -float('inf'), dm)
+                            stop_price = max(
+                                stop_price if stop_price is not None else -float("inf"), dm
+                            )
                         else:
-                            stop_price = min(stop_price if stop_price is not None else float('inf'), dm)
+                            stop_price = min(
+                                stop_price if stop_price is not None else float("inf"), dm
+                            )
 
             # Check dynamic stop first
             # Check partial take-profit at R-multiple (payday) before stops/TP/SL
-            if (not partial_taken) and partial_tp_frac > 0.0 and tp_r_multiple > 0.0 and r_frac_entry > 0.0:
+            if (
+                (not partial_taken)
+                and partial_tp_frac > 0.0
+                and tp_r_multiple > 0.0
+                and r_frac_entry > 0.0
+            ):
                 # Compute payday price target and check intrabar extremes
                 if position == 1:
                     payday_px = entry_price * (1.0 + tp_r_multiple * r_frac_entry)
@@ -381,21 +410,25 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
                     # Execute partial exit
                     pf = float(max(0.0, min(partial_tp_frac, 1.0)))
                     if pf > 0.0 and f_notional > 0.0:
-                        fill_exit = _apply_cost(payday_px, cfg.fees_bps, cfg.slip_bps, side=-position)
+                        fill_exit = _apply_cost(
+                            payday_px, cfg.fees_bps, cfg.slip_bps, side=-position
+                        )
                         ret_frac = (fill_exit / entry_price - 1.0) * position
                         delta_f = f_notional * pf
-                        equity *= (1.0 + delta_f * ret_frac)
-                        trades.append({
-                            "exit_ts": ts[i],
-                            "side": "long" if position == 1 else "short",
-                            "entry_price": float(entry_price),
-                            "exit_price": float(fill_exit),
-                            "notional_frac": float(delta_f),
-                            "ret_price": float(ret_frac),
-                            "pnl": float(delta_f * ret_frac),
-                            "reason": "partial_tp",
-                            "bars": bars_in_trade,
-                        })
+                        equity *= 1.0 + delta_f * ret_frac
+                        trades.append(
+                            {
+                                "exit_ts": ts[i],
+                                "side": "long" if position == 1 else "short",
+                                "entry_price": float(entry_price),
+                                "exit_price": float(fill_exit),
+                                "notional_frac": float(delta_f),
+                                "ret_price": float(ret_frac),
+                                "pnl": float(delta_f * ret_frac),
+                                "reason": "partial_tp",
+                                "bars": bars_in_trade,
+                            }
+                        )
                         f_notional = float(max(0.0, f_notional - delta_f))
                         partial_taken = True
                         # Lock stop to BE + X*R (or BE-X*R for short)
@@ -403,14 +436,25 @@ def run_backtest(df, signals_fn: Callable[["pd.DataFrame"], "pd.DataFrame"], cfg
                             lock = lock_in_r_after_tp * r_frac_entry
                             if position == 1:
                                 candidate = entry_price * (1.0 + lock)
-                                stop_price = max(stop_price if stop_price is not None else -float('inf'), candidate)
+                                stop_price = max(
+                                    stop_price if stop_price is not None else -float("inf"),
+                                    candidate,
+                                )
                             else:
                                 candidate = entry_price * (1.0 - lock)
-                                stop_price = min(stop_price if stop_price is not None else float('inf'), candidate)
+                                stop_price = min(
+                                    stop_price if stop_price is not None else float("inf"),
+                                    candidate,
+                                )
                             be_armed = True
 
             # Optional pullback-confirm exit using EMA +/- k*ATR bands with stateful count
-            if (ema is not None) and pullback_atr_mult > 0.0 and pullback_confirm > 0 and position != 0:
+            if (
+                (ema is not None)
+                and pullback_atr_mult > 0.0
+                and pullback_confirm > 0
+                and position != 0
+            ):
                 k = pullback_atr_mult
                 need = pullback_confirm
                 e = ema[i]

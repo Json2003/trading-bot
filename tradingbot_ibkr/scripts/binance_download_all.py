@@ -7,6 +7,7 @@ Usage (list-only probe):
 
 When not in list-only, the script shells out to `binance_vision_full_download.py` per symbol.
 """
+
 import argparse
 import re
 import subprocess
@@ -14,6 +15,7 @@ import sys
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from pathlib import Path
+
 
 def yyyymm_iter(start, end):
     cur = datetime.strptime(start, "%Y-%m")
@@ -32,6 +34,7 @@ def month_days(yyyy, mm):
 def head_exists(url):
     try:
         import requests
+
         r = requests.head(url, timeout=10)
         return r.status_code == 200
     except Exception:
@@ -42,21 +45,22 @@ def discover_symbols():
     # try using ccxt first
     try:
         import ccxt
+
         ex = ccxt.binance()
         markets = ex.load_markets()
         syms = list(markets.keys())
         # ccxt gives symbols like 'BTC/USDT' — convert
-        syms = [s.replace('/', '').replace('-', '').upper() for s in syms]
+        syms = [s.replace("/", "").replace("-", "").upper() for s in syms]
         return sorted(set(syms))
     except Exception:
         # fallback common list
-        return ['BTCUSDT','ETHUSDT','BNBUSDT','ADAUSDT','XRPUSDT']
+        return ["BTCUSDT", "ETHUSDT", "BNBUSDT", "ADAUSDT", "XRPUSDT"]
 
 
 def probe_symbol(symbol, start, end):
     BASE = "https://data.binance.vision"
     SPOT_MONTHLY = "/data/spot/monthly/trades/{symbol}/{symbol}-trades-{yyyy}-{mm}.zip"
-    SPOT_DAILY   = "/data/spot/daily/trades/{symbol}/{yyyy}/{mm}/{symbol}-trades-{yyyy}-{mm}-{dd}.zip"
+    SPOT_DAILY = "/data/spot/daily/trades/{symbol}/{yyyy}/{mm}/{symbol}-trades-{yyyy}-{mm}-{dd}.zip"
     found = []
     for yyyy, mm in yyyymm_iter(start, end):
         murl = BASE + SPOT_MONTHLY.format(symbol=symbol, yyyy=yyyy, mm=mm)
@@ -72,39 +76,53 @@ def probe_symbol(symbol, start, end):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--since', default='2017-01')
-    ap.add_argument('--until', default=datetime.utcnow().strftime('%Y-%m'))
-    ap.add_argument('--symbols-regex', default='.*')
-    ap.add_argument('--out', default='./raw_all')
-    ap.add_argument('--list-only', action='store_true')
-    ap.add_argument('--threads', type=int, default=4)
+    ap.add_argument("--since", default="2017-01")
+    ap.add_argument("--until", default=datetime.utcnow().strftime("%Y-%m"))
+    ap.add_argument("--symbols-regex", default=".*")
+    ap.add_argument("--out", default="./raw_all")
+    ap.add_argument("--list-only", action="store_true")
+    ap.add_argument("--threads", type=int, default=4)
     args = ap.parse_args()
 
     import re
+
     regex = re.compile(args.symbols_regex)
     syms = discover_symbols()
     syms = [s for s in syms if regex.search(s)]
-    print(f'Found {len(syms)} symbols matching regex')
+    print(f"Found {len(syms)} symbols matching regex")
     # probe a few symbols first
     results = {}
     for s in syms[:200]:
         urls = probe_symbol(s, args.since, args.until)
         if urls:
             results[s] = urls
-            print(s, '->', len(urls), 'matches (example first 3):')
+            print(s, "->", len(urls), "matches (example first 3):")
             for u in urls[:3]:
-                print('  ', u)
+                print("  ", u)
 
     total = sum(len(v) for v in results.values())
-    print('\nTotal archive URLs found for matched symbols:', total)
+    print("\nTotal archive URLs found for matched symbols:", total)
 
     if not args.list_only and results:
         # spawn downloads for matched symbols
         for s in sorted(results.keys()):
-            cmd = [sys.executable, 'tradingbot_ibkr/scripts/binance_vision_full_download.py', '--symbol', s, '--since', args.since, '--until', args.until, '--out', args.out, '--threads', '4']
-            print('Running:', ' '.join(cmd))
+            cmd = [
+                sys.executable,
+                "tradingbot_ibkr/scripts/binance_vision_full_download.py",
+                "--symbol",
+                s,
+                "--since",
+                args.since,
+                "--until",
+                args.until,
+                "--out",
+                args.out,
+                "--threads",
+                "4",
+            ]
+            print("Running:", " ".join(cmd))
             subprocess.Popen(cmd)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

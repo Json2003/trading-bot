@@ -25,6 +25,7 @@ class _StubFinder(importlib.abc.MetaPathFinder):
     _packages: Dict[str, Path] = {
         "numpy": _ROOT / "numpy",
         "pandas": _ROOT / "pandas",
+        "ccxt": _ROOT / "ccxt",
     }
 
     def find_spec(self, fullname: str, path, target=None):  # type: ignore[override]

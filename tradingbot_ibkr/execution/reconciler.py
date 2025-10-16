@@ -1,4 +1,5 @@
 """Utilities to compare local state with broker state and enforce risk limits."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -66,7 +67,12 @@ class ReconciliationReport:
 
     @property
     def is_clean(self) -> bool:
-        return not (self.missing_orders or self.unexpected_orders or self.quantity_mismatches or self.position_deltas)
+        return not (
+            self.missing_orders
+            or self.unexpected_orders
+            or self.quantity_mismatches
+            or self.position_deltas
+        )
 
 
 class Reconciler:
@@ -85,15 +91,35 @@ class Reconciler:
         self._logger = logger or logging.getLogger(__name__)
         self._monitor = monitor
 
-    def _coerce_orders(self, orders: Iterable[Order] | Mapping[str, Order]) -> MutableMapping[str, Order]:
+    def _coerce_orders(
+        self, orders: Iterable[Order] | Mapping[str, Order]
+    ) -> MutableMapping[str, Order]:
         if isinstance(orders, Mapping):
             return dict(orders)
         return {order.id: order for order in orders}
 
-    def _coerce_positions(self, positions: Mapping[str, float] | Iterable[Position]) -> MutableMapping[str, float]:
+    def _coerce_positions(
+        self, positions: Mapping[str, float] | Iterable[Position]
+    ) -> MutableMapping[str, float]:
         if isinstance(positions, Mapping):
             return dict(positions)
         return {pos.symbol: pos.quantity for pos in positions}
+
+    def _order_key(self, order: object) -> str | None:
+        """Extract the most stable identifier from ``order`` if available."""
+
+        metadata = getattr(order, "metadata", None)
+        if isinstance(metadata, Mapping):
+            for candidate in ("client_order_id", "idemp_key", "order_id"):
+                value = metadata.get(candidate)
+                if value:
+                    return str(value)
+
+        for attr in ("idemp_key", "client_order_id", "id", "broker_order_id"):
+            value = getattr(order, attr, None)
+            if value:
+                return str(value)
+        return None
 
     def reconcile(
         self,
@@ -102,13 +128,19 @@ class Reconciler:
         local_positions: Mapping[str, float] | Iterable[Position],
     ) -> ReconciliationReport:
         broker_orders = {order.id: order for order in self._broker.list_open_orders()}
-        broker_positions = {position.symbol: position.quantity for position in self._broker.list_positions()}
+        broker_positions = {
+            position.symbol: position.quantity for position in self._broker.list_positions()
+        }
 
         local_orders_map = self._coerce_orders(local_orders)
         local_positions_map = self._coerce_positions(local_positions)
 
-        missing_orders = tuple(sorted(order_id for order_id in local_orders_map.keys() - broker_orders.keys()))
-        unexpected_orders = tuple(broker_orders[oid] for oid in broker_orders.keys() - local_orders_map.keys())
+        missing_orders = tuple(
+            sorted(order_id for order_id in local_orders_map.keys() - broker_orders.keys())
+        )
+        unexpected_orders = tuple(
+            broker_orders[oid] for oid in broker_orders.keys() - local_orders_map.keys()
+        )
 
         quantity_mismatches: dict[str, float] = {}
         partials: list[str] = []
@@ -137,6 +169,56 @@ class Reconciler:
             position_deltas=position_deltas,
             partially_filled_orders=tuple(sorted(partials)),
         )
+
+    def submit_idempotent(
+        self,
+        order: Order,
+        *,
+        open_orders: MutableMapping[str, Order] | None = None,
+        submitter: Callable[[Order], Order] | None = None,
+    ) -> Order:
+        """Submit ``order`` while avoiding duplicate broker requests."""
+
+        key = self._order_key(order)
+        current_open = (
+            open_orders
+            if open_orders is not None
+            else self._coerce_orders(self._broker.list_open_orders())
+        )
+
+        if key and key in current_open:
+            existing = current_open[key]
+            self._logger.info(
+                "submit_idempotent: reusing existing order",
+                extra={
+                    "order_id": key,
+                    "status": getattr(existing, "status", None),
+                },
+            )
+            return existing
+
+        if submitter is None:
+            broker_submit = getattr(self._broker, "submit_order", None)
+            if broker_submit is None:
+                raise AttributeError(
+                    "Broker does not implement submit_order; provide a submitter"
+                )
+            placed = broker_submit(order)  # type: ignore[misc]
+        else:
+            placed = submitter(order)
+
+        placed_key = self._order_key(placed) or key
+        if open_orders is not None and placed_key:
+            open_orders[placed_key] = placed
+
+        self._logger.info(
+            "submit_idempotent: submitted order",
+            extra={
+                "order_id": placed_key,
+                "status": getattr(placed, "status", None),
+            },
+        )
+        return placed
 
     def reconcile_with_retry(
         self,
@@ -222,6 +304,43 @@ class Reconciler:
             position_risk_pct=position_risk_pct,
             breached_limits=tuple(breached),
         )
+
+    def check_kill_switch(self, equity_curve: Sequence[float]) -> bool:
+        """Return ``True`` if the configured kill switch thresholds are breached."""
+
+        limits = self._limits
+        if limits is None or not equity_curve:
+            return False
+
+        latest = float(equity_curve[-1])
+        peak = max(float(value) for value in equity_curve)
+        drawdown_pct = 0.0
+        if peak > 0:
+            drawdown_pct = max(0.0, 100.0 * (1 - latest / peak))
+
+        start = float(equity_curve[0])
+        loss_pct = 0.0
+        if start > 0:
+            loss_pct = max(0.0, 100.0 * (start - latest) / start)
+
+        evaluation = self.evaluate_risk(
+            daily_loss_pct=loss_pct,
+            drawdown_pct=drawdown_pct,
+            position_risk_pct=0.0,
+        )
+
+        if evaluation.kill_switch_triggered:
+            self._logger.error(
+                "Kill-switch triggered",
+                extra={
+                    "daily_loss_pct": evaluation.daily_loss_pct,
+                    "drawdown_pct": evaluation.drawdown_pct,
+                    "breached_limits": evaluation.breached_limits,
+                },
+            )
+            return True
+
+        return False
 
 
 __all__ = ["RiskLimits", "RiskEvaluation", "ReconciliationReport", "Reconciler"]
