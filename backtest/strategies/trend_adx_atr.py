@@ -5,7 +5,9 @@ import numpy as np
 def _atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
     high, low, close = df["high"], df["low"], df["close"]
     prev_close = close.shift(1)
-    tr = pd.concat([(high - low), (high - prev_close).abs(), (low - prev_close).abs()], axis=1).max(axis=1)
+    tr = pd.concat([(high - low), (high - prev_close).abs(), (low - prev_close).abs()], axis=1).max(
+        axis=1
+    )
     return tr.rolling(int(period), min_periods=int(period)).mean()
 
 
@@ -16,13 +18,17 @@ def _adx(df: pd.DataFrame, period: int = 14) -> pd.Series:
     dn = -low.diff()
     plus_dm = ((up > dn) & (up > 0)) * up
     minus_dm = ((dn > up) & (dn > 0)) * dn
-    tr1 = (high - low)
+    tr1 = high - low
     tr2 = (high - close.shift(1)).abs()
     tr3 = (low - close.shift(1)).abs()
     tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
     atr = tr.rolling(int(period), min_periods=int(period)).mean()
-    pdi = 100 * (plus_dm.rolling(int(period), min_periods=int(period)).mean() / atr).replace([np.inf, -np.inf], np.nan)
-    mdi = 100 * (minus_dm.rolling(int(period), min_periods=int(period)).mean() / atr).replace([np.inf, -np.inf], np.nan)
+    pdi = 100 * (plus_dm.rolling(int(period), min_periods=int(period)).mean() / atr).replace(
+        [np.inf, -np.inf], np.nan
+    )
+    mdi = 100 * (minus_dm.rolling(int(period), min_periods=int(period)).mean() / atr).replace(
+        [np.inf, -np.inf], np.nan
+    )
     dx = ((pdi - mdi).abs() / (pdi + mdi).replace(0, np.nan)) * 100
     return dx.rolling(int(period), min_periods=int(period)).mean()
 
@@ -61,21 +67,21 @@ def generate_signals(
 
     # Long regime
     long_base = (
-        (out["sma_fast"] > out["sma_slow"]) &
-        (out["close"] > out["sma_trend"]) &
-        (out["sma_trend_slope"] > float(slope_min_bull)) &
-        (adx >= float(adx_min)) &
-        (atr_pct >= float(atr_pctile_bull))
+        (out["sma_fast"] > out["sma_slow"])
+        & (out["close"] > out["sma_trend"])
+        & (out["sma_trend_slope"] > float(slope_min_bull))
+        & (adx >= float(adx_min))
+        & (atr_pct >= float(atr_pctile_bull))
     )
 
     # Short regime
     short_base = (
-        bool(enable_shorts) &
-        (out["sma_fast"] < out["sma_slow"]) &
-        (out["close"] < out["sma_trend"]) &
-        (out["sma_trend_slope"] < float(slope_max_bear)) &
-        (adx >= float(adx_min)) &
-        (atr_pct >= float(atr_pctile_bear))
+        bool(enable_shorts)
+        & (out["sma_fast"] < out["sma_slow"])
+        & (out["close"] < out["sma_trend"])
+        & (out["sma_trend_slope"] < float(slope_max_bear))
+        & (adx >= float(adx_min))
+        & (atr_pct >= float(atr_pctile_bear))
     )
 
     sig = pd.Series(0, index=out.index, dtype=int)
@@ -85,9 +91,9 @@ def generate_signals(
     # Cooldown after exits
     if int(cooldown) > 0:
         sig_shift = sig.shift(1).fillna(0)
-        exit_points = ((sig_shift != 0) & (sig == 0))
+        exit_points = (sig_shift != 0) & (sig == 0)
         cool_mask = np.zeros(len(sig), dtype=bool)
-        last_exit = -10**9
+        last_exit = -(10**9)
         for i, ex in enumerate(exit_points):
             if ex:
                 last_exit = i

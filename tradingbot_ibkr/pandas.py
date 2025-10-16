@@ -1,6 +1,7 @@
 """A tiny subset of pandas used for unit tests.
 This stub implements only the features required by the tests.
 """
+
 from __future__ import annotations
 
 import csv
@@ -78,11 +79,14 @@ class DataFrame:
 
 # module level helpers
 
+
 def DataFrame_from_records(records: Iterable[Dict[str, Any]]) -> DataFrame:
     return DataFrame(list(records))
 
 
-def read_csv(path: Any, parse_dates: Optional[List[str]] = None, index_col: Optional[str] = None) -> DataFrame:
+def read_csv(
+    path: Any, parse_dates: Optional[List[str]] = None, index_col: Optional[str] = None
+) -> DataFrame:
     with open(path, newline="") as f:
         reader = csv.DictReader(f)
         rows: List[Dict[str, Any]] = []
@@ -102,5 +106,5 @@ def read_csv(path: Any, parse_dates: Optional[List[str]] = None, index_col: Opti
             rows.append(new_row)
     return DataFrame(rows)
 
-DataFrame.from_records = staticmethod(DataFrame_from_records)
 
+DataFrame.from_records = staticmethod(DataFrame_from_records)

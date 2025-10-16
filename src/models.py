@@ -1,4 +1,5 @@
 """Public FastAPI schemas re-exported from the core domain models."""
+
 from __future__ import annotations
 
 from models import OrderRequest as CoreOrderRequest

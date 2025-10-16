@@ -16,15 +16,25 @@ from backtest.strategies.donchian_confirmed import generate_signals
 
 def test_breakout_logic():
     ts = pd.date_range("2024-01-01", periods=30, freq="H", tz="UTC")
-    close = pd.Series([100]*10 + [110]*10 + [120]*10, index=ts)
-    df = pd.DataFrame({
-        "timestamp": ts,
-        "open": close,
-        "high": close + 1,
-        "low": close - 1,
-        "close": close,
-        "volume": 1,
-    })
-    out = generate_signals(df, donchian_n=5, trend_ma=10, adx_min=0, atr_pctile_min=0.0, cooldown=0, enable_shorts=False)
+    close = pd.Series([100] * 10 + [110] * 10 + [120] * 10, index=ts)
+    df = pd.DataFrame(
+        {
+            "timestamp": ts,
+            "open": close,
+            "high": close + 1,
+            "low": close - 1,
+            "close": close,
+            "volume": 1,
+        }
+    )
+    out = generate_signals(
+        df,
+        donchian_n=5,
+        trend_ma=10,
+        adx_min=0,
+        atr_pctile_min=0.0,
+        cooldown=0,
+        enable_shorts=False,
+    )
     # After breaking above 5-bar high, should be long at least once
     assert out["signals"].max() == 1

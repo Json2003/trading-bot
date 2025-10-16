@@ -1,9 +1,11 @@
 """Tests for the logging helper utilities."""
+
 from __future__ import annotations
 
 import io
 import json
 import logging
+from datetime import datetime
 
 import pytest
 
@@ -17,6 +19,11 @@ def test_json_formatter_serializes_basic_fields() -> None:
     logger.info("hello world")
 
     payload = json.loads(stream.getvalue().strip())
+    # The JSON payload should include a timestamp formatted using the standard
+    # logging formatter.  ``datetime.strptime`` raises ``ValueError`` if the
+    # value does not match the expected format, which doubles as an assertion
+    # that the field is present and non-empty.
+    datetime.strptime(payload["timestamp"], "%Y-%m-%d %H:%M:%S,%f")
     assert payload["level"] == "INFO"
     assert payload["name"] == "test.json"
     assert payload["msg"] == "hello world"

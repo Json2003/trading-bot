@@ -81,9 +81,9 @@ def test_reconcile_ignores_orders_with_same_idempotency_key() -> None:
     )
     reconciler = Reconciler(
         broker,
-        account_id="acct",
         limits=RiskLimits(max_daily_loss_pct=10, kill_switch_drawdown_pct=15, max_position_risk_pct=5),
         logger=DummyLogger(),
+        account_id="acct",
     )
 
     reconciler.reconcile([_order_request(client_order_id="abc")])
@@ -108,9 +108,9 @@ def test_reconcile_submits_when_no_matching_idempotency_key() -> None:
     )
     reconciler = Reconciler(
         broker,
-        account_id="acct",
         limits=RiskLimits(max_daily_loss_pct=10, kill_switch_drawdown_pct=15, max_position_risk_pct=5),
         logger=DummyLogger(),
+        account_id="acct",
     )
 
     intended = _order_request(client_order_id="xyz")
@@ -130,18 +130,32 @@ def test_reconcile_falls_back_to_client_id_when_idemp_key_missing() -> None:
                 filled_qty=0.0,
                 avg_price=None,
                 ts=0.0,
-                raw={},
+                raw={"idempotency_key": "meta-1"},
             )
         ]
     )
     reconciler = Reconciler(
         broker,
-        account_id="acct",
         limits=RiskLimits(max_daily_loss_pct=10, kill_switch_drawdown_pct=15, max_position_risk_pct=5),
         logger=DummyLogger(),
+        account_id="acct",
     )
 
-    reconciler.reconcile([_order_request(client_order_id="client-123")])
+    reconciler.reconcile([
+        _order_request(client_order_id=None, meta={"idempotency_key": "meta-1"})
+    ])
 
     assert broker.submitted == []
 
+
+def test_check_kill_switch_triggers_on_drawdown() -> None:
+    logger = DummyLogger()
+    reconciler = Reconciler(
+        FakeBroker(),
+        limits=RiskLimits(max_daily_loss_pct=10, kill_switch_drawdown_pct=15, max_position_risk_pct=5),
+        logger=logger,
+        account_id="acct",
+    )
+
+    assert not reconciler.check_kill_switch([100_000.0, 105_000.0, 100_000.0])
+    assert reconciler.check_kill_switch([100_000.0, 110_000.0, 90_000.0])
