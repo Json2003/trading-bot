@@ -2,10 +2,44 @@
   "name": "trading-bot-dashboard",
   "version": "1.0.0",
   "main": "main.js",
+  "description": "Desktop dashboard for Trading Bot",
+  "author": {
+    "name": "Splitstar Development",
+    "email": "dev@splitstar.io"
+  },
+  "homepage": "https://github.com/Json2003/trading-bot",
+  "license": "MIT",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder",
+    "dist": "electron-builder -p never"
   },
   "devDependencies": {
-    "electron": "^38.0.0"
+    "electron": "^38.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "publish": null,
+    "appId": "com.splitstar.tradingbot.dashboard",
+    "productName": "Trading Bot Dashboard",
+    "files": [
+      "**/*",
+      "!dist/**",
+      "!node_modules/.cache/**"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Finance"
+    },
+    "win": {
+      "target": ["nsis"]
+    },
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.finance"
+    }
   }
 }

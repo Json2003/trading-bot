@@ -2,116 +2,1193 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Trading Bot Dashboard</title>
+    <title>Trading Bot Desktop Console</title>
     <style>
+      :root {
+        --bg: #0b1220;
+        --panel: #0f172a;
+        --border: #1f2a44;
+        --accent: #38bdf8;
+        --accent-soft: rgba(56, 189, 248, 0.18);
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --danger: #f87171;
+        --success: #34d399;
+        --warning: #fbbf24;
+        --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         margin: 0;
-        padding: 20px;
-        background-color: #f5f5f5;
+        padding: 0;
+        background: radial-gradient(circle at top, rgba(56, 189, 248, 0.08), transparent 60%), var(--bg);
+        color: var(--text);
+        font-family: var(--font);
       }
-      
-      .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        background: white;
-        border-radius: 8px;
-        padding: 30px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      }
-      
-      .header {
-        text-align: center;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 2px solid #eee;
-      }
-      
-      .status {
+
+      header {
         display: flex;
-        justify-content: space-around;
-        margin: 20px 0;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px 8px;
       }
-      
-      .status-item {
-        text-align: center;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 5px;
-        min-width: 150px;
-      }
-      
-      .status-label {
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 5px;
-      }
-      
-      .status-value {
+
+      .brand {
         font-size: 18px;
-        font-weight: bold;
-        color: #333;
+        font-weight: 600;
+        letter-spacing: 0.6px;
       }
-      
-      .success { color: #28a745; }
-      .warning { color: #ffc107; }
-      .error { color: #dc3545; }
+
+      .brand em {
+        color: var(--accent);
+        font-style: normal;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        background: #1f2937;
+        color: var(--muted);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+      }
+
+      .badge.online {
+        background: rgba(34, 197, 94, 0.16);
+        color: #bbf7d0;
+        border-color: rgba(34, 197, 94, 0.32);
+      }
+
+      .badge.offline {
+        background: rgba(248, 113, 113, 0.12);
+        color: #fecaca;
+        border-color: rgba(248, 113, 113, 0.2);
+      }
+
+      .badge.paused {
+        background: rgba(251, 191, 36, 0.12);
+        color: #fde68a;
+        border-color: rgba(251, 191, 36, 0.3);
+      }
+
+      .badge.active {
+        background: rgba(56, 189, 248, 0.12);
+        color: #bae6fd;
+        border-color: rgba(56, 189, 248, 0.3);
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+        gap: 18px;
+        padding: 12px 20px 80px;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.32);
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #cbd5f5;
+      }
+
+      p.subtle {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+
+      .summary-tile {
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 12px;
+        padding: 12px;
+      }
+
+      .summary-value {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+
+      .summary-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--muted);
+      }
+
+      .plugin-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-height: 320px;
+        overflow-y: auto;
+        padding-right: 6px;
+      }
+
+      .plugin-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 12px;
+        padding: 14px;
+        background: rgba(15, 23, 42, 0.92);
+      }
+
+      .plugin-row .meta {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .plugin-row strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+
+      .plugin-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-end;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        background: rgba(30, 41, 59, 0.7);
+        color: var(--text);
+        cursor: pointer;
+        transition: background 0.2s ease, border 0.2s ease;
+      }
+
+      .btn:hover {
+        background: rgba(56, 189, 248, 0.16);
+        border-color: rgba(56, 189, 248, 0.38);
+      }
+
+      .btn.primary {
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.9), rgba(14, 165, 233, 0.8));
+        border: none;
+        color: #0f172a;
+        font-weight: 600;
+      }
+
+      .btn.danger {
+        background: rgba(248, 113, 113, 0.16);
+        border-color: rgba(248, 113, 113, 0.32);
+        color: #fecaca;
+      }
+
+      .btn.ghost {
+        background: rgba(15, 23, 42, 0.6);
+        border-color: rgba(148, 163, 184, 0.18);
+      }
+
+      form {
+        display: grid;
+        gap: 12px;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+      }
+
+      label {
+        display: flex;
+        flex-direction: column;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--muted);
+        gap: 6px;
+      }
+
+      input, select {
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        background: rgba(11, 18, 32, 0.9);
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      input:focus, select:focus {
+        outline: none;
+        border-color: rgba(56, 189, 248, 0.5);
+        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.14);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+
+      th, td {
+        padding: 8px 6px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+        text-align: left;
+      }
+
+      th {
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: #94a3b8;
+        font-weight: 600;
+      }
+
+      .empty-state {
+        text-align: center;
+        color: var(--muted);
+        padding: 18px 0;
+      }
+
+      .log-area {
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 12px;
+        padding: 12px;
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: 12px;
+        max-height: 260px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+      }
+
+      footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 10px 20px;
+        background: linear-gradient(to top, rgba(10, 14, 24, 0.95), rgba(10, 14, 24, 0));
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .notice {
+        margin: 0 20px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .pnl-positive {
+        color: var(--success);
+      }
+
+      .pnl-negative {
+        color: var(--danger);
+      }
+
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .switch {
+        position: relative;
+        width: 42px;
+        height: 22px;
+      }
+
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(148, 163, 184, 0.3);
+        transition: 0.2s;
+        border-radius: 999px;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 4px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.2s;
+        border-radius: 50%;
+      }
+
+      input:checked + .slider {
+        background-color: rgba(56, 189, 248, 0.6);
+      }
+
+      input:checked + .slider:before {
+        transform: translateX(18px);
+      }
+
+      .table-actions {
+        display: flex;
+        gap: 6px;
+      }
+
+      .message {
+        margin: 0 20px 12px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(56, 189, 248, 0.08);
+        border: 1px solid rgba(56, 189, 248, 0.18);
+        font-size: 13px;
+        color: #dbeafe;
+      }
+
+      .message.offline {
+        background: rgba(248, 113, 113, 0.08);
+        border-color: rgba(248, 113, 113, 0.2);
+        color: #fecaca;
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .error-text {
+        color: var(--danger);
+        font-size: 12px;
+      }
+
+      @media (max-width: 960px) {
+        main {
+          grid-template-columns: 1fr;
+        }
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+        }
+        footer {
+          flex-direction: column;
+          gap: 6px;
+        }
+      }
     </style>
   </head>
   <body>
-    <div class="container">
-      <div class="header">
-        <h1>Trading Bot Dashboard</h1>
-        <p>Real-time monitoring and backtesting interface</p>
+    <header>
+      <div class="brand">Splitstar <em>Development</em> — Desktop Trading Console</div>
+      <div class="header-actions">
+        <span id="backendStatus" class="badge offline">Standalone Mode</span>
+        <button class="btn ghost" id="resetState">Reset Demo Data</button>
       </div>
-      
-      <div class="status">
-        <div class="status-item">
-          <div class="status-label">CONNECTION</div>
-          <div class="status-value success">CONNECTED</div>
-        </div>
-        <div class="status-item">
-          <div class="status-label">BACKTEST ENGINE</div>
-          <div class="status-value success">READY</div>
-        </div>
-        <div class="status-item">
-          <div class="status-label">LAST UPDATE</div>
-          <div class="status-value" id="timestamp">--:--:--</div>
-        </div>
-      </div>
-      
-      <div style="margin-top: 30px;">
-        <h3>Available Functions</h3>
-        <ul>
-          <li>📊 <strong>Backtesting</strong>: Run historical strategy analysis using CSV or CCXT data sources</li>
-          <li>📈 <strong>Signal Generation</strong>: Generate trading signals using moving average crossovers</li>
-          <li>⚙️ <strong>Parameter Optimization</strong>: Grid search for optimal trading parameters</li>
-          <li>📋 <strong>Performance Analytics</strong>: Detailed trade analysis and risk metrics</li>
-        </ul>
-        
-        <h3>Quick Commands</h3>
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 12px;">
-          # Run backtest with CSV data:<br>
-          python scripts/run_backtest.py --source csv --path data/BTCUSDT-1h.csv<br><br>
-          
-          # Run backtest with CCXT (live data):<br>
-          python scripts/run_backtest.py --source ccxt --exchange binance --symbol "BTC/USDT" --timeframe 1h --since 2023-01-01
-        </div>
-      </div>
+    </header>
+    <div id="backendMessage" class="message offline">
+      Standalone mode active — using local state for data plugins and simulated exchange execution.
     </div>
-    
+    <main>
+      <section class="card" id="pluginsCard">
+        <div>
+          <h2>Data plugins</h2>
+          <p class="subtle">Manage ingestion adapters and inspect their latest activity.</p>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-tile">
+            <div id="pluginSummary" class="summary-value">0</div>
+            <div class="summary-label">Status</div>
+          </div>
+          <div class="summary-tile">
+            <div id="pluginCoverage" class="summary-value">0</div>
+            <div class="summary-label">Symbols Covered</div>
+          </div>
+          <div class="summary-tile">
+            <div id="pluginThroughput" class="summary-value">0</div>
+            <div class="summary-label">Bars / Minute</div>
+          </div>
+        </div>
+        <div class="plugin-list" id="pluginList"></div>
+        <div>
+          <h3 style="margin:0;font-size:13px;text-transform:uppercase;letter-spacing:0.6px;color:#cbd5f5;">Add plugin</h3>
+          <form id="pluginForm" class="form-grid">
+            <label>name
+              <input name="name" placeholder="Binance Spot" required maxlength="80">
+            </label>
+            <label>provider
+              <input name="provider" placeholder="CCXT" maxlength="40">
+            </label>
+            <label>symbol
+              <input name="symbol" placeholder="BTC/USDT" maxlength="32" required>
+            </label>
+            <label>interval
+              <select name="interval">
+                <option value="1m">1m</option>
+                <option value="5m">5m</option>
+                <option value="15m">15m</option>
+                <option value="1h">1h</option>
+              </select>
+            </label>
+            <label>notes
+              <input name="notes" placeholder="Custom dataset or destination" maxlength="120">
+            </label>
+            <div class="form-actions">
+              <button type="submit" class="btn primary">Add Plugin</button>
+            </div>
+          </form>
+        </div>
+      </section>
+      <section class="card" id="exchangeCard">
+        <div>
+          <h2>Exchange execution</h2>
+          <p class="subtle">Control connectivity and simulate trade instructions for the execution adapter.</p>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-tile">
+            <div id="exchangeMode" class="summary-value">Paper</div>
+            <div class="summary-label">Mode</div>
+          </div>
+          <div class="summary-tile">
+            <div id="quoteBalance" class="summary-value">0</div>
+            <div class="summary-label">Quote Balance</div>
+          </div>
+          <div class="summary-tile">
+            <div id="realizedPnl" class="summary-value">0</div>
+            <div class="summary-label">Realized PnL</div>
+          </div>
+        </div>
+        <div class="toggle-row">
+          <label class="switch">
+            <input type="checkbox" id="exchangeConnected">
+            <span class="slider"></span>
+          </label>
+          <div>
+            <div style="text-transform:uppercase;font-size:11px;letter-spacing:0.5px;color:#cbd5f5;">Exchange link</div>
+            <div id="exchangeConnectionLabel">Disconnected</div>
+          </div>
+        </div>
+        <form id="tradeForm">
+          <div class="form-grid">
+            <label>symbol
+              <input name="symbol" placeholder="BTC/USDT" required maxlength="32">
+            </label>
+            <label>side
+              <select name="side">
+                <option value="buy">Buy</option>
+                <option value="sell">Sell</option>
+              </select>
+            </label>
+            <label>quantity
+              <input name="quantity" type="number" step="0.0001" min="0" placeholder="0.10" required>
+            </label>
+            <label>order type
+              <select name="orderType">
+                <option value="market">Market</option>
+                <option value="limit">Limit</option>
+              </select>
+            </label>
+            <label>limit price
+              <input name="price" type="number" step="0.01" min="0" placeholder="Optional">
+            </label>
+          </div>
+          <div class="form-actions">
+            <span id="tradeError" class="error-text"></span>
+            <button type="submit" class="btn primary">Send order</button>
+          </div>
+        </form>
+        <div>
+          <h3 style="margin:0 0 8px 0;font-size:13px;text-transform:uppercase;letter-spacing:0.6px;color:#cbd5f5;">Open positions</h3>
+          <div id="positionsEmpty" class="empty-state" style="display:none;">No open positions</div>
+          <table id="positionsTable">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th>Size</th>
+                <th>Avg Px</th>
+                <th>Mark</th>
+                <th>Unrealized</th>
+              </tr>
+            </thead>
+            <tbody id="positionsBody"></tbody>
+          </table>
+        </div>
+        <div>
+          <h3 style="margin:0 0 8px 0;font-size:13px;text-transform:uppercase;letter-spacing:0.6px;color:#cbd5f5;">Orders</h3>
+          <div id="ordersEmpty" class="empty-state" style="display:none;">No orders yet</div>
+          <table id="ordersTable">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="card" id="activityCard">
+        <div>
+          <h2>Activity log</h2>
+          <p class="subtle">Audit of plugin syncs and exchange actions.</p>
+        </div>
+        <div class="log-area" id="activityLog">No activity yet.</div>
+      </section>
+    </main>
+    <footer>
+      <div>Splitstar Development — Local console</div>
+      <div>Data plugins &amp; exchange execution run entirely on this desktop session.</div>
+    </footer>
     <script>
-      // Update timestamp every second
-      function updateTimestamp() {
-        const now = new Date();
-        document.getElementById('timestamp').textContent = now.toTimeString().slice(0, 8);
+      const API = 'http://127.0.0.1:9000';
+      const STORAGE_KEY = 'splitstar.desktop.state.v1';
+
+      const defaultState = {
+        plugins: [
+          {
+            id: 'binance-spot',
+            name: 'Binance Spot OHLCV',
+            provider: 'CCXT',
+            symbol: 'BTC/USDT',
+            interval: '1m',
+            status: 'active',
+            lastSync: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+            latencyMs: 220,
+            throughput: 1800,
+            notes: 'Streaming BTC/USDT candles into research cache'
+          },
+          {
+            id: 'bybit-futures',
+            name: 'Bybit Futures Funding',
+            provider: 'REST',
+            symbol: 'ETH/USDT',
+            interval: '1h',
+            status: 'paused',
+            lastSync: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+            latencyMs: 480,
+            throughput: 60,
+            notes: 'Pulls hourly funding rates for ETH perpetuals'
+          }
+        ],
+        exchange: {
+          name: 'Standalone Paper Exchange',
+          mode: 'paper',
+          connection: 'disconnected',
+          lastHeartbeat: null,
+          balances: { USDT: 25000, BTC: 0.35 },
+          positions: [
+            {
+              id: 'pos-default',
+              symbol: 'BTC/USDT',
+              direction: 'long',
+              size: 0.1,
+              avgPrice: 62000,
+              lastPrice: 62350
+            }
+          ],
+          orders: [
+            {
+              id: 'ord-sample',
+              timestamp: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+              symbol: 'BTC/USDT',
+              side: 'sell',
+              qty: 0.05,
+              type: 'limit',
+              price: 64000,
+              status: 'working'
+            }
+          ],
+          prices: { 'BTC/USDT': 62350, 'ETH/USDT': 3180 },
+          realizedPnl: 0
+        },
+        activity: []
+      };
+
+      const state = {
+        backend: { connected: false, lastChecked: null, lastError: null, health: null },
+        plugins: [],
+        exchange: {},
+        activity: []
+      };
+
+      function uuid(prefix = 'id') {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+          return `${prefix}-${window.crypto.randomUUID()}`;
+        }
+        return `${prefix}-${Math.random().toString(16).slice(2)}${Date.now()}`;
       }
-      
-      updateTimestamp();
-      setInterval(updateTimestamp, 1000);
-      
-      // Log successful load
-      console.log('Trading Bot Dashboard loaded successfully');
+
+      function clone(obj) {
+        return JSON.parse(JSON.stringify(obj));
+      }
+
+      function loadState(reset = false) {
+        let parsed = null;
+        if (!reset) {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+              parsed = JSON.parse(raw);
+            }
+          } catch (err) {
+            console.warn('Failed to parse saved state', err);
+          }
+        }
+        const src = parsed || defaultState;
+        state.plugins = (src.plugins || []).map((p) => ({ ...p }));
+        const exchangeDefaults = defaultState.exchange;
+        const srcExchange = src.exchange || {};
+        state.exchange = {
+          name: srcExchange.name || exchangeDefaults.name,
+          mode: srcExchange.mode || exchangeDefaults.mode,
+          connection: srcExchange.connection || exchangeDefaults.connection,
+          lastHeartbeat: srcExchange.lastHeartbeat || null,
+          balances: { ...exchangeDefaults.balances, ...(srcExchange.balances || {}) },
+          positions: (srcExchange.positions || []).map((pos) => ({ ...pos })),
+          orders: (srcExchange.orders || []).map((ord) => ({ ...ord })),
+          prices: { ...exchangeDefaults.prices, ...(srcExchange.prices || {}) },
+          realizedPnl: Number(srcExchange.realizedPnl || 0)
+        };
+        state.activity = (src.activity || []).map((entry) => ({ ...entry }));
+      }
+
+      function persist() {
+        const payload = {
+          plugins: state.plugins,
+          exchange: {
+            name: state.exchange.name,
+            mode: state.exchange.mode,
+            connection: state.exchange.connection,
+            lastHeartbeat: state.exchange.lastHeartbeat,
+            balances: state.exchange.balances,
+            positions: state.exchange.positions,
+            orders: state.exchange.orders,
+            prices: state.exchange.prices,
+            realizedPnl: state.exchange.realizedPnl
+          },
+          activity: state.activity.slice(-400)
+        };
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        } catch (err) {
+          console.warn('Failed to persist state', err);
+        }
+      }
+
+      function logEvent(message) {
+        const entry = { timestamp: new Date().toISOString(), message };
+        state.activity.push(entry);
+        if (state.activity.length > 500) {
+          state.activity.shift();
+        }
+        persist();
+        renderActivity();
+      }
+
+      function formatNumber(value, digits = 2) {
+        if (value === null || value === undefined || Number.isNaN(Number(value))) {
+          return '—';
+        }
+        return Number(value).toLocaleString(undefined, {
+          minimumFractionDigits: digits,
+          maximumFractionDigits: digits
+        });
+      }
+
+      function formatDate(ts) {
+        if (!ts) return 'never';
+        const date = new Date(ts);
+        if (Number.isNaN(date.getTime())) return 'never';
+        return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+      }
+
+      function sanitizeSymbol(value) {
+        return (value || '').toUpperCase().replace(/[^A-Z0-9/._-]/g, '').slice(0, 32);
+      }
+
+      function sanitizeText(value, limit = 120) {
+        return (value || '').replace(/[\n\r]+/g, ' ').trim().slice(0, limit);
+      }
+
+      function renderBackendStatus() {
+        const badge = document.getElementById('backendStatus');
+        const message = document.getElementById('backendMessage');
+        if (state.backend.connected) {
+          badge.textContent = 'Connected to API';
+          badge.classList.remove('offline');
+          badge.classList.add('online');
+          const uptime = state.backend.health?.uptime_seconds ?? 0;
+          const mins = Math.floor(uptime / 60);
+          message.classList.remove('offline');
+          message.textContent = `Live backend detected at ${API} — uptime ${mins} min.`;
+        } else {
+          badge.textContent = 'Standalone Mode';
+          badge.classList.remove('online');
+          badge.classList.add('offline');
+          message.classList.add('offline');
+          message.textContent = 'Standalone mode active — using local state for data plugins and simulated exchange execution.';
+        }
+      }
+
+      function renderPluginSummary() {
+        const total = state.plugins.length;
+        const active = state.plugins.filter((p) => p.status === 'active').length;
+        const coverage = new Set(state.plugins.map((p) => p.symbol)).size;
+        const throughput = state.plugins.reduce((acc, p) => acc + (Number(p.throughput) || 0), 0);
+        document.getElementById('pluginSummary').textContent = `${active} active / ${total} total`;
+        document.getElementById('pluginCoverage').textContent = coverage;
+        document.getElementById('pluginThroughput').textContent = formatNumber(throughput, throughput >= 10 ? 0 : 2);
+      }
+
+      function renderPlugins() {
+        const container = document.getElementById('pluginList');
+        if (!state.plugins.length) {
+          container.innerHTML = '<div class="empty-state">No plugins configured yet.</div>';
+          renderPluginSummary();
+          return;
+        }
+        container.innerHTML = state.plugins
+          .map((plugin) => {
+            const statusBadge = `<span class="badge ${plugin.status === 'active' ? 'active' : 'paused'}">${plugin.status}</span>`;
+            return `
+              <div class="plugin-row">
+                <div>
+                  <strong>${plugin.name}</strong>
+                  <div class="meta">${plugin.provider || 'custom'} • ${plugin.symbol} • ${plugin.interval}</div>
+                  <div class="meta">Last sync: ${formatDate(plugin.lastSync)} • Latency: ${plugin.latencyMs ? `${plugin.latencyMs}ms` : 'n/a'}</div>
+                  ${plugin.notes ? `<div class="meta">${plugin.notes}</div>` : ''}
+                </div>
+                <div class="plugin-actions">
+                  ${statusBadge}
+                  <button class="btn ghost plugin-toggle" data-id="${plugin.id}">${plugin.status === 'active' ? 'Pause' : 'Resume'}</button>
+                  <button class="btn ghost plugin-sync" data-id="${plugin.id}">Sync now</button>
+                  <button class="btn ghost plugin-remove" data-id="${plugin.id}">Remove</button>
+                </div>
+              </div>`;
+          })
+          .join('');
+        container.querySelectorAll('.plugin-toggle').forEach((btn) => {
+          btn.addEventListener('click', () => togglePlugin(btn.dataset.id));
+        });
+        container.querySelectorAll('.plugin-sync').forEach((btn) => {
+          btn.addEventListener('click', () => syncPlugin(btn.dataset.id));
+        });
+        container.querySelectorAll('.plugin-remove').forEach((btn) => {
+          btn.addEventListener('click', () => removePlugin(btn.dataset.id));
+        });
+        renderPluginSummary();
+      }
+
+      function getBase(symbol) {
+        const [base] = symbol.split('/');
+        return base || symbol;
+      }
+
+      function getQuote(symbol) {
+        const parts = symbol.split('/');
+        return parts[1] || 'USDT';
+      }
+
+      function adjustBalance(asset, delta) {
+        state.exchange.balances[asset] = Number(state.exchange.balances[asset] || 0) + Number(delta || 0);
+      }
+
+      function ensurePosition(symbol, direction) {
+        let pos = state.exchange.positions.find((p) => p.symbol === symbol && p.direction === direction);
+        if (!pos) {
+          pos = { id: uuid('pos'), symbol, direction, size: 0, avgPrice: 0, lastPrice: 0 };
+          state.exchange.positions.push(pos);
+        }
+        return pos;
+      }
+
+      function cleanupPositions() {
+        state.exchange.positions = state.exchange.positions.filter((p) => p.size > 1e-9);
+      }
+
+      function applyFill(order, fillPrice) {
+        const price = Number(fillPrice ?? order.price);
+        if (!price || Number.isNaN(price)) {
+          throw new Error('Fill price required');
+        }
+        const symbol = order.symbol;
+        const qty = Number(order.qty);
+        const side = order.side;
+        const direction = side === 'buy' ? 'long' : 'short';
+        const opposite = direction === 'long' ? 'short' : 'long';
+        let remaining = qty;
+        const oppPos = state.exchange.positions.find((p) => p.symbol === symbol && p.direction === opposite);
+        if (oppPos && oppPos.size > 0) {
+          const closingQty = Math.min(oppPos.size, remaining);
+          const pnlPer = oppPos.direction === 'short' ? oppPos.avgPrice - price : price - oppPos.avgPrice;
+          state.exchange.realizedPnl = Number(state.exchange.realizedPnl || 0) + closingQty * pnlPer;
+          oppPos.size -= closingQty;
+          oppPos.lastPrice = price;
+          remaining -= closingQty;
+        }
+        if (remaining > 1e-9) {
+          const pos = ensurePosition(symbol, direction);
+          const totalSize = pos.size + remaining;
+          if (pos.size <= 1e-9) {
+            pos.avgPrice = price;
+          } else {
+            pos.avgPrice = (pos.avgPrice * pos.size + price * remaining) / totalSize;
+          }
+          pos.size = totalSize;
+          pos.lastPrice = price;
+        }
+        cleanupPositions();
+        state.exchange.prices[symbol] = price;
+        const base = getBase(symbol);
+        const quote = getQuote(symbol);
+        if (side === 'buy') {
+          adjustBalance(base, qty);
+          adjustBalance(quote, -qty * price);
+        } else {
+          adjustBalance(base, -qty);
+          adjustBalance(quote, qty * price);
+        }
+        order.status = 'filled';
+        order.price = price;
+        order.filledPrice = price;
+        order.filledAt = new Date().toISOString();
+        if (!order.timestamp) {
+          order.timestamp = order.filledAt;
+        }
+      }
+
+      function renderExchange() {
+        document.getElementById('exchangeMode').textContent = state.exchange.mode === 'live' ? 'Live' : 'Paper';
+        document.getElementById('quoteBalance').textContent = `${formatNumber(state.exchange.balances[getQuote('BTC/USDT')] || 0, 2)} ${getQuote('BTC/USDT')}`;
+        const pnlEl = document.getElementById('realizedPnl');
+        pnlEl.textContent = `${formatNumber(state.exchange.realizedPnl, 2)} ${getQuote('BTC/USDT')}`;
+        pnlEl.classList.toggle('pnl-positive', state.exchange.realizedPnl > 0);
+        pnlEl.classList.toggle('pnl-negative', state.exchange.realizedPnl < 0);
+        const connected = state.exchange.connection === 'connected';
+        const toggle = document.getElementById('exchangeConnected');
+        const label = document.getElementById('exchangeConnectionLabel');
+        toggle.checked = connected;
+        label.textContent = connected ? 'Connected' : 'Disconnected';
+        label.style.color = connected ? '#bbf7d0' : '#fecaca';
+
+        const positionsBody = document.getElementById('positionsBody');
+        const positionsEmpty = document.getElementById('positionsEmpty');
+        if (!state.exchange.positions.length) {
+          positionsBody.innerHTML = '';
+          positionsEmpty.style.display = 'block';
+        } else {
+          positionsEmpty.style.display = 'none';
+          positionsBody.innerHTML = state.exchange.positions
+            .map((pos) => {
+              const mark = state.exchange.prices[pos.symbol] ?? pos.lastPrice ?? pos.avgPrice;
+              const unrealized = (pos.direction === 'long' ? mark - pos.avgPrice : pos.avgPrice - mark) * pos.size;
+              return `
+                <tr>
+                  <td>${pos.symbol}</td>
+                  <td>${pos.direction}</td>
+                  <td>${formatNumber(pos.size, 4)}</td>
+                  <td>${formatNumber(pos.avgPrice, 2)}</td>
+                  <td>${formatNumber(mark, 2)}</td>
+                  <td class="${unrealized >= 0 ? 'pnl-positive' : 'pnl-negative'}">${formatNumber(unrealized, 2)}</td>
+                </tr>`;
+            })
+            .join('');
+        }
+
+        const ordersBody = document.getElementById('ordersBody');
+        const ordersEmpty = document.getElementById('ordersEmpty');
+        if (!state.exchange.orders.length) {
+          ordersBody.innerHTML = '';
+          ordersEmpty.style.display = 'block';
+        } else {
+          ordersEmpty.style.display = 'none';
+          ordersBody.innerHTML = state.exchange.orders
+            .slice()
+            .sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0))
+            .map((order) => {
+              const statusBadge = `<span class="badge ${order.status === 'filled' ? 'online' : order.status === 'cancelled' ? 'offline' : 'active'}">${order.status}</span>`;
+              const actions =
+                order.status === 'working'
+                  ? `<div class="table-actions">
+                       <button class="btn ghost order-fill" data-id="${order.id}">Mark filled</button>
+                       <button class="btn ghost order-cancel" data-id="${order.id}">Cancel</button>
+                     </div>`
+                  : '';
+              const displayTime = order.status === 'filled' ? order.filledAt || order.timestamp : order.timestamp;
+              return `
+                <tr>
+                  <td>${formatDate(displayTime)}</td>
+                  <td>${order.symbol}</td>
+                  <td>${order.side}</td>
+                  <td>${formatNumber(order.qty, 4)}</td>
+                  <td>${order.status === 'filled' ? formatNumber(order.filledPrice, 2) : order.price ? formatNumber(order.price, 2) : '—'}</td>
+                  <td>${statusBadge}</td>
+                  <td>${actions}</td>
+                </tr>`;
+            })
+            .join('');
+          ordersBody.querySelectorAll('.order-fill').forEach((btn) => {
+            btn.addEventListener('click', () => handleOrderAction(btn.dataset.id, 'fill'));
+          });
+          ordersBody.querySelectorAll('.order-cancel').forEach((btn) => {
+            btn.addEventListener('click', () => handleOrderAction(btn.dataset.id, 'cancel'));
+          });
+        }
+      }
+
+      function renderActivity() {
+        const area = document.getElementById('activityLog');
+        if (!state.activity.length) {
+          area.textContent = 'No activity yet.';
+          return;
+        }
+        const lines = state.activity
+          .slice()
+          .reverse()
+          .slice(0, 120)
+          .map((entry) => `${formatDate(entry.timestamp)} — ${entry.message}`);
+        area.textContent = lines.join('\n');
+      }
+
+      function refreshAll() {
+        renderBackendStatus();
+        renderPlugins();
+        renderExchange();
+        renderActivity();
+      }
+
+      function togglePlugin(id) {
+        const plugin = state.plugins.find((p) => p.id === id);
+        if (!plugin) return;
+        plugin.status = plugin.status === 'active' ? 'paused' : 'active';
+        plugin.lastSync = new Date().toISOString();
+        plugin.latencyMs = Math.round(150 + Math.random() * 200);
+        persist();
+        renderPlugins();
+        logEvent(`${plugin.name} ${plugin.status === 'active' ? 'resumed' : 'paused'}.`);
+      }
+
+      function syncPlugin(id) {
+        const plugin = state.plugins.find((p) => p.id === id);
+        if (!plugin) return;
+        plugin.lastSync = new Date().toISOString();
+        plugin.latencyMs = Math.round(120 + Math.random() * 120);
+        plugin.throughput = Math.max(20, Math.round((plugin.throughput || 100) * (0.8 + Math.random() * 0.4)));
+        persist();
+        renderPlugins();
+        logEvent(`${plugin.name} synced manually.`);
+      }
+
+      function removePlugin(id) {
+        const plugin = state.plugins.find((p) => p.id === id);
+        if (!plugin) return;
+        state.plugins = state.plugins.filter((p) => p.id !== id);
+        persist();
+        renderPlugins();
+        logEvent(`${plugin.name} removed from configuration.`);
+      }
+
+      function createOrder(payload) {
+        const order = {
+          id: uuid('ord'),
+          timestamp: new Date().toISOString(),
+          symbol: payload.symbol,
+          side: payload.side,
+          qty: Number(payload.qty),
+          type: payload.type,
+          price: payload.price,
+          status: payload.type === 'market' ? 'filled' : 'working'
+        };
+        state.exchange.orders.push(order);
+        if (order.status === 'filled') {
+          applyFill(order, order.price || state.exchange.prices[order.symbol] || order.price);
+          persist();
+          renderExchange();
+          logEvent(`Filled ${order.side} ${order.qty} ${order.symbol} @ ${formatNumber(order.filledPrice, 2)} (${order.type})`);
+        } else {
+          persist();
+          renderExchange();
+          logEvent(`Placed ${order.type} ${order.side} ${order.qty} ${order.symbol} @ ${formatNumber(order.price, 2)}`);
+        }
+      }
+
+      function handleOrderAction(id, action) {
+        const order = state.exchange.orders.find((o) => o.id === id);
+        if (!order) return;
+        if (action === 'fill' && order.status === 'working') {
+          try {
+            applyFill(order, order.price || state.exchange.prices[order.symbol] || order.price || 0);
+            logEvent(`Order ${id} filled @ ${formatNumber(order.filledPrice, 2)}`);
+          } catch (err) {
+            document.getElementById('tradeError').textContent = err.message;
+            return;
+          }
+        } else if (action === 'cancel' && order.status === 'working') {
+          order.status = 'cancelled';
+          order.cancelledAt = new Date().toISOString();
+          logEvent(`Order ${id} cancelled.`);
+        }
+        persist();
+        renderExchange();
+      }
+
+      document.getElementById('pluginForm').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const plugin = {
+          id: uuid('plugin'),
+          name: sanitizeText(form.name.value, 80) || 'Plugin',
+          provider: sanitizeText(form.provider.value, 40) || 'Custom',
+          symbol: sanitizeSymbol(form.symbol.value) || 'BTC/USDT',
+          interval: sanitizeText(form.interval.value, 8) || '1m',
+          status: 'active',
+          lastSync: new Date().toISOString(),
+          latencyMs: Math.round(180 + Math.random() * 120),
+          throughput: 120,
+          notes: sanitizeText(form.notes.value, 120)
+        };
+        state.plugins.push(plugin);
+        persist();
+        renderPlugins();
+        logEvent(`Added plugin ${plugin.name} (${plugin.symbol} @ ${plugin.interval}).`);
+        form.reset();
+      });
+
+      document.getElementById('tradeForm').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const symbol = sanitizeSymbol(form.symbol.value);
+        const side = form.side.value;
+        const qty = Number(form.quantity.value);
+        const type = form.orderType.value;
+        const priceInput = form.price.value ? Number(form.price.value) : undefined;
+        const errorEl = document.getElementById('tradeError');
+        errorEl.textContent = '';
+        if (!symbol) {
+          errorEl.textContent = 'Symbol required';
+          return;
+        }
+        if (!qty || qty <= 0) {
+          errorEl.textContent = 'Quantity must be positive';
+          return;
+        }
+        if (type === 'limit' && (!priceInput || priceInput <= 0)) {
+          errorEl.textContent = 'Limit price required';
+          return;
+        }
+        const payload = {
+          symbol,
+          side,
+          qty,
+          type,
+          price: type === 'market' ? priceInput || state.exchange.prices[symbol] || state.exchange.prices['BTC/USDT'] || 0 : priceInput
+        };
+        if (payload.type === 'market' && (!payload.price || payload.price <= 0)) {
+          errorEl.textContent = 'No reference price available for market order';
+          return;
+        }
+        try {
+          createOrder(payload);
+          form.reset();
+          form.side.value = side;
+          form.orderType.value = type;
+        } catch (err) {
+          errorEl.textContent = err.message;
+        }
+      });
+
+      document.getElementById('resetState').addEventListener('click', () => {
+        loadState(true);
+        persist();
+        refreshAll();
+        logEvent('Demo state reset to defaults.');
+      });
+
+      document.getElementById('exchangeConnected').addEventListener('change', (event) => {
+        state.exchange.connection = event.target.checked ? 'connected' : 'disconnected';
+        state.exchange.lastHeartbeat = event.target.checked ? new Date().toISOString() : null;
+        persist();
+        renderExchange();
+        logEvent(`Exchange connection ${event.target.checked ? 'enabled' : 'disabled'}.`);
+      });
+
+      async function probeBackend() {
+        try {
+          const res = await fetch(API + '/health', { cache: 'no-store' });
+          state.backend.lastChecked = new Date().toISOString();
+          if (res.ok) {
+            state.backend.health = await res.json();
+            state.backend.connected = true;
+            state.backend.lastError = null;
+          } else {
+            throw new Error(`HTTP ${res.status}`);
+          }
+        } catch (err) {
+          state.backend.connected = false;
+          state.backend.health = null;
+          state.backend.lastError = err?.message || String(err);
+          state.backend.lastChecked = new Date().toISOString();
+        }
+        renderBackendStatus();
+      }
+
+      loadState();
+      refreshAll();
+      probeBackend();
+      setInterval(probeBackend, 15000);
     </script>
   </body>
 </html>

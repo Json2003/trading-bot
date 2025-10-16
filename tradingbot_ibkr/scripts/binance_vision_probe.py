@@ -3,13 +3,14 @@
 Simple probe of data.binance.vision archive URLs for several symbols and date ranges.
 Prints found monthly/daily archive URLs.
 """
+
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import requests
 
 BASE = "https://data.binance.vision"
 SPOT_MONTHLY = "/data/spot/monthly/trades/{symbol}/{symbol}-trades-{yyyy}-{mm}.zip"
-SPOT_DAILY   = "/data/spot/daily/trades/{symbol}/{yyyy}/{mm}/{symbol}-trades-{yyyy}-{mm}-{dd}.zip"
+SPOT_DAILY = "/data/spot/daily/trades/{symbol}/{yyyy}/{mm}/{symbol}-trades-{yyyy}-{mm}-{dd}.zip"
 
 
 def yyyymm_iter(start, end):
@@ -52,15 +53,15 @@ def probe(symbols, ranges):
     return found
 
 
-if __name__ == '__main__':
-    symbols = ['BTCUSDT','ETHUSDT','BNBUSDT','ADAUSDT','BTC_USDT','btcusdt']
-    ranges = [('2017-01','2017-03'),('2021-01','2021-03'),('2023-01','2023-03')]
-    print('Probing Binance Vision for symbols:', symbols)
+if __name__ == "__main__":
+    symbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "ADAUSDT", "BTC_USDT", "btcusdt"]
+    ranges = [("2017-01", "2017-03"), ("2021-01", "2021-03"), ("2023-01", "2023-03")]
+    print("Probing Binance Vision for symbols:", symbols)
     results = probe(symbols, ranges)
     for sym, urls in results.items():
-        print('---', sym, '->', len(urls), 'matches')
+        print("---", sym, "->", len(urls), "matches")
         for u in urls[:20]:
-            print('  ', u)
+            print("  ", u)
     # summary
     any_found = sum(len(v) for v in results.values())
-    print('\nTotal matches found:', any_found)
+    print("\nTotal matches found:", any_found)
