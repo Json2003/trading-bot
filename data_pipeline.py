@@ -7,14 +7,21 @@ Implements helpers to enforce a leakage-safe research pipeline:
 - Build labels for multiple horizons without peeking past t.
 - Simple feature-store writer stub aligned with the BigQuery schema.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Iterable, Iterator, Optional, Tuple
 
 import math
 
 import pandas as pd
+
+try:  # pragma: no cover - fallback branch exercised when zoneinfo missing
+    from zoneinfo import ZoneInfo
+except Exception:  # pragma: no cover
+    ZoneInfo = None  # type: ignore
 
 
 def canonicalize_ohlcv(df: pd.DataFrame, freq: str, session_tz: str = "UTC") -> pd.DataFrame:
@@ -32,32 +39,93 @@ def canonicalize_ohlcv(df: pd.DataFrame, freq: str, session_tz: str = "UTC") -> 
     if "timestamp" not in df:
         raise KeyError("missing 'timestamp' column")
 
-    ts = pd.to_datetime(df["timestamp"]).dt.tz_convert(session_tz)
-    ts_utc = ts.dt.tz_convert("UTC")
-    df = df.copy()
-    df["timestamp"] = ts_utc
+    ts_series = pd.to_datetime(df["timestamp"])
 
-    # Reindex to expected frequency and forward fill within the session
-    start, end = ts_utc.min(), ts_utc.max()
-    full_range = pd.date_range(start=start, end=end, freq=freq, tz="UTC")
-    df = df.set_index("timestamp").reindex(full_range)
-    df = df.ffill()
-    df.index.name = "timestamp"
-    return df.reset_index()
+    def _resolve_tz(name: str):
+        if ZoneInfo is None:
+            return timezone.utc
+        try:
+            return ZoneInfo(name)
+        except Exception:
+            if name.upper() == "UTC":
+                return timezone.utc
+            try:
+                return ZoneInfo("UTC")
+            except Exception:
+                return timezone.utc
+
+    session_tzinfo = _resolve_tz(session_tz)
+    utc_values = []
+    for value in ts_series._values:
+        if not isinstance(value, datetime):
+            try:
+                value = datetime.fromisoformat(str(value))
+            except Exception:
+                utc_values.append(value)
+                continue
+        if value.tzinfo is None:
+            localized = value.replace(tzinfo=session_tzinfo)
+        else:
+            localized = value.astimezone(session_tzinfo)
+        utc_values.append(localized.astimezone(timezone.utc))
+
+    df = df.copy()
+    df["timestamp"] = utc_values
+
+    valid_times = [ts for ts in utc_values if isinstance(ts, datetime)]
+    if len(valid_times) != len(df):
+        raise ValueError("timestamp column must contain datetime-like values")
+    if not valid_times:
+        raise ValueError("timestamp column must contain datetime-like values")
+
+    session_dates = [
+        ts.astimezone(session_tzinfo).date() if isinstance(ts, datetime) else None
+        for ts in utc_values
+    ]
+    df["_session_date"] = session_dates
+
+    grouped_records: dict = {}
+    for record in df.to_dict("records"):
+        key = record.get("_session_date")
+        grouped_records.setdefault(key, []).append(record)
+
+    output_records = []
+    for key in sorted(grouped_records):
+        rows = grouped_records[key]
+        if not rows:
+            continue
+        rows.sort(key=lambda row: row["timestamp"])
+        start = rows[0]["timestamp"]
+        end = rows[-1]["timestamp"]
+        session_df = pd.DataFrame(rows)
+        session_df = session_df.set_index("timestamp")
+        session_range = pd.date_range(start=start, end=end, freq=freq, tz="UTC")
+        reindexed = session_df.reindex(session_range)
+        reindexed = reindexed.ffill()
+        session_records = reindexed.reset_index().to_dict("records")
+        for row in session_records:
+            row.pop("_session_date", None)
+            if "index" in row:
+                row["timestamp"] = row.pop("index")
+            output_records.append(row)
+
+    if not output_records:
+        raise ValueError("timestamp column must contain datetime-like values")
+
+    return pd.DataFrame(output_records)
 
 
 def drop_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     """Drop bars with broken OHLCV or negative volume."""
-    mask = (
-        (df["high"] >= df["low"]) &
-        (df["volume"] >= 0)
-    )
+    mask = (df["high"] >= df["low"]) & (df["volume"] >= 0)
     body_at_low = (df["open"] == df["close"]) & (df["close"] == df["low"])
     mask &= ~body_at_low
     return df[mask].copy()
 
 
-def attach_cost_columns(df: pd.DataFrame, commission: float, spread: float, slippage: float) -> pd.DataFrame:
+def attach_cost_columns(
+    df: pd.DataFrame, commission: float, spread: float, slippage: float
+) -> pd.DataFrame:
     """Attach transaction cost columns for later backtests."""
     df = df.copy()
     df["commission"] = commission
@@ -78,9 +146,40 @@ def directional_return_label(close: pd.Series, horizon: int) -> pd.Series:
 
 
 def magnitude_bucket_label(close: pd.Series, horizon: int, q: int = 3) -> pd.Series:
-    """Quantile-bucket future returns."""
+    """Quantile-bucket future returns.
+
+    ``pandas.qcut`` raises when it cannot build ``q`` unique bins (e.g. flat
+    price series).  The stub pandas implementation shipped with the project has
+    similar limitations, so we implement a small fallback that deterministically
+    buckets the available distinct returns.
+    """
     ret = _future_return(close, horizon)
-    return pd.qcut(ret, q, labels=False)
+    values = list(ret._values) if hasattr(ret, "_values") else list(ret)
+    index = ret.index[:] if hasattr(ret, "index") else list(range(len(values)))
+
+    valid_positions = [i for i, value in enumerate(values) if not pd.isna(value)]
+    if not valid_positions:
+        return pd.Series([math.nan] * len(values), index=index)
+
+    unique_values = sorted({values[i] for i in valid_positions})
+    if len(unique_values) == 1:
+        result = [math.nan] * len(values)
+        for pos in valid_positions:
+            result[pos] = 0
+        return pd.Series(result, index=index)
+
+    bucket_count = min(q, len(unique_values))
+    step = len(unique_values) / bucket_count
+    bucket_map = {}
+    for idx, value in enumerate(unique_values):
+        bucket = min(bucket_count - 1, int(idx / step))
+        bucket_map[value] = bucket
+
+    result = [math.nan] * len(values)
+    for pos in valid_positions:
+        value = values[pos]
+        result[pos] = bucket_map[value]
+    return pd.Series(result, index=index)
 
 
 def triple_barrier_label(close: pd.Series, horizon: int, upper: float, lower: float) -> pd.Series:
@@ -107,13 +206,21 @@ def triple_barrier_label(close: pd.Series, horizon: int, upper: float, lower: fl
             out.iloc[i] = 0
             continue
         diff = window - start
-        hit_upper = (diff >= math.log(1 + upper)).idxmax() if (diff >= math.log(1 + upper)).any() else None
-        hit_lower = (diff <= -math.log(1 + lower)).idxmax() if (diff <= -math.log(1 + lower)).any() else None
+        hit_upper = (
+            (diff >= math.log(1 + upper)).idxmax() if (diff >= math.log(1 + upper)).any() else None
+        )
+        hit_lower = (
+            (diff <= -math.log(1 + lower)).idxmax()
+            if (diff <= -math.log(1 + lower)).any()
+            else None
+        )
         first_hit = None
         if hit_upper is not None:
             first_hit = hit_upper
             label = 1
-        if hit_lower is not None and (first_hit is None or window.index.get_loc(hit_lower) < window.index.get_loc(first_hit)):
+        if hit_lower is not None and (
+            first_hit is None or window.index.get_loc(hit_lower) < window.index.get_loc(first_hit)
+        ):
             first_hit = hit_lower
             label = -1
         out.iloc[i] = label if first_hit is not None else 0
@@ -123,10 +230,18 @@ def triple_barrier_label(close: pd.Series, horizon: int, upper: float, lower: fl
 @dataclass
 class FeatureStore:
     """Very small BigQuery-oriented feature store stub."""
+
     dataset: str = "market_fs"
     table: str = "features_ohlcv_min"
 
-    def write(self, df: pd.DataFrame, feature_version: str, source_hash: str, *, project: Optional[str] = None) -> Tuple[str, str]:
+    def write(
+        self,
+        df: pd.DataFrame,
+        feature_version: str,
+        source_hash: str,
+        *,
+        project: Optional[str] = None,
+    ) -> Tuple[str, str]:
         """Write features to BigQuery or, if unavailable, to a local CSV.
 
         Returns the destination (dataset.table) and path written.
@@ -134,6 +249,7 @@ class FeatureStore:
         dest = f"{self.dataset}.{self.table}"
         try:
             from pandas_gbq import to_gbq  # type: ignore
+
             to_gbq(df, dest, project_id=project, if_exists="append")
             return dest, "bigquery"
         except Exception:
@@ -144,7 +260,9 @@ class FeatureStore:
             return dest, path
 
 
-def purged_kfold(n_splits: int, embargo: int, n_samples: int) -> Iterator[Tuple[Iterable[int], Iterable[int]]]:
+def purged_kfold(
+    n_splits: int, embargo: int, n_samples: int
+) -> Iterator[Tuple[Iterable[int], Iterable[int]]]:
     """Yield purged train/validation indices with embargo.
 
     This generator splits [0, n_samples) into ``n_splits`` folds. For each

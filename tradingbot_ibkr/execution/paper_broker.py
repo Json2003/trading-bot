@@ -1,4 +1,5 @@
 """In-memory broker used for tests and simple simulations."""
+
 from __future__ import annotations
 
 from dataclasses import replace
@@ -16,7 +17,9 @@ class PaperBroker(BrokerBase):
             for symbol, qty in (initial_positions or {}).items()
         }
 
-    def submit_order(self, symbol: str, side: str, quantity: float, *, price: float | None = None) -> Order:
+    def submit_order(
+        self, symbol: str, side: str, quantity: float, *, price: float | None = None
+    ) -> Order:
         order_id = uuid.uuid4().hex
         order = Order(id=order_id, symbol=symbol, side=side, quantity=quantity, price=price)
         self._orders[order_id] = order

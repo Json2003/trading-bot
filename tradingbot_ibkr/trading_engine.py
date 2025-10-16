@@ -1,4 +1,5 @@
 """High-level trading engine connecting the pipeline components."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

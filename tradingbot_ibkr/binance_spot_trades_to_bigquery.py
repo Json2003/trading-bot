@@ -16,6 +16,7 @@ Example:
       --table spot_trades \
       --region us-central1
 """
+
 from __future__ import annotations
 
 import argparse
@@ -32,6 +33,7 @@ DAILY_INDEX = "/data/spot/daily/trades/"
 MONTHLY_TMPL = "/data/spot/monthly/trades/{symbol}/{symbol}-trades-{yyyy}-{mm}.zip"
 DAILY_TMPL = "/data/spot/daily/trades/{symbol}/{yyyy}/{mm}/{symbol}-trades-{yyyy}-{mm}-{dd}.zip"
 
+
 def month_iter(since: str, until: str) -> Iterable[Tuple[str, str]]:
     """Yield year/month strings between two YYYY-MM values inclusive."""
     sy, sm = [int(x) for x in since.split("-")]
@@ -45,25 +47,31 @@ def month_iter(since: str, until: str) -> Iterable[Tuple[str, str]]:
         else:
             m += 1
 
+
 def month_days(yyyy: str, mm: str) -> Iterable[str]:
     _, ndays = calendar.monthrange(int(yyyy), int(mm))
     for d in range(1, ndays + 1):
         yield f"{d:02d}"
 
+
 def http_head(url: str) -> bool:
     try:
         import requests
+
         r = requests.head(url, timeout=20)
         return r.status_code == 200
     except Exception:
         return False
 
+
 def list_symbols_usdt() -> list[str]:
     import requests
+
     url = BASE + DAILY_INDEX
     html = requests.get(url, timeout=60).text
     syms = set(re.findall(r'href="/data/spot/daily/trades/([A-Z0-9]+)/"', html))
     return sorted([s for s in syms if s.endswith("USDT")])
+
 
 def upload_parquet(df, bucket, symbol: str, year: str, month: str) -> None:
     import pandas as pd
@@ -78,7 +86,20 @@ def upload_parquet(df, bucket, symbol: str, year: str, month: str) -> None:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
     df.dropna(subset=["price", "qty"], inplace=True)
-    cols = [c for c in ["time", "price", "qty", "quoteQty", "isBuyerMaker", "isBestMatch", "tradeId", "symbol"] if c in df.columns]
+    cols = [
+        c
+        for c in [
+            "time",
+            "price",
+            "qty",
+            "quoteQty",
+            "isBuyerMaker",
+            "isBestMatch",
+            "tradeId",
+            "symbol",
+        ]
+        if c in df.columns
+    ]
     if not cols:
         return
     df = df[cols]
@@ -89,6 +110,7 @@ def upload_parquet(df, bucket, symbol: str, year: str, month: str) -> None:
     pq.write_table(table, buf)
     buf.seek(0)
     bucket.blob(path).upload_from_file(buf, content_type="application/octet-stream")
+
 
 def process_symbol(bucket, symbol: str, since: str, until: str) -> None:
     import pandas as pd
@@ -116,7 +138,10 @@ def process_symbol(bucket, symbol: str, since: str, until: str) -> None:
                         df = pd.read_csv(f)
                         upload_parquet(df, bucket, symbol, yyyy, mm)
 
-def create_external_table(project: str, dataset: str, table: str, bucket: str, region: str, connection: str) -> None:
+
+def create_external_table(
+    project: str, dataset: str, table: str, bucket: str, region: str, connection: str
+) -> None:
     from google.cloud import bigquery
 
     bq_client = bigquery.Client(project=project)
@@ -132,6 +157,7 @@ def create_external_table(project: str, dataset: str, table: str, bucket: str, r
     table_obj = bigquery.Table(table_id)
     table_obj.external_data_configuration = external_config
     bq_client.create_table(table_obj, exists_ok=True)
+
 
 def ensure_gcs_connection(project: str, region: str, connection_id: str) -> None:
     """Create a BigQuery Cloud Resource connection if it does not already exist."""
@@ -149,6 +175,7 @@ def ensure_gcs_connection(project: str, region: str, connection_id: str) -> None
         )
         client.create_connection(parent=parent, connection_id=connection_id, connection=conn)
 
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bucket", required=True, help="GCS bucket to upload to")
@@ -158,7 +185,9 @@ def main() -> None:
     parser.add_argument("--region", default="us", help="Location for BigQuery resources")
     parser.add_argument("--connection", default="gcs_conn", help="BigQuery connection id")
     parser.add_argument("--since", default="2017-01", help="Start month YYYY-MM")
-    parser.add_argument("--until", default=datetime.utcnow().strftime("%Y-%m"), help="End month YYYY-MM")
+    parser.add_argument(
+        "--until", default=datetime.utcnow().strftime("%Y-%m"), help="End month YYYY-MM"
+    )
     parser.add_argument("--symbols-regex", default=".*USDT$", help="Regex to filter symbols")
     args = parser.parse_args()
 
@@ -174,7 +203,10 @@ def main() -> None:
     for sym in symbols:
         process_symbol(bucket, sym, args.since, args.until)
 
-    create_external_table(args.project, args.dataset, args.table, args.bucket, args.region, args.connection)
+    create_external_table(
+        args.project, args.dataset, args.table, args.bucket, args.region, args.connection
+    )
+
 
 if __name__ == "__main__":
     main()

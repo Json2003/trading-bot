@@ -24,7 +24,7 @@ _device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class InferenceRequest(BaseModel):
-    tag: str = ""                # optional: force specific tag
+    tag: str = ""  # optional: force specific tag
     features: List[List[float]]  # shape: [T, F]
     threshold: float = 0.5
 
@@ -32,8 +32,12 @@ class InferenceRequest(BaseModel):
 class LSTMClassifier(nn.Module):
     def __init__(self, n_feat, hidden=64, layers=1, dropout=0.1):
         super().__init__()
-        self.lstm = nn.LSTM(n_feat, hidden, layers, batch_first=True, dropout=dropout if layers > 1 else 0.0)
-        self.head = nn.Sequential(nn.Linear(hidden, hidden), nn.ReLU(), nn.Dropout(dropout), nn.Linear(hidden, 1))
+        self.lstm = nn.LSTM(
+            n_feat, hidden, layers, batch_first=True, dropout=dropout if layers > 1 else 0.0
+        )
+        self.head = nn.Sequential(
+            nn.Linear(hidden, hidden), nn.ReLU(), nn.Dropout(dropout), nn.Linear(hidden, 1)
+        )
 
     def forward(self, x):
         out, _ = self.lstm(x)
@@ -150,10 +154,19 @@ def infer(req: InferenceRequest):
         log_dir = pathlib.Path("artifacts")
         log_dir.mkdir(parents=True, exist_ok=True)
         with open(log_dir / "ml_infer.log", "a") as f:
-            f.write(json.dumps({
-                "ts": out["ts"], "tag": out["tag"], "p_up": out["p_up"],
-                "allow": out["allow"], "T": int(X.shape[0]), "F": int(X.shape[1]),
-            }) + "\n")
+            f.write(
+                json.dumps(
+                    {
+                        "ts": out["ts"],
+                        "tag": out["tag"],
+                        "p_up": out["p_up"],
+                        "allow": out["allow"],
+                        "T": int(X.shape[0]),
+                        "F": int(X.shape[1]),
+                    }
+                )
+                + "\n"
+            )
     except Exception:
         pass
     return out
