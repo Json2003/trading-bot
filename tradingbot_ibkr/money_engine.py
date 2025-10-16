@@ -61,6 +61,53 @@ def choose_position_size(
     return qty, notional * leverage
 
 
+def qty_from_risk(
+    equity: float,
+    risk_pct: float,
+    atr: float,
+    atr_mult: float,
+    price: float,
+) -> float:
+    """Return position quantity sized by ATR-derived stop distance.
+
+    This helper mirrors a common ATR-based position sizing formula:
+
+        qty = (equity * (risk_pct / 100)) / (atr * atr_mult)
+
+    The calculation approximates the stop distance with ``atr * atr_mult`` and
+    allocates ``equity * (risk_pct / 100)`` of capital to risk.  The resulting
+    quantity is expressed in base units assuming *atr* is measured in the same
+    price units as ``price``.
+
+    Args:
+        equity: Account equity in quote currency.
+        risk_pct: Percent of equity to risk (e.g. ``1.0`` for 1%).
+        atr: Average True Range value in price units.
+        atr_mult: Multiplier applied to ATR to determine stop distance.
+        price: Current instrument price in quote currency (must be positive).
+
+    Returns:
+        Quantity in base units.  Returns ``0.0`` whenever inputs are invalid or
+        do not permit sizing a position safely.
+    """
+
+    if equity <= 0 or risk_pct <= 0:
+        return 0.0
+    if atr <= 0 or atr_mult <= 0 or price <= 0:
+        return 0.0
+
+    risk_cash = equity * (risk_pct / 100.0)
+    if risk_cash <= 0:
+        return 0.0
+
+    stop_distance = atr * atr_mult
+    if stop_distance <= 0:
+        return 0.0
+
+    qty = risk_cash / stop_distance
+    return max(qty, 0.0)
+
+
 def fixed_fractional(balance: float, fraction: float, entry_price: float) -> Tuple[float, float]:
     """Buy a fixed fraction of account notional.
 
