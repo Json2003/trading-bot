@@ -5,7 +5,7 @@ from typing import Iterable, List
 
 from brokers.broker_base import Broker
 from brokers.reconciler import Reconciler, RiskLimits
-from models import OrderRequest, OrderStatus, OrderType, Position, Side, TimeInForce
+from models import OrderRequest, OrderStatus, OrderType, Side, TimeInForce
 
 
 def _order_request(
@@ -16,7 +16,6 @@ def _order_request(
     qty: float = 1.0,
     order_type: OrderType = OrderType.MARKET,
     tif: TimeInForce = TimeInForce.DAY,
-    meta: dict[str, object] | None = None,
 ) -> OrderRequest:
     return OrderRequest(
         symbol=symbol,
@@ -25,14 +24,13 @@ def _order_request(
         order_type=order_type,
         tif=tif,
         client_order_id=client_order_id,
-        meta=meta,
     )
 
 
 @dataclass
 class FakeBroker(Broker):
     open_orders: List[OrderStatus] = field(default_factory=list)
-    positions: List[Position] = field(default_factory=list)
+    positions: List[str] = field(default_factory=list)
     submitted: List[OrderRequest] = field(default_factory=list)
 
     def place_order(self, account_id: str, req: OrderRequest) -> OrderStatus:
@@ -51,7 +49,7 @@ class FakeBroker(Broker):
     def list_orders(self, account_id: str) -> Iterable[OrderStatus]:
         return list(self.open_orders)
 
-    def get_positions(self, account_id: str) -> Iterable[Position]:
+    def get_positions(self, account_id: str) -> Iterable[str]:
         return list(self.positions)
 
 
@@ -66,7 +64,7 @@ class DummyLogger:
         self.messages.append((message, args))
 
 
-def test_reconcile_skips_orders_with_matching_key() -> None:
+def test_reconcile_ignores_orders_with_same_idempotency_key() -> None:
     broker = FakeBroker(
         open_orders=[
             OrderStatus(
@@ -93,7 +91,7 @@ def test_reconcile_skips_orders_with_matching_key() -> None:
     assert broker.submitted == []
 
 
-def test_reconcile_submits_missing_orders() -> None:
+def test_reconcile_submits_when_no_matching_idempotency_key() -> None:
     broker = FakeBroker(
         open_orders=[
             OrderStatus(
@@ -121,13 +119,13 @@ def test_reconcile_submits_missing_orders() -> None:
     assert broker.submitted == [intended]
 
 
-def test_reconcile_matches_meta_idempotency_key() -> None:
+def test_reconcile_falls_back_to_client_id_when_idemp_key_missing() -> None:
     broker = FakeBroker(
         open_orders=[
             OrderStatus(
                 broker="fake",
                 broker_order_id="open-1",
-                client_order_id=None,
+                client_order_id="client-123",
                 status="NEW",
                 filled_qty=0.0,
                 avg_price=None,
