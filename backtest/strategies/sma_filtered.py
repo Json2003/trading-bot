@@ -100,8 +100,12 @@ def generate_signals(
         out["sma_trend"] = out["close"].rolling(int(trend_ma), min_periods=int(trend_ma)).mean()
         trend_ok = out["close"] > out["sma_trend"]
     else:
-        out["trend_fast"] = out["close"].rolling(int(trend_fast), min_periods=int(trend_fast)).mean()
-        out["trend_slow"] = out["close"].rolling(int(trend_slow), min_periods=int(trend_slow)).mean()
+        out["trend_fast"] = (
+            out["close"].rolling(int(trend_fast), min_periods=int(trend_fast)).mean()
+        )
+        out["trend_slow"] = (
+            out["close"].rolling(int(trend_slow), min_periods=int(trend_slow)).mean()
+        )
         trend_ok = out["trend_fast"] > out["trend_slow"]
 
     sig = base & trend_ok

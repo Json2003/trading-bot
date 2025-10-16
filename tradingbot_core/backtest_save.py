@@ -1,4 +1,5 @@
 """Helpers for persisting and retrieving backtest results."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone

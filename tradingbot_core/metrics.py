@@ -1,4 +1,5 @@
 """Common performance metrics used in reports and dashboards."""
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -59,7 +60,9 @@ def calculate_max_drawdown(equity_curve: Sequence[float]) -> Drawdown:
     return Drawdown(peak=peak, trough=trough, recovery=recovery, depth=max_depth)
 
 
-def calculate_sharpe_ratio(returns: Sequence[float], *, risk_free_rate: float = 0.0, periods_per_year: int = 252) -> float:
+def calculate_sharpe_ratio(
+    returns: Sequence[float], *, risk_free_rate: float = 0.0, periods_per_year: int = 252
+) -> float:
     _validate_series(returns)
     mean_return = sum(returns) / len(returns)
     excess_returns = [r - risk_free_rate / periods_per_year for r in returns]
@@ -70,15 +73,21 @@ def calculate_sharpe_ratio(returns: Sequence[float], *, risk_free_rate: float = 
     return (mean_return - risk_free_rate / periods_per_year) / std_dev * math.sqrt(periods_per_year)
 
 
-def calculate_sortino_ratio(returns: Sequence[float], *, risk_free_rate: float = 0.0, periods_per_year: int = 252) -> float:
+def calculate_sortino_ratio(
+    returns: Sequence[float], *, risk_free_rate: float = 0.0, periods_per_year: int = 252
+) -> float:
     _validate_series(returns)
     downside = [min(0.0, r - risk_free_rate / periods_per_year) for r in returns]
-    downside_squared = [r ** 2 for r in downside]
+    downside_squared = [r**2 for r in downside]
     downside_deviation = math.sqrt(sum(downside_squared) / len(returns))
     if downside_deviation == 0:
         raise ValueError("Downside deviation is zero; Sortino ratio undefined")
     mean_return = sum(returns) / len(returns)
-    return (mean_return - risk_free_rate / periods_per_year) / downside_deviation * math.sqrt(periods_per_year)
+    return (
+        (mean_return - risk_free_rate / periods_per_year)
+        / downside_deviation
+        * math.sqrt(periods_per_year)
+    )
 
 
 def compute_portfolio_stats(returns: Sequence[float], *, risk_free: float = 0.0) -> PortfolioStats:

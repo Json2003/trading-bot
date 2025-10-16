@@ -134,7 +134,10 @@ def load_backtest_profiles(path: str | Path) -> dict[str, BacktestProfile]:
     profiles: dict[str, BacktestProfile] = {}
     for name, payload in profiles_data.items():
         metrics_payload = payload.get("metrics") or {}
-        metrics = tuple(_parse_metric(name, metric_name, metric_payload) for metric_name, metric_payload in metrics_payload.items())
+        metrics = tuple(
+            _parse_metric(name, metric_name, metric_payload)
+            for metric_name, metric_payload in metrics_payload.items()
+        )
 
         notes = payload.get("notes")
         tags_payload = payload.get("tags") or []

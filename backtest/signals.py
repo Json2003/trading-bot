@@ -4,6 +4,7 @@ Implements a basic SMA crossover signal generator.
 Avoids importing pandas at module import time to prevent shadowing by
 repo-local files named pandas.py.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

@@ -73,7 +73,10 @@ datafiles/
 !tradingbot_ibkr/datafiles/
 tradingbot_ibkr/datafiles/*
 !tradingbot_ibkr/datafiles/ETH_USDT_bars.csv
-data/
+data/*
+!data/.gitkeep
+!data/daily/
+!data/daily/.gitkeep
 model_store/
 *.bak
 *.backup

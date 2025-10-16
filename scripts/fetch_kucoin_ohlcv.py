@@ -19,11 +19,12 @@ import argparse
 
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path = [p for p in sys.path if p not in ('', REPO_ROOT)] + [REPO_ROOT]
+sys.path = [p for p in sys.path if p not in ("", REPO_ROOT)] + [REPO_ROOT]
 
 
 def _import_site(mod_name: str):
     import importlib
+
     mod = sys.modules.get(mod_name)
     if mod is not None:
         src = getattr(mod, "__file__", "") or ""
@@ -43,10 +44,10 @@ def _import_site(mod_name: str):
 
 
 def fetch_ohlcv(exchange: str, symbol: str, timeframe: str, since: str, until: str):
-    pd = _import_site('pandas')
-    dparser = _import_site('dateutil.parser')
-    _import_site('requests')
-    ccxt = _import_site('ccxt')
+    pd = _import_site("pandas")
+    dparser = _import_site("dateutil.parser")
+    _import_site("requests")
+    ccxt = _import_site("ccxt")
 
     ex = getattr(ccxt, exchange)({"enableRateLimit": True})
     since_ms = int(pd.Timestamp(dparser.parse(since)).timestamp() * 1000) if since else None
@@ -64,7 +65,11 @@ def fetch_ohlcv(exchange: str, symbol: str, timeframe: str, since: str, until: s
             break
         if until_ms and cursor >= until_ms:
             break
-    df = pd.DataFrame(rows, columns=["timestamp","open","high","low","close","volume"]) if rows else pd.DataFrame(columns=["timestamp","open","high","low","close","volume"])
+    df = (
+        pd.DataFrame(rows, columns=["timestamp", "open", "high", "low", "close", "volume"])
+        if rows
+        else pd.DataFrame(columns=["timestamp", "open", "high", "low", "close", "volume"])
+    )
     if not df.empty:
         # keep ms epoch int for CSV compatibility; parquet will store datetime if converted by downstream
         pass
@@ -82,7 +87,7 @@ def main():
 
     out_path = args.out
     if not out_path:
-        sym = args.symbol.replace('/', '_')
+        sym = args.symbol.replace("/", "_")
         out_path = os.path.join(REPO_ROOT, "data", f"{sym}_{args.timeframe}.csv")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
@@ -94,10 +99,10 @@ def main():
     # Try to write parquet alongside
     try:
         pq_path = os.path.splitext(out_path)[0] + ".parquet"
-        pd = _import_site('pandas')
+        pd = _import_site("pandas")
         dft = df.copy()
-        dft['timestamp'] = pd.to_datetime(dft['timestamp'], unit='ms', utc=True)
-        dft = dft.set_index('timestamp')
+        dft["timestamp"] = pd.to_datetime(dft["timestamp"], unit="ms", utc=True)
+        dft = dft.set_index("timestamp")
         dft.to_parquet(pq_path)
         print(f"Saved CSV: {out_path} and Parquet: {pq_path}")
     except Exception:
@@ -106,4 +111,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -7,6 +7,7 @@ location.  Equities are sourced from Yahoo Finance via ``yfinance``
 while crypto prices come from the public CoinGecko API.  Results are
 stored in timezone-aware parquet files grouped by asset class.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -46,7 +47,7 @@ def _coerce_scalar(value: str) -> Any:
     value = value.strip()
     if not value:
         return ""
-    if value.startswith("\"") and value.endswith("\""):
+    if value.startswith('"') and value.endswith('"'):
         return value[1:-1]
     if value.isdigit():
         return int(value)
@@ -127,7 +128,9 @@ def load_config(path: Path) -> FetchConfig:
     crypto = [s for s in parsed.get("crypto", []) if s]
     lookback = int(parsed.get("lookback_days", 200))
     out_dir = Path(parsed.get("out_dir", "data/daily"))
-    return FetchConfig(timezone=timezone, equities=equities, crypto=crypto, lookback_days=lookback, out_dir=out_dir)
+    return FetchConfig(
+        timezone=timezone, equities=equities, crypto=crypto, lookback_days=lookback, out_dir=out_dir
+    )
 
 
 def ensure_directory(path: Path) -> Path:
@@ -215,10 +218,18 @@ def summarize_assets(rows: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Fetch daily equity and crypto data into Parquet files")
-    parser.add_argument("--config", type=Path, default=CONFIG_DEFAULT, help="Path to YAML/JSON configuration file")
-    parser.add_argument("--days", type=int, default=None, help="Override lookback days from configuration")
-    parser.add_argument("--out", type=Path, default=None, help="Override output directory from configuration")
+    parser = argparse.ArgumentParser(
+        description="Fetch daily equity and crypto data into Parquet files"
+    )
+    parser.add_argument(
+        "--config", type=Path, default=CONFIG_DEFAULT, help="Path to YAML/JSON configuration file"
+    )
+    parser.add_argument(
+        "--days", type=int, default=None, help="Override lookback days from configuration"
+    )
+    parser.add_argument(
+        "--out", type=Path, default=None, help="Override output directory from configuration"
+    )
     args = parser.parse_args()
 
     cfg = load_config(args.config)
