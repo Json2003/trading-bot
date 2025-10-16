@@ -1,10 +1,48 @@
 """Abstract base class describing a trading broker interface."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Sequence
 
-from models import OrderRequest, OrderStatus, Position
+from models import OrderRequest, OrderStatus as CoreOrderStatus, Position
+
+
+@dataclass(slots=True)
+class Order:
+    """Lightweight representation of an order intent used by higher level code."""
+
+    symbol: str
+    quantity: float
+    side: str
+    client_id: str | None = None
+    idemp_key: str | None = None
+    price: float | None = None
+    order_type: str | None = None
+    time_in_force: str | None = None
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class OrderStatus:
+    """Minimal status information used by the retry/reconciliation helpers."""
+
+    status: str
+    client_id: str | None = None
+    idemp_key: str | None = None
+    filled_quantity: float = 0.0
+    avg_price: float | None = None
+    message: str | None = None
+    broker_order_id: str | None = None
+    raw: Mapping[str, Any] | None = None
+
+
+# Backwards compatibility: existing call-sites expect ``OrderStatus`` to refer to
+# the richer object defined in :mod:`models`.  We therefore expose it under a
+# dedicated alias so both flavours remain available without creating circular
+# imports.
+LegacyOrderStatus = CoreOrderStatus
 
 
 class Broker(ABC):
@@ -82,3 +120,6 @@ class Broker(ABC):
         """
 
         raise NotImplementedError
+
+
+__all__ = ["Broker", "Order", "OrderStatus", "LegacyOrderStatus"]

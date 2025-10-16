@@ -31,9 +31,7 @@ def _resolve_price_column(df: pd.DataFrame, candidates: Iterable[str]) -> str:
     for name in candidates:
         if name in df.columns:
             return name
-    raise KeyError(
-        "No price column found. Tried: " + ", ".join(candidates)
-    )
+    raise KeyError("No price column found. Tried: " + ", ".join(candidates))
 
 
 def generate_signals(
@@ -86,12 +84,16 @@ def generate_signals(
 
     valid_values = [val for val in price_list if not math.isnan(val)]
     if not valid_values:
-        return pd.DataFrame({"signals": np.zeros(len(price_list), dtype=int)}, index=getattr(df, "index", None))
+        return pd.DataFrame(
+            {"signals": np.zeros(len(price_list), dtype=int)}, index=getattr(df, "index", None)
+        )
 
     mid_price = float(sum(valid_values) / len(valid_values))
     if not math.isfinite(mid_price):
         # Degenerate input (all NaN). Return a flat signal series.
-        return pd.DataFrame({"signals": np.zeros(len(price_list), dtype=int)}, index=getattr(df, "index", None))
+        return pd.DataFrame(
+            {"signals": np.zeros(len(price_list), dtype=int)}, index=getattr(df, "index", None)
+        )
 
     span = float(range_pct)
     if span < 0:

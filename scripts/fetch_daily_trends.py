@@ -56,13 +56,13 @@ def _normalise_entry(day: str, entry: dict) -> dict:
             }
             for article in articles
         ],
-        "relatedQueries": [
-            query.get("query") for query in related if query and query.get("query")
-        ],
+        "relatedQueries": [query.get("query") for query in related if query and query.get("query")],
     }
 
 
-def fetch_daily_trends(geo: str = "US", tz_offset: int = 0, session: requests.Session | None = None) -> List[dict]:
+def fetch_daily_trends(
+    geo: str = "US", tz_offset: int = 0, session: requests.Session | None = None
+) -> List[dict]:
     """Fetch daily trending search queries for the provided geography."""
 
     params = {"hl": "en-US", "tz": tz_offset, "geo": geo.upper()}

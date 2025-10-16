@@ -23,11 +23,11 @@ def create_env_file(repo_root: Path) -> None:
     """Create .env file from .env.example if needed"""
     env_file = repo_root / ".env"
     env_example = repo_root / "tradingbot_ibkr" / ".env.example"
-    
+
     if env_file.exists():
         print("✅ .env file already exists")
         return
-        
+
     if env_example.exists():
         shutil.copy(env_example, env_file)
         print("✅ Created .env file from .env.example")
@@ -53,7 +53,7 @@ IBKR_CLIENT_ID=1
 LOG_LEVEL=INFO
 ALLOW_LIVE_RISK=false
 """
-        with open(env_file, 'w') as f:
+        with open(env_file, "w") as f:
             f.write(env_content)
         print("✅ Created basic .env file")
         print("📝 Please edit .env file with your API keys and settings")
@@ -66,9 +66,9 @@ def create_directories(repo_root: Path) -> None:
         repo_root / "tradingbot_ibkr" / "model_store",
         repo_root / "data",
         repo_root / "artifacts",
-        repo_root / "logs"
+        repo_root / "logs",
     ]
-    
+
     for directory in dirs_to_create:
         if not directory.exists():
             directory.mkdir(parents=True, exist_ok=True)
@@ -80,30 +80,33 @@ def create_directories(repo_root: Path) -> None:
 def install_dependencies(repo_root: Path) -> bool:
     """Try to install dependencies"""
     requirements_file = repo_root / "tradingbot_ibkr" / "requirements.txt"
-    
+
     if not requirements_file.exists():
         print("❌ requirements.txt not found")
         return False
-    
+
     try:
         print("📦 Installing dependencies...")
         # Install core dependencies first
         core_deps = ["python-dotenv", "pandas", "numpy", "ccxt"]
         for dep in core_deps:
             print(f"   Installing {dep}...")
-            result = subprocess.run([
-                sys.executable, "-m", "pip", "install", dep
-            ], capture_output=True, text=True, timeout=120)
-            
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "install", dep],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+
             if result.returncode == 0:
                 print(f"   ✅ {dep} installed successfully")
             else:
                 print(f"   ❌ Failed to install {dep}: {result.stderr}")
                 return False
-        
+
         print("✅ Core dependencies installed")
         return True
-        
+
     except subprocess.TimeoutExpired:
         print("❌ Installation timed out")
         return False
@@ -115,37 +118,40 @@ def install_dependencies(repo_root: Path) -> bool:
 def main():
     """Main setup function"""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Quick setup for trading bot")
-    parser.add_argument("--install-deps", action="store_true", 
-                       help="Attempt to install dependencies")
-    
+    parser.add_argument(
+        "--install-deps", action="store_true", help="Attempt to install dependencies"
+    )
+
     args = parser.parse_args()
-    
+
     repo_root = Path(__file__).parent
-    
+
     print("🚀 Trading Bot Quick Setup")
-    print("="*50)
-    
+    print("=" * 50)
+
     # Create .env file
     create_env_file(repo_root)
-    
+
     # Create directories
     create_directories(repo_root)
-    
+
     # Install dependencies if requested
     if args.install_deps:
         success = install_dependencies(repo_root)
         if not success:
             print("⚠️  Some dependencies failed to install. Try manual installation.")
-    
+
     print("\n🎯 Next Steps:")
     print("1. Edit .env file with your API keys")
-    print("2. If dependencies installation failed, run: pip install -r tradingbot_ibkr/requirements.txt")
+    print(
+        "2. If dependencies installation failed, run: pip install -r tradingbot_ibkr/requirements.txt"
+    )
     print("3. Download market data or run data fetching scripts")
     print("4. Run readiness check: python check_trading_readiness.py")
     print("5. Start with paper trading mode (PAPER=true)")
-    
+
     print("\n✅ Quick setup completed!")
 
 

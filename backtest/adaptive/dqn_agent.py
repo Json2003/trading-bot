@@ -166,7 +166,9 @@ class DQNAgent:
         else:
             reward = float(transition.reward)
         self._replay.append(
-            Transition(transition.state, transition.action, reward, transition.next_state, transition.done)
+            Transition(
+                transition.state, transition.action, reward, transition.next_state, transition.done
+            )
         )
 
     # ---------------------------------------------------------------- training
@@ -185,11 +187,21 @@ class DQNAgent:
         indices = np.random.choice(len(self._replay), batch_size, replace=False)
         batch = [self._replay[idx] for idx in indices]
 
-        states = torch.as_tensor(np.stack([b.state for b in batch]), dtype=torch.float32, device=self.device)
-        actions = torch.as_tensor([b.action for b in batch], dtype=torch.int64, device=self.device).unsqueeze(1)
-        rewards = torch.as_tensor([b.reward for b in batch], dtype=torch.float32, device=self.device).unsqueeze(1)
-        next_states = torch.as_tensor(np.stack([b.next_state for b in batch]), dtype=torch.float32, device=self.device)
-        dones = torch.as_tensor([b.done for b in batch], dtype=torch.float32, device=self.device).unsqueeze(1)
+        states = torch.as_tensor(
+            np.stack([b.state for b in batch]), dtype=torch.float32, device=self.device
+        )
+        actions = torch.as_tensor(
+            [b.action for b in batch], dtype=torch.int64, device=self.device
+        ).unsqueeze(1)
+        rewards = torch.as_tensor(
+            [b.reward for b in batch], dtype=torch.float32, device=self.device
+        ).unsqueeze(1)
+        next_states = torch.as_tensor(
+            np.stack([b.next_state for b in batch]), dtype=torch.float32, device=self.device
+        )
+        dones = torch.as_tensor(
+            [b.done for b in batch], dtype=torch.float32, device=self.device
+        ).unsqueeze(1)
 
         q_values = self._online_net(states).gather(1, actions)  # type: ignore[arg-type]
         with torch.no_grad():
@@ -318,4 +330,3 @@ def build_transition_stream(
 
 
 __all__ = ["DQNAgent", "Transition", "build_transition_stream"]
-

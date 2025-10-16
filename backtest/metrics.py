@@ -4,6 +4,7 @@ Includes max_drawdown, sharpe_ratio, and profit_factor.
 Safe to import in this repo where files named pandas.py/requests.py
 may exist, by avoiding importing pandas at module import time.
 """
+
 from __future__ import annotations
 
 import math
@@ -82,7 +83,7 @@ def profit_factor(trade_pnls: Iterable[float]) -> float:
         elif x < 0:
             losses -= x  # accumulate absolute value
     if losses == 0.0:
-        return float('inf') if gains > 0.0 else 0.0
+        return float("inf") if gains > 0.0 else 0.0
     return float(gains / losses)
 
 
@@ -116,9 +117,21 @@ def summarize(trades, equity_curve, bar_returns, periods_per_year: int = 365) ->
     try:
         equity_series = equity_curve["equity"]
         ts_series = equity_curve["timestamp"]
-        end_equity = float(equity_series[-1]) if isinstance(equity_series, list) else float(getattr(equity_series, 'iloc', equity_series)[-1])
-        start_ts = str(ts_series[0]) if isinstance(ts_series, list) else str(getattr(ts_series, 'iloc', ts_series)[0])
-        end_ts = str(ts_series[-1]) if isinstance(ts_series, list) else str(getattr(ts_series, 'iloc', ts_series)[-1])
+        end_equity = (
+            float(equity_series[-1])
+            if isinstance(equity_series, list)
+            else float(getattr(equity_series, "iloc", equity_series)[-1])
+        )
+        start_ts = (
+            str(ts_series[0])
+            if isinstance(ts_series, list)
+            else str(getattr(ts_series, "iloc", ts_series)[0])
+        )
+        end_ts = (
+            str(ts_series[-1])
+            if isinstance(ts_series, list)
+            else str(getattr(ts_series, "iloc", ts_series)[-1])
+        )
     except Exception:
         arr = np.asarray(equity_curve, dtype=float)
         end_equity = float(arr[-1]) if arr.size else 1.0
@@ -126,7 +139,11 @@ def summarize(trades, equity_curve, bar_returns, periods_per_year: int = 365) ->
         end_ts = ""
 
     total_ret = end_equity - 1.0
-    dd = max_drawdown(equity_curve["equity"] if isinstance(equity_curve, dict) or hasattr(equity_curve, '__getitem__') else equity_curve)
+    dd = max_drawdown(
+        equity_curve["equity"]
+        if isinstance(equity_curve, dict) or hasattr(equity_curve, "__getitem__")
+        else equity_curve
+    )
     sr = sharpe_ratio(bar_returns, periods_per_year)
     sor = sortino_ratio(bar_returns, periods_per_year)
 
