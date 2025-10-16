@@ -4,6 +4,7 @@ import json
 import math
 import statistics
 from collections.abc import Sequence as SequenceABC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, List, Optional, Sequence
 
@@ -195,6 +196,16 @@ def parse_args() -> argparse.Namespace:
         "--output",
         type=Path,
         help="Optional path to write a markdown summary.",
+    )
+    parser.add_argument(
+        "--markdown-style",
+        choices=["sections", "table"],
+        default="sections",
+        help=(
+            "Controls the markdown layout when --output is provided. "
+            "'sections' renders a heading per file (default) while 'table' "
+            "emits a compact summary table."
+        ),
     )
     parser.add_argument(
         "--precision",
@@ -413,6 +424,69 @@ def format_summary_markdown(rows: Sequence[dict], precision: int) -> str:
     return "\n".join(lines)
 
 
+def _format_profit_factor(value: Optional[float]) -> str:
+    if not isinstance(value, float):
+        return "—"
+    if math.isinf(value):
+        return "∞"
+    if math.isnan(value):
+        return "—"
+    return f"{value:.2f}"
+
+
+def _format_ratio(value: Optional[float]) -> str:
+    if not isinstance(value, float):
+        return "n/a"
+    if math.isnan(value):
+        return "n/a"
+    if math.isinf(value):
+        return "∞" if value > 0 else "-∞"
+    return f"{value:.2f}"
+
+
+def format_summary_markdown_table(rows: Sequence[dict], precision: int) -> str:
+    timestamp = (
+        datetime.now(timezone.utc)
+        .isoformat(timespec="seconds")
+        .replace("+00:00", "Z")
+    )
+    lines = ["# Backtest Summary", "", f"_Last updated:_ {timestamp}", ""]
+    lines.append(
+        "| File | Period | PnL | Ann | MaxDD | Sharpe | Sortino | Win-rate | PF | Trades |"
+    )
+    lines.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---:|")
+    for row in rows:
+        period = row["period"].replace(" → ", "→") if row["period"] else ""
+        total = pct(row["total_pnl"], precision)
+        annualized = pct(row["ann_pnl"], precision)
+        drawdown = pct(row["mdd"], precision)
+        sharpe_ratio = _format_ratio(row["sharpe"])
+        sortino_ratio = _format_ratio(row["sortino"])
+        win_rate = (
+            pct(row["win_rate"], precision)
+            if isinstance(row["win_rate"], float)
+            else "—"
+        )
+        profit_factor = _format_profit_factor(row["profit_factor"])
+        lines.append(
+            " | ".join(
+                [
+                    f"`{row['file']}`",
+                    period,
+                    total,
+                    annualized,
+                    drawdown,
+                    sharpe_ratio,
+                    sortino_ratio,
+                    win_rate,
+                    profit_factor,
+                    str(row["trades"]),
+                ]
+            )
+        )
+    return "\n".join(lines)
+
+
 def render_summary(rows: Sequence[dict], precision: int) -> str:
     summary = format_summary_text(rows, precision)
     print(summary)
@@ -447,7 +521,10 @@ def main() -> None:
     render_summary(rows, args.precision)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        markdown = format_summary_markdown(rows, args.precision)
+        if args.markdown_style == "table":
+            markdown = format_summary_markdown_table(rows, args.precision)
+        else:
+            markdown = format_summary_markdown(rows, args.precision)
         if not markdown.endswith("\n"):
             markdown += "\n"
         args.output.write_text(markdown, encoding="utf-8")
