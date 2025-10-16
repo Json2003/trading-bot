@@ -12,7 +12,9 @@ class DummySession:
     def __init__(self) -> None:
         self.calls: list[tuple[str, dict[str, object] | None]] = []
 
-    def post(self, url: str, json: dict[str, object] | None = None, timeout: int | float | None = None) -> None:
+    def post(
+        self, url: str, json: dict[str, object] | None = None, timeout: int | float | None = None
+    ) -> None:
         self.calls.append((url, json))
 
 

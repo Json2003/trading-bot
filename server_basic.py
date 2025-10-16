@@ -12,27 +12,32 @@ STATE = {
         "win_rate": 0.55,
         "sharpe": 1.2,
         "drawdown": 0.05,
-        "timestamp": datetime.now(timezone.utc).isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     },
     "positions": [],
-    "orders": []
+    "orders": [],
 }
+
 
 @app.get("/status")
 def status():
     return {"running": STATE["running"]}
+
 
 @app.post("/control/start")
 def start():
     STATE["running"] = True
     return {"ok": True}
 
+
 @app.post("/control/stop")
 def stop():
     STATE["running"] = False
     return {"ok": True}
 
+
 clients = []
+
 
 @app.websocket("/ws")
 async def ws(ws: WebSocket):

@@ -1,4 +1,5 @@
 """Production-ready wiring for the Interactive Brokers adapter."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -14,11 +15,11 @@ from .models import OrderRequest, OrderState, OrderStatus, Position
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from tradingbot_core.monitoring import MonitoringHub
 
+
 class BrokerClient(Protocol):
     """Protocol describing the client used by :class:`IbkrBroker`."""
 
-    def connect(self) -> None:
-        ...
+    def connect(self) -> None: ...
 
     def submit_order(
         self,
@@ -26,8 +27,7 @@ class BrokerClient(Protocol):
         request: OrderRequest,
         *,
         idempotency_key: str,
-    ) -> OrderStatus | Mapping[str, object]:
-        ...
+    ) -> OrderStatus | Mapping[str, object]: ...
 
     def cancel_order(
         self,
@@ -35,20 +35,17 @@ class BrokerClient(Protocol):
         broker_order_id: str,
         *,
         idempotency_key: str | None = None,
-    ) -> OrderStatus | Mapping[str, object]:
-        ...
+    ) -> OrderStatus | Mapping[str, object]: ...
 
-    def fetch_order(self, account_id: str, broker_order_id: str) -> OrderStatus | Mapping[str, object]:
-        ...
+    def fetch_order(
+        self, account_id: str, broker_order_id: str
+    ) -> OrderStatus | Mapping[str, object]: ...
 
-    def list_positions(self, account_id: str) -> Iterable[Position | Mapping[str, object]]:
-        ...
+    def list_positions(self, account_id: str) -> Iterable[Position | Mapping[str, object]]: ...
 
-    def get_cash(self, account_id: str) -> float:
-        ...
+    def get_cash(self, account_id: str) -> float: ...
 
-    def stream_orders(self, account_id: str, handler: Callable[[OrderStatus], None]) -> None:
-        ...
+    def stream_orders(self, account_id: str, handler: Callable[[OrderStatus], None]) -> None: ...
 
 
 def _status_from_payload(payload: OrderStatus | Mapping[str, object]) -> OrderStatus:
@@ -127,8 +124,12 @@ class IbkrBroker(Broker):
             "symbol": req.symbol,
             "quantity": req.quantity,
             "side": req.side.value if hasattr(req.side, "value") else str(req.side),
-            "order_type": req.order_type.value if hasattr(req.order_type, "value") else str(req.order_type),
-            "time_in_force": req.time_in_force.value if hasattr(req.time_in_force, "value") else str(req.time_in_force),
+            "order_type": req.order_type.value
+            if hasattr(req.order_type, "value")
+            else str(req.order_type),
+            "time_in_force": req.time_in_force.value
+            if hasattr(req.time_in_force, "value")
+            else str(req.time_in_force),
         }
         if req.limit_price is not None:
             payload["limit_price"] = req.limit_price
@@ -210,7 +211,9 @@ class IbkrBroker(Broker):
         return symbol.strip().upper()
 
     def update_expected_positions(self, positions: Mapping[str, float]) -> None:
-        self._expected_positions = {self.normalize_symbol(sym): float(qty) for sym, qty in positions.items()}
+        self._expected_positions = {
+            self.normalize_symbol(sym): float(qty) for sym, qty in positions.items()
+        }
 
     def _check_positions_once(self) -> None:
         broker_positions = {pos.symbol: pos.quantity for pos in self.get_positions(self.account_id)}
@@ -242,7 +245,9 @@ class IbkrBroker(Broker):
         interval: float = 60.0,
         sleeper: Callable[[float], None] = time.sleep,
     ) -> None:
-        if self._monitor_thread and self._monitor_thread.is_alive():  # pragma: no cover - idempotent guard
+        if (
+            self._monitor_thread and self._monitor_thread.is_alive()
+        ):  # pragma: no cover - idempotent guard
             return
 
         self._monitor_stop.clear()
@@ -262,7 +267,9 @@ class IbkrBroker(Broker):
                     break
                 sleeper(interval)
 
-        self._monitor_thread = threading.Thread(target=_loop, name="ibkr-position-monitor", daemon=True)
+        self._monitor_thread = threading.Thread(
+            target=_loop, name="ibkr-position-monitor", daemon=True
+        )
         self._monitor_thread.start()
 
     def stop_position_monitor(self) -> None:

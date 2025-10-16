@@ -1,4 +1,5 @@
 """Utilities for reconciling intended orders with broker state."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

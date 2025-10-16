@@ -1,20 +1,27 @@
 from typing import Any
 
+
 def _atr(df, period: int = 14):
     import pandas as pd
+
     high, low, close = df["high"], df["low"], df["close"]
     prev_close = close.shift(1)
-    tr = pd.concat([
-        (high - low),
-        (high - prev_close).abs(),
-        (low - prev_close).abs()
-    ], axis=1).max(axis=1)
+    tr = pd.concat([(high - low), (high - prev_close).abs(), (low - prev_close).abs()], axis=1).max(
+        axis=1
+    )
     return tr.rolling(period, min_periods=period).mean()
 
 
 essential_params = [
-    "fast", "slow", "trend_ma", "atr_period", "atr_pctile", "atr_window", "cooldown"
+    "fast",
+    "slow",
+    "trend_ma",
+    "atr_period",
+    "atr_pctile",
+    "atr_window",
+    "cooldown",
 ]
+
 
 def generate_signals(
     df: Any,
@@ -45,9 +52,9 @@ def generate_signals(
     out["atr_pct"] = atr_rank
 
     sig = (
-        (out["sma_fast"] > out["sma_slow"]) &
-        (out["close"] > out["sma_trend"]) &
-        (out["atr_pct"] >= float(atr_pctile))
+        (out["sma_fast"] > out["sma_slow"])
+        & (out["close"] > out["sma_trend"])
+        & (out["atr_pct"] >= float(atr_pctile))
     ).astype(int)
 
     sig_shift = sig.shift(1).fillna(0).astype(int)

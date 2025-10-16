@@ -4,6 +4,7 @@ import numpy as np
 
 FEATURES = "data/parquet/features_1m"
 
+
 def triple_barrier(df, up=0.003, down=0.003, max_h=30):
     px = df["close"].to_numpy()
     y = np.zeros(len(px), dtype=np.int8)
@@ -22,19 +23,23 @@ def triple_barrier(df, up=0.003, down=0.003, max_h=30):
             y[i] = 0
     return pl.Series("y", y)
 
+
 def process_symbol(symbol):
     files = sorted(Path(FEATURES).glob(f"symbol={symbol}/date=*/part.parquet"))
     dfs = [pl.read_parquet(fp) for fp in files]
     if not dfs:
         return
     df = pl.concat(dfs).sort("ts")
-    df = df.with_columns([
-        triple_barrier(df, up=0.003, down=0.003, max_h=30),
-        pl.col("ret_1m").cast(pl.Float64).fill_null(0.0)
-    ])
+    df = df.with_columns(
+        [
+            triple_barrier(df, up=0.003, down=0.003, max_h=30),
+            pl.col("ret_1m").cast(pl.Float64).fill_null(0.0),
+        ]
+    )
     out_dir = Path("data/parquet/labels_1m") / f"symbol={symbol}"
     out_dir.mkdir(parents=True, exist_ok=True)
     df.select(["symbol", "ts", "y"]).write_parquet(out_dir / "labels.parquet")
+
 
 if __name__ == "__main__":
     for sym in ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"]:

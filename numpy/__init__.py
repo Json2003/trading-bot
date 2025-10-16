@@ -191,7 +191,7 @@ class ndarray:
         if total != len(flat):
             raise ValueError("cannot reshape array")
         if len(shape) == 1:
-            return ndarray(flat[:shape[0]])
+            return ndarray(flat[: shape[0]])
         out: List = []
         idx = 0
         for _ in range(shape[0]):
@@ -256,7 +256,9 @@ class ndarray:
 
     def _unary(self, op):
         if isinstance(self._data, list):
-            return ndarray([ndarray(v)._unary(op)._data if isinstance(v, list) else op(v) for v in self._data])
+            return ndarray(
+                [ndarray(v)._unary(op)._data if isinstance(v, list) else op(v) for v in self._data]
+            )
         return ndarray(op(self._data))
 
     def __add__(self, other):
@@ -287,6 +289,7 @@ class ndarray:
                 return a / b
             except ZeroDivisionError:
                 return float("inf")
+
         return self._binary(other, _div)
 
     def __rtruediv__(self, other):
@@ -631,7 +634,9 @@ class _RandomModule:
                 return self._normal(loc, scale)
             if isinstance(size, tuple):
                 if len(size) == 2:
-                    return ndarray([[self._normal(loc, scale) for _ in range(size[1])] for _ in range(size[0])])
+                    return ndarray(
+                        [[self._normal(loc, scale) for _ in range(size[1])] for _ in range(size[0])]
+                    )
             return ndarray([self._normal(loc, scale) for _ in range(int(size))])
 
         def lognormal(self, mean: float = 0.0, sigma: float = 1.0, size=None):

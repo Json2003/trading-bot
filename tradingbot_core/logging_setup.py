@@ -1,4 +1,5 @@
 """Centralised logging helpers used across services and scripts."""
+
 from __future__ import annotations
 
 import json

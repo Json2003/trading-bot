@@ -1,4 +1,5 @@
 """Configuration loader that stitches together environment, strategy, and fee profiles."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -9,6 +10,8 @@ import os
 import yaml
 
 _CONFIG_ROOT = Path(__file__).resolve().parents[2] / "config"
+
+from .risk import RiskCfg, RiskConfigError
 
 
 def _coerce_int(value: str | None) -> int | str | None:
@@ -122,7 +125,9 @@ def _normalise_fees_config(fees: Mapping[str, Any]) -> dict[str, Any]:
     return normalised
 
 
-def load_config(env_name: str, strategy_name: str, *, config_dir: str | Path | None = None) -> ConfigBundle:
+def load_config(
+    env_name: str, strategy_name: str, *, config_dir: str | Path | None = None
+) -> ConfigBundle:
     """Load configuration sections for a given environment and strategy."""
 
     base_dir = Path(config_dir) if config_dir else _CONFIG_ROOT
@@ -170,7 +175,9 @@ def load_env_config(env_name: str, *, config_dir: str | Path | None = None) -> d
     return env_config
 
 
-def load_strategy_config(strategy_name: str, *, config_dir: str | Path | None = None) -> dict[str, Any]:
+def load_strategy_config(
+    strategy_name: str, *, config_dir: str | Path | None = None
+) -> dict[str, Any]:
     """Load a strategy configuration mapping."""
 
     base_dir = Path(config_dir) if config_dir else _CONFIG_ROOT
@@ -179,6 +186,8 @@ def load_strategy_config(strategy_name: str, *, config_dir: str | Path | None = 
 
 __all__ = [
     "ConfigBundle",
+    "RiskCfg",
+    "RiskConfigError",
     "load_config",
     "load_env_config",
     "load_strategy_config",

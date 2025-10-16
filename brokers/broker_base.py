@@ -1,4 +1,5 @@
 """Abstract base class describing a trading broker interface."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -33,6 +34,8 @@ class OrderStatus:
     filled_quantity: float = 0.0
     avg_price: float | None = None
     message: str | None = None
+    broker_order_id: str | None = None
+    raw: Mapping[str, Any] | None = None
 
 
 # Backwards compatibility: existing call-sites expect ``OrderStatus`` to refer to

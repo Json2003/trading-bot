@@ -7,7 +7,13 @@ from typing import Callable, Iterable
 import pytest
 
 from tradingbot_ibkr.brokers.ibkr_broker import IbkrBroker, BrokerClient
-from tradingbot_ibkr.brokers.models import OrderRequest, OrderSide, OrderState, OrderStatus, Position
+from tradingbot_ibkr.brokers.models import (
+    OrderRequest,
+    OrderSide,
+    OrderState,
+    OrderStatus,
+    Position,
+)
 
 
 class DummyClient(BrokerClient):
@@ -20,7 +26,9 @@ class DummyClient(BrokerClient):
     def connect(self) -> None:  # pragma: no cover - simple stub
         self.connected = True
 
-    def submit_order(self, account_id: str, request: OrderRequest, *, idempotency_key: str) -> OrderStatus:
+    def submit_order(
+        self, account_id: str, request: OrderRequest, *, idempotency_key: str
+    ) -> OrderStatus:
         self.submit_keys.append(idempotency_key)
         return OrderStatus(
             broker_order_id="brk-1",
@@ -90,7 +98,9 @@ class DummyMonitor:
 def test_ibkr_broker_uses_client_order_id_for_idempotency() -> None:
     client = DummyClient()
     broker = IbkrBroker("https://example", "acct", client)
-    request = OrderRequest(symbol="ETH", quantity=2.0, side=OrderSide.BUY, client_order_id="custom-123")
+    request = OrderRequest(
+        symbol="ETH", quantity=2.0, side=OrderSide.BUY, client_order_id="custom-123"
+    )
 
     status = broker.place_order("acct", request)
 

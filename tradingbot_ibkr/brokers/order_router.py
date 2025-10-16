@@ -1,4 +1,5 @@
 """Broker routing utilities for placing orders with risk checks."""
+
 from __future__ import annotations
 
 from typing import Dict, Optional
