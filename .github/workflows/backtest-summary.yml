@@ -1,38 +1,124 @@
 name: Backtest Summary
+
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "scripts/**"
-      - "engine/**"
-      - "strategies/**"
-      - "config/**"
-      - "backtest*.json"
-      - "report_*.json"
+  schedule:
+    - cron: '0 6 * * 1'
+
 permissions:
-  contents: write
+  contents: read
+  actions: read
+  id-token: write
+
 jobs:
-  summarize:
+  backtest:
+    name: Run backtests and publish summary
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - uses: actions/setup-python@v5
-        with: { python-version: "3.11" }
-      - run: |
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
           python -m pip install --upgrade pip
-          pip install numpy pandas
-          if [ -f pyproject.toml ]; then pip install . || true; fi
-      # (Optional) re-run your backtests here if desired
-      - name: Generate portfolio report
+          pip install .
+
+      - name: Run sample backtest
         run: |
-          python scripts/portfolio_report.py | tee summary-latest.md
-      - uses: actions/upload-artifact@v4
-        with: { name: backtest-summary, path: summary-latest.md }
-      - name: Commit summary to repo
+          python scripts/run_backtest.py \
+            --source csv \
+            --path backtest/sample_data/sample_ohlcv.csv \
+            --strategy backtest.strategies.sample_strategy:generate_signals \
+            --out_prefix artifacts/summary
+
+      - name: Generate Markdown summary
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add summary-latest.md || true
-          git commit -m "chore: update backtest summary" || true
-          git push || true
+          python - <<'PY'
+import json
+import math
+from pathlib import Path
+
+metrics_path = Path('artifacts/summary_metrics.json')
+if not metrics_path.exists():
+    raise SystemExit('Expected metrics report at artifacts/summary_metrics.json')
+metrics = json.loads(metrics_path.read_text())
+
+start = metrics.get('start', 'n/a')
+end = metrics.get('end', 'n/a')
+
+
+def to_float(value):
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def pct(value):
+    num = to_float(value)
+    if num is None:
+        return 'n/a'
+    if math.isnan(num):
+        return 'n/a'
+    if math.isinf(num):
+        return '∞%'
+    return f"{num * 100:.2f}%"
+
+
+def ratio(value):
+    num = to_float(value)
+    if num is None:
+        return 'n/a'
+    if math.isnan(num):
+        return 'n/a'
+    if math.isinf(num):
+        return '∞'
+    return f"{num:.2f}"
+
+def count(value):
+    num = to_float(value)
+    if num is None or math.isnan(num) or math.isinf(num):
+        return 0
+    return int(num)
+
+lines = [
+    '# Backtest Summary',
+    '',
+    f'**Period:** {start} → {end}',
+    '',
+    '| Metric | Value |',
+    '| --- | --- |',
+    f"| Total Return | {pct(metrics.get('total_return'))} |",
+    f"| Max Drawdown | {pct(metrics.get('max_drawdown'))} |",
+    f"| Win Rate | {pct(metrics.get('win_rate'))} |",
+    f"| Profit Factor | {ratio(metrics.get('profit_factor'))} |",
+    f"| Sharpe Ratio | {ratio(metrics.get('sharpe'))} |",
+    f"| Sortino Ratio | {ratio(metrics.get('sortino'))} |",
+    f"| Trades | {count(metrics.get('num_trades'))} |",
+]
+
+Path('summary-latest.md').write_text('\n'.join(lines) + '\n')
+PY
+
+      - name: Display summary
+        run: cat summary-latest.md
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backtest-summary
+          path: |
+            summary-latest.md
+            artifacts/summary_metrics.json
+            artifacts/summary_trades.csv
+            artifacts/summary_equity.csv
