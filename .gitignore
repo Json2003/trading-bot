@@ -16,7 +16,7 @@ pip-wheel-metadata/
 
 # Virtual environments
 .venv/
-env/
+/env/
 venv/
 
 # PyTest cache
@@ -28,6 +28,7 @@ venv/
 # Environment variables
 .env
 .env.*
+!.env.example
 
 # OS files
 .DS_Store
@@ -69,7 +70,13 @@ report_*.json
 *.tmp
 *.checkpoint.json
 datafiles/
-data/
+!tradingbot_ibkr/datafiles/
+tradingbot_ibkr/datafiles/*
+!tradingbot_ibkr/datafiles/ETH_USDT_bars.csv
+data/*
+!data/.gitkeep
+!data/daily/
+!data/daily/.gitkeep
 model_store/
 *.bak
 *.backup
@@ -80,11 +87,17 @@ server.pid
 
 # Large data files (keep sample files)
 *.csv
+*.csv.gz
 *.parquet
 *.h5
 *.hdf5
+*.feather
 !**/sample_*.csv
+!tradingbot_ibkr/datafiles/ETH_USDT_bars.csv
 !**/requirements.txt
+
+# Reports
+reports/
 
 # API keys and secrets
 config.py
@@ -101,3 +114,6 @@ secrets.json
 models/checkpoints/
 *.pt
 *.pth
+
+# Trading readiness reports
+trading_readiness_report_*.json

@@ -11,6 +11,7 @@ backtest.regime to provide stable import paths:
 from .regimes import classify_regime  # re-export for convenience
 from .param_policy import params_for_regime, ATRExit, TrendATRPolicy
 from .candidate_gen import around
+from .dqn_agent import DQNAgent, Transition, build_transition_stream
 
 __all__ = [
     "classify_regime",
@@ -18,4 +19,7 @@ __all__ = [
     "ATRExit",
     "TrendATRPolicy",
     "around",
+    "DQNAgent",
+    "Transition",
+    "build_transition_stream",
 ]

@@ -43,26 +43,60 @@ def _parse_val(v: str):
         return s
 
 
-def run_bt(symbol, timeframe, since, until, strat_path, strat_args, exit_args,
-           fees_bps, slip_bps, out_prefix, allow_short):
+def run_bt(
+    symbol,
+    timeframe,
+    since,
+    until,
+    strat_path,
+    strat_args,
+    exit_args,
+    fees_bps,
+    slip_bps,
+    out_prefix,
+    allow_short,
+):
     # Prefer project venv python if present, else current interpreter
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     vpy = os.path.join(repo_root, ".venv", "bin", "python")
     py = vpy if os.path.exists(vpy) else sys.executable
     args = [
-        py, "scripts/run_backtest.py",
-        "--source", "ccxt", "--exchange", "kucoin",
-        "--symbol", symbol, "--timeframe", timeframe,
-        "--since", since, "--until", until,
-        "--strategy", strat_path,
-        "--strategy_args", ",".join(f"{k}={v}" for k, v in strat_args.items()),
-        "--fees_bps", str(fees_bps), "--slip_bps", str(slip_bps),
-        "--tp_bps", "0", "--sl_bps", "0",
-        "--tp_atr_mult", str(exit_args.get("tp_atr_mult", 0)),
-        "--sl_atr_mult", str(exit_args.get("sl_atr_mult", 0)),
-        "--atr_period", "14",
-        "--max_bars", str(int(exit_args.get("max_bars", 12))),
-        "--out_prefix", out_prefix,
+        py,
+        "scripts/run_backtest.py",
+        "--source",
+        "ccxt",
+        "--exchange",
+        "kucoin",
+        "--symbol",
+        symbol,
+        "--timeframe",
+        timeframe,
+        "--since",
+        since,
+        "--until",
+        until,
+        "--strategy",
+        strat_path,
+        "--strategy_args",
+        ",".join(f"{k}={v}" for k, v in strat_args.items()),
+        "--fees_bps",
+        str(fees_bps),
+        "--slip_bps",
+        str(slip_bps),
+        "--tp_bps",
+        "0",
+        "--sl_bps",
+        "0",
+        "--tp_atr_mult",
+        str(exit_args.get("tp_atr_mult", 0)),
+        "--sl_atr_mult",
+        str(exit_args.get("sl_atr_mult", 0)),
+        "--atr_period",
+        "14",
+        "--max_bars",
+        str(int(exit_args.get("max_bars", 12))),
+        "--out_prefix",
+        out_prefix,
     ]
     if allow_short:
         args.append("--allow_short")
@@ -73,7 +107,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--symbol", default="BTC/USDT")
     ap.add_argument("--timeframe", default="4h")
-    ap.add_argument("--strat_path", required=True, help="module:function, e.g., backtest.strategies.sma_filtered:generate_signals")
+    ap.add_argument(
+        "--strat_path",
+        required=True,
+        help="module:function, e.g., backtest.strategies.sma_filtered:generate_signals",
+    )
     ap.add_argument("--strat_args", required=True, help="k=v,k=v")
     ap.add_argument("--exit_args", default="tp_atr_mult=3.0,sl_atr_mult=1.5,max_bars=12")
     ap.add_argument("--fees_bps", type=float, default=10.0)
