@@ -37,13 +37,6 @@ def post(*args, **kwargs):  # pragma: no cover - network disabled
 class Session:
     """Minimal Session implementation that always fails with ``HTTPError``."""
 
-    def __init__(self, *args, **kwargs):  # pragma: no cover - trivial
-        # ``requests.Session`` exposes ``headers`` as a mutable mapping and keeps a
-        # registry of mounted adapters.  Tests only check that updates succeed, so
-        # the shim stores them without ever using them.
-        self.headers: dict[str, str] = {}
-        self._mounts: dict[str, object] = {}
-
     def request(self, method: str, *args, **kwargs):  # pragma: no cover - network disabled
         _raise_unavailable(f"Session.{method.lower()}")
 
@@ -53,17 +46,10 @@ class Session:
     def post(self, *args, **kwargs):  # pragma: no cover - network disabled
         self.request("POST", *args, **kwargs)
 
-    def mount(self, prefix: str, adapter: object) -> None:  # pragma: no cover - trivial
-        self._mounts[prefix] = adapter
-
-    def close(self) -> None:  # pragma: no cover - trivial
-        self._mounts.clear()
-
     # ``requests.Session`` implements the context manager protocol; mirroring it
     # keeps ``with requests.Session() as session`` working in tests.
     def __enter__(self):  # pragma: no cover - trivial
         return self
 
     def __exit__(self, exc_type, exc, tb):  # pragma: no cover - trivial
-        self.close()
         return False
