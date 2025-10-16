@@ -16,7 +16,15 @@ This guide helps you verify that your trading bot is ready for safe operation.
    python quick_setup.py --install-deps
    ```
 
-4. **Need help fixing common issues automatically?**
+4. **Need a lightweight check with optional auto-fixes?**
+   ```bash
+   python scripts/check_readiness_lite.py --verbose --fix-issues
+   ```
+   This helper performs a handful of foundational checks (virtual
+   environment, dependencies, sample data, and `.env`) without importing
+   the heavier readiness checker module.
+
+5. **Need help fixing common issues automatically?**
    ```bash
    python check_trading_readiness.py --fix-issues --verbose
    ```

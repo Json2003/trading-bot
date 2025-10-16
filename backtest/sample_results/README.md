@@ -1,7 +1,9 @@
 # Sample Backtest Results
 
 This directory captures a reproducible run of the SMA-filtered strategy against
-the synthetic OHLCV dataset stored at `../sample_data/sample_ohlcv.csv`.
+the synthetic hourly OHLCV dataset stored at `../sample_data/sample_ohlcv.csv`.
+For lower-latency experiments, a companion one-minute sample lives at
+`../sample_data/sample_ohlcv_1m.csv`.
 
 ## Summary
 

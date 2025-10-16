@@ -3,6 +3,7 @@
 Produces an annotated CSV with columns: ts, open, high, low, close, volume, event_name, window
 where window is one of pre, shock, recovery, or none.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -71,7 +72,9 @@ def main():
     events = load_events(events_path)
     annotated = annotate(df, events)
 
-    out_path = Path(args.out) if args.out else bars_path.with_name(bars_path.stem + "_annotated.csv")
+    out_path = (
+        Path(args.out) if args.out else bars_path.with_name(bars_path.stem + "_annotated.csv")
+    )
     annotated.to_csv(out_path, index=False)
     print(f"Wrote annotated CSV to {out_path}")
 

@@ -62,7 +62,13 @@ class Series:
 
     __array_priority__ = 1000
 
-    def __init__(self, data: Any = None, index: Optional[Sequence[Any]] = None, dtype=None, name: Optional[str] = None):
+    def __init__(
+        self,
+        data: Any = None,
+        index: Optional[Sequence[Any]] = None,
+        dtype=None,
+        name: Optional[str] = None,
+    ):
         if isinstance(data, Series):
             data = data._values[:]
             index = data.index if index is None else index
@@ -103,11 +109,17 @@ class Series:
             idx = self.index[item]
             return Series(self._values[item], index=idx)
         if item in self.index:
-            position = self.index.get_loc(item) if hasattr(self.index, "get_loc") else self.index.index(item)
+            position = (
+                self.index.get_loc(item)
+                if hasattr(self.index, "get_loc")
+                else self.index.index(item)
+            )
             return self._values[position]
         if isinstance(item, Series):
             positions = [i for i, flag in enumerate(item._values) if flag]
-            return Series([self._values[i] for i in positions], index=[self.index[i] for i in positions])
+            return Series(
+                [self._values[i] for i in positions], index=[self.index[i] for i in positions]
+            )
         if isinstance(item, list):
             return Series([self._values[i] for i in item], index=[self.index[i] for i in item])
         return self._values[item]
@@ -206,7 +218,9 @@ class Series:
         return self.__add__(other)
 
     def __rsub__(self, other):
-        return Series([other - v if not _isna(v) else math.nan for v in self._values], index=self.index[:])
+        return Series(
+            [other - v if not _isna(v) else math.nan for v in self._values], index=self.index[:]
+        )
 
     def __rtruediv__(self, other):
         def _rdiv(v):
@@ -242,13 +256,19 @@ class Series:
         return Series([abs(v) if v is not None else v for v in self._values], index=self.index[:])
 
     def __and__(self, other):
-        return self._binary(other, lambda a, b: (not _isna(a) and bool(a)) and (not _isna(b) and bool(b)))
+        return self._binary(
+            other, lambda a, b: (not _isna(a) and bool(a)) and (not _isna(b) and bool(b))
+        )
 
     def __or__(self, other):
-        return self._binary(other, lambda a, b: (not _isna(a) and bool(a)) or (not _isna(b) and bool(b)))
+        return self._binary(
+            other, lambda a, b: (not _isna(a) and bool(a)) or (not _isna(b) and bool(b))
+        )
 
     def __invert__(self):
-        return Series([not bool(v) if not _isna(v) else False for v in self._values], index=self.index[:])
+        return Series(
+            [not bool(v) if not _isna(v) else False for v in self._values], index=self.index[:]
+        )
 
     def __rand__(self, other):
         return self._binary(other, lambda a, b: (not _isna(b) and bool(b)) and bool(other))
@@ -435,7 +455,7 @@ class _Rolling:
         data = self.series._values
         for i in range(len(data)):
             start = max(0, i - self.window + 1)
-            window = [v for v in data[start:i + 1] if not _isna(v)]
+            window = [v for v in data[start : i + 1] if not _isna(v)]
             if len(window) >= self.min_periods:
                 values.append(func(window))
             else:
@@ -505,8 +525,15 @@ class _EWM:
 class DataFrame:
     """Minimal DataFrame implementation."""
 
-    def __init__(self, data: Any = None, index: Optional[Sequence[Any]] = None, columns: Optional[Sequence[str]] = None):
-        if isinstance(data, DataFrame) or (hasattr(data, "_data") and hasattr(data, "columns") and hasattr(data, "index")):
+    def __init__(
+        self,
+        data: Any = None,
+        index: Optional[Sequence[Any]] = None,
+        columns: Optional[Sequence[str]] = None,
+    ):
+        if isinstance(data, DataFrame) or (
+            hasattr(data, "_data") and hasattr(data, "columns") and hasattr(data, "index")
+        ):
             base = data.copy()
             self._data = {col: base._data[col].copy() for col in base.columns}
             self.columns = list(base.columns)
@@ -570,11 +597,17 @@ class DataFrame:
         self.loc = _DataFrameLoc(self)
 
     def copy(self) -> "DataFrame":
-        return DataFrame({col: series.copy() for col, series in self._data.items()}, index=self.index[:], columns=self.columns[:])
+        return DataFrame(
+            {col: series.copy() for col, series in self._data.items()},
+            index=self.index[:],
+            columns=self.columns[:],
+        )
 
     def __getitem__(self, key):
         if isinstance(key, list):
-            return DataFrame({col: self._data[col] for col in key}, index=self.index[:], columns=key)
+            return DataFrame(
+                {col: self._data[col] for col in key}, index=self.index[:], columns=key
+            )
         if isinstance(key, Series):
             positions = [i for i, flag in enumerate(key._values) if flag]
             data = {}
@@ -582,7 +615,9 @@ class DataFrame:
                 values = [self._data[col]._values[i] for i in positions]
                 idx = [self.index[i] for i in positions]
                 data[col] = Series(values, index=idx)
-            return DataFrame(data, index=[self.index[i] for i in positions], columns=self.columns[:])
+            return DataFrame(
+                data, index=[self.index[i] for i in positions], columns=self.columns[:]
+            )
         return self._data[key]
 
     def __setitem__(self, key, value):
@@ -605,7 +640,9 @@ class DataFrame:
             return rows
         return {col: series._values[:] for col, series in self._data.items()}
 
-    def to_csv(self, path: Union[str, Path], index: bool = True, header: bool = True, mode: str = "w"):
+    def to_csv(
+        self, path: Union[str, Path], index: bool = True, header: bool = True, mode: str = "w"
+    ):
         with open(path, mode, newline="") as f:
             writer = csv.writer(f)
             header_row = []
@@ -621,7 +658,9 @@ class DataFrame:
                 row.extend(self._data[col]._values[idx_pos] for col in self.columns)
                 writer.writerow(row)
 
-    def merge(self, other: "DataFrame", on: str, suffixes: Tuple[str, str] = ("_x", "_y")) -> "DataFrame":
+    def merge(
+        self, other: "DataFrame", on: str, suffixes: Tuple[str, str] = ("_x", "_y")
+    ) -> "DataFrame":
         left_rows = self.to_dict("records")
         right_lookup = {}
         for row in other.to_dict("records"):
@@ -642,7 +681,11 @@ class DataFrame:
 
     def set_index(self, column: str) -> "DataFrame":
         new_index = self._data[column]._values[:]
-        data = {col: Series(series._values[:], index=new_index) for col, series in self._data.items() if col != column}
+        data = {
+            col: Series(series._values[:], index=new_index)
+            for col, series in self._data.items()
+            if col != column
+        }
         return DataFrame(data, index=new_index)
 
     def reset_index(self, drop: bool = False) -> "DataFrame":
@@ -701,7 +744,10 @@ class DataFrame:
                 elif col in fill_values and isinstance(fill_values[col], Series):
                     aligned = fill_values[col]._align_to(self.index)
                     data[col] = Series(
-                        [aligned[i] if _isna(series._values[i]) else series._values[i] for i in range(len(series))],
+                        [
+                            aligned[i] if _isna(series._values[i]) else series._values[i]
+                            for i in range(len(series))
+                        ],
                         index=self.index[:],
                     )
                     continue
@@ -711,7 +757,10 @@ class DataFrame:
             if isinstance(fill_value, Series):
                 aligned = fill_value._align_to(self.index)
                 data[col] = Series(
-                    [aligned[i] if _isna(series._values[i]) else series._values[i] for i in range(len(series))],
+                    [
+                        aligned[i] if _isna(series._values[i]) else series._values[i]
+                        for i in range(len(series))
+                    ],
                     index=self.index[:],
                 )
             elif fill_value is not None:
@@ -730,7 +779,11 @@ class DataFrame:
         if axis == 1:
             values = []
             for i in range(len(self.index)):
-                row_vals = [self._data[col]._values[i] for col in self.columns if not _isna(self._data[col]._values[i])]
+                row_vals = [
+                    self._data[col]._values[i]
+                    for col in self.columns
+                    if not _isna(self._data[col]._values[i])
+                ]
                 values.append(max(row_vals) if row_vals else math.nan)
             return Series(values, index=self.index[:])
         raise NotImplementedError("max with axis other than 1 is not implemented")
@@ -739,7 +792,11 @@ class DataFrame:
         if axis == 1:
             values = []
             for i in range(len(self.index)):
-                row_vals = [self._data[col]._values[i] for col in self.columns if not _isna(self._data[col]._values[i])]
+                row_vals = [
+                    self._data[col]._values[i]
+                    for col in self.columns
+                    if not _isna(self._data[col]._values[i])
+                ]
                 values.append(min(row_vals) if row_vals else math.nan)
             return Series(values, index=self.index[:])
         raise NotImplementedError("min with axis other than 1 is not implemented")
@@ -855,7 +912,13 @@ def read_csv(path: Union[str, Path]) -> DataFrame:
     return DataFrame(rows)
 
 
-def date_range(start: Union[str, datetime], periods: Optional[int] = None, freq: str = "D", end: Optional[Union[str, datetime]] = None, tz: Optional[str] = None):
+def date_range(
+    start: Union[str, datetime],
+    periods: Optional[int] = None,
+    freq: str = "D",
+    end: Optional[Union[str, datetime]] = None,
+    tz: Optional[str] = None,
+):
     if isinstance(start, str):
         try:
             start_dt = datetime.fromisoformat(start)
@@ -964,4 +1027,3 @@ __all__ = [
     "to_datetime",
     "qcut",
 ]
-

@@ -7,6 +7,7 @@ interactive exploration sessions. For production usage, replace the
 synthetic data generator with a real data source and integrate the
 signal generation logic into the broader trading framework.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -84,9 +85,7 @@ def compute_sma_crossover(
     return df
 
 
-def sharpe_ratio(
-    returns: Iterable[float], *, trading_days: int, risk_free_rate: float
-) -> float:
+def sharpe_ratio(returns: Iterable[float], *, trading_days: int, risk_free_rate: float) -> float:
     """Calculate the annualised Sharpe ratio for a return series."""
 
     series = pd.Series(returns)
@@ -114,8 +113,12 @@ def plot_cumulative_returns(df: pd.DataFrame) -> None:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--days", type=int, default=1000, help="Number of synthetic trading days")
-    parser.add_argument("--short-window", type=int, default=50, help="Length of the fast SMA window")
-    parser.add_argument("--long-window", type=int, default=200, help="Length of the slow SMA window")
+    parser.add_argument(
+        "--short-window", type=int, default=50, help="Length of the fast SMA window"
+    )
+    parser.add_argument(
+        "--long-window", type=int, default=200, help="Length of the slow SMA window"
+    )
     parser.add_argument(
         "--plot",
         action="store_true",

@@ -12,6 +12,7 @@ for shadow in ("pandas", "requests", "ccxt"):
         del sys.modules[shadow]
 try:
     import importlib.util as _ilut
+
     _req_spec = _ilut.find_spec("requests")
     if _req_spec is not None and getattr(_req_spec, "origin", "").endswith("requests.py"):
         raise ImportError("Local requests.py shadowing detected")
@@ -36,13 +37,14 @@ def parse_kv(csv: str) -> dict:
     out = {}
     if not csv:
         return out
-    for pair in csv.split(','):
-        if not pair or '=' not in pair:
+    for pair in csv.split(","):
+        if not pair or "=" not in pair:
             continue
-        k, v = pair.split('=', 1)
-        k = k.strip(); v = v.strip()
+        k, v = pair.split("=", 1)
+        k = k.strip()
+        v = v.strip()
         try:
-            out[k] = float(v) if '.' in v else int(v)
+            out[k] = float(v) if "." in v else int(v)
         except ValueError:
             out[k] = v
     return out
@@ -50,45 +52,49 @@ def parse_kv(csv: str) -> dict:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--exchange', default='kucoin')
-    ap.add_argument('--symbols', default='BTC/USDT,ETH/USDT,SOL/USDT')
-    ap.add_argument('--timeframe', default='4h')
-    ap.add_argument('--extra_timeframe', default=None, help='Optional second timeframe to include (e.g., 1h)')
-    ap.add_argument('--since', required=True)
-    ap.add_argument('--until', required=True)
-    ap.add_argument('--strategy', required=True)
-    ap.add_argument('--strategy_args', default='')
-    ap.add_argument('--strategy_args_extra', default='', help='Optional strategy args for extra timeframe')
+    ap.add_argument("--exchange", default="kucoin")
+    ap.add_argument("--symbols", default="BTC/USDT,ETH/USDT,SOL/USDT")
+    ap.add_argument("--timeframe", default="4h")
+    ap.add_argument(
+        "--extra_timeframe", default=None, help="Optional second timeframe to include (e.g., 1h)"
+    )
+    ap.add_argument("--since", required=True)
+    ap.add_argument("--until", required=True)
+    ap.add_argument("--strategy", required=True)
+    ap.add_argument("--strategy_args", default="")
+    ap.add_argument(
+        "--strategy_args_extra", default="", help="Optional strategy args for extra timeframe"
+    )
     # engine
-    ap.add_argument('--fees_bps', type=float, default=10.0)
-    ap.add_argument('--slip_bps', type=float, default=5.0)
-    ap.add_argument('--tp_bps', type=float, default=0.0)
-    ap.add_argument('--sl_bps', type=float, default=0.0)
-    ap.add_argument('--tp_atr_mult', type=float, default=0.0)
-    ap.add_argument('--sl_atr_mult', type=float, default=0.0)
-    ap.add_argument('--atr_period', type=int, default=14)
-    ap.add_argument('--break_even_atr', type=float, default=0.0)
-    ap.add_argument('--trail_atr_mult', type=float, default=0.0)
-    ap.add_argument('--trail_method', choices=['atr','donchian'], default='atr')
-    ap.add_argument('--trail_ref', choices=['best','close'], default='best')
-    ap.add_argument('--donch_mid_n', type=int, default=0)
+    ap.add_argument("--fees_bps", type=float, default=10.0)
+    ap.add_argument("--slip_bps", type=float, default=5.0)
+    ap.add_argument("--tp_bps", type=float, default=0.0)
+    ap.add_argument("--sl_bps", type=float, default=0.0)
+    ap.add_argument("--tp_atr_mult", type=float, default=0.0)
+    ap.add_argument("--sl_atr_mult", type=float, default=0.0)
+    ap.add_argument("--atr_period", type=int, default=14)
+    ap.add_argument("--break_even_atr", type=float, default=0.0)
+    ap.add_argument("--trail_atr_mult", type=float, default=0.0)
+    ap.add_argument("--trail_method", choices=["atr", "donchian"], default="atr")
+    ap.add_argument("--trail_ref", choices=["best", "close"], default="best")
+    ap.add_argument("--donch_mid_n", type=int, default=0)
     # partial TP / payday
-    ap.add_argument('--tp_r_multiple', type=float, default=0.0)
-    ap.add_argument('--partial_tp_frac', type=float, default=0.0)
-    ap.add_argument('--lock_in_r_after_tp', type=float, default=0.0)
+    ap.add_argument("--tp_r_multiple", type=float, default=0.0)
+    ap.add_argument("--partial_tp_frac", type=float, default=0.0)
+    ap.add_argument("--lock_in_r_after_tp", type=float, default=0.0)
     # pullback/structure exit
-    ap.add_argument('--pullback_ema_len', type=int, default=0)
-    ap.add_argument('--pullback_atr_mult', type=float, default=0.0)
-    ap.add_argument('--pullback_confirm', type=int, default=0)
+    ap.add_argument("--pullback_ema_len", type=int, default=0)
+    ap.add_argument("--pullback_atr_mult", type=float, default=0.0)
+    ap.add_argument("--pullback_confirm", type=int, default=0)
     # momentum/timebox
-    ap.add_argument('--min_rr_by_bars_r', type=float, default=0.0)
-    ap.add_argument('--min_rr_by_bars_n', type=int, default=0)
-    ap.add_argument('--notional', type=float, default=1.0)
-    ap.add_argument('--risk_per_trade', type=float, default=0.005)
-    ap.add_argument('--max_notional_frac', type=float, default=1.0)
-    ap.add_argument('--allow_short', action='store_true')
-    ap.add_argument('--max_bars', type=int, default=0)
-    ap.add_argument('--out_prefix', default='artifacts/portfolio')
+    ap.add_argument("--min_rr_by_bars_r", type=float, default=0.0)
+    ap.add_argument("--min_rr_by_bars_n", type=int, default=0)
+    ap.add_argument("--notional", type=float, default=1.0)
+    ap.add_argument("--risk_per_trade", type=float, default=0.005)
+    ap.add_argument("--max_notional_frac", type=float, default=1.0)
+    ap.add_argument("--allow_short", action="store_true")
+    ap.add_argument("--max_bars", type=int, default=0)
+    ap.add_argument("--out_prefix", default="artifacts/portfolio")
     args = ap.parse_args()
 
     strat_fn = load_strategy(args.strategy)
@@ -126,12 +132,12 @@ def main():
         max_bars=args.max_bars,
     )
 
-    os.makedirs('artifacts', exist_ok=True)
+    os.makedirs("artifacts", exist_ok=True)
 
     combined_equity = None
     per_symbol = {}
 
-    syms = [s.strip() for s in args.symbols.split(',') if s.strip()]
+    syms = [s.strip() for s in args.symbols.split(",") if s.strip()]
     components = []
     # Base timeframe
     for sym in syms:
@@ -139,7 +145,7 @@ def main():
         trades, eq, bar_ret = run_backtest(df, strat, cfg)
         m = summarize(trades, eq, bar_ret)
         per_symbol[f"{sym}@{args.timeframe}"] = m
-        eq = eq.rename(columns={'equity': f'equity_{sym.replace("/","_")}_{args.timeframe}'})
+        eq = eq.rename(columns={"equity": f"equity_{sym.replace('/', '_')}_{args.timeframe}"})
         components.append(eq)
     # Extra timeframe (optional)
     if args.extra_timeframe:
@@ -148,7 +154,9 @@ def main():
             trades2, eq2, br2 = run_backtest(df2, strat_extra, cfg)
             m2 = summarize(trades2, eq2, br2)
             per_symbol[f"{sym}@{args.extra_timeframe}"] = m2
-            eq2 = eq2.rename(columns={'equity': f'equity_{sym.replace("/","_")}_{args.extra_timeframe}'})
+            eq2 = eq2.rename(
+                columns={"equity": f"equity_{sym.replace('/', '_')}_{args.extra_timeframe}"}
+            )
             components.append(eq2)
 
     # Merge all components by timestamp
@@ -156,31 +164,45 @@ def main():
         if combined_equity is None:
             combined_equity = eq
         else:
-            combined_equity = pd.merge_asof(combined_equity.sort_values('timestamp'), eq.sort_values('timestamp'), on='timestamp')
+            combined_equity = pd.merge_asof(
+                combined_equity.sort_values("timestamp"),
+                eq.sort_values("timestamp"),
+                on="timestamp",
+            )
             combined_equity = combined_equity.ffill()
 
     # Aggregate equity: simple sum of normalized equity curves (assumes same notional each)
-    cols = [c for c in combined_equity.columns if c.startswith('equity_')]
-    combined_equity['equity'] = combined_equity[cols].mean(axis=1)
+    cols = [c for c in combined_equity.columns if c.startswith("equity_")]
+    combined_equity["equity"] = combined_equity[cols].mean(axis=1)
 
     # Recompute metrics on combined equity
-    combined_equity['equity_prev'] = combined_equity['equity'].shift(1).fillna(combined_equity['equity'].iloc[0])
-    bar_ret = combined_equity['equity'] / combined_equity['equity_prev'] - 1.0
+    combined_equity["equity_prev"] = (
+        combined_equity["equity"].shift(1).fillna(combined_equity["equity"].iloc[0])
+    )
+    bar_ret = combined_equity["equity"] / combined_equity["equity_prev"] - 1.0
     portfolio_metrics = {
-        'symbols': args.symbols,
-        'timeframe': args.timeframe,
-        'start': combined_equity['timestamp'].iloc[0],
-        'end': combined_equity['timestamp'].iloc[-1],
-        'total_return': (combined_equity['equity'].iloc[-1] / combined_equity['equity'].iloc[0]) - 1.0,
-        'num_components': len(cols),
+        "symbols": args.symbols,
+        "timeframe": args.timeframe,
+        "start": combined_equity["timestamp"].iloc[0],
+        "end": combined_equity["timestamp"].iloc[-1],
+        "total_return": (combined_equity["equity"].iloc[-1] / combined_equity["equity"].iloc[0])
+        - 1.0,
+        "num_components": len(cols),
     }
 
     # Save artifacts
-    combined_equity[['timestamp','equity']].to_csv(f"{args.out_prefix}_equity.csv", index=False)
-    with open(f"{args.out_prefix}_metrics.json", 'w') as f:
-        json.dump({'per_symbol': per_symbol, 'portfolio': portfolio_metrics}, f, indent=2, default=str)
+    combined_equity[["timestamp", "equity"]].to_csv(f"{args.out_prefix}_equity.csv", index=False)
+    with open(f"{args.out_prefix}_metrics.json", "w") as f:
+        json.dump(
+            {"per_symbol": per_symbol, "portfolio": portfolio_metrics}, f, indent=2, default=str
+        )
 
-    print(json.dumps({'portfolio': portfolio_metrics, 'per_symbol': per_symbol}, indent=2, default=str))
+    print(
+        json.dumps(
+            {"portfolio": portfolio_metrics, "per_symbol": per_symbol}, indent=2, default=str
+        )
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

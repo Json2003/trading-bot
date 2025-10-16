@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "work", "chore/**", "feature/**"]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .[dev]
+
+      - name: Run Ruff
+        run: ruff check .
+
+      - name: Type check
+        run: mypy src tradingbot_core tradingbot_ibkr tests
+
+      - name: Run tests
+        env:
+          PYTHONPATH: "${{ github.workspace }}/src"
+        run: pytest --cov=tradingbot_core --cov=tradingbot_ibkr --cov-report=xml
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: ignore
+
+      - run: python -m pip install .[dev] || true
+      - run: python -m pip install numpy pandas
+      - run: python scripts/summarize_backtests.py
+
+      - name: Git diagnostics
+        if: ${{ always() }}
+        run: |
+          set -x
+          git rev-parse --is-inside-work-tree
+          git remote -v
+          git status
+          git branch -vv

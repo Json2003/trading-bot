@@ -1,4 +1,5 @@
 """Tests for simple spot-futures arbitrage helpers."""
+
 from __future__ import annotations
 
 import pandas as pd
@@ -64,3 +65,29 @@ def test_generate_threshold_signals_rejects_zero_spot_price():
     futures = pd.DataFrame({"timestamp": timestamps, "Close": [100.0]})
     with pytest.raises(ValueError):
         generate_threshold_signals(spot, futures)
+
+
+def test_generate_threshold_signals_rejects_duplicate_timestamps():
+    timestamps = pd.date_range("2024-01-01", periods=2, freq="1H")
+    spot = pd.DataFrame({"timestamp": [timestamps[0], timestamps[0]], "Close": [100.0, 101.0]})
+    futures = pd.DataFrame({"timestamp": timestamps, "Close": [101.0, 102.0]})
+
+    with pytest.raises(ValueError, match="Spot data contains duplicate timestamps"):
+        generate_threshold_signals(spot, futures)
+
+
+def test_generate_threshold_signals_handles_unsorted_inputs():
+    timestamps = pd.date_range("2024-01-01", periods=3, freq="1H")
+    spot = pd.DataFrame({
+        "timestamp": [timestamps[1], timestamps[0], timestamps[2]],
+        "Close": [101.0, 100.0, 102.0],
+    })
+    futures = pd.DataFrame({
+        "timestamp": [timestamps[2], timestamps[0], timestamps[1]],
+        "Close": [102.5, 101.0, 100.0],
+    })
+
+    result = generate_threshold_signals(spot, futures, threshold=0.005)
+
+    assert result["timestamp"].to_list() == list(timestamps)
+    assert result["signal"].to_list() == [1, -1, 0]
