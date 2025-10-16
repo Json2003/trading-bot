@@ -5,6 +5,7 @@ microstructure order-flow signals so that downstream models receive a rich
 feature matrix.  Lightweight fallbacks are used when optional data (e.g.
 earnings releases) are not supplied.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -192,7 +193,9 @@ class FeatureBundle:
         return combined
 
 
-def build_feature_matrix(df: pd.DataFrame, earnings: Optional[pd.DataFrame] = None) -> FeatureBundle:
+def build_feature_matrix(
+    df: pd.DataFrame, earnings: Optional[pd.DataFrame] = None
+) -> FeatureBundle:
     """Return a :class:`FeatureBundle` combining technical, fundamental, and order-flow features."""
 
     technical = technical_indicators(df)

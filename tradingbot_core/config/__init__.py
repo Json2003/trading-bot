@@ -1,4 +1,5 @@
-"""Configuration helpers used by services across the trading bot platform."""
+"""Configuration loader that stitches together environment, strategy, and fee profiles."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -21,6 +22,8 @@ class AppSettings(BaseSettings):
     LOG_LEVEL: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=_REPO_ROOT / ".env", case_sensitive=False)
+
+from .risk import RiskCfg, RiskConfigError
 
 
 def _coerce_int(value: str | None) -> int | str | None:
@@ -134,7 +137,9 @@ def _normalise_fees_config(fees: Mapping[str, Any]) -> dict[str, Any]:
     return normalised
 
 
-def load_config(env_name: str, strategy_name: str, *, config_dir: str | Path | None = None) -> ConfigBundle:
+def load_config(
+    env_name: str, strategy_name: str, *, config_dir: str | Path | None = None
+) -> ConfigBundle:
     """Load configuration sections for a given environment and strategy."""
 
     base_dir = Path(config_dir) if config_dir else _CONFIG_ROOT
@@ -153,4 +158,49 @@ def load_config(env_name: str, strategy_name: str, *, config_dir: str | Path | N
     return ConfigBundle(env=env_config, strategy=strategy_config, fees=fees_config, runtime=runtime)
 
 
-__all__ = ["AppSettings", "ConfigBundle", "load_config"]
+def load_env_config(env_name: str, *, config_dir: str | Path | None = None) -> dict[str, Any]:
+    """Load an environment configuration mapping.
+
+    Parameters
+    ----------
+    env_name:
+        Identifier of the environment configuration file to load.
+    config_dir:
+        Optional alternative configuration root directory. When omitted the
+        package's default ``config`` directory is used.
+
+    Returns
+    -------
+    dict[str, Any]
+        Parsed configuration mapping containing at least an ``"env"`` key with
+        the requested ``env_name``.
+    """
+
+    base_dir = Path(config_dir) if config_dir else _CONFIG_ROOT
+    env_config = _load_yaml(base_dir / "env" / f"{env_name}.yaml")
+
+    if "env" not in env_config:
+        # Preserve the original mapping while guaranteeing callers can rely on
+        # the presence of the environment identifier.
+        env_config = {"env": env_name, **env_config}
+
+    return env_config
+
+
+def load_strategy_config(
+    strategy_name: str, *, config_dir: str | Path | None = None
+) -> dict[str, Any]:
+    """Load a strategy configuration mapping."""
+
+    base_dir = Path(config_dir) if config_dir else _CONFIG_ROOT
+    return _load_yaml(base_dir / "strategy" / f"{strategy_name}.yaml")
+
+
+__all__ = [
+    "ConfigBundle",
+    "RiskCfg",
+    "RiskConfigError",
+    "load_config",
+    "load_env_config",
+    "load_strategy_config",
+]

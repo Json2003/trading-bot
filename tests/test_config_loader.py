@@ -5,6 +5,8 @@ import pathlib
 
 import pytest
 
+pytest.importorskip("yaml")
+
 from tradingbot_core.config import ConfigBundle, load_config
 
 

@@ -1,4 +1,5 @@
 """FastAPI application exposing health and metadata endpoints."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -7,9 +8,10 @@ import os
 
 from fastapi import FastAPI
 
-from tradingbot_core.config import AppSettings, ConfigBundle, load_config
+from tradingbot_core.config import ConfigBundle, load_config
 from tradingbot_core.logging_setup import setup_logging
 from tradingbot_ibkr.execution import BrokerBase, PaperBroker, Reconciler, RiskLimits
+from src.settings import AppSettings
 
 _START_TIME = datetime.now(timezone.utc)
 
@@ -99,9 +101,7 @@ def create_app(
         strategy_name = strategy or app.state.default_strategy
 
         overrides: dict[str, object] = {}
-        limits_for_payload = (
-            app.state.risk_limits.as_dict() if app.state.risk_limits else None
-        )
+        limits_for_payload = app.state.risk_limits.as_dict() if app.state.risk_limits else None
         if limits_for_payload:
             overrides.setdefault("risk_limits", limits_for_payload)
 

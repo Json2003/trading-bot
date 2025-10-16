@@ -5,6 +5,7 @@ ensemble that blends gradient boosting, LSTM-style sequence modelling, and a
 transformer-inspired order-flow module.  The ensemble exposes agreement-aware
 decisions which are combined with fundamental filters before orders are issued.
 """
+
 from __future__ import annotations
 
 from collections import deque
@@ -197,7 +198,11 @@ class SignalPredictor:
                 self.model.fit(np.vstack(self._gbm_X), np.array(self._gbm_y))
             return
 
-        if self.model_type == "lstm" and self._last_hidden is not None and self._weights is not None:
+        if (
+            self.model_type == "lstm"
+            and self._last_hidden is not None
+            and self._weights is not None
+        ):
             pred = float(_sigmoid(self._last_hidden @ self._weights + self._bias))
             error = target - pred
             self._weights += self.learning_rate * error * self._last_hidden
@@ -210,7 +215,9 @@ class SignalPredictor:
                 return
             pred = float(_sigmoid(self._last_context @ proj_w + self._bias))
             error = target - pred
-            self._transformer_params["proj"] = proj_w + self.learning_rate * error * self._last_context
+            self._transformer_params["proj"] = (
+                proj_w + self.learning_rate * error * self._last_context
+            )
             self._bias += self.learning_rate * error
 
 
@@ -282,16 +289,19 @@ class SignalEnsemble:
     fundamental_filter: FundamentalFilter
     min_confidence: float = 0.6
 
-    def observe(self, features: Dict[str, float], fundamentals: Optional[Dict[str, float]] = None) -> None:
+    def observe(
+        self, features: Dict[str, float], fundamentals: Optional[Dict[str, float]] = None
+    ) -> None:
         for predictor in self.predictors.values():
             predictor.observe(features)
         if fundamentals is not None:
             self.fundamental_filter.observe(fundamentals)
 
-    def evaluate(self, features: Dict[str, float], fundamentals: Dict[str, float]) -> EnsembleDecision:
+    def evaluate(
+        self, features: Dict[str, float], fundamentals: Dict[str, float]
+    ) -> EnsembleDecision:
         probabilities = {
-            name: predictor.predict(features)
-            for name, predictor in self.predictors.items()
+            name: predictor.predict(features) for name, predictor in self.predictors.items()
         }
         consensus = float(np.mean(list(probabilities.values()))) if probabilities else 0.5
         ml_agreement = all(prob >= self.min_confidence for prob in probabilities.values())
@@ -304,7 +314,9 @@ class SignalEnsemble:
             threshold=self.min_confidence,
         )
 
-    def learn(self, features: Dict[str, float], fundamentals: Dict[str, float], outcome: float) -> None:
+    def learn(
+        self, features: Dict[str, float], fundamentals: Dict[str, float], outcome: float
+    ) -> None:
         for predictor in self.predictors.values():
             predictor.learn(features, outcome)
         self.fundamental_filter.learn(fundamentals, outcome)

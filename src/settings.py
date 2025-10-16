@@ -9,7 +9,6 @@ import yaml
 
 from tradingbot_core.config import AppSettings
 
-
 # The repository root is two levels up from this file (``src/settings.py``).
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -53,4 +52,3 @@ def load_strategy_config(name: str) -> dict[str, Any]:
 
 
 __all__ = ["AppSettings", "load_env_config", "load_strategy_config"]
-
