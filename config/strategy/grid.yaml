@@ -1,7 +1,11 @@
+# Grid strategy tuned for BTC/USDT with geometric spacing between orders.
+# The bounds and order size mirror the requested deployment parameters so the
+# generated ladder matches the live configuration.
 symbol: BTC/USDT
 venue: binance
 market_key: binance:BTC/USDT
-lower_bound: 25000
-upper_bound: 35000
-levels: 9
-base_order_size: 0.02
+lower_bound: 50000
+upper_bound: 70000
+levels: 15
+base_order_size: 0.005
+geometric: true

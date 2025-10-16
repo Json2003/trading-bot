@@ -11,6 +11,7 @@ from .backtest_save import save_backtest_results, load_backtest_results
 from .backtest_harness import BacktestHarness, BacktestContext, BacktestResult
 from .results import deps_fingerprint, save_results
 from .monitoring import AlertConfig, MonitoringHub
+from .risk import KillSwitch, KillSwitchCfg
 from .strategy import Bar, OrderIntent, Strategy
 from .strategies import GridConfig, GridStrategy
 
@@ -37,6 +38,8 @@ __all__ = [
     "BacktestResult",
     "AlertConfig",
     "MonitoringHub",
+    "KillSwitch",
+    "KillSwitchCfg",
     "save_backtest_results",
     "load_backtest_results",
     "deps_fingerprint",

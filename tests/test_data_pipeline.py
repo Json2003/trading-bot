@@ -1,8 +1,11 @@
+import math
+
 import pandas as pd
 from data_pipeline import (
     canonicalize_ohlcv,
     directional_return_label,
     drop_anomalies,
+    magnitude_bucket_label,
 )
 
 
@@ -68,3 +71,23 @@ def test_canonicalize_ohlcv_respects_session_boundaries():
     first_session_end = out.iloc[1]["timestamp"]
     second_session_start = out.iloc[2]["timestamp"]
     assert (second_session_start - first_session_end).total_seconds() > 3600
+
+
+def test_magnitude_bucket_label_handles_constant_series():
+    close = pd.Series([100, 100, 100, 100])
+
+    lbl = magnitude_bucket_label(close, horizon=1, q=4)
+
+    assert all(value == 0 for value in lbl[:-1])
+    assert math.isnan(lbl.iloc[-1])
+
+
+def test_magnitude_bucket_label_handles_low_unique_bins():
+    close = pd.Series([100, 101, 101, 102, 102, 103])
+
+    lbl = magnitude_bucket_label(close, horizon=1, q=5)
+
+    # All except the final horizon look-ahead should be labeled
+    labeled = [value for value in lbl if not math.isnan(value)]
+    assert len(labeled) == len(close) - 1
+    assert max(labeled) <= 4

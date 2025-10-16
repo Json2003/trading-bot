@@ -11,6 +11,8 @@ import yaml
 
 _CONFIG_ROOT = Path(__file__).resolve().parents[2] / "config"
 
+from .risk import RiskCfg, RiskConfigError
+
 
 def _coerce_int(value: str | None) -> int | str | None:
     """Attempt to coerce a string to an integer when possible."""
@@ -184,6 +186,8 @@ def load_strategy_config(
 
 __all__ = [
     "ConfigBundle",
+    "RiskCfg",
+    "RiskConfigError",
     "load_config",
     "load_env_config",
     "load_strategy_config",
