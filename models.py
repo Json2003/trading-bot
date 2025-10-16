@@ -2,9 +2,60 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from enum import Enum
-from typing import Any, Dict, Mapping, Optional
+from math import isclose, isfinite
+from typing import Any, Dict, Mapping, MutableMapping, Optional
+
+__all__ = [
+    "Allocation",
+    "OrderRequest",
+    "OrderStatus",
+    "PortfolioBook",
+    "Position",
+    "Side",
+    "OrderType",
+    "TimeInForce",
+]
+
+
+@dataclass(slots=True)
+class Allocation:
+    """Percentage allocations to individual strategies.
+
+    The percentages must be expressed as decimals (e.g. ``0.25`` for 25%)
+    and sum to ``1``.  The mapping is copied to ensure subsequent
+    mutations by the caller do not affect the allocation object.
+    """
+
+    per_strategy_pct: Mapping[str, float]
+    tolerance: float = field(default=1e-6, repr=False)
+
+    def __post_init__(self) -> None:
+        if not self.per_strategy_pct:
+            raise ValueError("at least one strategy allocation is required")
+
+        # Create an immutable copy for downstream consumers.
+        self.per_strategy_pct = dict(self.per_strategy_pct)
+
+        invalid = [name for name, pct in self.per_strategy_pct.items() if pct < 0]
+        if invalid:
+            raise ValueError(
+                "allocations must be non-negative; invalid strategies: "
+                + ", ".join(sorted(invalid))
+            )
+
+        total = sum(self.per_strategy_pct.values())
+        if not isclose(total, 1.0, abs_tol=self.tolerance):
+            raise ValueError(
+                "strategy allocations must sum to 1.0; "
+                f"received total {total:.6f}"
+            )
+
+    def to_dict(self) -> Dict[str, float]:
+        """Return a shallow copy of the allocation percentages."""
+
+        return dict(self.per_strategy_pct)
 
 
 class Side(str, Enum):
@@ -185,3 +236,47 @@ class Position:
         """Return a new ``Position`` with the supplied changes applied."""
 
         return replace(self, **changes)
+
+
+class PortfolioBook:
+    """Track strategy-level allocations and aggregate portfolio equity."""
+
+    def __init__(self, base_equity: float, alloc: Allocation):
+        if base_equity <= 0:
+            raise ValueError("base_equity must be positive")
+
+        self.base_equity = float(base_equity)
+        self.alloc = alloc
+        self.strategy_equity: MutableMapping[str, float] = {
+            name: self.base_equity * pct for name, pct in self.alloc.per_strategy_pct.items()
+        }
+        # Keep a running history of total equity snapshots.
+        self._equity_curve = [self.total_equity]
+
+    @property
+    def equity_curve(self) -> list[float]:
+        """Historical total equity snapshot after each update."""
+
+        return list(self._equity_curve)
+
+    @property
+    def total_equity(self) -> float:
+        """Return the sum of all strategy sub-accounts."""
+
+        return float(sum(self.strategy_equity.values()))
+
+    def credit_pnl(self, strategy: str, pnl: float) -> None:
+        """Apply ``pnl`` to ``strategy`` and persist the updated total equity."""
+
+        if strategy not in self.strategy_equity:
+            raise KeyError(f"unknown strategy '{strategy}'")
+
+        if not isinstance(pnl, (int, float)):
+            raise TypeError("pnl must be a numeric value")
+
+        pnl_value = float(pnl)
+        if not isfinite(pnl_value):
+            raise ValueError("pnl must be a finite value")
+
+        self.strategy_equity[strategy] += pnl_value
+        self._equity_curve.append(self.total_equity)
