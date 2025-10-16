@@ -1,77 +1,63 @@
-"""Lightweight technical indicators used by the backtest engine."""
+"""Lightweight technical indicators for streaming backtests."""
 
 from __future__ import annotations
 
 from collections import deque
-from typing import Deque, Iterable, Protocol, Tuple
+from typing import Deque, Sequence, Tuple
 
 
-class _BarLike(Protocol):
-    """Protocol describing the minimal bar attributes used by :class:`ATR`."""
+def _extract_hlc(bar: object) -> Tuple[float, float, float]:
+    """Return the high/low/close values from a tuple-like bar or object."""
 
-    timestamp: int
-    open: float
-    high: float
-    low: float
-    close: float
-    volume: float
+    if isinstance(bar, Sequence) and not isinstance(bar, (str, bytes, bytearray)):
+        if len(bar) < 5:
+            raise ValueError("expected (ts, open, high, low, close, volume) sequence")
+        return float(bar[2]), float(bar[3]), float(bar[4])
 
+    try:
+        high = getattr(bar, "high")
+        low = getattr(bar, "low")
+        close = getattr(bar, "close")
+    except AttributeError as exc:  # pragma: no cover - defensive
+        raise TypeError("bar must be tuple-like or expose high/low/close attributes") from exc
 
-BarInput = Tuple[int, float, float, float, float, float]
+    return float(high), float(low), float(close)
 
 
 def true_range(prev_close: float, high: float, low: float) -> float:
-    """Return the True Range value for the provided prices."""
+    """Wilder's True Range for the current bar."""
 
     return max(high - low, abs(high - prev_close), abs(low - prev_close))
 
 
 class ATR:
-    """Rolling Average True Range (Wilder) with ``O(1)`` updates."""
+    """Rolling Average True Range (Wilder) with constant-time updates."""
 
-    def __init__(self, window: int = 14):
+    def __init__(self, window: int = 14) -> None:
         if window <= 0:
             raise ValueError("window must be positive")
-        self.window = window
-        self._trs: Deque[float] = deque(maxlen=window)
+        self.window = int(window)
+        self._trs: Deque[float] = deque(maxlen=self.window)
         self.prev_close: float | None = None
         self.value: float | None = None
 
-    def _get_bar_values(self, bar: _BarLike | BarInput) -> Tuple[float, float, float]:
-        if isinstance(bar, tuple):
-            _ts, _o, high, low, close, _volume = bar
-        else:
-            high = float(bar.high)
-            low = float(bar.low)
-            close = float(bar.close)
-        return high, low, close
+    def update(self, bar: object) -> float | None:
+        """Ingest a bar and return the updated ATR value."""
 
-    def update(self, bar: _BarLike | BarInput) -> float | None:
-        """Update the ATR with a new bar and return the current value."""
-
-        high, low, close = self._get_bar_values(bar)
+        high, low, close = _extract_hlc(bar)
         if self.prev_close is None:
-            tr = high - low
+            tr = float(high - low)
         else:
             tr = true_range(self.prev_close, high, low)
-        self.prev_close = close
+        self.prev_close = float(close)
 
         if len(self._trs) < self.window:
             self._trs.append(tr)
             self.value = sum(self._trs) / len(self._trs)
         else:
-            # Wilder smoothing
-            assert self.value is not None
-            self.value = (self.value * (self.window - 1) + tr) / self.window
+            prev = self.value if self.value is not None else tr
+            self.value = (prev * (self.window - 1) + tr) / self.window
         return self.value
-
-    def warmup(self, bars: Iterable[_BarLike | BarInput]) -> float | None:
-        """Convenience helper to seed the ATR with historical data."""
-
-        value: float | None = None
-        for bar in bars:
-            value = self.update(bar)
-        return value
 
 
 __all__ = ["ATR", "true_range"]
