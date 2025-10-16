@@ -11,7 +11,7 @@ This script provides advanced backtesting capabilities including:
 import os
 import logging
 import time
-from typing import Dict, List, Optional, Tuple, Any, TYPE_CHECKING
+from typing import Dict, List, Optional, Tuple, Any, TYPE_CHECKING, Callable
 from dotenv import load_dotenv
 import ccxt
 import pandas as pd
@@ -355,303 +355,6 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
     roll_down = down.rolling(14, min_periods=1).mean()
     rs = roll_up / roll_down.replace(0, 1e-8)
     df['rsi14'] = 100.0 - (100.0 / (1.0 + rs))
-    
-    # Initialize trading variables
-    trades = []
-    detailed_trades = []
-    position = None
-    entry_idx = None
-    entry_price = None
-    balance = starting_balance
-    equity_curve = [balance]
-    
-    # Risk management
-    if risk_per_trade is None:
-        risk_per_trade = 0.01
-        
-    # Adaptive learning setup
-    trainer = OnlineTrainer()
-    trainer.load()
-    
-    # Trading statistics
-    stats = {
-        'entries_attempted': 0,
-        'entries_executed': 0,
-        'entries_filtered_trend': 0,
-        'entries_filtered_vol': 0,
-        'entries_filtered_ml': 0,
-        'exits_tp': 0,
-        'exits_sl': 0,
-        'exits_trailing': 0,
-        'exits_time': 0
-    }
-    
-    holding = 0
-    last_features = None
-    last_outcome = None
-    peak_price = 0
-    trailing_stop_price = None
-    
-    # Main trading loop with enhanced logging
-    logger.debug(f"Starting trading simulation on {len(df)} bars...")
-    
-    for i, (timestamp, row) in enumerate(df.iterrows()):
-        # Prepare features for ML
-        features = {
-            'close': float(row['close']),
-            'high': float(row['high']),
-            'low': float(row['low']),
-            'volume': float(row.get('volume', 1)),
-            'ret1': float(row['ret1']),
-            'ma3': float(row['ma3']),
-            'mom5': float(row['mom5']),
-            'mom10': float(row['mom10']),
-            'vol20': float(row['vol20']),
-            'vol_ratio': float(row['vol_ratio']),
-            'atr14': float(row['atr14']),
-            'rsi14': float(row['rsi14'])
-        }
-        
-        if position is None:
-            # Check for entry signal
-            if not pd.isna(row['rolling_high']) and row['close'] > row['rolling_high']:
-                stats['entries_attempted'] += 1
-                
-                # ML-based filtering
-                prob = trainer.predict_proba(features)
-                if prob < 0.6:
-                    stats['entries_filtered_ml'] += 1
-                    if enable_logging and i % 100 == 0:
-                        logger.debug(f"Entry filtered by ML at {timestamp}: prob={prob:.3f}")
-                    continue
-                
-                # Trend filter
-                if trend_filter:
-                    if pd.isna(row.get('ema_fast')) or pd.isna(row.get('ema_slow')):
-                        continue
-                    if row['ema_fast'] <= row['ema_slow']:
-                        stats['entries_filtered_trend'] += 1
-                        continue
-                
-                # Volatility filter
-                if vol_filter:
-                    vol = row.get('vol', None)
-                    if vol is None or pd.isna(vol):
-                        continue
-                    vol_median = df['vol'].median()
-                    if vol_median == 0 or vol < vol_median * vol_multiplier:
-                        stats['entries_filtered_vol'] += 1
-                        continue
-                
-                # Execute entry
-                position = 'long'
-                entry_idx = timestamp
-                entry_price = row['close']
-                
-                # Position sizing
-                stop_price = entry_price * (1 - stop_loss_pct)
-                try:
-                    raw_qty, notional = choose_position_size(
-                        balance, risk_per_trade, entry_price, stop_price, 
-                        leverage=leverage, min_qty=min_qty
-                    )
-                    qty = round_qty(raw_qty, step=0.0001, min_qty=min_qty)
-                except:
-                    # Fallback if money_engine not available
-                    notional = balance * risk_per_trade
-                    qty = notional / entry_price
-                
-                trades.append({
-                    'type': 'entry',
-                    'time': timestamp,
-                    'price': entry_price,
-                    'qty': qty,
-                    'notional': qty * entry_price
-                })
-                
-                detailed_trades.append({
-                    'entry_time': timestamp,
-                    'entry_price': entry_price,
-                    'qty': qty,
-                    'ml_prob': prob,
-                    'features': features.copy()
-                })
-                
-                holding = 0
-                peak_price = entry_price
-                trailing_stop_price = None
-                last_features = features
-                stats['entries_executed'] += 1
-                
-                if enable_logging and len(trades) <= 5:  # Log first few trades in detail
-                    logger.info(f"ENTRY #{len(detailed_trades)}: {timestamp} @ {entry_price:.4f}, qty={qty:.4f}, ML prob={prob:.3f}")
-        
-        else:  # In position
-            holding += 1
-            
-            # Update trailing stop
-            if trailing_stop_pct is not None:
-                if row['high'] > peak_price:
-                    peak_price = row['high']
-                trailing_stop_price = peak_price * (1 - trailing_stop_pct)
-            
-            # Check exit conditions
-            exit_triggered = False
-            exit_type = None
-            exit_price = None
-            
-            # Take profit
-            if row['high'] >= entry_price * (1 + take_profit_pct):
-                exit_price = entry_price * (1 + take_profit_pct)
-                exit_type = 'exit_tp'
-                stats['exits_tp'] += 1
-                last_outcome = 1  # Win
-                exit_triggered = True
-            
-            # Stop loss
-            elif row['low'] <= entry_price * (1 - stop_loss_pct):
-                exit_price = entry_price * (1 - stop_loss_pct)
-                exit_type = 'exit_sl'
-                stats['exits_sl'] += 1
-                last_outcome = 0  # Loss
-                exit_triggered = True
-            
-            # Trailing stop
-            elif trailing_stop_pct is not None and trailing_stop_price is not None and row['low'] <= trailing_stop_price:
-                exit_price = trailing_stop_price
-                exit_type = 'exit_trail'
-                stats['exits_trailing'] += 1
-                last_outcome = 1 if exit_price > entry_price else 0
-                exit_triggered = True
-            
-            # Time-based exit
-            elif holding >= max_holding_bars:
-                exit_price = row['close']
-                exit_type = 'exit_time'
-                stats['exits_time'] += 1
-                last_outcome = 1 if exit_price > entry_price else 0
-                exit_triggered = True
-            
-            if exit_triggered:
-                # Record exit
-                trades.append({
-                    'type': exit_type,
-                    'time': timestamp,
-                    'price': exit_price,
-                    'qty': qty
-                })
-                
-                # Calculate trade P&L with fees and slippage
-                entry_px_adj = entry_price * (1 + slippage_pct)
-                exit_px_adj = exit_price * (1 - slippage_pct)
-                
-                # Volume-based slippage adjustment
-                if slippage_vs_volume and 'volume' in row:
-                    try:
-                        recent_vol = float(row['vol_mean20']) if not pd.isna(row['vol_mean20']) else 1.0
-                        extra_slippage = min(slippage_k * (qty / max(recent_vol, 1e-8)), slippage_cap)
-                        entry_px_adj *= (1 + extra_slippage)
-                        exit_px_adj *= (1 - extra_slippage)
-                    except:
-                        pass
-                
-                # Calculate P&L
-                trade_pnl_price = exit_px_adj - entry_px_adj
-                trade_pnl = trade_pnl_price * qty
-                
-                # Apply fees
-                fee_cost = (entry_px_adj * qty + exit_px_adj * qty) * fee_pct
-                trade_pnl -= fee_cost
-                
-                # Update balance and equity curve
-                balance += trade_pnl
-                equity_curve.append(balance)
-                
-                # Complete trade record
-                if detailed_trades:
-                    detailed_trades[-1].update({
-                        'exit_time': timestamp,
-                        'exit_price': exit_price,
-                        'exit_type': exit_type,
-                        'holding_bars': holding,
-                        'pnl': trade_pnl,
-                        'pnl_pct': (trade_pnl / (qty * entry_price)) * 100,
-                        'outcome': last_outcome
-                    })
-                
-                # ML learning
-                if last_features is not None and last_outcome is not None:
-                    trainer.learn_one(last_features, last_outcome)
-                
-                    # Prepare values for logging before resetting
-                    prev_entry_price = entry_price
-                    prev_qty = qty
-
-                    # Reset position
-                    position = None
-                    entry_idx = None
-                    entry_price = None
-                    holding = 0
-                    last_features = None
-                    last_outcome = None
-
-                    if enable_logging and len(detailed_trades) <= 5:  # Log first few trades in detail
-                        try:
-                            if prev_qty is None or prev_entry_price is None or prev_qty == 0 or prev_entry_price == 0:
-                                pnl_pct = 0.0
-                            else:
-                                pnl_pct = (float(trade_pnl) / (float(prev_qty) * float(prev_entry_price))) * 100
-                        except Exception:
-                            pnl_pct = 0.0
-                        logger.info(f"EXIT #{len(detailed_trades)}: {timestamp} @ {exit_price:.4f}, {exit_type}, PnL={trade_pnl:.2f} ({pnl_pct:.2f}%), hold={holding} bars")
-    
-    # Calculate final performance metrics
-    execution_time = time.time() - start_time
-    
-    # Ensure we have equity curve
-    if len(equity_curve) == 1:
-        equity_curve.append(balance)
-    
-    # Calculate comprehensive metrics
-    performance_metrics = calculate_performance_metrics(equity_curve, detailed_trades)
-    
-    # Compile results
-    results = {
-        'trades': len(detailed_trades),
-        'wins': stats['exits_tp'] + sum(1 for t in detailed_trades if t.get('pnl', 0) > 0),
-        'win_rate_pct': (stats['exits_tp'] / len(detailed_trades) * 100) if detailed_trades else 0,
-        'pnl': balance - starting_balance,
-        'final_balance': balance,
-        'starting_balance': starting_balance,
-        'execution_time_seconds': execution_time,
-        'trading_stats': stats,
-        'performance_metrics': performance_metrics,
-        'equity_curve': equity_curve,
-        'trade_list': detailed_trades[:100],  # Limit to first 100 trades for memory efficiency
-        'details': {
-            'entries': len([t for t in trades if t['type'] == 'entry']),
-            'exits': len([t for t in trades if not t['type'] == 'entry']),
-            'bars_processed': len(df),
-            'avg_holding_period': np.mean([t.get('holding_bars', 0) for t in detailed_trades]) if detailed_trades else 0
-        }
-    }
-    
-    if enable_logging:
-        logger.info("="*60)
-        logger.info("BACKTEST COMPLETED")
-        logger.info(f"Execution time: {execution_time:.2f}s")
-        logger.info(f"Total trades: {results['trades']}")
-        logger.info(f"Win rate: {results['win_rate_pct']:.1f}%")
-        logger.info(f"Total PnL: {results['pnl']:.2f} ({(results['pnl']/starting_balance)*100:.1f}%)")
-        if performance_metrics:
-            logger.info(f"Sharpe ratio: {performance_metrics.get('sharpe_ratio', 0):.3f}")
-            logger.info(f"Max drawdown: {performance_metrics.get('max_drawdown_pct', 0):.2f}%")
-            logger.info(f"Profit factor: {performance_metrics.get('profit_factor', 0):.2f}")
-        logger.info("="*60)
-    
-    return results
-    rs = roll_up / roll_down
-    df['rsi14'] = 100.0 - (100.0 / (1.0 + rs))
 
     for i in range(len(df)):
         row = df.iloc[i]
@@ -816,6 +519,33 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
         'trade_list': trade_pairs,
         'equity_curve': equity,
     }
+
+def run_backtest(trades: Any,
+                 *,
+                 progress_callback: Optional[Callable[[float], None]] = None,
+                 **kwargs) -> dict:
+    """
+    Run backtest over trades. progress_callback, if provided, is called
+    with a float in [0.0, 1.0] periodically.
+    """
+    total = len(trades) if hasattr(trades, "__len__") else None
+    processed = 0
+
+    results = {}
+    for idx, trade in enumerate(trades):
+        processed += 1
+        if progress_callback and total:
+            try:
+                progress_callback(processed / total)
+            except Exception:
+                # don't allow callback errors to fail the backtest
+                logger.debug("progress_callback raised", exc_info=True)
+    if progress_callback:
+        try:
+            progress_callback(1.0)
+        except Exception:
+            pass
+    return results
 
 def main():
     """

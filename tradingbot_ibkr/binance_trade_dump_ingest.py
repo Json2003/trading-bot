@@ -1,4 +1,4 @@
-!/usr/bin/env python3
+#!/usr/bin/env python3
 """Ingest Binance trade dump files (tick-level) and optionally aggregate to OHLCV.
 
 Usage examples (PowerShell):
@@ -18,7 +18,7 @@ from pathlib import Path
 import csv
 import json
 import sys
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Callable
 import hashlib
 import os
 import logging
@@ -98,6 +98,8 @@ def read_trade_file(path: Path) -> Any:
         })
 
     norm.sort(key=lambda x: x["ts"])
+    if pd is None:
+        raise ImportError("pandas is required to create DataFrame; could not import pandas")
     return pd.DataFrame(norm)
 
 
@@ -180,6 +182,8 @@ def ticks_to_ohlcv(ticks: Any, timeframe: str = "1m") -> Any:  # pragma: no cove
     tf = tf.replace("H", "h")
 
     # Accept list-of-dicts or DataFrame-like
+    if pd is None or not hasattr(pd, "DataFrame"):
+        raise ImportError("pandas is required to create DataFrame; could not import pandas")
     try:
         if not hasattr(ticks, "copy"):
             df = pd.DataFrame(ticks)
@@ -203,7 +207,7 @@ def ticks_to_ohlcv(ticks: Any, timeframe: str = "1m") -> Any:  # pragma: no cove
         df["ts"] = pd.to_datetime(df["ts"], utc=True, errors="coerce")
     df = df.dropna(subset=["ts", "price"])
     df["price"] = pd.to_numeric(df["price"], errors="coerce")
-    df["qty"] = pd.to_numeric(df.get("qty", 0.0), errors="coerce").fillna(0.0)
+    df["qty"] = pd.to_numeric(df["qty"], errors="coerce").fillna(0.0)
 
     df = df.set_index("ts").sort_index()
 
@@ -268,84 +272,90 @@ def main():
         processed = set(json.loads(state_path.read_text())) if state_path.exists() else set()
     except Exception:
         processed = set()
+    processed_ids = []
 
-    total_bytes = sum(p.stat().st_size for p in files)
-    processed_bytes = 0
-    processed_lock = threading.Lock()
+    def ingest_dir(input_dir: Path,
+                   out_dir: Path,
+                   *,
+                   progress_callback: Optional[Callable[[float], None]] = None,
+                   max_workers: int = 4,
+                   **kwargs) -> None:
+        total_bytes = sum(p.stat().st_size for p in files)
+        processed_bytes = 0
+        processed_lock = threading.Lock()
 
-    processed_ids: List[str] = []
-
-    def _worker(path: Path):
-         nonlocal processed_bytes
-         fid = _file_id(path)
-         if fid in processed and not args.force:
-             logger.info(f"Skipping already processed file {path.name}")
-             with processed_lock:
-                 processed_bytes += path.stat().st_size
-             return None, None
-         try:
-             t = read_trade_file(path)
-             with processed_lock:
-                 processed_bytes += path.stat().st_size
-                 pct = (processed_bytes / total_bytes) * 100 if total_bytes else 100.0
-             logger.info(f"Read {len(t)} ticks from {path.name}  [{pct:.1f}%]")
-             # update tqdm if enabled
-             if args.progress and tqdm is not None:
-                 try:
-                     # update by bytes to reflect progress
-                     bar.update(path.stat().st_size)
-                 except Exception:
-                     pass
-             return fid, t
-         except Exception as e:
-             with processed_lock:
-                 processed_bytes += path.stat().st_size
-             logger.warning(f"Failed to read {path}: {e}")
-             return None, None
-
-    # streaming: process each parsed file as it completes to avoid accumulating all ticks
-    out_ticks = out_dir / f"{args.symbol.replace('/', '_')}_trades.csv"
-    out_bars = out_dir / f"{args.symbol.replace('/', '_')}_bars.csv" if args.to_ohlcv else None
-
-    bar = None
-    try:
-        if args.progress and tqdm is not None:
-            bar = tqdm(total=total_bytes, unit="B", unit_scale=True, desc="ingest")
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as exe:
-            futures = {exe.submit(_worker, p): p for p in files}
-            for fut in concurrent.futures.as_completed(futures):
-                fid, t = fut.result()
-                if fid and t is not None:
-                    # append ticks from this file immediately
-                    try:
-                        appended = append_ticks(t, out_ticks)
-                        logger.info(f"Appended {appended} ticks from {futures[fut].name} to {out_ticks}")
-                    except Exception as e:
-                        logger.warning(f"Failed to append ticks for {futures[fut].name}: {e}")
-                    processed_ids.append(fid)
-
-                    # optionally compute per-file OHLCV and merge to bars file immediately
-                    if args.to_ohlcv and out_bars is not None and pd is not None:
-                        try:
-                            ohlcv = ticks_to_ohlcv(t, args.to_ohlcv)
-                            if out_bars.exists():
-                                existing = pd.read_csv(out_bars, parse_dates=["ts"], index_col="ts")
-                                existing.index = pd.to_datetime(existing.index, utc=True)
-                                new = ohlcv.set_index("ts")
-                                combined = pd.concat([existing, new])
-                                combined = combined[~combined.index.duplicated(keep="first")]
-                                combined.sort_index(inplace=True)
-                                combined.to_csv(out_bars)
-                            else:
-                                ohlcv.to_csv(out_bars, index=False)
-                        except Exception as e:
-                            logger.warning(f"Failed to process OHLCV for {futures[fut].name}: {e}")
-    finally:
-        if bar is not None:
+        def _worker(path: Path):
+            nonlocal processed_bytes
+            fid = _file_id(path)
+            if fid in processed and not args.force:
+                logger.info(f"Skipping already processed file {path.name}")
+                with processed_lock:
+                    processed_bytes += path.stat().st_size
+                return None, None
             try:
-                bar.close()
-            except Exception:
-                pass
+                t = read_trade_file(path)
+                with processed_lock:
+                    processed_bytes += path.stat().st_size
+                    pct = (processed_bytes / total_bytes) * 100 if total_bytes else 100.0
+                logger.info(f"Read {len(t)} ticks from {path.name}  [{pct:.1f}%]")
+                # update tqdm if enabled
+                if args.progress and tqdm is not None:
+                    try:
+                        # update by bytes to reflect progress
+                        if bar is not None:
+                            bar.update(path.stat().st_size)
+                    except Exception:
+                        pass
+                return fid, t
+            except Exception as e:
+                with processed_lock:
+                    processed_bytes += path.stat().st_size
+                logger.warning(f"Failed to read {path}: {e}")
+                return None, None
+
+        # streaming: process each parsed file as it completes to avoid accumulating all ticks
+        out_ticks = out_dir / f"{args.symbol.replace('/', '_')}_trades.csv"
+        out_bars = out_dir / f"{args.symbol.replace('/', '_')}_bars.csv" if args.to_ohlcv else None
+
+        bar = None
+        try:
+            if args.progress and tqdm is not None:
+                bar = tqdm(total=total_bytes, unit="B", unit_scale=True, desc="ingest")
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as exe:
+                futures = {exe.submit(_worker, p): p for p in files}
+                for fut in concurrent.futures.as_completed(futures):
+                    fid, t = fut.result()
+                    if fid and t is not None:
+                        # append ticks from this file immediately
+                        try:
+                            appended = append_ticks(t, out_ticks)
+                            logger.info(f"Appended {appended} ticks from {futures[fut].name} to {out_ticks}")
+                        except Exception as e:
+                            logger.warning(f"Failed to append ticks for {futures[fut].name}: {e}")
+                        processed_ids.append(fid)
+
+                        # optionally compute per-file OHLCV and merge to bars file immediately
+                        if args.to_ohlcv and out_bars is not None and pd is not None:
+                            try:
+                                ohlcv = ticks_to_ohlcv(t, args.to_ohlcv)
+                                if out_bars.exists():
+                                    existing = pd.read_csv(out_bars, parse_dates=["ts"], index_col="ts")
+                                    existing.index = pd.to_datetime(existing.index, utc=True)
+                                    new = ohlcv.set_index("ts")
+                                    combined = pd.concat([existing, new])
+                                    combined = combined[~combined.index.duplicated(keep="first")]
+                                    combined.sort_index(inplace=True)
+                                    combined.to_csv(out_bars)
+                                else:
+                                    ohlcv.to_csv(out_bars, index=False)
+                            except Exception as e:
+                                logger.warning(f"Failed to process OHLCV for {futures[fut].name}: {e}")
+        finally:
+            if bar is not None:
+                try:
+                    bar.close()
+                except Exception:
+                    pass
 
     if not processed_ids:
         print("No ticks parsed; exiting")

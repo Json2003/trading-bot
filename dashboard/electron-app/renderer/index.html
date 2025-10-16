@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Trading Bot Dashboard</title>
     <style>
       body {
@@ -56,6 +57,17 @@
       .success { color: #28a745; }
       .warning { color: #ffc107; }
       .error { color: #dc3545; }
+
+      .margin-top-30 {
+        margin-top: 30px;
+      }
+      .quick-commands-box {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        font-family: monospace;
+        font-size: 12px;
+      }
     </style>
   </head>
   <body>
@@ -76,27 +88,28 @@
         </div>
         <div class="status-item">
           <div class="status-label">LAST UPDATE</div>
-          <div class="status-value" id="timestamp">--:--:--</div>
-        </div>
-      </div>
-      
-      <div style="margin-top: 30px;">
+      <div class="margin-top-30">
         <h3>Available Functions</h3>
         <ul>
-          <li>📊 <strong>Backtesting</strong>: Run historical strategy analysis using CSV or CCXT data sources</li>
-          <li>📈 <strong>Signal Generation</strong>: Generate trading signals using moving average crossovers</li>
-          <li>⚙️ <strong>Parameter Optimization</strong>: Grid search for optimal trading parameters</li>
-          <li>📋 <strong>Performance Analytics</strong>: Detailed trade analysis and risk metrics</li>
+          <li>
+            <div class="quick-commands-box">
+              # Run backtest with CSV data:<br>
+              python scripts/run_backtest.py --source csv --path data/BTCUSDT-1h.csv<br><br>
+              
+              # Run backtest with CCXT (live data):<br>
+              python scripts/run_backtest.py --source ccxt --exchange binance --symbol "BTC/USDT" --timeframe 1h --since 2023-01-01
+            </div>
+          </li>
+          <li>
+            <div class="quick-commands-box">
+              # Run backtest with CSV data:<br>
+              python scripts/run_backtest.py --source csv --path data/BTCUSDT-1h.csv<br><br>
+              
+              # Run backtest with CCXT (live data):<br>
+              python scripts/run_backtest.py --source ccxt --exchange binance --symbol "BTC/USDT" --timeframe 1h --since 2023-01-01
+            </div>
+          </li>
         </ul>
-        
-        <h3>Quick Commands</h3>
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 12px;">
-          # Run backtest with CSV data:<br>
-          python scripts/run_backtest.py --source csv --path data/BTCUSDT-1h.csv<br><br>
-          
-          # Run backtest with CCXT (live data):<br>
-          python scripts/run_backtest.py --source ccxt --exchange binance --symbol "BTC/USDT" --timeframe 1h --since 2023-01-01
-        </div>
       </div>
     </div>
     

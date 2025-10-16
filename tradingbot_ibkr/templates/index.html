@@ -1,7 +1,8 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>TradingBot Dashboard</title>
     <link rel="stylesheet" href="/static/style.css">
   </head>
@@ -10,13 +11,16 @@
     <section>
       <h2>Models</h2>
   <div>Current model version: <span id="model_version">loading...</span></div>
+      {% if models %}
       <ul>
-      {% for name, mtime in models.items() %}
+        {% for name, mtime in models.items() %}
         <li>{{name}} (mtime: {{mtime}})</li>
-      {% else %}
-        <li>No models found</li>
-      {% endfor %}
+        {% endfor %}
       </ul>
+      {% else %}
+      </ul>
+        <div>No models found</div>
+      {% endif %}
   <button id="train">Run Demo Training</button>
   <button id="pretrain">Run Pretrain</button>
       <div>
