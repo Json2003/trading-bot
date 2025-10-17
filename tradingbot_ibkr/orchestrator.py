@@ -2,16 +2,84 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
+from statistics import mean, pstdev
 from typing import Dict, List
 import logging
+import math
+
+import numpy as np
 
 from tradingbot_core.risk import KillSwitch, KillSwitchCfg
 from tradingbot_core.strategy import Bar, OrderIntent, Strategy
 
 from tradingbot_ibkr.execution.reconciler import Reconciler, RiskLimits
 from tradingbot_ibkr.money_engine import qty_from_risk
+
+
+def comp_m_scores(
+    price_history: Mapping[str, np.ndarray], *, lookback: int, skip: int = 0
+) -> dict[str, float]:
+    """Compute momentum z-scores for each symbol based on log returns."""
+
+    scores: dict[str, float] = {}
+    if lookback <= 1:
+        return scores
+
+    for symbol, prices in price_history.items():
+        if prices.size == 0:
+            continue
+
+        series = np.asarray(prices, dtype=float)
+        if skip > 0 and series.size > skip:
+            series = series[:-skip]
+        elif series.size <= skip:
+            continue
+
+        if series.size < lookback:
+            continue
+
+        window = series[-lookback:]
+        window_list = [float(value) for value in window]
+        log_returns = [
+            math.log(window_list[idx] / window_list[idx - 1])
+            for idx in range(1, len(window_list))
+            if window_list[idx - 1] > 0 and window_list[idx] > 0
+        ]
+        if not log_returns:
+            continue
+
+        mean_value = mean(log_returns)
+        std_value = pstdev(log_returns) if len(log_returns) > 1 else 0.0
+        if std_value <= 1e-12:
+            continue
+
+        scores[symbol] = float(mean_value / std_value)
+
+    return scores
+
+
+def tilt_allocations(
+    allocations: Mapping[str, float], symbol: str, tilt: float
+) -> dict[str, float]:
+    """Return updated allocations with ``symbol`` tilted by ``tilt`` factor."""
+
+    if not allocations:
+        return {}
+
+    adjusted = dict(allocations)
+    if symbol not in adjusted:
+        return adjusted
+
+    factor = float(max(tilt, 0.0))
+    adjusted[symbol] = adjusted[symbol] * factor
+    total = sum(adjusted.values())
+    if total <= 0:
+        return dict(allocations)
+
+    return {name: value / total for name, value in adjusted.items()}
 
 
 def _lookup(cfg: object, key: str, *aliases: str) -> float:
@@ -51,6 +119,13 @@ class Orchestrator:
         datafeed,
         logger: logging.Logger | None = None,
         atr_mult: float = 2.0,
+        tradable_symbols: Sequence[str] | None = None,
+        *,
+        beta=None,
+        hedger=None,
+        cfg=None,
+        rebalance_k: int | None = None,
+        min_notional: float | None = None,
     ) -> None:
         self.strategies = strategies
         self.broker = broker
@@ -58,6 +133,42 @@ class Orchestrator:
         self.datafeed = datafeed
         self.atr_mult = float(atr_mult)
         self.log = logger or logging.getLogger("orchestrator")
+
+        if tradable_symbols is None:
+            derived: list[str] = []
+            for strategy in strategies:
+                symbols = getattr(strategy, "symbols", None)
+                if isinstance(symbols, Sequence):
+                    derived.extend(str(symbol) for symbol in symbols)
+            self.tradable_symbols = sorted(set(derived))
+        else:
+            self.tradable_symbols = [str(symbol) for symbol in tradable_symbols]
+
+        self.beta = beta
+        self.hedger = hedger
+        self.cfg = cfg
+
+        if rebalance_k is None and cfg is not None:
+            rebalance_k = getattr(cfg, "rebalance_K", None)
+            if rebalance_k is None:
+                rebalance_k = getattr(cfg, "rebalance_k", None)
+        self._rebalance_k = int(rebalance_k) if rebalance_k else 0
+
+        cfg_min_notional = 0.0
+        if cfg is not None:
+            cfg_min_notional = float(getattr(cfg, "min_notional", 0.0) or 0.0)
+        self._min_notional = float(min_notional) if min_notional is not None else cfg_min_notional
+
+        comp_cfg = getattr(cfg, "comp_m", None)
+        lookback = int(getattr(comp_cfg, "lookback", 0) or 0) if comp_cfg else 0
+        skip = int(getattr(comp_cfg, "skip", 0) or 0) if comp_cfg else 0
+        self._history_length = max(lookback + skip + 2, 0)
+
+        self._last_price: dict[str, float] = {}
+        self._last_market_price: float | None = None
+        self._hist_prices: dict[str, list[float]] = defaultdict(list)
+        self._bar_index = 0
+        self._market_symbol = "BTC/USDT"
 
         max_daily_loss = _lookup(risk_cfg, "max_daily_loss_pct")
         kill_drawdown = _lookup(risk_cfg, "kill_switch_drawdown_pct")
@@ -202,6 +313,12 @@ class Orchestrator:
 
     def step(self) -> None:
         bars = self.datafeed.latest_bars()
+
+        bar_index = self._bar_index
+        self._update_log_returns(bars)
+        self._maybe_rebalance_allocations(bar_index)
+        self._maybe_beta_hedge(bar_index, bars)
+
         intents: List[OrderIntent] = []
         for strategy in self.strategies:
             try:
@@ -221,6 +338,148 @@ class Orchestrator:
         if hit or self.reconciler.check_kill_switch(self._equity_curve):
             self.log.error(reason or "Kill-switch (reconciler) hit; stopping.")
             raise SystemExit(2)
+
+        self._bar_index = bar_index + 1
+
+    def _update_log_returns(self, bars: Mapping[str, Bar]) -> None:
+        if not self.tradable_symbols or self.beta is None:
+            return
+
+        market_bar = bars.get(self._market_symbol)
+        market_close = getattr(market_bar, "close", None) if market_bar else None
+        last_market_price = self._last_market_price
+        if market_close is None or market_close <= 0:
+            market_return = 0.0
+        elif last_market_price is None or last_market_price <= 0:
+            market_return = 0.0
+        else:
+            market_return = math.log(market_close / last_market_price)
+
+        if market_close is not None and market_close > 0:
+            self._last_market_price = float(market_close)
+
+        for symbol in self.tradable_symbols:
+            bar = bars.get(symbol)
+            price = getattr(bar, "close", None) if bar else None
+            if price is None or price <= 0:
+                continue
+
+            prev_price = self._last_price.get(symbol, price)
+            symbol_return = math.log(price / prev_price) if prev_price > 0 else 0.0
+            self._last_price[symbol] = float(price)
+
+            history = self._hist_prices[symbol]
+            history.append(float(price))
+            if self._history_length and len(history) > self._history_length:
+                del history[0 : len(history) - self._history_length]
+
+            try:
+                self.beta.update(symbol, symbol_return, market_return)
+            except Exception:  # pragma: no cover - defensive guard
+                self.log.exception("Failed to update beta for %s", symbol)
+
+    def _maybe_rebalance_allocations(self, bar_index: int) -> None:
+        if self._rebalance_k <= 0:
+            return
+
+        if bar_index % self._rebalance_k != 0:
+            return
+
+        comp_cfg = getattr(self.cfg, "comp_m", None)
+        if comp_cfg is None:
+            return
+
+        lookback = int(getattr(comp_cfg, "lookback", 0) or 0)
+        skip = int(getattr(comp_cfg, "skip", 0) or 0)
+        tilt_strength = float(getattr(comp_cfg, "tilt_strength", 0.0) or 0.0)
+
+        price_hist = {
+            symbol: np.asarray(self._hist_prices.get(symbol, []), dtype=float)
+            for symbol in self.tradable_symbols
+        }
+        scores = comp_m_scores(price_hist, lookback=lookback, skip=skip)
+        if not scores:
+            return
+
+        alloc = getattr(self.portfolio, "alloc", None)
+        if alloc is None or not hasattr(alloc, "per_strategy_pct"):
+            return
+
+        current_alloc = getattr(alloc, "per_strategy_pct")
+        if not isinstance(current_alloc, Mapping):
+            return
+
+        updated = dict(current_alloc)
+        changed = False
+        for symbol, score in scores.items():
+            if symbol not in updated:
+                continue
+            tilt = np.clip(1 + tilt_strength * score, 0.2, 1.8)
+            updated = tilt_allocations(updated, symbol, float(tilt))
+            changed = True
+
+        if changed:
+            setattr(alloc, "per_strategy_pct", updated)
+
+    def _maybe_beta_hedge(self, bar_index: int, bars: Mapping[str, Bar]) -> None:
+        if self._rebalance_k <= 0 or bar_index % self._rebalance_k != 0:
+            return
+
+        if self.beta is None or self.hedger is None:
+            return
+
+        exposures_fn = getattr(self, "current_exposures_quote_currency", None)
+        if exposures_fn is None:
+            exposures_fn = getattr(self.portfolio, "current_exposures_quote_currency", None)
+
+        exposures = {}
+        if callable(exposures_fn):
+            try:
+                exposures = exposures_fn() or {}
+            except Exception:  # pragma: no cover - defensive guard
+                self.log.exception("Failed to obtain current exposures")
+                exposures = {}
+
+        betas = getattr(self.beta, "latest", None)
+        if not isinstance(betas, Mapping) or not betas:
+            return
+
+        total_equity = self._portfolio_equity()
+        try:
+            notional = self.hedger.hedge_notional(exposures, betas, total_equity=total_equity)
+        except Exception:  # pragma: no cover - defensive guard
+            self.log.exception("Beta hedging notional calculation failed")
+            return
+
+        if not isinstance(notional, (int, float)):
+            return
+
+        notional_value = float(notional)
+        if abs(notional_value) <= self._min_notional:
+            return
+
+        market_bar = bars.get(self._market_symbol)
+        market_price = getattr(market_bar, "close", None) if market_bar else None
+        if market_price is None or market_price <= 0:
+            return
+
+        qty = abs(notional_value) / float(market_price)
+        side = "sell" if notional_value > 0 else "buy"
+
+        submit_fn = getattr(self.broker, "submit_order", None)
+        if not callable(submit_fn):
+            return
+
+        try:
+            submit_fn(
+                symbol=self._market_symbol,
+                side=side,
+                qty=qty,
+                type="market",
+                tag="beta-hedge",
+            )
+        except Exception:  # pragma: no cover - defensive guard
+            self.log.exception("Beta hedge order submission failed")
 
 
 __all__ = ["Orchestrator"]
