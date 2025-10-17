@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import numpy as np
 from collections import deque
-from typing import Deque, Sequence, Tuple
+from typing import Deque, Dict, Sequence, Tuple
 
 
 def _extract_hlc(bar: object) -> Tuple[float, float, float]:
@@ -61,4 +62,39 @@ class ATR:
 
 
 __all__ = ["ATR", "true_range"]
+
+
+class RollingBeta:
+    """Rolling OLS beta of each asset versus a reference market series."""
+
+    def __init__(self, window: int = 240) -> None:
+        if window <= 1:
+            raise ValueError("window must be greater than 1")
+        self.window = int(window)
+        self._pairs: Dict[str, Deque[tuple[float, float]]] = {}
+        self.latest: Dict[str, float] = {}
+
+    def update(self, symbol: str, r_asset: float, r_market: float) -> float | None:
+        """Update the rolling beta for ``symbol`` and return the new estimate."""
+
+        dq = self._pairs.setdefault(symbol, deque(maxlen=self.window))
+        dq.append((float(r_asset), float(r_market)))
+
+        min_obs = max(30, self.window // 5)
+        if len(dq) < min_obs:
+            return None
+
+        returns = np.asarray(dq, dtype=float)
+        asset = returns[:, 0]
+        market = returns[:, 1]
+
+        cov = np.cov(asset, market, ddof=1)
+        var_market = float(cov[1, 1])
+        beta = float(cov[0, 1] / var_market) if var_market > 1e-12 else 0.0
+
+        self.latest[symbol] = beta
+        return beta
+
+
+__all__.append("RollingBeta")
 
