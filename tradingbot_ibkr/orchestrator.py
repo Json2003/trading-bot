@@ -81,6 +81,45 @@ class Orchestrator:
         kill_cfg = KillSwitchCfg(max_dd_pct=kill_drawdown, max_daily_loss_pct=max_daily_loss)
         self.kill = KillSwitch(kill_cfg, start_equity=float(start_equity))
 
+    def _portfolio_equity(self) -> float:
+        """Return aggregate portfolio equity using available attributes."""
+
+        equity_map = getattr(self.portfolio, "strategy_equity", None)
+        if isinstance(equity_map, Mapping) and equity_map:
+            total = 0.0
+            try:
+                total = float(sum(float(value) for value in equity_map.values()))
+            except Exception:  # pragma: no cover - defensive guard
+                total = 0.0
+            if total > 0:
+                return total
+
+        for attr in ("total_equity", "equity", "balance"):
+            if hasattr(self.portfolio, attr):
+                try:
+                    total = float(getattr(self.portfolio, attr))
+                except Exception:  # pragma: no cover - defensive guard
+                    total = 0.0
+                if total > 0:
+                    return total
+
+        return 0.0
+
+    def _strategy_equity(self, strategy_name: str) -> float:
+        """Return equity allocated to ``strategy_name`` with graceful fallbacks."""
+
+        equity_map = getattr(self.portfolio, "strategy_equity", None)
+        if isinstance(equity_map, Mapping):
+            try:
+                strategy_equity = float(equity_map.get(strategy_name, 0.0))
+            except Exception:  # pragma: no cover - defensive guard
+                strategy_equity = 0.0
+            else:
+                if strategy_equity > 0:
+                    return strategy_equity
+
+        return self._portfolio_equity()
+
     def _apply_atr_sizing(
         self,
         strategy_name: str,
@@ -88,11 +127,7 @@ class Orchestrator:
         bars: Dict[str, Bar],
     ) -> List[OrderIntent]:
         sized: List[OrderIntent] = []
-        strat_equity = 0.0
-        try:
-            strat_equity = float(self.portfolio.strategy_equity.get(strategy_name, 0.0))
-        except Exception:  # pragma: no cover - defensive guard
-            strat_equity = 0.0
+        strat_equity = self._strategy_equity(strategy_name)
 
         atr_fn = getattr(self.datafeed, "atr", None)
 
@@ -113,8 +148,19 @@ class Orchestrator:
 
             price = getattr(bar, "close", None) if bar is not None else None
 
+            risk_pct = self.limits.max_position_risk_pct
+            meta = getattr(intent, "meta", None)
+            if isinstance(meta, Mapping):
+                try:
+                    override = float(meta.get("risk_pct", risk_pct))
+                except Exception:  # pragma: no cover - defensive guard
+                    override = risk_pct
+                if override > 0:
+                    risk_pct = override
+
             if (
                 strat_equity > 0
+                and risk_pct > 0
                 and atr_value is not None
                 and atr_value > 0
                 and price is not None
@@ -122,7 +168,7 @@ class Orchestrator:
             ):
                 qty = qty_from_risk(
                     strat_equity,
-                    self.limits.max_position_risk_pct,
+                    risk_pct,
                     atr_value,
                     self.atr_mult,
                     price,
@@ -168,7 +214,7 @@ class Orchestrator:
             order = self.broker.intent_to_order(intent)
             self.reconciler.submit_idempotent(order)
 
-        total_equity = float(sum(getattr(self.portfolio, "strategy_equity", {}).values()))
+        total_equity = self._portfolio_equity()
         self._snapshot_equity(total_equity)
 
         hit, reason = self.kill.check(total_equity)
