@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from typing import Any, Iterable, Mapping
 import logging
 
+from .atr import compute_atr
+
 logger = logging.getLogger(__name__)
 
 
@@ -51,6 +53,18 @@ class MarketData:
     @property
     def key(self) -> str:
         return f"{self.venue}:{self.symbol}"
+
+    def latest_candle(self) -> OHLCV | None:
+        """Return the most recent OHLCV candle when available."""
+
+        return self.ohlcv[-1] if self.ohlcv else None
+
+    def atr(self, period: int = 14) -> float | None:
+        """Compute an Average True Range value from the cached candles."""
+
+        if not self.ohlcv:
+            return None
+        return compute_atr(self.ohlcv, period)
 
 
 class UnifiedDataFeed:

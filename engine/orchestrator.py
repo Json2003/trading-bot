@@ -8,6 +8,7 @@ from typing import Protocol, Sequence
 import logging
 
 from .datafeed import MarketData, UnifiedDataFeed
+from .kill_switch import PortfolioKillSwitch
 from .portfolio import OrderFill, Portfolio, PortfolioSnapshot, StrategyAllocation
 from .risk import RiskManager
 from strategies.base import Strategy, StrategyContext, StrategySignal
@@ -42,6 +43,7 @@ class MultiStrategyOrchestrator:
         risk_manager: RiskManager,
         strategies: Sequence[StrategyBinding],
         executor: OrderExecutor | None = None,
+        kill_switch: PortfolioKillSwitch | None = None,
         log: logging.Logger | None = None,
     ) -> None:
         if not strategies:
@@ -51,6 +53,7 @@ class MultiStrategyOrchestrator:
         self._risk = risk_manager
         self._strategies = list(strategies)
         self._executor = executor
+        self._kill_switch = kill_switch
         self._log = log or logger
 
     def run_cycle(self) -> list[OrderFill]:
@@ -61,6 +64,13 @@ class MultiStrategyOrchestrator:
             mark_prices={data.symbol: data.price for data in market_data.values()}
         )
         timestamp = datetime.now(timezone.utc)
+        if self._kill_switch and self._kill_switch.evaluate(snapshot, timestamp=timestamp):
+            event = self._kill_switch.event
+            if event:
+                self._log.warning("Kill-switch active (%s) – skipping cycle", event.reason)
+            else:
+                self._log.warning("Kill-switch active – skipping cycle")
+            return []
         fills: list[OrderFill] = []
 
         for binding in self._strategies:
