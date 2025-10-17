@@ -11,6 +11,7 @@ from .portfolio import (
     StrategyPnL,
 )
 from .risk import RiskDecision, RiskManager, RiskViolation
+from .beta_hedger import BetaHedgeCfg, BetaHedger
 from .orchestrator import MultiStrategyOrchestrator, StrategyBinding
 from .kill_switch import KillSwitchEvent, PortfolioKillSwitch
 from .position_sizing import (
@@ -41,6 +42,8 @@ __all__ = [
     "RiskDecision",
     "RiskManager",
     "RiskViolation",
+    "BetaHedgeCfg",
+    "BetaHedger",
     "MultiStrategyOrchestrator",
     "StrategyBinding",
     "KillSwitchEvent",
