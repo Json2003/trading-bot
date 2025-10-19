@@ -106,15 +106,28 @@ PY
           name: backtest-summary
           path: summary-latest.md
 
-      - name: Commit summary to repo (optional)
+      - name: Commit and push results
+        if: github.event_name != 'pull_request'
         run: |
-          set -euxo pipefail
-          git config user.name "github-actions[bot]"
+          set -euo pipefail
+          git config user.name  "market-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add summary-latest.md || true
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+          # Stage results if they exist
+          shopt -s nullglob
+          files=(backtest*.json report_*.json summary-latest.md)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No results to commit."
+            exit 0
+          fi
+
+          git add "${files[@]}" || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
-          git commit -m "chore: update backtest summary"
-          git push
+
+          git commit -m "chore: auto-update backtest results $(date -u +'%Y-%m-%dT%H:%M:%SZ')" || true
+          git pull --rebase origin "$GITHUB_REF_NAME" || true
+          git push origin HEAD:"$GITHUB_REF_NAME" || true
