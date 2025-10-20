@@ -7,6 +7,10 @@ Plan source (external):
 - Windows path (owner-provided): `C:\Users\j-mga\OneDrive\Documents\GitHub\Wcoin`
 - If a public link is available, add it below.
 
+Related documents in this repo:
+
+- Plan review summary: `docs/plan_review.md`
+
 How to keep this repo in sync
 
 - Export key milestones and IDs from the Splitstar Development plan into this file.
