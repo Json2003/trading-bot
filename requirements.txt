@@ -24,3 +24,4 @@ prometheus-client>=0.20.0
 pyyaml>=6.0,<7
 ta>=0.10.2  # For indicators
 argparse  # Built-in, but for clarity
+optuna>=3.6,<4
