@@ -24,6 +24,7 @@ class StrategyConfig:
     capital: float
     max_position_notional: float | None = None
     max_drawdown: float | None = None
+    sizing: Mapping[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,7 @@ class PortfolioConfig:
     base_currency: str
     total_capital: float
     portfolio_limits: Mapping[str, float]
+    kill_switch: Mapping[str, float] | None
     strategies: tuple[StrategyConfig, ...]
 
     def allocation_for(self, name: str) -> StrategyConfig:
@@ -58,6 +60,15 @@ def load_portfolio_config(path: str | Path) -> PortfolioConfig:
         for key, value in (data.get("portfolio_limits") or {}).items()
     }
 
+    risk_block = data.get("risk") or {}
+    kill_switch_block = risk_block.get("kill_switch") or {}
+    kill_switch = {
+        str(key): float(value)
+        for key, value in kill_switch_block.items()
+        if value is not None
+    }
+    kill_switch_config: Mapping[str, float] | None = kill_switch or None
+
     strategy_blocks = data.get("strategies") or {}
     strategies = []
     for name, payload in strategy_blocks.items():
@@ -72,12 +83,16 @@ def load_portfolio_config(path: str | Path) -> PortfolioConfig:
             if payload.get("max_drawdown") is not None
             else None
         )
+        sizing_block = payload.get("sizing")
+        sizing = dict(sizing_block) if sizing_block else None
+
         strategies.append(
             StrategyConfig(
                 name=str(name),
                 capital=capital,
                 max_position_notional=max_position_notional,
                 max_drawdown=max_drawdown,
+                sizing=sizing,
             )
         )
 
@@ -85,6 +100,7 @@ def load_portfolio_config(path: str | Path) -> PortfolioConfig:
         base_currency=base_currency,
         total_capital=total_capital,
         portfolio_limits=portfolio_limits,
+        kill_switch=kill_switch_config,
         strategies=tuple(strategies),
     )
 

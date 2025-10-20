@@ -2,16 +2,48 @@ base_currency: USD
 total_capital: 100000
 portfolio_limits:
   max_symbol_notional: 120000
+risk:
+  kill_switch:
+    max_drawdown: 0.25
+    max_loss: 35000
 strategies:
   grid:
     capital: 25000
     max_position_notional: 50000
+    max_drawdown: 0.25
+    sizing:
+      risk_fraction: 0.02
+      atr_period: 14
+      atr_multiplier: 1.8
+      min_notional: 500
+      max_notional: 7500
   momentum:
     capital: 20000
     max_position_notional: 40000
+    max_drawdown: 0.2
+    sizing:
+      risk_fraction: 0.015
+      atr_period: 21
+      atr_multiplier: 2.0
+      min_notional: 400
+      max_notional: 6000
   dca:
     capital: 30000
     max_position_notional: 67500
+    max_drawdown: 0.25
+    sizing:
+      risk_fraction: 0.0125
+      atr_period: 14
+      atr_multiplier: 2.2
+      min_notional: 750
+      max_notional: 9000
   arbitrage:
     capital: 25000
     max_position_notional: 75000
+    max_drawdown: 0.2
+    sizing:
+      risk_fraction: 0.01
+      atr_period: 10
+      atr_multiplier: 1.6
+      min_notional: 500
+      max_notional: 8000

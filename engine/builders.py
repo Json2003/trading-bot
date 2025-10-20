@@ -8,8 +8,10 @@ import logging
 from tradingbot_ibkr.execution.broker_base import BrokerBase
 
 from .datafeed import MarketInstrument, UnifiedDataFeed
+from .kill_switch import PortfolioKillSwitch
 from .orchestrator import MultiStrategyOrchestrator, OrderExecutor, StrategyBinding
 from .portfolio import Portfolio, StrategyAllocation
+from .position_sizing import ATRSizingConfig
 from .risk import RiskManager
 from config.portfolio_loader import PortfolioConfig
 from strategies import (
@@ -116,11 +118,32 @@ def build_multi_strategy_orchestrator(
         strategy = strategies.get(cfg.name)
         if strategy is None:
             raise KeyError(f"Missing strategy parameters for {cfg.name!r}")
+        sizing_cfg = None
+        if cfg.sizing:
+            sizing_kwargs = dict(cfg.sizing)
+            sizing_cfg = ATRSizingConfig(
+                risk_fraction=float(sizing_kwargs.get("risk_fraction", 0.01)),
+                atr_period=int(sizing_kwargs.get("atr_period", 14)),
+                atr_multiplier=float(sizing_kwargs.get("atr_multiplier", 2.0)),
+                min_notional=float(sizing_kwargs.get("min_notional", 0.0)),
+                min_quantity=float(sizing_kwargs.get("min_quantity", 0.0)),
+                max_notional=(
+                    float(sizing_kwargs["max_notional"])
+                    if sizing_kwargs.get("max_notional") is not None
+                    else None
+                ),
+                max_leverage=(
+                    float(sizing_kwargs["max_leverage"])
+                    if sizing_kwargs.get("max_leverage") is not None
+                    else None
+                ),
+            )
         bindings.append(
             StrategyBinding(
                 name=cfg.name,
                 strategy=strategy,
                 allocation=allocation_map[cfg.name],
+                sizing=sizing_cfg,
             )
         )
 
@@ -149,12 +172,22 @@ def build_multi_strategy_orchestrator(
         log=log or logger,
     )
 
+    kill_switch_config = portfolio_config.kill_switch or {}
+    kill_switch = None
+    if kill_switch_config:
+        kill_switch = PortfolioKillSwitch(
+            max_drawdown=kill_switch_config.get("max_drawdown"),
+            max_loss=kill_switch_config.get("max_loss"),
+            log=log or logger,
+        )
+
     orchestrator = MultiStrategyOrchestrator(
         data_feed=data_feed,
         portfolio=portfolio,
         risk_manager=risk_manager,
         strategies=bindings,
         executor=executor,
+        kill_switch=kill_switch,
         log=log or logger,
     )
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from typing import Protocol, Sequence
 import logging
@@ -10,6 +10,7 @@ import logging
 from .datafeed import MarketData, UnifiedDataFeed
 from .kill_switch import PortfolioKillSwitch
 from .portfolio import OrderFill, Portfolio, PortfolioSnapshot, StrategyAllocation
+from .position_sizing import ATRSizingConfig, atr_position_size, atr_stop
 from .risk import RiskManager
 from strategies.base import Strategy, StrategyContext, StrategySignal
 
@@ -30,6 +31,7 @@ class StrategyBinding:
     name: str
     strategy: Strategy
     allocation: StrategyAllocation
+    sizing: ATRSizingConfig | None = None
 
 
 class MultiStrategyOrchestrator:
@@ -79,7 +81,20 @@ class MultiStrategyOrchestrator:
             if not signals:
                 continue
 
-            decision = self._risk.evaluate_signals(binding.name, signals, snapshot)
+            sized_signals: list[StrategySignal] = []
+            for signal in signals:
+                sized = self._apply_sizing(
+                    binding, signal, market_data, snapshot
+                )
+                if sized is not None:
+                    sized_signals.append(sized)
+
+            if not sized_signals:
+                continue
+
+            decision = self._risk.evaluate_signals(
+                binding.name, sized_signals, snapshot
+            )
             if not decision.accepted:
                 self._log.debug("No signals accepted for %s", binding.name)
                 continue
@@ -113,6 +128,56 @@ class MultiStrategyOrchestrator:
             positions=state.positions,
             pnl=state.pnl,
         )
+
+    def _apply_sizing(
+        self,
+        binding: StrategyBinding,
+        signal: StrategySignal,
+        market_data: dict[str, MarketData],
+        snapshot: PortfolioSnapshot,
+    ) -> StrategySignal | None:
+        config = binding.sizing
+        if config is None:
+            return signal
+
+        market_key = str(signal.tags.get("market_key", signal.symbol))
+        market = market_data.get(market_key)
+        if market is None:
+            self._log.warning(
+                "Skipping sizing for %s: missing market data for %s",
+                binding.name,
+                market_key,
+            )
+            return None
+
+        state = snapshot.state_for(binding.name)
+        equity = state.cash + sum(position.market_value for position in state.positions)
+
+        sizing = atr_position_size(
+            equity,
+            market,
+            config=config,
+            price=signal.price,
+        )
+        if not sizing.is_actionable:
+            self._log.debug(
+                "ATR sizing filtered %s signal for %s (equity=%.2f)",
+                binding.name,
+                market_key,
+                equity,
+            )
+            return None
+
+        tags = dict(signal.tags)
+        tags["atr"] = {
+            "value": sizing.atr,
+            "risk_cash": sizing.risk_cash,
+            "stop_distance": sizing.stop_distance,
+        }
+        stop = sizing.stop_distance or 0.0
+        tags["stop_level"] = atr_stop(signal.price, stop, signal.side)
+
+        return replace(signal, quantity=sizing.quantity, tags=tags)
 
 
 __all__ = ["OrderExecutor", "StrategyBinding", "MultiStrategyOrchestrator"]

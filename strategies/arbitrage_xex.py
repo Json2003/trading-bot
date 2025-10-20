@@ -45,7 +45,12 @@ class CrossExchangeArbitrageStrategy(Strategy):
                     quantity=self._size,
                     price=primary.price,
                     venue=primary.venue,
-                    tags={"type": "xex", "leg": "primary", "edge": edge},
+                    tags={
+                        "type": "xex",
+                        "leg": "primary",
+                        "edge": edge,
+                        "market_key": self._primary_key,
+                    },
                 )
             )
             signals.append(
@@ -56,7 +61,12 @@ class CrossExchangeArbitrageStrategy(Strategy):
                     quantity=self._size,
                     price=hedge.price,
                     venue=hedge.venue,
-                    tags={"type": "xex", "leg": "hedge", "edge": edge},
+                    tags={
+                        "type": "xex",
+                        "leg": "hedge",
+                        "edge": edge,
+                        "market_key": self._hedge_key,
+                    },
                 )
             )
         elif edge < -self._min_edge - 2 * self._fee:
@@ -68,7 +78,12 @@ class CrossExchangeArbitrageStrategy(Strategy):
                     quantity=self._size,
                     price=primary.price,
                     venue=primary.venue,
-                    tags={"type": "xex", "leg": "primary", "edge": edge},
+                    tags={
+                        "type": "xex",
+                        "leg": "primary",
+                        "edge": edge,
+                        "market_key": self._primary_key,
+                    },
                 )
             )
             signals.append(
@@ -79,7 +94,12 @@ class CrossExchangeArbitrageStrategy(Strategy):
                     quantity=self._size,
                     price=hedge.price,
                     venue=hedge.venue,
-                    tags={"type": "xex", "leg": "hedge", "edge": edge},
+                    tags={
+                        "type": "xex",
+                        "leg": "hedge",
+                        "edge": edge,
+                        "market_key": self._hedge_key,
+                    },
                 )
             )
         return signals

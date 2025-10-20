@@ -41,6 +41,25 @@ class DCAMartingaleStrategy(Strategy):
         price = market.price
         signals: List[StrategySignal] = []
 
+        held_qty = 0.0
+        held_avg: float | None = None
+        for position in context.positions:
+            if position.symbol == self.symbol:
+                held_qty += position.quantity
+                held_avg = position.average_price
+
+        if abs(held_qty - self._position) > 1e-9:
+            self._position = held_qty
+            if held_qty <= 0:
+                self._avg_entry = None
+                self._layers = 0
+            else:
+                if held_avg is not None:
+                    self._avg_entry = held_avg
+                elif self._avg_entry is None:
+                    self._avg_entry = price
+                self._layers = max(1, self._layers)
+
         if self._position <= 0:
             signals.append(
                 StrategySignal(
@@ -50,7 +69,11 @@ class DCAMartingaleStrategy(Strategy):
                     quantity=self._base_size,
                     price=price,
                     venue=self._venue,
-                    tags={"type": "dca", "layer": 1},
+                    tags={
+                        "type": "dca",
+                        "layer": 1,
+                        "market_key": self._market_key,
+                    },
                 )
             )
             self._position = self._base_size
@@ -71,7 +94,11 @@ class DCAMartingaleStrategy(Strategy):
                     quantity=qty,
                     price=price,
                     venue=self._venue,
-                    tags={"type": "dca", "layer": self._layers + 1},
+                    tags={
+                        "type": "dca",
+                        "layer": self._layers + 1,
+                        "market_key": self._market_key,
+                    },
                 )
             )
             total_qty = self._position + qty
@@ -90,7 +117,11 @@ class DCAMartingaleStrategy(Strategy):
                     quantity=self._position,
                     price=price,
                     venue=self._venue,
-                    tags={"type": "take_profit", "layers": self._layers},
+                    tags={
+                        "type": "take_profit",
+                        "layers": self._layers,
+                        "market_key": self._market_key,
+                    },
                 )
             )
             self._position = 0.0
