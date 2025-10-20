@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-from typing import Dict, List
 
 import pandas as pd
 
@@ -32,93 +31,80 @@ def compute_comp_m_factor(
     pd.DataFrame
         Cross-sectional z-scores with mean zero (if ``neutralize`` is ``True``).
     """
+
     if lookback <= 0:
         raise ValueError("lookback must be positive")
     if lag < 0:
         raise ValueError("lag must be non-negative")
 
-    columns = list(prices.columns)
-    index = list(prices.index)
-    if not columns or not index:
+    columns = list(getattr(prices, "columns", []))
+    index = list(getattr(prices, "index", []))
+    try:
+        row_count = len(prices)
+    except TypeError:
+        row_count = 0
+
+    if row_count == 0 or not columns:
         return pd.DataFrame({col: [] for col in columns}, index=index)
 
-    price_history: Dict[str, List[float]] = {}
+    price_history: dict[str, list[float]] = {}
     for col in columns:
         series = prices[col]
-        history: List[float] = []
+        history: list[float] = []
         for value in series:
-            if value is None or (isinstance(value, float) and math.isnan(value)):
-                history.append(float("nan"))
-            else:
+            try:
                 history.append(float(value))
+            except Exception:
+                history.append(float("nan"))
         price_history[col] = history
 
-    momentum_values: Dict[str, List[float]] = {col: [float("nan")] * len(index) for col in columns}
+    momentum: dict[str, list[float]] = {col: [float("nan")] * row_count for col in columns}
 
-    for t in range(len(index)):
+    for t in range(row_count):
         src = t - lag
         base = src - lookback
         if src < 0 or base < 0:
             continue
         for col in columns:
-            series = price_history[col]
-            recent = series[src]
-            prior = series[base]
+            recent = price_history[col][src]
+            prior = price_history[col][base]
             if not _is_positive(recent) or not _is_positive(prior):
                 continue
-            momentum_values[col][t] = math.log(recent / prior)
+            momentum[col][t] = math.log(recent / prior)
 
-    zscore_values: Dict[str, List[float]] = {col: [float("nan")] * len(index) for col in columns}
+    zscores: dict[str, list[float]] = {col: [float("nan")] * row_count for col in columns}
 
-    for t in range(len(index)):
-        raw_vals: List[float] = []
-        valid_cols: List[str] = []
+    for t in range(row_count):
+        values: list[float] = []
+        valid_cols: list[str] = []
         for col in columns:
-            value = momentum_values[col][t]
+            value = momentum[col][t]
             if math.isnan(value):
                 continue
-            raw_vals.append(value)
+            values.append(value)
             valid_cols.append(col)
-        if not raw_vals:
+        if not values:
             continue
 
-        mean_val = sum(raw_vals) / len(raw_vals)
+        mean_val = sum(values) / len(values)
         if neutralize:
-            centered = [val - mean_val for val in raw_vals]
+            centered = [val - mean_val for val in values]
         else:
-            centered = raw_vals[:]
+            centered = values[:]
 
         variance = sum(val * val for val in centered) / len(centered)
-        if not math.isfinite(variance) or variance == 0.0:
-            denom = None
-        else:
-            denom = math.sqrt(variance)
+        if not math.isfinite(variance) or variance <= 1e-12:
+            for col in valid_cols:
+                zscores[col][t] = 0.0
+            continue
 
-        for idx_col, raw_val, centered_val in zip(valid_cols, raw_vals, centered):
-            if denom is None or denom == 0.0:
-                zscore = 0.0
-            else:
-                numerator = centered_val if neutralize else raw_val
-                zscore = numerator / denom
-            zscore_values[idx_col][t] = zscore
+        denom = math.sqrt(variance)
+        for col, raw_val, centered_val in zip(valid_cols, values, centered):
+            numerator = centered_val if neutralize else raw_val
+            zscores[col][t] = numerator / denom
 
-    valid_rows = []
-    for t in range(len(index)):
-        keep = False
-        for col in columns:
-            val = zscore_values[col][t]
-            if not math.isnan(val):
-                keep = True
-                break
-        valid_rows.append(keep)
-
-    filtered_index = [idx for idx, keep in zip(index, valid_rows) if keep]
-    filtered_data = {
-        col: [value for value, keep in zip(values, valid_rows) if keep]
-        for col, values in zscore_values.items()
-    }
-
-    return pd.DataFrame(filtered_data, index=filtered_index)
+    data = {col: zscores[col] for col in columns}
+    return pd.DataFrame(data, index=index)
 
 
 def _is_positive(value: float) -> bool:

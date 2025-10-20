@@ -3,7 +3,113 @@
 from __future__ import annotations
 
 import math
+
+import numpy as np
 import pandas as pd
+
+
+def _as_float_series(values: pd.Series) -> pd.Series:
+    """Return ``values`` converted to floats while preserving the index."""
+
+    try:
+        return values.astype(float)
+    except Exception:
+        index = list(getattr(values, "index", []))
+        data: list[float] = []
+        for item in values:
+            try:
+                data.append(float(item))
+            except Exception:
+                data.append(math.nan)
+        if not index:
+            index = list(range(len(data)))
+        return pd.Series(data, index=index, dtype=float)
+
+
+def _manual_beta(
+    aligned: pd.DataFrame,
+    window: int,
+    min_periods: int,
+) -> pd.Series:
+    """Fallback beta implementation for reduced pandas environments."""
+
+    asset = list(aligned["asset"])
+    market = list(aligned["market"])
+    beta: list[float] = [math.nan] * len(asset)
+
+    for pos in range(len(aligned)):
+        start = max(0, pos - window + 1)
+        length = pos - start + 1
+        if length < min_periods:
+            continue
+
+        asset_slice = asset[start : pos + 1]
+        market_slice = market[start : pos + 1]
+
+        asset_mean = float(sum(asset_slice) / length)
+        market_mean = float(sum(market_slice) / length)
+
+        cov = sum((a - asset_mean) * (m - market_mean) for a, m in zip(asset_slice, market_slice))
+        cov /= length
+        var = sum((m - market_mean) ** 2 for m in market_slice) / length
+        if not math.isfinite(var) or abs(var) <= 1e-18:
+            continue
+
+        beta[pos] = cov / var
+
+    index = list(getattr(aligned, "index", []))
+    if len(index) != len(beta):
+        index = list(range(len(beta)))
+    return pd.Series(beta, index=index, dtype=float)
+
+
+def _align_series(asset_returns: pd.Series, market_returns: pd.Series) -> pd.DataFrame:
+    try:
+        combined = pd.DataFrame({"asset": asset_returns, "market": market_returns})
+        combined = combined.dropna()
+        combined = combined.apply(pd.to_numeric, errors="coerce")
+        combined = combined.replace([np.inf, -np.inf], np.nan).dropna()
+        try:
+            if len(combined) == 0:
+                raise ValueError
+        except TypeError:
+            raise ValueError
+        return combined
+    except Exception:
+        pass
+
+    asset_index = list(getattr(asset_returns, "index", []))
+    market_index = list(getattr(market_returns, "index", []))
+    market_values = {}
+    for idx in market_index:
+        try:
+            value = float(market_returns[idx])
+        except Exception:
+            continue
+        if math.isfinite(value):
+            market_values[idx] = value
+
+    aligned_idx: list = []
+    asset_vals: list[float] = []
+    market_vals: list[float] = []
+
+    for idx in asset_index:
+        if idx not in market_values:
+            continue
+        try:
+            asset_val = float(asset_returns[idx])
+        except Exception:
+            continue
+        if not math.isfinite(asset_val):
+            continue
+        aligned_idx.append(idx)
+        asset_vals.append(asset_val)
+        market_vals.append(market_values[idx])
+
+    if not aligned_idx:
+        return pd.DataFrame({"asset": [], "market": []})
+
+    return pd.DataFrame({"asset": asset_vals, "market": market_vals}, index=aligned_idx)
 
 
 def compute_rolling_beta(
@@ -23,73 +129,53 @@ def compute_rolling_beta(
     window : int
         Number of observations to use for the rolling regression.
     min_periods : int, optional
-        Minimum observations required for a beta estimate.  Defaults to the
-        rolling window size.
+        Minimum observations required for a beta estimate. Defaults to ``window``.
 
     Returns
     -------
     pd.Series
         Rolling beta aligned with the shared index of ``asset_returns`` and
-        ``market_returns``.
+        ``market_returns``. The returned series is reindexed to ``asset_returns``
+        so callers retain their original alignment.
     """
+
     if window <= 1:
         raise ValueError("window must be greater than 1")
 
-    if min_periods is None:
-        min_periods = window
+    min_periods = int(min_periods or window)
+    if min_periods <= 0:
+        raise ValueError("min_periods must be positive")
 
-    records: list[tuple] = []
-    asset_index = list(asset_returns.index)
-    market_data = {idx: market_returns[idx] for idx in market_returns.index}
-    for idx in asset_index:
-        if idx not in market_data:
-            continue
-        asset_val = asset_returns[idx]
-        market_val = market_data[idx]
-        if pd.isna(asset_val) or pd.isna(market_val):
-            continue
-        records.append((idx, float(asset_val), float(market_val)))
+    aligned = _align_series(asset_returns, market_returns)
+    try:
+        if len(aligned) == 0:
+            return pd.Series(index=asset_returns.index, dtype=float)
+    except TypeError:
+        return pd.Series(index=asset_returns.index, dtype=float)
 
-    if not records:
-        return pd.Series(dtype=float)
+    try:
+        asset = _as_float_series(aligned["asset"])
+        market = _as_float_series(aligned["market"])
 
-    aligned = pd.DataFrame(
-        {
-            "asset": [row[1] for row in records],
-            "market": [row[2] for row in records],
-        },
-        index=[row[0] for row in records],
-    )
+        rolling_cov = asset.rolling(window, min_periods=min_periods).cov(market)
+        rolling_var = market.rolling(window, min_periods=min_periods).var()
+        rolling_var = rolling_var.replace(0.0, np.nan)
+        beta = rolling_cov / rolling_var
+    except Exception:
+        beta = _manual_beta(aligned, window=window, min_periods=min_periods)
 
-    asset_values = list(aligned["asset"])
-    market_values = list(aligned["market"])
-    beta_values: list[float] = [float("nan")] * len(aligned.index)
+    beta = beta.replace([-np.inf, np.inf], np.nan)
+    if hasattr(beta, "reindex"):
+        try:
+            return beta.reindex(asset_returns.index)
+        except Exception:
+            pass
 
-    for i in range(len(aligned.index)):
-        start = max(0, i - window + 1)
-        length = i - start + 1
-        if length < (min_periods or window):
-            continue
-
-        asset_window = [float(x) for x in asset_values[start : i + 1]]
-        market_window = [float(x) for x in market_values[start : i + 1]]
-
-        asset_mean = sum(asset_window) / len(asset_window)
-        market_mean = sum(market_window) / len(market_window)
-
-        cov = sum((a - asset_mean) * (m - market_mean) for a, m in zip(asset_window, market_window))
-        cov /= len(asset_window)
-        var = sum((m - market_mean) ** 2 for m in market_window) / len(market_window)
-        if not math.isfinite(var) or var == 0.0:
-            beta_values[i] = float("nan")
-            continue
-        beta_values[i] = cov / var
-
-    result_index = list(asset_returns.index)
-    result_values = [float("nan")] * len(result_index)
-    index_to_pos = {idx: pos for pos, idx in enumerate(result_index)}
-    for idx, value in zip(aligned.index, beta_values):
-        pos = index_to_pos.get(idx)
-        if pos is not None:
-            result_values[pos] = value
-    return pd.Series(result_values, index=result_index, dtype=float)
+    asset_index = list(getattr(asset_returns, "index", []))
+    beta_index = list(getattr(beta, "index", []))
+    beta_values = list(beta)
+    lookup = {idx: val for idx, val in zip(beta_index, beta_values)}
+    if not asset_index:
+        asset_index = list(range(len(asset_returns)))
+    aligned_values = [lookup.get(idx, math.nan) for idx in asset_index]
+    return pd.Series(aligned_values, index=asset_index, dtype=float)
