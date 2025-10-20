@@ -32,18 +32,40 @@ logger = logging.getLogger(__name__)
 try:
     from .money_engine import choose_position_size, fixed_fractional, round_qty, round_price
 except ImportError:
-    logger.warning("Money engine not available, using simplified position sizing")
-    def choose_position_size(balance, risk_pct, entry_price, stop_price, leverage=1.0, min_qty=0.0):
-        return balance * risk_pct / abs(entry_price - stop_price), balance * risk_pct
+    try:
+        from tradingbot_ibkr.money_engine import choose_position_size, fixed_fractional, round_qty, round_price  # type: ignore
+    except ImportError:
+        logger.warning("Money engine not available, using simplified position sizing")
+
+        def choose_position_size(balance, risk_pct, entry_price, stop_price, leverage=1.0, min_qty=0.0):
+            return balance * risk_pct / abs(entry_price - stop_price), balance * risk_pct
 
 try:
-    from .models.online_trainer import OnlineTrainer
+    from .models.online_trainer import OnlineTrainer  # type: ignore
+    ONLINE_TRAINER_AVAILABLE = True
 except ImportError:
-    logger.warning("Online trainer not available, adaptive learning disabled")
-    class OnlineTrainer:
-        def load(self): pass
-        def predict_proba(self, features): return 0.5
-        def learn_one(self, features, outcome): pass
+    try:
+        from tradingbot_ibkr.models.online_trainer import OnlineTrainer  # type: ignore
+        ONLINE_TRAINER_AVAILABLE = True
+    except ImportError:
+        ONLINE_TRAINER_AVAILABLE = False
+        logger.warning("Online trainer not available, adaptive learning disabled")
+
+        class OnlineTrainer:
+            def load(self):  # pragma: no cover - fallback stub
+                pass
+
+            def predict_proba(self, features):
+                return 0.5
+
+            def learn_one(self, features, outcome):  # pragma: no cover - fallback stub
+                pass
+
+            def save(self):  # pragma: no cover - fallback stub
+                pass
+
+            def is_ready(self):  # pragma: no cover - fallback stub
+                return True
 
 load_dotenv()
 EXCHANGE = os.getenv('EXCHANGE', 'binance')
@@ -230,9 +252,9 @@ def simple_backtest(df: pd.DataFrame) -> Tuple[float, List[Tuple]]:
     return pnl, trades
 
 
-def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.004, 
+def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.004,
                                 stop_loss_pct: float = 0.002, max_holding_bars: int = 12,
-                                fee_pct: float = 0.0, slippage_pct: float = 0.0, 
+                                fee_pct: float = 0.0, slippage_pct: float = 0.0,
                                 starting_balance: float = 10000.0,
                                 trend_filter: bool = False, ema_fast: int = 50, ema_slow: int = 200,
                                 vol_filter: bool = False, vol_lookback: int = 20, vol_multiplier: float = 1.0,
@@ -241,7 +263,10 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
                                 leverage: float = 1.0, min_qty: float = 0.0,
                                 slippage_vs_volume: bool = False,
                                 slippage_k: float = 0.0, slippage_cap: float = 0.05,
-                                enable_logging: bool = True) -> Dict:
+                                enable_logging: bool = True,
+                                ml_min_prob: float = 0.75,
+                                ml_min_prob_cold: float = 0.6,
+                                persist_online_model: bool = False) -> Dict:
     """
     Enhanced aggressive intraday-style strategy with comprehensive analytics.
 
@@ -275,6 +300,9 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
         slippage_k: Volume slippage factor
         slippage_cap: Maximum slippage percentage
         enable_logging: Enable detailed trade logging
+        ml_min_prob: Minimum probability from the online trainer once warmed up
+        ml_min_prob_cold: Probability threshold during warm-up / when not ready
+        persist_online_model: Save the online model to disk after the run
 
     Returns:
         Dictionary with comprehensive backtest results and analytics
@@ -321,17 +349,24 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
     # Additional features for adaptive learning (vectorized)
     df['ret1'] = df['close'].pct_change().fillna(0.0)
     df['ma3'] = df['close'].rolling(3, min_periods=1).mean()
+    df['ma6'] = df['close'].rolling(6, min_periods=1).mean()
     df['mom5'] = df['close'].pct_change(5).fillna(0.0)
     df['mom10'] = df['close'].pct_change(10).fillna(0.0)
+    df['ret2'] = df['close'].pct_change(2).fillna(0.0)
+    df['ret4'] = df['close'].pct_change(4).fillna(0.0)
+    df['ret8'] = df['close'].pct_change(8).fillna(0.0)
     
     # Volume-based features
     if 'volume' in df.columns:
         df['vol_mean20'] = df['volume'].rolling(20, min_periods=1).mean()
         df['vol_ratio'] = df['volume'] / df['vol_mean20'].replace(0, 1)
+        df['vol_z'] = ((df['volume'] - df['vol_mean20']) /
+                       df['vol_mean20'].replace(0, 1)).fillna(0.0)
     else:
         df['vol_mean20'] = 1.0
         df['vol_ratio'] = 1.0
-    
+        df['vol_z'] = 0.0
+
     # Volatility and ATR indicators
     df['vol20'] = df['ret1'].rolling(20).std().fillna(0.0)
     
@@ -350,6 +385,31 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
     roll_down = down.rolling(14, min_periods=1).mean()
     rs = roll_up / roll_down.replace(0, 1e-8)
     df['rsi14'] = 100.0 - (100.0 / (1.0 + rs))
+
+    # Additional regime features
+    df['range_pct'] = ((df['high'] - df['low']) / df['close']).fillna(0.0)
+    df['body_pct'] = ((df['close'] - df['open']) / df['open']).fillna(0.0)
+    df['trend_slope'] = df['close'].diff(3).fillna(0.0)
+    df['ema_fast'] = df['close'].ewm(span=10, adjust=False).mean()
+    df['ema_slow'] = df['close'].ewm(span=30, adjust=False).mean()
+    df['ema_ratio'] = ((df['ema_fast'] - df['ema_slow']) / df['close']).fillna(0.0)
+    trend_ema_long = df['close'].ewm(span=100, adjust=False).mean()
+    df['trend_position'] = ((df['close'] - trend_ema_long) / trend_ema_long).fillna(0.0)
+    df['vol_long'] = df['ret1'].rolling(100).std().fillna(0.0)
+    df['vol_quartile'] = df['vol_long'].rank(pct=True).fillna(0.0)
+
+    if isinstance(df.index, pd.DatetimeIndex):
+        radians = 2 * np.pi * df.index.hour / 24
+        df['hour_sin'] = np.sin(radians)
+        df['hour_cos'] = np.cos(radians)
+        dow = df.index.dayofweek
+        df['dow_sin'] = np.sin(2 * np.pi * dow / 7)
+        df['dow_cos'] = np.cos(2 * np.pi * dow / 7)
+    else:
+        df['hour_sin'] = 0.0
+        df['hour_cos'] = 0.0
+        df['dow_sin'] = 0.0
+        df['dow_cos'] = 0.0
     
     # Initialize trading variables
     trades = []
@@ -358,15 +418,25 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
     entry_idx = None
     entry_price = None
     balance = starting_balance
-    equity_curve = [balance]
+    first_time = df.index[0] if len(df.index) > 0 else None
+    equity_curve = [{'time': str(first_time) if first_time is not None else None, 'balance': balance}]
     
     # Risk management
     if risk_per_trade is None:
-        risk_per_trade = 0.01
+        risk_per_trade = 0.02
+
+    ml_min_prob = max(0.0, min(1.0, ml_min_prob))
+    ml_min_prob_cold = max(0.0, min(ml_min_prob, ml_min_prob_cold))
         
     # Adaptive learning setup
     trainer = OnlineTrainer()
-    trainer.load()
+    try:
+        trainer.load()
+    except Exception:
+        logger.exception("Failed to load online trainer state")
+
+    trainer_dirty = False
+    trainer_has_ready = hasattr(trainer, 'is_ready') and callable(getattr(trainer, 'is_ready'))
     
     # Trading statistics
     stats = {
@@ -390,21 +460,45 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
     # Main trading loop with enhanced logging
     logger.debug(f"Starting trading simulation on {len(df)} bars...")
     
+    def _safe_float(val, default=0.0):
+        if pd.isna(val):
+            return float(default)
+        try:
+            return float(val)
+        except Exception:
+            return float(default)
+
     for i, (timestamp, row) in enumerate(df.iterrows()):
         # Prepare features for ML
         features = {
-            'close': float(row['close']),
-            'high': float(row['high']),
-            'low': float(row['low']),
-            'volume': float(row.get('volume', 1)),
-            'ret1': float(row['ret1']),
-            'ma3': float(row['ma3']),
-            'mom5': float(row['mom5']),
-            'mom10': float(row['mom10']),
-            'vol20': float(row['vol20']),
-            'vol_ratio': float(row['vol_ratio']),
-            'atr14': float(row['atr14']),
-            'rsi14': float(row['rsi14'])
+            'close': _safe_float(row['close']),
+            'high': _safe_float(row['high']),
+            'low': _safe_float(row['low']),
+            'volume': _safe_float(row.get('volume', 1), default=1.0),
+            'ret1': _safe_float(row['ret1']),
+            'ret2': _safe_float(row.get('ret2', 0.0)),
+            'ret4': _safe_float(row.get('ret4', 0.0)),
+            'ret8': _safe_float(row.get('ret8', 0.0)),
+            'ma3': _safe_float(row['ma3']),
+            'ma6': _safe_float(row.get('ma6', row['ma3'])),
+            'mom5': _safe_float(row['mom5']),
+            'mom10': _safe_float(row['mom10']),
+            'vol20': _safe_float(row['vol20']),
+            'vol_ratio': _safe_float(row['vol_ratio'], default=1.0),
+            'vol_z': _safe_float(row.get('vol_z', 0.0)),
+            'atr14': _safe_float(row['atr14']),
+            'rsi14': _safe_float(row['rsi14']),
+            'ema_ratio': _safe_float(row.get('ema_ratio', 0.0)),
+            'trend_slope': _safe_float(row.get('trend_slope', 0.0)),
+            'range_pct': _safe_float(row.get('range_pct', 0.0)),
+            'body_pct': _safe_float(row.get('body_pct', 0.0)),
+            'hour_sin': _safe_float(row.get('hour_sin', 0.0)),
+            'hour_cos': _safe_float(row.get('hour_cos', 0.0)),
+            'dow_sin': _safe_float(row.get('dow_sin', 0.0)),
+            'dow_cos': _safe_float(row.get('dow_cos', 0.0)),
+            'trend_position': _safe_float(row.get('trend_position', 0.0)),
+            'vol_long': _safe_float(row.get('vol_long', 0.0)),
+            'vol_quartile': _safe_float(row.get('vol_quartile', 0.0))
         }
         
         if position is None:
@@ -414,10 +508,16 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
                 
                 # ML-based filtering
                 prob = trainer.predict_proba(features)
-                if prob < 0.6:
+                samples_seen = getattr(trainer, '_samples_seen', 0)
+                warm_target = getattr(trainer, '_min_samples_ready', max(samples_seen, 1))
+                warm_fraction = min(1.0, samples_seen / max(1, warm_target))
+                if trainer_has_ready and trainer.is_ready():
+                    warm_fraction = 1.0
+                threshold = ml_min_prob_cold + (ml_min_prob - ml_min_prob_cold) * warm_fraction
+                if prob < threshold:
                     stats['entries_filtered_ml'] += 1
                     if enable_logging and i % 100 == 0:
-                        logger.debug(f"Entry filtered by ML at {timestamp}: prob={prob:.3f}")
+                        logger.debug(f"Entry filtered by ML at {timestamp}: prob={prob:.3f}, threshold={threshold:.2f}")
                     continue
                 
                 # Trend filter
@@ -560,23 +660,29 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
                 
                 # Update balance and equity curve
                 balance += trade_pnl
-                equity_curve.append(balance)
+                equity_curve.append({'time': str(timestamp) if timestamp is not None else None, 'balance': balance})
                 
                 # Complete trade record
                 if detailed_trades:
+                    base_notional = qty * entry_price if entry_price else 0.0
+                    pnl_pct = (trade_pnl / base_notional) * 100 if base_notional else 0.0
                     detailed_trades[-1].update({
                         'exit_time': timestamp,
                         'exit_price': exit_price,
                         'exit_type': exit_type,
                         'holding_bars': holding,
                         'pnl': trade_pnl,
-                        'pnl_pct': (trade_pnl / (qty * entry_price)) * 100,
+                        'pnl_pct': pnl_pct,
                         'outcome': last_outcome
                     })
                 
                 # ML learning
                 if last_features is not None and last_outcome is not None:
                     trainer.learn_one(last_features, last_outcome)
+                    trainer_dirty = True
+                
+                log_entry_price = entry_price
+                log_holding = holding
                 
                 # Reset position
                 position = None
@@ -587,23 +693,29 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
                 last_outcome = None
                 
                 if enable_logging and len(detailed_trades) <= 5:  # Log first few trades in detail
-                    logger.info(f"EXIT #{len(detailed_trades)}: {timestamp} @ {exit_price:.4f}, {exit_type}, PnL={trade_pnl:.2f} ({trade_pnl/(qty*entry_price)*100:.2f}%), hold={holding} bars")
+                    base_notional = qty * log_entry_price if log_entry_price else 0.0
+                    pnl_pct = (trade_pnl / base_notional) * 100 if base_notional else 0.0
+                    logger.info(f"EXIT #{len(detailed_trades)}: {timestamp} @ {exit_price:.4f}, {exit_type}, PnL={trade_pnl:.2f} ({pnl_pct:.2f}%), hold={log_holding} bars")
     
     # Calculate final performance metrics
     execution_time = time.time() - start_time
     
     # Ensure we have equity curve
     if len(equity_curve) == 1:
-        equity_curve.append(balance)
+        last_time = df.index[-1] if len(df.index) > 0 else None
+        equity_curve.append({'time': str(last_time) if last_time is not None else None, 'balance': balance})
     
     # Calculate comprehensive metrics
-    performance_metrics = calculate_performance_metrics(equity_curve, detailed_trades)
+    equity_balances = [entry['balance'] for entry in equity_curve]
+    performance_metrics = calculate_performance_metrics(equity_balances, detailed_trades)
     
     # Compile results
+    wins_count = sum(1 for t in detailed_trades if t.get('pnl', 0) > 0)
+
     results = {
         'trades': len(detailed_trades),
-        'wins': stats['exits_tp'] + sum(1 for t in detailed_trades if t.get('pnl', 0) > 0),
-        'win_rate_pct': (stats['exits_tp'] / len(detailed_trades) * 100) if detailed_trades else 0,
+        'wins': wins_count,
+        'win_rate_pct': (wins_count / len(detailed_trades) * 100) if detailed_trades else 0,
         'pnl': balance - starting_balance,
         'final_balance': balance,
         'starting_balance': starting_balance,
@@ -611,7 +723,7 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
         'trading_stats': stats,
         'performance_metrics': performance_metrics,
         'equity_curve': equity_curve,
-        'trade_list': detailed_trades[:100],  # Limit to first 100 trades for memory efficiency
+        'trade_list': detailed_trades,
         'details': {
             'entries': len([t for t in trades if t['type'] == 'entry']),
             'exits': len([t for t in trades if not t['type'] == 'entry']),
@@ -619,7 +731,13 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
             'avg_holding_period': np.mean([t.get('holding_bars', 0) for t in detailed_trades]) if detailed_trades else 0
         }
     }
-    
+
+    if persist_online_model and ONLINE_TRAINER_AVAILABLE and trainer_dirty:
+        try:
+            trainer.save()
+        except Exception:
+            logger.exception("Failed to persist online trainer state")
+
     if enable_logging:
         logger.info("="*60)
         logger.info("BACKTEST COMPLETED")
@@ -639,13 +757,17 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
 
     for i in range(len(df)):
         row = df.iloc[i]
-        features = {col: float(row[col]) for col in ['close','high','low','volume','ret1','ma3','mom5','mom10','vol20','vol_ratio','atr14','rsi14'] if col in row}
+        feature_names = ['close','high','low','volume','ret1','ret2','ret4','ret8','ma3','ma6','mom5','mom10','vol20','vol_ratio','vol_z','atr14','rsi14','ema_ratio','trend_slope','range_pct','body_pct','hour_sin','hour_cos','dow_sin','dow_cos','trend_position','vol_long','vol_quartile']
+        features = {col: float(row[col]) for col in feature_names if col in row}
         if position is None:
             # entry condition: breakout
             if not pd.isna(row['rolling_high']) and row['close'] > row['rolling_high']:
                 # Adaptive filter: only enter if model predicts high probability
                 prob = trainer.predict_proba(features)
-                if prob < 0.6:
+                threshold = ml_min_prob
+                if trainer_has_ready and not trainer.is_ready():
+                    threshold = ml_min_prob_cold
+                if prob < threshold:
                     continue
                 # optional trend filter: only enter if ema_fast > ema_slow
                 if trend_filter:
@@ -707,6 +829,7 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
                 # Learn from the outcome
                 if last_features is not None and last_outcome is not None:
                     trainer.learn_one(last_features, last_outcome)
+                    trainer_dirty = True
                 position = None
                 entry_idx = None
                 entry_price = None

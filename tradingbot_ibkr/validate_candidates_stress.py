@@ -56,6 +56,7 @@ def run_stress(candidate, df, starting_balance=10000.0, mc_runs=5000, fee_pct=0.
     tp = candidate['tp']
     sl = candidate['sl']
     hold = candidate['hold']
+    risk = candidate['risk']
     trail = candidate.get('trail')
 
     stats = aggressive_strategy_backtest(
@@ -67,7 +68,8 @@ def run_stress(candidate, df, starting_balance=10000.0, mc_runs=5000, fee_pct=0.
         slippage_pct=slippage_pct,
         starting_balance=starting_balance,
         trend_filter=True,
-        trailing_stop_pct=trail
+        trailing_stop_pct=trail,
+        risk_per_trade=risk
     )
 
     overall_dd = max_drawdown_from_equity(stats.get('equity_curve', []))
@@ -117,8 +119,8 @@ def run_stress(candidate, df, starting_balance=10000.0, mc_runs=5000, fee_pct=0.
 def main():
     df = load_bars()
     candidates = [
-        {'label': 'A', 'tp': 0.01, 'sl': 0.005, 'hold': 12, 'risk': 0.005, 'trail': None},
-        {'label': 'B', 'tp': 0.01, 'sl': 0.01, 'hold': 12, 'risk': 0.005, 'trail': 0.01}
+        {'label': 'A', 'tp': 0.01, 'sl': 0.005, 'hold': 12, 'risk': 0.02, 'trail': None},
+        {'label': 'B', 'tp': 0.015, 'sl': 0.01, 'hold': 12, 'risk': 0.02, 'trail': 0.01}
     ]
 
     out_files = []

@@ -57,7 +57,8 @@ def backtest_combination(args):
             max_holding_bars=hold,
             fee_pct=0.001,
             slippage_pct=0.0005,
-            starting_balance=10000.0
+            starting_balance=10000.0,
+            risk_per_trade=risk
         )
         
         execution_time = time.time() - start_time
@@ -147,7 +148,7 @@ def run_grid(symbol='BTC/USDT', max_workers=None, batch_size=50):
         'take_profit_pct': [0.002, 0.004, 0.006, 0.01, 0.02],
         'stop_loss_pct': [0.001, 0.002, 0.003, 0.005, 0.01],
         'max_holding_bars': [3, 6, 12, 24, 48],
-        'risk_pct': [0.005, 0.01, 0.02]
+        'risk_pct': [0.005, 0.01, 0.015, 0.02]
     }
 
     # Generate all parameter combinations

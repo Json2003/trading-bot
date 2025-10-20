@@ -1,37 +1,37 @@
 {
   "candidate": {
     "label": "MAX",
-    "tp": 0.15,
-    "sl": 0.15,
+    "tp": 0.08,
+    "sl": 0.08,
     "hold": 1,
-    "risk": 0.5,
-    "trail": 0.1
+    "risk": 0.02,
+    "trail": 0.08
   },
   "summary": {
-    "trades": 0,
-    "win_rate": 0.0,
-    "pnl": 0.0,
+    "trades": 1,
+    "win_rate": 100.0,
+    "pnl": 5.62025060535052,
     "overall_max_drawdown_pct": 0.0
   },
   "walk_forward": [
     {
       "period": 1,
       "trades": 0,
-      "win_rate": 0.0,
+      "win_rate": 0,
       "pnl": 0.0,
       "max_drawdown_pct": 0.0
     },
     {
       "period": 2,
-      "trades": 0,
-      "win_rate": 0.0,
-      "pnl": 0.0,
+      "trades": 1,
+      "win_rate": 100.0,
+      "pnl": 5.62025060535052,
       "max_drawdown_pct": 0.0
     },
     {
       "period": 3,
       "trades": 0,
-      "win_rate": 0.0,
+      "win_rate": 0,
       "pnl": 0.0,
       "max_drawdown_pct": 0.0
     }

@@ -25,9 +25,9 @@ def run_grid(symbol='BTC/USDT'):
 
     params = {
         'take_profit_pct': [0.002, 0.004, 0.006, 0.01],
-        'stop_loss_pct': [0.003, 0.005, 0.01],
+        'stop_loss_pct': [0.002, 0.003, 0.005, 0.01],
         'max_holding_bars': [6, 12, 24, 48],
-        'risk_pct': [0.005, 0.01],
+        'risk_pct': [0.005, 0.01, 0.015],
         'trailing_stop_pct': [None, 0.005, 0.01]
     }
 
@@ -56,7 +56,8 @@ def run_grid(symbol='BTC/USDT'):
             ema_fast=50,
             ema_slow=200,
             vol_filter=False,
-            trailing_stop_pct=trail
+            trailing_stop_pct=trail,
+            risk_per_trade=risk
         )
         results.append({
             'params': {'tp': tp, 'sl': sl, 'hold': hold, 'risk': risk, 'trail': trail},
