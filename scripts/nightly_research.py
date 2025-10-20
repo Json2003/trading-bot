@@ -60,6 +60,18 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="Relative improvement required to flag configs for paper trading",
     )
     parser.add_argument(
+        "--dd-spike-ratio",
+        type=float,
+        default=2.0,
+        help="Maximum allowed ratio between OOS and train max drawdown before pruning",
+    )
+    parser.add_argument(
+        "--dd-spike-floor",
+        type=float,
+        default=0.05,
+        help="Floor applied to train drawdown when evaluating spike ratio",
+    )
+    parser.add_argument(
         "--top-n",
         type=int,
         default=5,
@@ -103,6 +115,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         Path(args.registry),
         trials_range=(int(args.trials_min), int(args.trials_max)),
         paper_improve_threshold=float(args.paper_threshold),
+        drawdown_spike_ratio=float(args.dd_spike_ratio),
+        drawdown_spike_floor=float(args.dd_spike_floor),
         top_n=int(args.top_n),
         seed=args.seed,
     )

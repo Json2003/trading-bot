@@ -47,12 +47,15 @@ _import_site("numpy")
 _import_site("pandas")
 
 import numpy as np
+import optuna
 import pandas as pd
+import pytest
 
 from backtest.optimization.research_loop import (
     NightlyResearchLoop,
     RegistryEntry,
     ModelRegistry,
+    StrategyEvaluation,
     create_non_overlapping_windows,
 )
 
@@ -114,6 +117,7 @@ def test_model_registry_persists_top_entries(tmp_path: Path) -> None:
         window="window_1",
         params={"grid_levels": 12},
         score=1.5,
+        train_max_drawdown=-0.05,
         oos_sharpe=1.2,
         oos_max_drawdown=-0.1,
         turnover=0.02,
@@ -141,5 +145,83 @@ def test_run_updates_registry(tmp_path: Path) -> None:
     saved = json.loads(registry_path.read_text())
     assert 1 <= len(saved) <= 5
     assert all("score" in item for item in saved)
+    assert all("train_max_drawdown" in item for item in saved)
     assert len(results) <= 1
+
+
+def test_drawdown_spike_prunes(monkeypatch, tmp_path: Path) -> None:
+    df = _make_dataframe(360)
+    windows = create_non_overlapping_windows(df, window_size=180, test_fraction=0.3)
+    registry_path = tmp_path / "registry.json"
+    loop = NightlyResearchLoop(
+        windows,
+        registry_path,
+        trials_range=(1, 1),
+        seed=0,
+        drawdown_spike_ratio=1.2,
+        drawdown_spike_floor=0.01,
+    )
+
+    train_summary = {
+        "total_return": 0.05,
+        "max_drawdown": -0.01,
+        "sharpe": 1.0,
+        "sortino": 0.0,
+        "profit_factor": 1.0,
+        "num_trades": 5,
+    }
+    test_summary = {
+        "total_return": -0.2,
+        "max_drawdown": -0.25,
+        "sharpe": -0.5,
+        "sortino": 0.0,
+        "profit_factor": 0.5,
+        "num_trades": 5,
+    }
+    train_returns = [0.01] * 5
+    test_returns = [-0.25, 0.0, 0.0, 0.0, 0.0]
+
+    def fake_eval_signal_strategy(self, *_args, **_kwargs):
+        return StrategyEvaluation(
+            name="signal",
+            train_summary=train_summary,
+            test_summary=test_summary,
+            train_returns=train_returns,
+            test_returns=test_returns,
+            train_trades=5,
+            test_trades=5,
+        )
+
+    dca_calls = {"count": 0}
+
+    def fake_simulate_dca(*_args, **_kwargs):
+        dca_calls["count"] += 1
+        if dca_calls["count"] == 1:
+            return train_summary, train_returns, 5
+        return test_summary, test_returns, 5
+
+    arb_calls = {"count": 0}
+
+    def fake_simulate_arbitrage(*_args, **_kwargs):
+        arb_calls["count"] += 1
+        if arb_calls["count"] == 1:
+            return train_summary, train_returns, 5
+        return test_summary, test_returns, 5
+
+    monkeypatch.setattr(NightlyResearchLoop, "_evaluate_signal_strategy", fake_eval_signal_strategy)
+    monkeypatch.setattr("backtest.optimization.research_loop._simulate_dca", fake_simulate_dca)
+    monkeypatch.setattr("backtest.optimization.research_loop._simulate_arbitrage", fake_simulate_arbitrage)
+
+    params = {
+        "grid_levels": 10,
+        "grid_range_pct": 0.05,
+        "momentum_fast": 8,
+        "momentum_slow": 21,
+        "dca_step_pct": 0.03,
+        "dca_max_layers": 3,
+        "arb_edge_bps": 8.0,
+    }
+
+    with pytest.raises(optuna.TrialPruned):
+        loop._evaluate_params(windows[0], params)
 
