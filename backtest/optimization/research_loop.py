@@ -110,6 +110,7 @@ class RegistryEntry:
     params: Mapping[str, float]
     score: float
     oos_sharpe: float
+    train_max_drawdown: float
     oos_max_drawdown: float
     turnover: float
     diagnostics: Mapping[str, object]
@@ -143,6 +144,7 @@ class ModelRegistry:
                         window=str(item["window"]),
                         params=dict(item.get("params", {})),
                         score=float(item["score"]),
+                        train_max_drawdown=float(item.get("train_max_drawdown", float("nan"))),
                         oos_sharpe=float(item["oos_sharpe"]),
                         oos_max_drawdown=float(item["oos_max_drawdown"]),
                         turnover=float(item.get("turnover", 0.0)),
@@ -161,6 +163,7 @@ class ModelRegistry:
                 "window": entry.window,
                 "params": dict(entry.params),
                 "score": entry.score,
+                "train_max_drawdown": entry.train_max_drawdown,
                 "oos_sharpe": entry.oos_sharpe,
                 "oos_max_drawdown": entry.oos_max_drawdown,
                 "turnover": entry.turnover,
@@ -464,6 +467,8 @@ class NightlyResearchLoop:
         drawdown_penalty: float = 2.0,
         overfit_ratio: float = 1.6,
         max_oos_drawdown: float = 0.35,
+        drawdown_spike_ratio: float = 2.0,
+        drawdown_spike_floor: float = 0.05,
         paper_improve_threshold: float = 0.05,
         top_n: int = 5,
         seed: int | None = None,
@@ -476,6 +481,8 @@ class NightlyResearchLoop:
         self._drawdown_penalty = float(drawdown_penalty)
         self._overfit_ratio = float(overfit_ratio)
         self._max_oos_drawdown = float(max_oos_drawdown)
+        self._dd_spike_ratio = float(max(drawdown_spike_ratio, 1.0))
+        self._dd_spike_floor = float(max(drawdown_spike_floor, 0.0))
         self._paper_threshold = float(paper_improve_threshold)
         self._rng = random.Random(seed)
         self._registry = ModelRegistry(Path(registry_path), top_n=top_n)
@@ -582,14 +589,19 @@ class NightlyResearchLoop:
 
         agg_train_sharpe = float(sharpe_ratio(pd.Series(agg_train))) if agg_train.size else 0.0
         agg_test_sharpe = float(sharpe_ratio(pd.Series(agg_test)))
-        equity = pd.Series(np.cumprod(1.0 + agg_test))
-        agg_dd = float(max_drawdown(equity))
+        equity_train = pd.Series(np.cumprod(1.0 + agg_train)) if agg_train.size else pd.Series([1.0])
+        equity_test = pd.Series(np.cumprod(1.0 + agg_test))
+        agg_train_dd = float(max_drawdown(equity_train)) if agg_train.size else 0.0
+        agg_dd = float(max_drawdown(equity_test))
         turnover = sum(eval.test_trades for eval in evaluations) / max(len(window.test), 1)
 
         if agg_test_sharpe <= 0.0:
             raise optuna.TrialPruned("Non-positive out-of-sample Sharpe")
-        if agg_dd < -abs(self._max_oos_drawdown):
+        if abs(agg_dd) > abs(self._max_oos_drawdown):
             raise optuna.TrialPruned("Excessive out-of-sample drawdown")
+        baseline_train_dd = max(abs(agg_train_dd), self._dd_spike_floor)
+        if baseline_train_dd > 0 and abs(agg_dd) > baseline_train_dd * self._dd_spike_ratio:
+            raise optuna.TrialPruned("Out-of-sample drawdown spike vs training")
         if agg_train_sharpe > 0 and agg_test_sharpe > 0:
             if agg_train_sharpe / max(agg_test_sharpe, 1e-6) > self._overfit_ratio:
                 raise optuna.TrialPruned("Overfit signature detected")
@@ -600,6 +612,7 @@ class NightlyResearchLoop:
             "train_sharpe": agg_train_sharpe,
             "oos_sharpe": agg_test_sharpe,
             "oos_max_drawdown": agg_dd,
+            "train_max_drawdown": agg_train_dd,
             "turnover": turnover,
             "components": [
                 {
@@ -666,6 +679,7 @@ class NightlyResearchLoop:
                 params={k: float(v) for k, v in best.params.items()},
                 score=score,
                 oos_sharpe=float(diagnostics.get("oos_sharpe", float("nan"))),
+                train_max_drawdown=float(diagnostics.get("train_max_drawdown", float("nan"))),
                 oos_max_drawdown=float(diagnostics.get("oos_max_drawdown", float("nan"))),
                 turnover=float(diagnostics.get("turnover", float("nan"))),
                 diagnostics=diagnostics,
