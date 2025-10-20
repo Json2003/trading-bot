@@ -21,6 +21,15 @@ import sys
 from typing import List
 import hashlib
 import os
+import threading
+import concurrent.futures
+import logging
+
+# optional progress bar
+try:
+    from tqdm import tqdm
+except Exception:  # pragma: no cover - optional
+    tqdm = None
 
 # use the very small local pandas stub if the real library is missing
 try:  # pragma: no cover - exercised in tests via stub

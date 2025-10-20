@@ -18,6 +18,17 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass
 
+# Configure logging first
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s',
+    handlers=[
+        logging.FileHandler('model_training.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
 # Core ML imports
 try:
     from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
@@ -33,6 +44,21 @@ try:
 except ImportError:
     sklearn_available = False
     logger.warning("scikit-learn not available, using minimal implementation")
+    # Define placeholder classes to avoid unbound variable errors
+    RandomForestClassifier = None
+    GradientBoostingClassifier = None
+    MLPClassifier = None
+    LogisticRegression = None
+    SVC = None
+    TimeSeriesSplit = None
+    GridSearchCV = None
+    cross_val_score = None
+    accuracy_score = None
+    classification_report = None
+    confusion_matrix = None
+    StandardScaler = None
+    Pipeline = None
+    joblib = None
 
 # Optuna for hyperparameter optimization
 try:
@@ -41,17 +67,6 @@ try:
     optuna_available = True
 except ImportError:
     optuna_available = False
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s',
-    handlers=[
-        logging.FileHandler('model_training.log'),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
 
 MODEL_DIR = Path(__file__).resolve().parents[1] / 'model_store'
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
@@ -215,6 +230,15 @@ class OptimizedModelTrainer:
         
     def optimize_hyperparameters_optuna(self, model_name: str, X: pd.DataFrame, y: pd.Series) -> Dict:
         """Optimize hyperparameters using Optuna."""
+        if not sklearn_available:
+            raise RuntimeError("scikit-learn not available for optimization")
+        
+        if not optuna_available:
+            raise RuntimeError("Optuna not available for optimization")
+        
+        # Import optuna here to ensure it's available
+        import optuna
+            
         config = MODEL_CONFIGS[model_name]
         
         def objective(trial):
@@ -239,6 +263,8 @@ class OptimizedModelTrainer:
             model = config.model_class(**params)
             
             if config.needs_scaling:
+                from sklearn.preprocessing import StandardScaler
+                from sklearn.pipeline import Pipeline
                 pipeline = Pipeline([
                     ('scaler', StandardScaler()),
                     ('model', model)
@@ -247,6 +273,7 @@ class OptimizedModelTrainer:
                 pipeline = model
             
             # Cross-validation
+            from sklearn.model_selection import TimeSeriesSplit, cross_val_score
             tscv = TimeSeriesSplit(n_splits=self.cv_folds)
             scores = cross_val_score(pipeline, X, y, cv=tscv, scoring='accuracy', n_jobs=-1)
             
@@ -261,16 +288,19 @@ class OptimizedModelTrainer:
         logger.info(f"Best params for {config.name}: {study.best_params}")
         
         return study.best_params
-    
     def optimize_hyperparameters_grid(self, model_name: str, X: pd.DataFrame, y: pd.Series) -> Dict:
         """Optimize hyperparameters using GridSearchCV."""
+        if not sklearn_available:
+            raise RuntimeError("scikit-learn not available for optimization")
+            
         config = MODEL_CONFIGS[model_name]
-        
         logger.info(f"Starting GridSearchCV for {config.name}")
         
         model = config.model_class()
         
         if config.needs_scaling:
+            from sklearn.preprocessing import StandardScaler
+            from sklearn.pipeline import Pipeline
             pipeline = Pipeline([
                 ('scaler', StandardScaler()),
                 ('model', model)
@@ -281,6 +311,7 @@ class OptimizedModelTrainer:
             pipeline = model
             param_grid = config.param_grid
         
+        from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
         tscv = TimeSeriesSplit(n_splits=self.cv_folds)
         
         grid_search = GridSearchCV(
@@ -302,13 +333,14 @@ class OptimizedModelTrainer:
         else:
             best_params = grid_search.best_params_
         
-        logger.info(f"Best params for {config.name}: {best_params}")
-        
         return best_params
-    
     def train_single_model(self, model_name: str, X: pd.DataFrame, y: pd.Series, 
                           optimize_hyperparams: bool = True) -> Dict:
         """Train a single model with optional hyperparameter optimization."""
+        if not sklearn_available:
+            logger.warning(f"scikit-learn not available, skipping {model_name}")
+            return {'error': 'scikit-learn not available'}
+            
         config = MODEL_CONFIGS[model_name]
         
         if not config.model_class:
@@ -328,10 +360,12 @@ class OptimizedModelTrainer:
             else:
                 best_params = config.default_params or {}
             
-            # Train final model with best parameters
+            # Create model with optimized parameters
             model = config.model_class(**best_params)
             
             if config.needs_scaling:
+                from sklearn.preprocessing import StandardScaler
+                from sklearn.pipeline import Pipeline
                 scaler = StandardScaler()
                 X_scaled = scaler.fit_transform(X)
                 model.fit(X_scaled, y)
@@ -346,6 +380,7 @@ class OptimizedModelTrainer:
                 final_model = model
             
             # Evaluate model with cross-validation
+            from sklearn.model_selection import TimeSeriesSplit, cross_val_score
             tscv = TimeSeriesSplit(n_splits=self.cv_folds)
             cv_scores = cross_val_score(final_model, X, y, cv=tscv, scoring='accuracy')
             
@@ -359,7 +394,11 @@ class OptimizedModelTrainer:
             # Save model
             model_filename = f'{model_name}_optimized.joblib'
             model_path = MODEL_DIR / model_filename
-            joblib.dump(final_model, model_path)
+            if joblib is not None:
+                joblib.dump(final_model, model_path)
+            else:
+                logger.warning("joblib not available, cannot save model to disk")
+                model_path = None
             
             training_time = time.time() - start_time
             
