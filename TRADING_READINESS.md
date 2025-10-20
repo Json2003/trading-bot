@@ -69,6 +69,18 @@ The `check_trading_readiness.py` script performs comprehensive validation of you
 - Risk management systems
 - Money management validation
 
+#### 🔒 Always-On Risk Controls
+- **Per-trade risk cap.** Size positions off recent volatility (e.g., ATR-based sizing) so the marked-to-stop loss on any single
+  trade never exceeds 1% of total strategy equity.
+- **Portfolio kill switch.** Enforce an automated halt if daily P&L drawdown breaches ~3% or the cumulative drawdown reaches the
+  8–12% range.
+- **Leverage caps.** Keep perpetual futures leverage inside a 5–10× band and reserve higher leverage exclusively for beta
+  hedging or short-lived momentum plays—never for grid or DCA tactics.
+- **Exposure limits.** Cap exposure to any single asset at 40% of portfolio equity and to any exchange at 60% to avoid
+  correlated failure modes.
+- **Order idempotency.** Stamp every order with a unique `clientOrderId` and reconcile acknowledgements, fills, and cancels until
+  the exchange confirms the final state.
+
 #### 🌐 Server Configuration
 - API authentication systems
 - Rate limiting mechanisms
