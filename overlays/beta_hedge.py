@@ -57,33 +57,60 @@ def size_btc_beta_hedge(
     betas = betas.astype(float)
     prices = prices.astype(float)
 
-    beta_index = set(betas.index)
-    price_index = set(prices.index)
+    if hasattr(pd, "concat") and hasattr(positions, "rename"):
+        df = pd.concat(
+            [
+                positions.rename("position"),
+                betas.rename("beta"),
+                prices.rename("price"),
+            ],
+            axis=1,
+            join="inner",
+        ).dropna()
 
-    notionals: list[float] = []
-    beta_contrib: list[float] = []
-    for label in positions.index:
-        if label not in beta_index or label not in price_index:
-            continue
-        pos = positions[label]
-        beta_val = betas[label]
-        price_val = prices[label]
-        if pos is None or beta_val is None or price_val is None:
-            continue
-        if price_val == 0 or price_val != price_val:
-            continue
-        notional = float(pos) * float(price_val)
-        notionals.append(notional)
-        beta_contrib.append(notional * float(beta_val))
+        if df.empty:
+            return 0.0
 
-    if not notionals:
-        return 0.0
+        df["notional"] = df["position"] * df["price"]
+        portfolio_value = df["notional"].sum()
+        if not pd.isfinite(portfolio_value) or portfolio_value == 0.0:
+            return 0.0
 
-    portfolio_value = sum(notionals)
-    if portfolio_value == 0:
-        return 0.0
+        beta_contrib = (df["notional"] * df["beta"]).sum()
+        portfolio_beta = beta_contrib / portfolio_value
+    else:
+        portfolio_value = 0.0
+        beta_contrib = 0.0
+        pos_index = list(getattr(positions, "index", range(len(positions))))
+        pos_values = list(positions)
+        beta_index = list(getattr(betas, "index", range(len(betas))))
+        beta_values = list(betas)
+        price_index = list(getattr(prices, "index", range(len(prices))))
+        price_values = list(prices)
 
-    portfolio_beta = sum(beta_contrib) / portfolio_value
+        beta_map = {label: value for label, value in zip(beta_index, beta_values)}
+        price_map = {label: value for label, value in zip(price_index, price_values)}
+
+        for idx, label in enumerate(pos_index):
+            pos = pos_values[idx] if idx < len(pos_values) else None
+            beta_val = beta_map.get(label)
+            price_val = price_map.get(label)
+            if pos is None or beta_val is None or price_val is None:
+                continue
+            try:
+                notional = float(pos) * float(price_val)
+                beta_component = notional * float(beta_val)
+            except Exception:
+                continue
+            if notional != notional:
+                continue
+            portfolio_value += notional
+            beta_contrib += beta_component
+
+        if portfolio_value == 0.0:
+            return 0.0
+
+        portfolio_beta = beta_contrib / portfolio_value
     target = _resolve_target(portfolio_beta, target_beta)
     beta_gap = portfolio_beta - target
     hedge_notional = -beta_gap * portfolio_value
@@ -92,6 +119,10 @@ def size_btc_beta_hedge(
         raise ValueError("btc_price and contract_size must be non-zero")
 
     contracts = hedge_notional / (btc_price * contract_size)
-    if contracts != contracts or contracts in (float("inf"), float("-inf")):
+    if hasattr(pd, "isfinite"):
+        finite = pd.isfinite(contracts)
+    else:
+        finite = contracts == contracts and contracts not in (float("inf"), float("-inf"))
+    if not finite:
         return 0.0
     return float(contracts)
