@@ -93,10 +93,16 @@ def read_trade_file(path: Path) -> pd.DataFrame:
 def append_ticks(ticks: pd.DataFrame, out_path: Path) -> int:
     """Append tick DataFrame to ``out_path`` deduplicating by ts/price/qty."""
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    new_rows = ticks.to_dict()
+    try:
+        new_rows = ticks.to_dict(orient="records")
+    except TypeError:  # stub fallback without orient support
+        new_rows = ticks.to_dict()
     existing: List[dict] = []
     if out_path.exists():
-        existing = pd.read_csv(out_path).to_dict()
+        try:
+            existing = pd.read_csv(out_path).to_dict(orient="records")
+        except TypeError:
+            existing = pd.read_csv(out_path).to_dict()
 
     combined = existing + new_rows
     seen = set()
