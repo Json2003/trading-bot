@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from collections import deque
+
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, Sequence
 import logging
 
 from .atr import compute_atr
@@ -220,6 +221,7 @@ class UnifiedDataFeed:
             )
         return snapshots
 
+
     @staticmethod
     def _infer_session(timestamp: datetime) -> str:
         ts = timestamp.astimezone(timezone.utc)
@@ -310,4 +312,51 @@ class UnifiedDataFeed:
             )
 
 
-__all__ = ["MarketInstrument", "OHLCV", "MarketData", "UnifiedDataFeed"]
+class ReplayDataFeed:
+    """Replay a pre-recorded sequence of :class:`MarketData` snapshots."""
+
+    def __init__(
+        self,
+        snapshots: Mapping[str, Sequence[MarketData]],
+    ) -> None:
+        if not snapshots:
+            raise ValueError("snapshots must contain at least one instrument")
+
+        lengths = {len(series) for series in snapshots.values()}
+        if not lengths or 0 in lengths:
+            raise ValueError("each instrument must provide at least one datapoint")
+        if len(lengths) != 1:
+            raise ValueError("all instruments must have the same number of snapshots")
+
+        self._snapshots: dict[str, Sequence[MarketData]] = {
+            key: tuple(series) for key, series in snapshots.items()
+        }
+        self._length = lengths.pop()
+        self._cursor = 0
+
+    def reset(self) -> None:
+        """Seek back to the first snapshot."""
+
+        self._cursor = 0
+
+    @property
+    def remaining(self) -> int:
+        """Return the number of snapshots left to replay."""
+
+        return self._length - self._cursor
+
+    def fetch(self) -> dict[str, MarketData]:
+        """Return the next snapshot in the replay sequence."""
+
+        if self._cursor >= self._length:
+            raise StopIteration("no more market data to replay")
+
+        frame = {
+            key: series[self._cursor]
+            for key, series in self._snapshots.items()
+        }
+        self._cursor += 1
+        return frame
+
+
+__all__ = ["MarketInstrument", "OHLCV", "MarketData", "UnifiedDataFeed", "ReplayDataFeed"]

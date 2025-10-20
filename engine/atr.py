@@ -18,6 +18,9 @@ def compute_atr(bars: Iterable[object], window: int = 14) -> float | None:
     """Return a simple Average True Range for ``bars``."""
 
     indicator = ATR(window)
-    return indicator.warmup(bars)
+    value: float | None = None
+    for bar in bars:
+        value = indicator.update(bar)
+    return value
 
 __all__ = ["ATR", "true_range", "compute_atr"]

@@ -8,7 +8,8 @@ from typing import Protocol, Sequence
 import logging
 
 from .datafeed import MarketData, UnifiedDataFeed
-from .kill_switch import PortfolioKillSwitch
+from .kill_switch import KillSwitchEvent, PortfolioKillSwitch
+from .overlays import OverlayEngine
 from .portfolio import OrderFill, Portfolio, PortfolioSnapshot, StrategyAllocation
 from .position_sizing import ATRSizingConfig, atr_position_size, atr_stop
 from .risk import RiskManager
@@ -47,6 +48,7 @@ class MultiStrategyOrchestrator:
         executor: OrderExecutor | None = None,
         kill_switch: PortfolioKillSwitch | None = None,
         log: logging.Logger | None = None,
+        overlay: OverlayEngine | None = None,
     ) -> None:
         if not strategies:
             raise ValueError("At least one strategy must be configured")
@@ -57,11 +59,15 @@ class MultiStrategyOrchestrator:
         self._executor = executor
         self._kill_switch = kill_switch
         self._log = log or logger
+        self._last_market_data: dict[str, MarketData] | None = None
+        self._overlay = overlay
+        self._cycle = 0
 
     def run_cycle(self) -> list[OrderFill]:
         """Run a single evaluation cycle across all strategies."""
 
         market_data = self._data_feed.fetch()
+        self._last_market_data = dict(market_data)
         snapshot = self._portfolio.snapshot(
             mark_prices={data.symbol: data.price for data in market_data.values()}
         )
@@ -83,8 +89,9 @@ class MultiStrategyOrchestrator:
 
             sized_signals: list[StrategySignal] = []
             for signal in signals:
+                overlayed = self._apply_overlay(binding, signal, snapshot)
                 sized = self._apply_sizing(
-                    binding, signal, market_data, snapshot
+                    binding, overlayed, market_data, snapshot
                 )
                 if sized is not None:
                     sized_signals.append(sized)
@@ -109,7 +116,28 @@ class MultiStrategyOrchestrator:
                     fills.append(fill)
                     self._portfolio.apply_fills(binding.name, [fill])
 
+        if self._overlay:
+            self._overlay.after_cycle()
+        self._cycle += 1
         return fills
+
+    @property
+    def last_market_data(self) -> dict[str, MarketData] | None:
+        """Return the most recent snapshot fetched from the data feed."""
+
+        return self._last_market_data
+
+    @property
+    def kill_switch_triggered(self) -> bool:
+        """Return ``True`` when the kill-switch has fired."""
+
+        return bool(self._kill_switch and self._kill_switch.triggered)
+
+    @property
+    def kill_switch_event(self) -> KillSwitchEvent | None:
+        """Return details of the most recent kill-switch trigger if available."""
+
+        return self._kill_switch.event if self._kill_switch else None
 
     def _build_context(
         self,
@@ -159,6 +187,13 @@ class MultiStrategyOrchestrator:
             config=config,
             price=signal.price,
         )
+        if sizing.atr is None:
+            self._log.debug(
+                "ATR unavailable for %s; using raw signal size for %s",
+                market_key,
+                binding.name,
+            )
+            return signal
         if not sizing.is_actionable:
             self._log.debug(
                 "ATR sizing filtered %s signal for %s (equity=%.2f)",
@@ -178,6 +213,16 @@ class MultiStrategyOrchestrator:
         tags["stop_level"] = atr_stop(signal.price, stop, signal.side)
 
         return replace(signal, quantity=sizing.quantity, tags=tags)
+
+    def _apply_overlay(
+        self,
+        binding: StrategyBinding,
+        signal: StrategySignal,
+        snapshot: PortfolioSnapshot,
+    ) -> StrategySignal:
+        if self._overlay is None:
+            return signal
+        return self._overlay.adjust_signal(self._cycle, binding.name, signal, snapshot)
 
 
 __all__ = ["OrderExecutor", "StrategyBinding", "MultiStrategyOrchestrator"]
