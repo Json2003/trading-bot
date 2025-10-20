@@ -78,7 +78,11 @@ class MomentumEMAStrategy(Strategy):
                     quantity=self._size,
                     price=market.price,
                     venue=self._venue,
-                    tags={"type": "momentum", "direction": "long"},
+                    tags={
+                        "type": "momentum",
+                        "direction": "long",
+                        "market_key": self._market_key,
+                    },
                 )
             ]
         elif bias < 0:
@@ -90,7 +94,11 @@ class MomentumEMAStrategy(Strategy):
                     quantity=self._size,
                     price=market.price,
                     venue=self._venue,
-                    tags={"type": "momentum", "direction": "short"},
+                    tags={
+                        "type": "momentum",
+                        "direction": "short",
+                        "market_key": self._market_key,
+                    },
                 )
             ]
         return []

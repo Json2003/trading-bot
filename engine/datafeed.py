@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Iterable, Mapping
@@ -49,6 +50,7 @@ class MarketData:
     price: float
     ohlcv: tuple[OHLCV, ...] = field(default_factory=tuple)
     raw: Mapping[str, Any] = field(default_factory=dict)
+    _atr_cache: dict[int, float] = field(default_factory=dict, repr=False)
 
     @property
     def key(self) -> str:
@@ -64,7 +66,14 @@ class MarketData:
 
         if not self.ohlcv:
             return None
-        return compute_atr(self.ohlcv, period)
+        cached = self._atr_cache.get(period)
+        if cached is not None:
+            return cached
+        if len(self.ohlcv) < max(2, period):
+            return None
+        value = compute_atr(self.ohlcv, period)
+        self._atr_cache[period] = value
+        return value
 
 
 class UnifiedDataFeed:
@@ -88,6 +97,7 @@ class UnifiedDataFeed:
         self._ohlcv_candles = int(max(0, ohlcv_candles))
         self._default_timeframe = default_timeframe
         self._log = log or logger
+        self._ohlcv_cache: dict[str, deque[OHLCV]] = {}
 
     def fetch(self) -> dict[str, MarketData]:
         """Fetch the latest snapshot for all configured instruments."""
@@ -104,6 +114,7 @@ class UnifiedDataFeed:
 
             ohlcv: tuple[OHLCV, ...] = ()
             raw_ohlcv: list[Any] | None = None
+            key = instrument.key()
             if self._ohlcv_candles and hasattr(client, "fetch_ohlcv"):
                 tf = instrument.timeframe or self._default_timeframe
                 try:
@@ -118,16 +129,33 @@ class UnifiedDataFeed:
                         exc,
                     )
                 else:
-                    ohlcv = tuple(self._transform_ohlcv(raw_ohlcv))
+                    transformed = tuple(self._transform_ohlcv(raw_ohlcv))
+                    if transformed:
+                        cache = self._ohlcv_cache.setdefault(
+                            key, deque(maxlen=self._ohlcv_candles or None)
+                        )
+                        for candle in transformed:
+                            if cache and cache[-1].timestamp >= candle.timestamp:
+                                # Replace out-of-order or duplicate entries with the latest data
+                                if cache[-1].timestamp == candle.timestamp:
+                                    cache[-1] = candle
+                                continue
+                            cache.append(candle)
+                        ohlcv = tuple(cache)
+                    else:
+                        ohlcv = tuple(self._ohlcv_cache.get(key, ()))
+            else:
+                ohlcv = tuple(self._ohlcv_cache.get(key, ()))
 
-            key = instrument.key()
             snapshots[key] = MarketData(
                 venue=instrument.venue,
                 symbol=instrument.symbol,
                 timestamp=timestamp,
                 price=price,
                 ohlcv=ohlcv,
-                raw={"ticker": ticker, "ohlcv": raw_ohlcv} if raw_ohlcv is not None else {"ticker": ticker},
+                raw={"ticker": ticker, "ohlcv": raw_ohlcv}
+                if raw_ohlcv is not None
+                else {"ticker": ticker},
             )
         return snapshots
 
