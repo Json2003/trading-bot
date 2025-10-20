@@ -5,3 +5,9 @@ fast_window: 12
 slow_window: 26
 threshold: 0.0015
 order_size: 0.5
+session_thresholds:
+  asia: 0.0020
+  europe: 0.0015
+  us: 0.0010
+atr_period: 21
+atr_pct_threshold: 0.04
