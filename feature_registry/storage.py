@@ -78,9 +78,13 @@ class FeatureStore:
         """Persist the latest snapshot to a lightweight cache (JSON)."""
         cache_path = DEFAULT_CACHE_PATH / f"{pipeline_name}.json"
         sample = df.sort_values("event_ts").tail(100)
+        rows = sample.copy()
+        for col in rows.columns:
+            if pd.api.types.is_datetime64_any_dtype(rows[col]):
+                rows[col] = rows[col].dt.strftime("%Y-%m-%dT%H:%M:%SZ")
         cache_payload = {
             "pipeline": pipeline_name,
             "updated_at": dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "rows": sample.to_dict(orient="records"),
+            "rows": rows.to_dict(orient="records"),
         }
         cache_path.write_text(json.dumps(cache_payload, indent=2))

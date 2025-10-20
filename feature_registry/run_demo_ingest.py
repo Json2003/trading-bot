@@ -30,7 +30,12 @@ def main() -> None:
     ]
     service = FeatureRegistryService(pipelines, store=store)
     results = service.run_all()
-    print(json.dumps([result.__dict__ for result in results], indent=2))
+    payload = []
+    for result in results:
+        entry = dict(result.__dict__)
+        entry["as_of"] = result.as_of.isoformat()
+        payload.append(entry)
+    print(json.dumps(payload, indent=2))
 
 
 if __name__ == "__main__":
