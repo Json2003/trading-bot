@@ -24,11 +24,14 @@ def _load_real_pandas():
         except Exception:
             continue
 
+    existing = sys.modules.pop("pandas", None)
     try:
         return importlib.import_module("pandas")
     except ModuleNotFoundError:
         return None
     finally:
+        if existing is not None and "pandas" not in sys.modules:
+            sys.modules["pandas"] = existing
         for idx, value in sorted(removed, key=lambda item: item[0]):
             sys.path.insert(idx, value)
 
