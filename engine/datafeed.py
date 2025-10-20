@@ -48,7 +48,9 @@ class MarketData:
     symbol: str
     timestamp: datetime
     price: float
+    session: str | None = None
     ohlcv: tuple[OHLCV, ...] = field(default_factory=tuple)
+    metrics: Mapping[str, Any] = field(default_factory=dict)
     raw: Mapping[str, Any] = field(default_factory=dict)
     _atr_cache: dict[int, float] = field(default_factory=dict, repr=False)
 
@@ -98,6 +100,7 @@ class UnifiedDataFeed:
         self._default_timeframe = default_timeframe
         self._log = log or logger
         self._ohlcv_cache: dict[str, deque[OHLCV]] = {}
+        self._open_interest_cache: dict[str, float] = {}
 
     def fetch(self) -> dict[str, MarketData]:
         """Fetch the latest snapshot for all configured instruments."""
@@ -147,17 +150,121 @@ class UnifiedDataFeed:
             else:
                 ohlcv = tuple(self._ohlcv_cache.get(key, ()))
 
+            session_label = self._infer_session(timestamp)
+            funding_payload: Any | None = None
+            open_interest_payload: Any | None = None
+            funding_rate = None
+            open_interest = None
+            open_interest_change = None
+
+            fetch_funding = getattr(client, "fetch_funding_rate", None)
+            if callable(fetch_funding):
+                try:
+                    funding_payload = fetch_funding(instrument.symbol)
+                except Exception as exc:  # pragma: no cover - runtime dependent
+                    self._log.debug(
+                        "Failed to fetch funding for %s on %s: %s",
+                        instrument.symbol,
+                        instrument.venue,
+                        exc,
+                    )
+                else:
+                    funding_rate = self._extract_funding_rate(funding_payload)
+
+            fetch_oi = getattr(client, "fetch_open_interest", None)
+            if callable(fetch_oi):
+                try:
+                    open_interest_payload = fetch_oi(instrument.symbol)
+                except Exception as exc:  # pragma: no cover - runtime dependent
+                    self._log.debug(
+                        "Failed to fetch open interest for %s on %s: %s",
+                        instrument.symbol,
+                        instrument.venue,
+                        exc,
+                    )
+                else:
+                    open_interest = self._extract_open_interest(open_interest_payload)
+                    if open_interest is not None:
+                        prev = self._open_interest_cache.get(key)
+                        if prev is not None:
+                            open_interest_change = open_interest - prev
+                        self._open_interest_cache[key] = open_interest
+
+            metrics: dict[str, Any] = {}
+            if session_label:
+                metrics["session"] = session_label
+            if funding_rate is not None:
+                metrics["funding_rate"] = funding_rate
+            if open_interest is not None:
+                metrics["open_interest"] = open_interest
+            if open_interest_change is not None:
+                metrics["open_interest_change"] = open_interest_change
+
+            raw_payload: dict[str, Any] = {"ticker": ticker}
+            if raw_ohlcv is not None:
+                raw_payload["ohlcv"] = raw_ohlcv
+            if funding_payload is not None:
+                raw_payload["funding_rate"] = funding_payload
+            if open_interest_payload is not None:
+                raw_payload["open_interest"] = open_interest_payload
+
             snapshots[key] = MarketData(
                 venue=instrument.venue,
                 symbol=instrument.symbol,
                 timestamp=timestamp,
                 price=price,
+                session=session_label,
                 ohlcv=ohlcv,
-                raw={"ticker": ticker, "ohlcv": raw_ohlcv}
-                if raw_ohlcv is not None
-                else {"ticker": ticker},
+                metrics=metrics,
+                raw=raw_payload,
             )
         return snapshots
+
+    @staticmethod
+    def _infer_session(timestamp: datetime) -> str:
+        ts = timestamp.astimezone(timezone.utc)
+        hour = ts.hour
+        if 0 <= hour < 8:
+            return "asia"
+        if 8 <= hour < 16:
+            return "europe"
+        return "us"
+
+    @staticmethod
+    def _extract_funding_rate(payload: Any) -> float | None:
+        if isinstance(payload, Mapping):
+            for key in ("fundingRate", "funding_rate", "rate", "value"):
+                value = payload.get(key)
+                if value is None and isinstance(payload.get("info"), Mapping):
+                    value = payload["info"].get(key)
+                if value is None:
+                    continue
+                try:
+                    return float(value)
+                except (TypeError, ValueError):
+                    continue
+        return None
+
+    @staticmethod
+    def _extract_open_interest(payload: Any) -> float | None:
+        if isinstance(payload, Mapping):
+            for key in (
+                "openInterest",
+                "open_interest",
+                "openInterestAmount",
+                "openInterestValue",
+                "value",
+            ):
+                value = payload.get(key)
+                if value is None and isinstance(payload.get("info"), Mapping):
+                    value = payload["info"].get(key)
+                if value is None:
+                    continue
+                try:
+                    return float(value)
+                except (TypeError, ValueError):
+                    continue
+        return None
 
     @staticmethod
     def _extract_timestamp(ticker: Mapping[str, Any]) -> datetime:
