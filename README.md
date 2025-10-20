@@ -153,6 +153,19 @@ The command writes the trade blotter, equity curve, and metrics beneath
 to exercise the exact same workflow on one-minute candles.  A copy of the
 latest run is kept under `backtest/sample_results/` for reference.
 
+### Optuna parameter search
+
+Use the bundled optimisation helper to explore parameter combinations with Optuna:
+
+```bash
+python scripts/optimize_strategy.py --data backtest/sample_data/sample_ohlcv.csv --trials 20
+```
+
+The command evaluates the SMA-based strategy while Optuna proposes combinations
+of the ``window``, ``feature_mix`` and ``thr`` knobs.  The script prints the best
+Sharpe (by default) along with a full metrics summary for the winning
+configuration.
+
 ### Minimal CSV-only CLI
 
 If you prefer a lightweight wrapper that works with local CSV files only and
