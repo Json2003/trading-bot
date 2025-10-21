@@ -92,7 +92,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-clean", action="store_true", help="Do not pass --clean to PyInstaller.")
     parser.add_argument("--windows-installer", action="store_true", help="Attempt to build an Inno Setup installer (Windows only).")
     parser.add_argument("--skip-release-copy", action="store_true", help="Do not copy dist output into release directory.")
+    parser.add_argument("--zip", dest="zip_archive", action="store_true", help="Create a ZIP archive of the release directory.")
     return parser.parse_args()
+
+
+def create_zip_archive(source_dir: Path, release_dir: Path) -> Path:
+    """Create a ZIP archive of the built application for easy distribution."""
+    archive_name = release_dir / f"{source_dir.name}"
+    if archive_name.with_suffix(".zip").exists():
+        archive_name.with_suffix(".zip").unlink()
+    zip_path = shutil.make_archive(str(archive_name), "zip", root_dir=source_dir)
+    print(f"[Archive] Created ZIP at {zip_path}")
+    return Path(zip_path)
 
 
 def main() -> None:
@@ -106,9 +117,14 @@ def main() -> None:
             release_target = copy_release(bin_dir, args.release_dir)
         else:
             release_target = bin_dir
+        archive_path = None
+        if args.zip_archive:
+            archive_path = create_zip_archive(release_target, args.release_dir)
         if args.windows_installer:
             run_inno_setup(release_target, args.release_dir)
         print("Packaging completed successfully.")
+        if archive_path:
+            print(f"ZIP archive available at: {archive_path}")
     except subprocess.CalledProcessError as exc:
         print(f"Packaging failed: {exc}")
         sys.exit(exc.returncode)
