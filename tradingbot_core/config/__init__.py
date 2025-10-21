@@ -4,12 +4,24 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 import os
 
 import yaml
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_CONFIG_ROOT = Path(__file__).resolve().parents[2] / "config"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_CONFIG_ROOT = _REPO_ROOT / "config"
+
+
+class AppSettings(BaseSettings):
+    """Typed runtime settings sourced from environment variables."""
+
+    TB_MODE: Literal["paper", "live"] = "paper"
+    BROKER: str = "IBKR"
+    LOG_LEVEL: str = "INFO"
+
+    model_config = SettingsConfigDict(env_file=_REPO_ROOT / ".env", case_sensitive=False)
 
 from .risk import RiskCfg, RiskConfigError
 

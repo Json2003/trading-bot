@@ -13,7 +13,7 @@ from .results import deps_fingerprint, save_results
 from .monitoring import AlertConfig, MonitoringHub
 from .risk import KillSwitch, KillSwitchCfg
 from .strategy import Bar, OrderIntent, Strategy
-from .strategies import GridConfig, GridStrategy
+from .momentum import MomentumEMA
 
 try:  # pragma: no cover - optional dependency guard
     from .reconciliation import (
@@ -47,8 +47,7 @@ __all__ = [
     "Bar",
     "OrderIntent",
     "Strategy",
-    "GridConfig",
-    "GridStrategy",
+    "MomentumEMA",
     "BacktestEvaluation",
     "BacktestProfile",
     "BacktestProfileNotFoundError",

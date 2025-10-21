@@ -8,8 +8,11 @@ import logging
 from tradingbot_ibkr.execution.broker_base import BrokerBase
 
 from .datafeed import MarketInstrument, UnifiedDataFeed
+from .kill_switch import PortfolioKillSwitch
 from .orchestrator import MultiStrategyOrchestrator, OrderExecutor, StrategyBinding
 from .portfolio import Portfolio, StrategyAllocation
+from .overlays import OverlayEngine
+from .position_sizing import ATRSizingConfig
 from .risk import RiskManager
 from config.portfolio_loader import PortfolioConfig
 from strategies import (
@@ -89,12 +92,16 @@ def build_multi_strategy_orchestrator(
     *,
     portfolio_config: PortfolioConfig,
     strategy_params: Mapping[str, Mapping[str, Any]],
-    clients: Mapping[str, Any],
+    clients: Mapping[str, Any] | None,
     broker: BrokerBase,
     executor: OrderExecutor,
     default_timeframe: str = "1h",
     ohlcv_candles: int = 20,
     log: logging.Logger | None = None,
+    data_feed: UnifiedDataFeed | None = None,
+    enable_sizing: bool = True,
+    enable_kill_switch: bool = True,
+    overlay: OverlayEngine | None = None,
 ) -> tuple[
     MultiStrategyOrchestrator,
     Portfolio,
@@ -116,25 +123,50 @@ def build_multi_strategy_orchestrator(
         strategy = strategies.get(cfg.name)
         if strategy is None:
             raise KeyError(f"Missing strategy parameters for {cfg.name!r}")
+        sizing_cfg = None
+        if enable_sizing and cfg.sizing:
+            sizing_kwargs = dict(cfg.sizing)
+            sizing_cfg = ATRSizingConfig(
+                risk_fraction=float(sizing_kwargs.get("risk_fraction", 0.01)),
+                atr_period=int(sizing_kwargs.get("atr_period", 14)),
+                atr_multiplier=float(sizing_kwargs.get("atr_multiplier", 2.0)),
+                min_notional=float(sizing_kwargs.get("min_notional", 0.0)),
+                min_quantity=float(sizing_kwargs.get("min_quantity", 0.0)),
+                max_notional=(
+                    float(sizing_kwargs["max_notional"])
+                    if sizing_kwargs.get("max_notional") is not None
+                    else None
+                ),
+                max_leverage=(
+                    float(sizing_kwargs["max_leverage"])
+                    if sizing_kwargs.get("max_leverage") is not None
+                    else None
+                ),
+            )
         bindings.append(
             StrategyBinding(
                 name=cfg.name,
                 strategy=strategy,
                 allocation=allocation_map[cfg.name],
+                sizing=sizing_cfg,
             )
         )
 
-    instruments = collect_market_instruments(
-        strategy_params, default_timeframe=default_timeframe
-    )
+    if data_feed is None:
+        if not clients:
+            raise ValueError("clients must be provided when data_feed is not supplied")
 
-    data_feed = UnifiedDataFeed(
-        clients=clients,
-        instruments=instruments,
-        ohlcv_candles=ohlcv_candles,
-        default_timeframe=default_timeframe,
-        log=log or logger,
-    )
+        instruments = collect_market_instruments(
+            strategy_params, default_timeframe=default_timeframe
+        )
+
+        data_feed = UnifiedDataFeed(
+            clients=clients,
+            instruments=instruments,
+            ohlcv_candles=ohlcv_candles,
+            default_timeframe=default_timeframe,
+            log=log or logger,
+        )
 
     portfolio = Portfolio(
         allocations,
@@ -149,13 +181,24 @@ def build_multi_strategy_orchestrator(
         log=log or logger,
     )
 
+    kill_switch_config = portfolio_config.kill_switch or {}
+    kill_switch = None
+    if enable_kill_switch and kill_switch_config:
+        kill_switch = PortfolioKillSwitch(
+            max_drawdown=kill_switch_config.get("max_drawdown"),
+            max_loss=kill_switch_config.get("max_loss"),
+            log=log or logger,
+        )
+
     orchestrator = MultiStrategyOrchestrator(
         data_feed=data_feed,
         portfolio=portfolio,
         risk_manager=risk_manager,
         strategies=bindings,
         executor=executor,
+        kill_switch=kill_switch,
         log=log or logger,
+        overlay=overlay,
     )
 
     return orchestrator, portfolio, risk_manager, data_feed, bindings

@@ -3,24 +3,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Protocol, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
-from .broker_base import Broker, Order, OrderStatus
+from .broker_base import Broker
+from models import OrderRequest, OrderStatus
 
-
-class LoggerLike(Protocol):
-    """Protocol describing the subset of :mod:`logging` used by the reconciler."""
-
-    def info(self, msg: str, *args, **kwargs) -> None:  # pragma: no cover - protocol stub
-        ...
-
-    def error(self, msg: str, *args, **kwargs) -> None:  # pragma: no cover - protocol stub
-        ...
+_TERMINAL_STATUSES = {
+    "FILLED",
+    "CANCELED",
+    "CANCELLED",
+    "REJECTED",
+    "DONE",
+    "EXPIRED",
+}
 
 
 @dataclass(slots=True)
 class RiskLimits:
-    """Simple container describing risk parameters for the reconciler."""
+    """Configuration for broker level risk controls."""
 
     max_daily_loss_pct: float
     kill_switch_drawdown_pct: float
@@ -28,133 +28,150 @@ class RiskLimits:
 
 
 class Reconciler:
-    """Compare the strategy's intent with the broker state and react accordingly."""
+    """Synchronise the intended orders with the broker state."""
 
-    def __init__(self, broker: Broker, limits: RiskLimits, logger: LoggerLike):
+    def __init__(
+        self,
+        broker: Broker,
+        limits: RiskLimits,
+        logger,
+        *,
+        account_id: str | None = None,
+    ) -> None:
         self.broker = broker
+        self.account_id = account_id
         self.limits = limits
         self.log = logger
 
+    # ---------------------------------------------------------------------
+    # Broker helpers
     # ------------------------------------------------------------------
-    # Helpers
-    def _order_key(self, order: object) -> str | None:
-        for attr in ("idemp_key", "client_id", "id", "broker_order_id"):
-            value = getattr(order, attr, None)
-            if value:
-                return str(value)
-        return None
+    def _place(self, order: OrderRequest | Mapping[str, Any] | object) -> OrderStatus:
+        """Submit ``order`` via whichever broker API is available."""
 
-    def _open_orders(self) -> dict[str, object]:
-        open_now: dict[str, object] = {}
-        for existing in self.broker.fetch_open_orders():
-            key = self._order_key(existing)
-            if key is None:
-                continue
-            # Always keep the freshest snapshot for the key.  Brokers occasionally
-            # return duplicates and we want later entries to win as they tend to be
-            # newer.
-            open_now[key] = existing
-        return open_now
+        if hasattr(self.broker, "place_order"):
+            account_id = "" if self.account_id is None else self.account_id
+            return self.broker.place_order(account_id, order)  # type: ignore[arg-type]
 
-    def _coerce_status(self, payload: object, fallback_key: str | None) -> OrderStatus:
-        if isinstance(payload, OrderStatus):
-            return payload
-        status = getattr(payload, "status", "open")
-        client_id = getattr(payload, "client_id", None)
-        idemp_key = getattr(payload, "idemp_key", fallback_key)
-        filled = getattr(payload, "filled_quantity", 0.0)
-        avg_price = getattr(payload, "avg_price", None)
-        message = getattr(payload, "message", None)
-        return OrderStatus(
-            status=status,
-            client_id=client_id,
-            idemp_key=idemp_key,
-            filled_quantity=filled,
-            avg_price=avg_price,
-            message=message,
-        )
+        if hasattr(self.broker, "place"):
+            # Legacy interface used by older broker implementations.
+            return self.broker.place(order)  # type: ignore[attr-defined]
+
+        raise AttributeError("Broker does not expose place_order/place")
+
+    def _list_orders(self) -> Sequence[OrderStatus] | Iterable[OrderStatus]:
+        if hasattr(self.broker, "list_orders"):
+            account_id = "" if self.account_id is None else self.account_id
+            return self.broker.list_orders(account_id)  # type: ignore[attr-defined]
+
+        if hasattr(self.broker, "fetch_open_orders"):
+            return self.broker.fetch_open_orders()  # type: ignore[attr-defined]
+
+        raise NotImplementedError("Broker cannot provide open orders")
+
+    def _list_positions(self) -> Sequence[object] | Iterable[object]:
+        if hasattr(self.broker, "get_positions"):
+            account_id = "" if self.account_id is None else self.account_id
+            return self.broker.get_positions(account_id)  # type: ignore[attr-defined]
+
+        if hasattr(self.broker, "fetch_positions"):
+            return self.broker.fetch_positions()  # type: ignore[attr-defined]
+
+        raise NotImplementedError("Broker cannot provide positions")
 
     # ------------------------------------------------------------------
-    # Public API
-    def submit_idempotent(
-        self,
-        order: Order,
-        *,
-        open_orders: dict[str, object] | None = None,
-    ) -> OrderStatus:
-        """Submit ``order`` while avoiding accidental duplicates."""
+    def submit_idempotent(self, order: OrderRequest | Mapping[str, Any] | object) -> OrderStatus:
+        """Submit ``order`` while avoiding duplicate broker entries."""
 
-        key = self._order_key(order)
-        current_open = open_orders if open_orders is not None else self._open_orders()
-        if key and key in current_open:
-            status = self._coerce_status(current_open[key], key)
-            self.log.info(
-                "submit_idempotent: reusing existing order status=%s id=%s",
-                status.status,
-                status.client_id,
-            )
-            return status
+        status = self._place(order)
+        status_desc = None
+        client_id = None
 
-        placed = self.broker.place(order)
-        status = self._coerce_status(placed, key)
-        if key and open_orders is not None:
-            open_orders[key] = status
-        self.log.info(
-            "submit_idempotent: submitted order status=%s id=%s",
-            status.status,
-            status.client_id,
-        )
+        if isinstance(status, Mapping):
+            status_desc = status.get("status") or status.get("state")
+            client_id = status.get("client_order_id") or status.get("client_id")
+        else:
+            status_desc = getattr(status, "status", None) or getattr(status, "state", None)
+            client_id = getattr(status, "client_order_id", None) or getattr(status, "client_id", None)
+
+        self.log.info("submit_idempotent: status=%s id=%s", status_desc, client_id)
         return status
 
-    def reconcile(self, intended_orders: Iterable[Order]) -> None:
-        """Ensure every intended order exists at the broker exactly once."""
+    @staticmethod
+    def _order_key(order: OrderRequest | OrderStatus | Mapping[str, object]) -> str | None:
+        """Return the preferred reconciliation key for an order-like payload."""
 
-        open_now = self._open_orders()
-        positions: Sequence[object] = tuple(self.broker.fetch_positions())
-        self.log.info(
-            "reconcile: open=%d positions=%s",
-            len(open_now),
-            positions,
-        )
+        # Support explicit idempotency hints provided either as attributes or via mappings.
+        id_fields = ("idempotency_key", "idemp_key", "client_order_id", "client_id")
+
+        if isinstance(order, Mapping):
+            for field in id_fields:
+                value = order.get(field)
+                if value:
+                    return str(value)
+            return None
+
+        meta = getattr(order, "meta", None)
+        if isinstance(meta, Mapping):
+            for field in id_fields:
+                value = meta.get(field)
+                if value:
+                    return str(value)
+
+        for field in ("idemp_key", "client_id", "client_order_id"):
+            value = getattr(order, field, None)
+            if value:
+                return str(value)
+
+        return None
+
+    def reconcile(self, intended_orders: Iterable[OrderRequest]) -> None:
+        """Compare intended state vs broker state and heal any drift."""
+
+        try:
+            broker_orders = self._list_orders()
+        except NotImplementedError:
+            broker_orders = ()
+
+        open_now: dict[str, OrderStatus] = {}
+        for broker_order in broker_orders:
+            if isinstance(broker_order, Mapping):
+                status_value = broker_order.get("status") or broker_order.get("state")
+            else:
+                status_value = getattr(broker_order, "status", None) or getattr(broker_order, "state", None)
+
+            if isinstance(status_value, str) and status_value.upper() in _TERMINAL_STATUSES:
+                continue
+
+            key = self._order_key(broker_order)
+            if key is not None:
+                open_now[key] = broker_order
+
+        try:
+            positions = tuple(self._list_positions())
+        except NotImplementedError:
+            positions = ()
+        self.log.info("reconcile: open=%d positions=%s", len(open_now), positions)
 
         for order in intended_orders:
             key = self._order_key(order)
             if key is None or key not in open_now:
-                self.submit_idempotent(order, open_orders=open_now)
+                self.submit_idempotent(order)
 
-    def check_kill_switch(self, equity_curve: Sequence[float]) -> bool:
-        """Return ``True`` if the kill switch should halt trading."""
+    def check_kill_switch(self, equity_curve: list[float]) -> bool:
+        """Return ``True`` when the drawdown breaches the configured limit."""
 
         if not equity_curve:
             return False
 
-        latest = float(equity_curve[-1])
-        peak = max(float(value) for value in equity_curve)
-        if peak > 0:
-            drawdown_pct = 100.0 * (1 - latest / peak)
-        else:
-            drawdown_pct = 0.0
-
+        equity = equity_curve[-1]
+        peak = max(equity_curve)
+        drawdown_pct = 100.0 * (1 - equity / peak) if peak > 0 else 0.0
         if drawdown_pct >= self.limits.kill_switch_drawdown_pct:
-            self.log.error(
-                "KILL SWITCH TRIGGERED: drawdown %.2f%% (limit %.2f%%)",
-                drawdown_pct,
-                self.limits.kill_switch_drawdown_pct,
-            )
+            self.log.error("KILL SWITCH TRIGGERED: drawdown %.2f%%", drawdown_pct)
             return True
-
-        start = float(equity_curve[0])
-        if start > 0:
-            loss_pct = 100.0 * (start - latest) / start
-            if loss_pct >= self.limits.max_daily_loss_pct:
-                self.log.error(
-                    "KILL SWITCH TRIGGERED: daily loss %.2f%% (limit %.2f%%)",
-                    loss_pct,
-                    self.limits.max_daily_loss_pct,
-                )
-                return True
-
         return False
 
 
 __all__ = ["RiskLimits", "Reconciler"]
+

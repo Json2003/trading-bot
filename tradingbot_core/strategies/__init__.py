@@ -1,14 +1,7 @@
 """Strategy implementations built on the lightweight core protocol."""
 
-from .arbitrage import CrossExArb
-from .dca import DCAMartingale
+from .cross_exchange_arb import CrossExchangeArbitrage
 from .grid import GridConfig, GridStrategy
 from .momentum import MomentumEMA
 
-__all__ = [
-    "CrossExArb",
-    "DCAMartingale",
-    "GridConfig",
-    "GridStrategy",
-    "MomentumEMA",
-]
+__all__ = ["CrossExchangeArbitrage", "GridConfig", "GridStrategy"]

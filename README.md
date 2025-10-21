@@ -61,6 +61,14 @@ The bot supports multiple asset classes including forex, options, futures,
 crypto, and stocks via a unified `AssetClass` enum. Trading scripts and the
 engine can adjust risk settings based on the selected class.
 
+## Portfolio performance guardrails
+
+Target operating metrics for the live portfolio—covering risk-adjusted returns,
+drawdown limits, turnover costs, hedging quality, and operational readiness—are
+documented in [`docs/performance_targets.md`](docs/performance_targets.md).
+Review the table before promoting new strategies or adjusting allocations so
+changes stay within the agreed guardrails.
+
 ## Binance to GCS ingestion
 
 Fetch minute and five-minute klines for BTCUSDT and ETHUSDT across spot and
@@ -152,6 +160,19 @@ The command writes the trade blotter, equity curve, and metrics beneath
 `artifacts/`.  Swap the `--path` argument to `backtest/sample_data/sample_ohlcv_1m.csv`
 to exercise the exact same workflow on one-minute candles.  A copy of the
 latest run is kept under `backtest/sample_results/` for reference.
+
+### Optuna parameter search
+
+Use the bundled optimisation helper to explore parameter combinations with Optuna:
+
+```bash
+python scripts/optimize_strategy.py --data backtest/sample_data/sample_ohlcv.csv --trials 20
+```
+
+The command evaluates the SMA-based strategy while Optuna proposes combinations
+of the ``window``, ``feature_mix`` and ``thr`` knobs.  The script prints the best
+Sharpe (by default) along with a full metrics summary for the winning
+configuration.
 
 ### Minimal CSV-only CLI
 

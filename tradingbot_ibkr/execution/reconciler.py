@@ -342,5 +342,43 @@ class Reconciler:
 
         return False
 
+    def evaluate_risk(
+        self,
+        *,
+        daily_loss_pct: float,
+        drawdown_pct: float,
+        position_risk_pct: float,
+    ) -> RiskEvaluation:
+        """Compare metrics against configured limits and log any breaches."""
+
+        limits = self._limits
+        breached: list[str] = []
+
+        if limits:
+            if daily_loss_pct > limits.max_daily_loss_pct:
+                breached.append("max_daily_loss_pct")
+            if drawdown_pct > limits.kill_switch_drawdown_pct:
+                breached.append("kill_switch_drawdown_pct")
+            if position_risk_pct > limits.max_position_risk_pct:
+                breached.append("max_position_risk_pct")
+
+            if breached:
+                self._logger.warning(
+                    "Risk limits breached",
+                    extra={
+                        "breached_limits": tuple(breached),
+                        "daily_loss_pct": daily_loss_pct,
+                        "drawdown_pct": drawdown_pct,
+                        "position_risk_pct": position_risk_pct,
+                    },
+                )
+
+        return RiskEvaluation(
+            daily_loss_pct=daily_loss_pct,
+            drawdown_pct=drawdown_pct,
+            position_risk_pct=position_risk_pct,
+            breached_limits=tuple(breached),
+        )
+
 
 __all__ = ["RiskLimits", "RiskEvaluation", "ReconciliationReport", "Reconciler"]

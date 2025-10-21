@@ -6,11 +6,15 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, Iterable
 
 import pandas as pd
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in os.sys.path:
@@ -62,34 +66,49 @@ def run_backtest(args: argparse.Namespace) -> None:
     if not args.path:
         raise ValueError("--path is required when --source csv")
 
-    df = pd.read_csv(args.path, parse_dates=["timestamp"], index_col="timestamp")
+    data_path = Path(args.path)
+    if not data_path.exists():
+        logger.error("Data file not found: %s", data_path)
+        raise FileNotFoundError(f"Data file not found: {data_path}")
+
+    logger.info("Loading data from %s", data_path)
+    df = pd.read_csv(data_path, parse_dates=["timestamp"], index_col="timestamp")
+    if df.empty:
+        logger.error("Empty DataFrame loaded from %s", data_path)
+        raise ValueError("DataFrame is empty")
+
+    strat_defaults = {
+        "fast": 8,
+        "slow": 34,
+        "trend_fast": 55,
+        "trend_slow": 144,
+    }
+    strat_args = strat_defaults.copy()
+    strat_args.update(parse_key_value_args(args.strategy_args))
+    try:
+        max_period = max(
+            int(strat_args.get("fast", strat_defaults["fast"])),
+            int(strat_args.get("slow", strat_defaults["slow"])),
+            int(strat_args.get("trend_fast", strat_defaults["trend_fast"])),
+            int(strat_args.get("trend_slow", strat_defaults["trend_slow"])),
+        )
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Strategy period arguments must be numeric") from exc
+
+    if args.max_bars and args.max_bars < max_period:
+        logger.error(
+            "max_bars (%d) too low for strategy periods (need >= %d)",
+            args.max_bars,
+            max_period,
+        )
+        raise ValueError(f"max_bars must be >= {max_period}")
+
     if args.max_bars:
         df = df.iloc[: args.max_bars].copy()
 
-    market_df = df.copy()
-
-    strat_args = parse_key_value_args(args.strategy_args)
     strategy_fn = resolve_strategy(args.strategy)
-    df = strategy_fn(df.copy(), **strat_args)
-    if not isinstance(df, pd.DataFrame):  # pragma: no cover - defensive guard
-        raise TypeError("Strategy must return a pandas DataFrame")
-
-    if not df.index.equals(market_df.index):
-        df = df.reindex(market_df.index)
-
-    if "close" not in df.columns:
-        if "close" not in market_df.columns:
-            raise KeyError("Input data is missing required 'close' column")
-        df = df.copy()
-        df["close"] = market_df["close"]
-
-    signal_col = None
-    for candidate in ("signal", "signals"):
-        if candidate in df.columns:
-            signal_col = candidate
-            break
-    if signal_col is None:
-        raise KeyError("Strategy output must include a 'signal' or 'signals' column")
+    logger.info("Strategy args: %s", strat_args)
+    df = strategy_fn(df, **strat_args)
 
     positions = []
     equity = [float(args.notional)]
@@ -178,7 +197,7 @@ def run_backtest(args: argparse.Namespace) -> None:
     }
     (out_dir / "metrics.json").write_text(json.dumps(metrics, indent=2))
 
-    print(f"Backtest complete. Outputs in {out_dir}")
+    logger.info("Backtest complete. Outputs in %s", out_dir)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -193,7 +212,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--strategy_args",
         nargs="+",
-        default=(),
+        default=("fast=8", "slow=34", "trend_fast=55", "trend_slow=144"),
         help="Strategy args like fast=8",
     )
     parser.add_argument("--fees_bps", type=float, default=0.0, help="Fees in bps")

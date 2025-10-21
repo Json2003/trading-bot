@@ -82,6 +82,7 @@ class GridTradingStrategy(Strategy):
                         "type": "grid",
                         "level": level,
                         "spacing": "geometric" if self._geometric else "arithmetic",
+                        "market_key": self._market_key,
                     },
                 )
             )
@@ -104,6 +105,7 @@ class GridTradingStrategy(Strategy):
                         "type": "grid",
                         "level": level,
                         "spacing": "geometric" if self._geometric else "arithmetic",
+                        "market_key": self._market_key,
                     },
                 )
             )

@@ -1,8 +1,10 @@
 import math
 
 import pandas as pd
+import numpy as np
 from data_pipeline import (
     canonicalize_ohlcv,
+    comp_m_scores,
     directional_return_label,
     drop_anomalies,
     magnitude_bucket_label,
@@ -91,3 +93,24 @@ def test_magnitude_bucket_label_handles_low_unique_bins():
     labeled = [value for value in lbl if not math.isnan(value)]
     assert len(labeled) == len(close) - 1
     assert max(labeled) <= 4
+
+
+def test_comp_m_scores_computes_cross_sectional_zscores():
+    price_hist = {
+        "AAA": np.array([10, 10.5, 11.0, 11.5, 12.0], dtype=float),
+        "BBB": np.array([8, 8.1, 8.0, 7.9, 7.8], dtype=float),
+        "CCC": np.array([5, 5.0, 5.1, 5.3, 5.6], dtype=float),
+        # Insufficient history should be ignored
+        "DDD": np.array([1.0, 1.1], dtype=float),
+    }
+
+    scores = comp_m_scores(price_hist, lookback=4)
+
+    assert set(scores) == {"AAA", "BBB", "CCC"}
+    # Ensure values are z-scored (mean approx 0, standard deviation approx 1)
+    z_values = list(scores.values())
+    mean = sum(z_values) / len(z_values)
+    variance = sum((value - mean) ** 2 for value in z_values) / len(z_values)
+    assert abs(mean) < 1e-12
+    assert abs(variance - 1.0) < 1e-12
+    assert scores["AAA"] > scores["CCC"] > scores["BBB"]

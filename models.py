@@ -150,6 +150,36 @@ class OrderRequest:
 
 
 @dataclass(slots=True)
+class RiskCfg:
+    """Risk guardrails used by the execution and monitoring layers."""
+
+    per_trade_risk_pct: float  # 0.5–2.0
+    max_daily_loss_pct: float  # e.g. 3.0
+    kill_switch_drawdown_pct: float  # e.g. 8.0
+    max_leverage: float  # cap at 5–10 for futures
+
+    def __post_init__(self) -> None:  # pragma: no cover - defensive validation
+        if self.per_trade_risk_pct <= 0:
+            raise ValueError("per_trade_risk_pct must be positive")
+        if self.max_daily_loss_pct <= 0:
+            raise ValueError("max_daily_loss_pct must be positive")
+        if self.kill_switch_drawdown_pct <= 0:
+            raise ValueError("kill_switch_drawdown_pct must be positive")
+        if self.max_leverage <= 0:
+            raise ValueError("max_leverage must be positive")
+
+    def to_dict(self) -> Dict[str, float]:
+        """Serialize the configuration into a simple dictionary."""
+
+        return {
+            "per_trade_risk_pct": self.per_trade_risk_pct,
+            "max_daily_loss_pct": self.max_daily_loss_pct,
+            "kill_switch_drawdown_pct": self.kill_switch_drawdown_pct,
+            "max_leverage": self.max_leverage,
+        }
+
+
+@dataclass(slots=True)
 class OrderStatus:
     broker: str
     broker_order_id: str

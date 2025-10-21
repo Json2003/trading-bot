@@ -12,11 +12,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Iterable, Iterator, Optional, Tuple
+from typing import Dict, Iterable, Iterator, Optional, Tuple
 
 import math
 
 import pandas as pd
+import numpy as np
 
 try:  # pragma: no cover - fallback branch exercised when zoneinfo missing
     from zoneinfo import ZoneInfo
@@ -180,6 +181,47 @@ def magnitude_bucket_label(close: pd.Series, horizon: int, q: int = 3) -> pd.Ser
         value = values[pos]
         result[pos] = bucket_map[value]
     return pd.Series(result, index=index)
+
+
+def comp_m_scores(
+    price_hist: Dict[str, np.ndarray], lookback: int = 60, skip: int = 0
+) -> Dict[str, float]:
+    """Cross-sectional momentum z-scores.
+
+    Prices are expected as numpy arrays with the most recent bar at the end.  The
+    trailing log return over ``lookback`` periods is computed for each asset,
+    optionally skipping the last ``skip`` observations.  Assets with insufficient
+    history are ignored.  The resulting scores are z-scored across the universe so
+    that callers can compare momentum strength on a standardized scale.
+    """
+
+    scores: Dict[str, float] = {}
+    vals: list[float] = []
+    keys: list[str] = []
+
+    for sym, px in price_hist.items():
+        if px.size < lookback + skip + 1:
+            continue
+        segment = px[-(lookback + skip) : -skip] if skip > 0 else px[-lookback:]
+        if segment.size == 0:
+            continue
+        ret = float(math.log(segment[-1] / segment[0]))
+        vals.append(ret)
+        keys.append(sym)
+
+    if not vals:
+        return scores
+
+    arr = [float(v) for v in vals]
+    mu = sum(arr) / len(arr)
+    variance = sum((value - mu) ** 2 for value in arr) / len(arr)
+    sd = math.sqrt(variance)
+    if not math.isfinite(sd) or sd == 0.0:
+        sd = 1e-12
+
+    for key, value in zip(keys, arr):
+        scores[key] = float((value - mu) / sd)
+    return scores
 
 
 def triple_barrier_label(close: pd.Series, horizon: int, upper: float, lower: float) -> pd.Series:

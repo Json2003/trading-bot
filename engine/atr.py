@@ -9,6 +9,18 @@ without forcing downstream projects to update simultaneously.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 from backtest.indicators import ATR, true_range
 
-__all__ = ["ATR", "true_range"]
+
+def compute_atr(bars: Iterable[object], window: int = 14) -> float | None:
+    """Return a simple Average True Range for ``bars``."""
+
+    indicator = ATR(window)
+    value: float | None = None
+    for bar in bars:
+        value = indicator.update(bar)
+    return value
+
+__all__ = ["ATR", "true_range", "compute_atr"]
