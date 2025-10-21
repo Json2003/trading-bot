@@ -23,23 +23,29 @@ scripts_dir = repo_root / "scripts"
 import_third_party = importlib.import_module  # fallback default
 run_backtest_module = None
 
-    if spec and spec.loader:
-        run_backtest_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(run_backtest_module)
-                 if hasattr(run_backtest_module, "import_third_party"):
-            import_third_party = run_backtest_module.import_third_party
-  
-         scripts_pkg = sys.modules.get("scripts")
-        if scripts_pkg is None:
-            scripts_pkg = types.ModuleType("scripts")
-            scripts_pkg.__path__ = [scripts_path]
-            sys.modules["scripts"] = scripts_pkg
-        sys.modules["scripts.run_backtest"] = run_backtest_module
+# Load run_backtest module
+scripts_path = str(scripts_dir)
+if scripts_path not in sys.path:
+    sys.path.append(scripts_path)
 
-        try:
-            sys.modules['requests'] = import_third_party('requests')
-        except ImportError:
-            pass
+spec = importlib.util.spec_from_file_location("run_backtest", scripts_dir / "run_backtest.py")
+if spec and spec.loader:
+    run_backtest_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(run_backtest_module)
+    if hasattr(run_backtest_module, "import_third_party"):
+        import_third_party = run_backtest_module.import_third_party
+
+    scripts_pkg = sys.modules.get("scripts")
+    if scripts_pkg is None:
+        scripts_pkg = types.ModuleType("scripts")
+        scripts_pkg.__path__ = [scripts_path]
+        sys.modules["scripts"] = scripts_pkg
+    sys.modules["scripts.run_backtest"] = run_backtest_module
+
+    try:
+        sys.modules['requests'] = import_third_party('requests')
+    except ImportError:
+        pass
 
 def create_synthetic_data(bars=100, trend_up=True):
     """Create synthetic OHLCV data for testing."""
