@@ -26,13 +26,10 @@ run_backtest_module = None
     if spec and spec.loader:
         run_backtest_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(run_backtest_module)
-
-        if hasattr(run_backtest_module, "import_third_party"):
+                 if hasattr(run_backtest_module, "import_third_party"):
             import_third_party = run_backtest_module.import_third_party
-
- 
-
-        scripts_pkg = sys.modules.get("scripts")
+  
+         scripts_pkg = sys.modules.get("scripts")
         if scripts_pkg is None:
             scripts_pkg = types.ModuleType("scripts")
             scripts_pkg.__path__ = [scripts_path]
