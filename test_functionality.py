@@ -6,19 +6,27 @@ Test script to verify the signal generation and backtesting functionality.
 import sys
 import os
 import tempfile
+from pathlib import Path
 import pandas as pd
 import numpy as np
 from datetime import datetime, timezone, timedelta
 
 # Add repo to path
-repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.append(repo_root)
+repo_root = Path(__file__).resolve().parent
+if str(repo_root) not in sys.path:
+    sys.path.append(str(repo_root))
+
+scripts_dir = repo_root / "scripts"
+if scripts_dir.exists():
+    scripts_path = str(scripts_dir)
+    if scripts_path not in sys.path:
+        sys.path.insert(0, scripts_path)
 
 def create_synthetic_data(bars=100, trend_up=True):
     """Create synthetic OHLCV data for testing."""
     # Start with a base price
     base_price = 50000.0
-    dates = pd.date_range(start='2024-01-01', periods=bars, freq='H')
+    dates = pd.date_range(start='2024-01-01', periods=bars, freq='h')
     
     # Generate trending price data
     if trend_up:
@@ -110,7 +118,9 @@ def test_backtest_with_signals():
     
     try:
         # Import and run the backtest
-        sys.path.insert(0, os.path.join(repo_root, 'scripts'))
+        from scripts.run_backtest import import_third_party
+        sys.modules['requests'] = import_third_party('requests')
+        sys.path.insert(0, str(repo_root / 'scripts'))
         from run_backtest import run_backtest, build_parser
         
         # Create arguments for CSV backtest with SMA cross strategy
