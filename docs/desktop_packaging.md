@@ -24,13 +24,14 @@ pip install -r requirements-packaging.txt
 The automation script wraps PyInstaller, collects artefacts, and (optionally) triggers Inno Setup.
 
 ```bash
-python scripts/package_desktop.py
+python scripts/package_desktop.py --zip
 ```
 
 Outputs:
 
 - `dist/desktop/RomanBot/` – PyInstaller build.
-- `release/desktop/RomanBot/` – copy ready for distribution (zip if desired).
+- `release/desktop/RomanBot/` – copy ready for distribution.
+- `release/desktop/RomanBot.zip` – zipped package when using `--zip` flag.
 - `release/desktop/` will contain the Inno installer when built on Windows with `--windows-installer`.
 
 ### Useful flags
@@ -39,6 +40,7 @@ Outputs:
 - `--windows-installer` – attempt to compile `romanbot_installer.iss` via Inno Setup (Windows only).
 - `--no-clean` – reuse existing PyInstaller cache for faster rebuilds.
 - `--skip-release-copy` – keep artefacts only under `dist/desktop/`.
+- `--zip` – produce a ZIP archive next to the release directory for easy distribution.
 
 ## 3. Manual steps the script does not cover
 
