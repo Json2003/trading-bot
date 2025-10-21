@@ -32,7 +32,9 @@ if scripts_dir.exists():
     if spec and spec.loader:
         run_backtest_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(run_backtest_module)
-        import_third_party = run_backtest_module.import_third_party
+
+        if hasattr(run_backtest_module, "import_third_party"):
+            import_third_party = run_backtest_module.import_third_party
 
         scripts_pkg = sys.modules.get("scripts")
         if scripts_pkg is None:
