@@ -17,3 +17,4 @@ overlays:
     target_beta: [0.1, 0.2]
     hedge_symbol: BTCUSDT_PERP
     contract_size: 0.001
+    rebalance_buffer: 0.02

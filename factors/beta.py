@@ -2,7 +2,114 @@
 
 from __future__ import annotations
 
+import math
+
+import numpy as np
 import pandas as pd
+
+
+def _as_float_series(values: pd.Series) -> pd.Series:
+    """Return ``values`` converted to floats while preserving the index."""
+
+    try:
+        return values.astype(float)
+    except Exception:
+        index = list(getattr(values, "index", []))
+        data: list[float] = []
+        for item in values:
+            try:
+                data.append(float(item))
+            except Exception:
+                data.append(math.nan)
+        if not index:
+            index = list(range(len(data)))
+        return pd.Series(data, index=index, dtype=float)
+
+
+def _manual_beta(
+    aligned: pd.DataFrame,
+    window: int,
+    min_periods: int,
+) -> pd.Series:
+    """Fallback beta implementation for reduced pandas environments."""
+
+    asset = list(aligned["asset"])
+    market = list(aligned["market"])
+    beta: list[float] = [math.nan] * len(asset)
+
+    for pos in range(len(aligned)):
+        start = max(0, pos - window + 1)
+        length = pos - start + 1
+        if length < min_periods:
+            continue
+
+        asset_slice = asset[start : pos + 1]
+        market_slice = market[start : pos + 1]
+
+        asset_mean = float(sum(asset_slice) / length)
+        market_mean = float(sum(market_slice) / length)
+
+        cov = sum((a - asset_mean) * (m - market_mean) for a, m in zip(asset_slice, market_slice))
+        cov /= length
+        var = sum((m - market_mean) ** 2 for m in market_slice) / length
+        if not math.isfinite(var) or abs(var) <= 1e-18:
+            continue
+
+        beta[pos] = cov / var
+
+    index = list(getattr(aligned, "index", []))
+    if len(index) != len(beta):
+        index = list(range(len(beta)))
+    return pd.Series(beta, index=index, dtype=float)
+
+
+def _align_series(asset_returns: pd.Series, market_returns: pd.Series) -> pd.DataFrame:
+    try:
+        combined = pd.DataFrame({"asset": asset_returns, "market": market_returns})
+        combined = combined.dropna()
+        combined = combined.apply(pd.to_numeric, errors="coerce")
+        combined = combined.replace([np.inf, -np.inf], np.nan).dropna()
+        try:
+            if len(combined) == 0:
+                raise ValueError
+        except TypeError:
+            raise ValueError
+        return combined
+    except Exception:
+        pass
+
+    asset_index = list(getattr(asset_returns, "index", []))
+    market_index = list(getattr(market_returns, "index", []))
+    market_values = {}
+    for idx in market_index:
+        try:
+            value = float(market_returns[idx])
+        except Exception:
+            continue
+        if math.isfinite(value):
+            market_values[idx] = value
+
+    aligned_idx: list = []
+    asset_vals: list[float] = []
+    market_vals: list[float] = []
+
+    for idx in asset_index:
+        if idx not in market_values:
+            continue
+        try:
+            asset_val = float(asset_returns[idx])
+        except Exception:
+            continue
+        if not math.isfinite(asset_val):
+            continue
+        aligned_idx.append(idx)
+        asset_vals.append(asset_val)
+        market_vals.append(market_values[idx])
+
+    if not aligned_idx:
+        return pd.DataFrame({"asset": [], "market": []})
+
+    return pd.DataFrame({"asset": asset_vals, "market": market_vals}, index=aligned_idx)
 
 
 def compute_rolling_beta(
@@ -22,8 +129,7 @@ def compute_rolling_beta(
     window : int
         Number of observations to use for the rolling regression.
     min_periods : int, optional
-        Minimum observations required for a beta estimate.  Defaults to the
-        rolling window size.
+        Minimum observations required for a beta estimate. Defaults to ``window``.
 
     Returns
     -------
@@ -35,8 +141,16 @@ def compute_rolling_beta(
     if window <= 1:
         raise ValueError("window must be greater than 1")
 
-    if min_periods is None:
-        min_periods = window
+    min_periods = int(min_periods or window)
+    if min_periods <= 0:
+        raise ValueError("min_periods must be positive")
+
+    aligned = _align_series(asset_returns, market_returns)
+    try:
+        if len(aligned) == 0:
+            return pd.Series(index=asset_returns.index, dtype=float)
+    except TypeError:
+        return pd.Series(index=asset_returns.index, dtype=float)
 
     # Prefer the vectorised implementation when a full pandas Series/DataFrame is
     # available.  The repo ships with a very small pandas stub for environments

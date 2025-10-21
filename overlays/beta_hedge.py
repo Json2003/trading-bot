@@ -27,6 +27,7 @@ def size_btc_beta_hedge(
     target_beta: float | Sequence[float],
     btc_price: float,
     contract_size: float = 1.0,
+    rebalance_buffer: float = 0.0,
 ) -> float:
     """Return the BTC perpetual contract hedge required to hit ``target_beta``.
 
@@ -46,6 +47,8 @@ def size_btc_beta_hedge(
         Mark price of the BTC perpetual contract used for hedging.
     contract_size : float, optional
         Contract multiplier. Defaults to 1 which corresponds to a 1 BTC contract.
+    rebalance_buffer : float, optional
+        Additional tolerance added to the beta band before trading.
 
     Returns
     -------
@@ -115,8 +118,21 @@ def size_btc_beta_hedge(
     beta_gap = portfolio_beta - target
     hedge_notional = -beta_gap * portfolio_value
 
-    if btc_price == 0 or contract_size == 0:
-        raise ValueError("btc_price and contract_size must be non-zero")
+    buffered_lower = lower - rebalance_buffer
+    buffered_upper = upper + rebalance_buffer
+    if buffered_lower <= portfolio_beta <= buffered_upper:
+        return 0.0
+
+    if portfolio_beta > upper:
+        target = upper
+    elif portfolio_beta < lower:
+        target = lower
+    else:
+        midpoint = (lower + upper) / 2
+        target = upper if portfolio_beta >= midpoint else lower
+
+    beta_gap = portfolio_beta - target
+    hedge_notional = -beta_gap * portfolio_value
 
     contracts = hedge_notional / (btc_price * contract_size)
     if hasattr(pd, "isfinite"):
