@@ -715,11 +715,17 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
     # Compile results
     wins_count = sum(1 for t in detailed_trades if t.get('pnl', 0) > 0)
 
+    total_pnl = balance - starting_balance
+    total_return_pct = (total_pnl / starting_balance * 100) if starting_balance else 0.0
+    annual_roi_pct = performance_metrics.get('annualized_return_pct', 0.0) if performance_metrics else 0.0
+
     results = {
         'trades': len(detailed_trades),
         'wins': wins_count,
         'win_rate_pct': (wins_count / len(detailed_trades) * 100) if detailed_trades else 0,
-        'pnl': balance - starting_balance,
+        'pnl': total_pnl,
+        'total_return_pct': total_return_pct,
+        'annual_roi_pct': annual_roi_pct,
         'final_balance': balance,
         'starting_balance': starting_balance,
         'execution_time_seconds': execution_time,
@@ -747,7 +753,8 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
         logger.info(f"Execution time: {execution_time:.2f}s")
         logger.info(f"Total trades: {results['trades']}")
         logger.info(f"Win rate: {results['win_rate_pct']:.1f}%")
-        logger.info(f"Total PnL: {results['pnl']:.2f} ({(results['pnl']/starting_balance)*100:.1f}%)")
+        logger.info(f"Total PnL: {results['pnl']:.2f} ({results['total_return_pct']:.1f}%)")
+        logger.info(f"Annual ROI: {results['annual_roi_pct']:.1f}%")
         if performance_metrics:
             logger.info(f"Sharpe ratio: {performance_metrics.get('sharpe_ratio', 0):.3f}")
             logger.info(f"Max drawdown: {performance_metrics.get('max_drawdown_pct', 0):.2f}%")
@@ -981,6 +988,8 @@ def main():
     print('Wins:', stats['wins'])
     print(f"Win rate: {stats['win_rate_pct']:.2f}%")
     print('PnL (price units):', stats['pnl'])
+    print(f"Total return: {stats.get('total_return_pct', 0):.2f}%")
+    print(f"Annual ROI: {stats.get('annual_roi_pct', 0):.2f}%")
 
 if __name__ == '__main__':
     main()
