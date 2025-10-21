@@ -6,6 +6,9 @@ Test script to verify the signal generation and backtesting functionality.
 import sys
 import os
 import tempfile
+import types
+import importlib
+import importlib.util
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -17,10 +20,31 @@ if str(repo_root) not in sys.path:
     sys.path.append(str(repo_root))
 
 scripts_dir = repo_root / "scripts"
+import_third_party = importlib.import_module  # fallback default
+run_backtest_module = None
+
 if scripts_dir.exists():
     scripts_path = str(scripts_dir)
     if scripts_path not in sys.path:
-        sys.path.insert(0, scripts_path)
+        sys.path.append(scripts_path)
+
+    spec = importlib.util.spec_from_file_location("scripts.run_backtest", scripts_dir / "run_backtest.py")
+    if spec and spec.loader:
+        run_backtest_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(run_backtest_module)
+        import_third_party = run_backtest_module.import_third_party
+
+        scripts_pkg = sys.modules.get("scripts")
+        if scripts_pkg is None:
+            scripts_pkg = types.ModuleType("scripts")
+            scripts_pkg.__path__ = [scripts_path]
+            sys.modules["scripts"] = scripts_pkg
+        sys.modules["scripts.run_backtest"] = run_backtest_module
+
+        try:
+            sys.modules['requests'] = import_third_party('requests')
+        except ImportError:
+            pass
 
 def create_synthetic_data(bars=100, trend_up=True):
     """Create synthetic OHLCV data for testing."""
@@ -69,8 +93,6 @@ def test_signal_generation():
     """Test the signal generation functions."""
     print("Testing signal generation...")
     
-    # Import with proper path handling
-    from scripts.run_backtest import import_third_party
     from tradingbot_ibkr.signal_generators import generate_signals, generate_enhanced_signals, generate_breakout_signals
     
     # Create upward trending data (should generate SMA crossover signals)
@@ -113,18 +135,18 @@ def test_backtest_with_signals():
     df = create_synthetic_data(bars=200, trend_up=True)
     
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-        df.reset_index().to_csv(f.name, index=False)
+        df_reset = df.reset_index().rename(columns={'index': 'ts'})
+        df_reset.to_csv(f.name, index=False)
         csv_path = f.name
     
     try:
-        # Import and run the backtest
-        from scripts.run_backtest import import_third_party
+        if run_backtest_module is None:
+            raise RuntimeError("run_backtest module unavailable")
+
         sys.modules['requests'] = import_third_party('requests')
-        sys.path.insert(0, str(repo_root / 'scripts'))
-        from run_backtest import run_backtest, build_parser
+        parser = run_backtest_module.build_parser()
         
         # Create arguments for CSV backtest with SMA cross strategy
-        parser = build_parser()
         args = parser.parse_args([
             '--source', 'csv',
             '--path', csv_path,
@@ -135,7 +157,7 @@ def test_backtest_with_signals():
         ])
         
         # Run backtest
-        results = run_backtest(args)
+        results = run_backtest_module.run_backtest(args)
         
         print(f"Backtest results:")
         print(f"  Total trades: {results.get('total_trades', 0)}")
@@ -157,7 +179,7 @@ def test_electron_file_paths():
     """Test that Electron app files exist and are properly structured."""
     print("\nTesting Electron app file structure...")
     
-    electron_dir = os.path.join(repo_root, 'dashboard', 'electron-app')
+    electron_dir = repo_root / 'dashboard' / 'electron-app'
     files_to_check = [
         'main.js',
         'package.json',
@@ -167,8 +189,8 @@ def test_electron_file_paths():
     
     all_exist = True
     for file in files_to_check:
-        path = os.path.join(electron_dir, file)
-        exists = os.path.exists(path)
+        path = electron_dir / Path(file)
+        exists = path.exists()
         print(f"  {file}: {'✅' if exists else '❌'}")
         if not exists:
             all_exist = False
