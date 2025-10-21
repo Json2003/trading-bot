@@ -175,10 +175,13 @@ def calculate_performance_metrics(equity_curve: List[float], trades: List[Dict],
         downside_deviation = np.std(downside_returns) * np.sqrt(252)
         sortino_ratio = (np.mean(returns) * 252 - risk_free_rate) / downside_deviation if downside_deviation > 0 else 0
     
+    annualized_return = (1 + total_return) ** (252 / len(equity)) - 1
+
     metrics = {
         'total_return': total_return,
         'total_return_pct': total_return * 100,
-        'annualized_return': (1 + total_return) ** (252 / len(equity)) - 1,
+        'annualized_return': annualized_return,
+        'annualized_return_pct': annualized_return * 100,
         'volatility': volatility,
         'sharpe_ratio': sharpe_ratio,
         'sortino_ratio': sortino_ratio,
