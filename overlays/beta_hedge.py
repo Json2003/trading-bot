@@ -62,8 +62,6 @@ def size_btc_beta_hedge(
     lower, upper = _normalise_beta_target(target_beta)
     if rebalance_buffer < 0:
         raise ValueError("rebalance_buffer must be non-negative")
-    if lower > upper:
-        lower, upper = upper, lower
 
     def _to_mapping(series: pd.Series) -> dict:
         mapping: dict = {}
