@@ -57,7 +57,7 @@ def test_compute_comp_m_factor_returns_zscores() -> None:
 
     # Asset A has the strongest momentum and should have positive score.
     last_pos = len(index) - 1
-    last_row_values = {col: zscores[col][last_pos] for col in columns}
+    last_row_values = {col: zscores[col].iloc[last_pos] for col in columns}
     assert last_row_values["A"] > 0
     assert last_row_values["C"] < 0
 
