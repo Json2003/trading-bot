@@ -19,9 +19,12 @@ import json
 import time
 import logging
 from collections import defaultdict, deque
-from pydantic import BaseModel
 import uuid
 import os
+
+from pydantic import BaseModel
+
+from tradingbot_ibkr.services.mcp_client import MCPClient
 
 # Configure logging
 logging.basicConfig(
@@ -152,6 +155,14 @@ class ConnectionManager:
             self.disconnect(connection)
 
 manager = ConnectionManager()
+
+# Optional MCP integration
+MCP_CLIENT = MCPClient.from_env()
+
+
+async def _run_in_executor(func, *args, **kwargs):
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, lambda: func(*args, **kwargs))
 
 # Authentication models
 class UserLogin(BaseModel):
@@ -300,6 +311,48 @@ async def metrics():
     STATE["metrics"]["timestamp"] = datetime.now(timezone.utc).isoformat()
     STATE["metrics"]["uptime_seconds"] = time.time() - STATE['server_stats']['start_time']
     return STATE["metrics"]
+
+
+@app.get("/mcp/health")
+async def mcp_health():
+    if not MCP_CLIENT:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="MCP integration not configured")
+    try:
+        data = await _run_in_executor(MCP_CLIENT.heartbeat)
+        return {"status": "ok", "mcp": data}
+    except Exception as exc:
+        logger.exception("MCP health check failed")
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+
+@app.get("/mcp/signals")
+async def mcp_fetch_signals():
+    if not MCP_CLIENT:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="MCP integration not configured")
+    try:
+        signals = await _run_in_executor(MCP_CLIENT.fetch_signal_batch)
+        return {"signals": signals}
+    except Exception as exc:
+        logger.exception("Failed to fetch signals from MCP")
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+
+@app.post("/mcp/metrics")
+async def mcp_push_metrics():
+    if not MCP_CLIENT:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="MCP integration not configured")
+    payload = {
+        "metrics": STATE.get("metrics", {}),
+        "orders": STATE.get("orders", []),
+        "positions": STATE.get("positions", []),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    try:
+        response = await _run_in_executor(MCP_CLIENT.push_metrics, payload)
+        return {"status": "ok", "response": response}
+    except Exception as exc:
+        logger.exception("Failed to push metrics to MCP")
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
 # Protected endpoints
 @app.post("/control/start")

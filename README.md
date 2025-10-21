@@ -19,6 +19,18 @@ install.bat
 
 This creates a `venv` directory and installs packages from `tradingbot_ibkr/requirements.txt`.
 
+## Docker & MCP deployment
+
+- Copy `env/docker.env.example` to `env/docker.env` and set MCP/API credentials.
+- Build the container and run via docker compose:
+
+  ```bash
+  docker compose -f docker/docker-compose.yml --project-directory . up --build
+  ```
+
+- MCP endpoints (`/mcp/health`, `/mcp/signals`, `/mcp/metrics`) are exposed automatically when `MCP_BASE_URL` is set.
+  See `docs/docker_mcp.md` for details.
+
 ## Asset classes
 
 The bot supports multiple asset classes including forex, options, futures,
