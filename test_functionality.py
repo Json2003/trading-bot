@@ -23,18 +23,13 @@ scripts_dir = repo_root / "scripts"
 import_third_party = importlib.import_module  # fallback default
 run_backtest_module = None
 
-if scripts_dir.exists():
-    scripts_path = str(scripts_dir)
-    if scripts_path not in sys.path:
-        sys.path.append(scripts_path)
-
-    spec = importlib.util.spec_from_file_location("scripts.run_backtest", scripts_dir / "run_backtest.py")
-      if spec and spec.loader:
+    if spec and spec.loader:
         run_backtest_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(run_backtest_module)
 
         if hasattr(run_backtest_module, "import_third_party"):
             import_third_party = run_backtest_module.import_third_party
+
  
 
         scripts_pkg = sys.modules.get("scripts")
