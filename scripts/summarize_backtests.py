@@ -229,8 +229,10 @@ def summarize_backtests(args: argparse.Namespace) -> List[dict]:
         try:
             data = load_json(path)
             results = data.get("results", {})
+            result_block = results.get("result") or {}
             equity_raw = (
                 results.get("equity_curve")
+                or result_block.get("equity_curve")
                 or data.get("equity_curve")
                 or data.get("equity")
                 or data.get("equity_series")
@@ -239,6 +241,7 @@ def summarize_backtests(args: argparse.Namespace) -> List[dict]:
             equity = normalize_equity(equity_raw)
             trades_raw_candidates = [
                 results.get("trades"),
+                result_block.get("trades"),
                 data.get("trades"),
                 results.get("trade_list"),
                 data.get("trade_list"),
@@ -254,8 +257,16 @@ def summarize_backtests(args: argparse.Namespace) -> List[dict]:
                 if isinstance(candidate, SequenceABC):
                     trades = list(candidate)
                     break
-            start = results.get("start") or data.get("start")
-            end = results.get("end") or data.get("end")
+            start = (
+                results.get("start")
+                or result_block.get("start")
+                or data.get("start")
+            )
+            end = (
+                results.get("end")
+                or result_block.get("end")
+                or data.get("end")
+            )
 
             metrics = (
                 results.get("performance_metrics")

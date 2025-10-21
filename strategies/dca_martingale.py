@@ -1,4 +1,4 @@
-"""DCA-first martingale-lite strategy."""
+"""Dollar-cost averaging strategy with optional martingale scaling."""
 
 from __future__ import annotations
 
@@ -36,11 +36,7 @@ class DCAMartingaleStrategy(Strategy):
         self._avg_entry: float | None = None
         self._layers = 0
 
-    def generate_signals(self, context: StrategyContext) -> Iterable[StrategySignal]:
-        market = context.data(self._market_key)
-        price = market.price
-        signals: List[StrategySignal] = []
-
+    def _sync_with_portfolio(self, context: StrategyContext, price: float) -> None:
         held_qty = 0.0
         held_avg: float | None = None
         for position in context.positions:
@@ -48,17 +44,34 @@ class DCAMartingaleStrategy(Strategy):
                 held_qty += position.quantity
                 held_avg = position.average_price
 
-        if abs(held_qty - self._position) > 1e-9:
-            self._position = held_qty
-            if held_qty <= 0:
-                self._avg_entry = None
-                self._layers = 0
-            else:
-                if held_avg is not None:
-                    self._avg_entry = held_avg
-                elif self._avg_entry is None:
-                    self._avg_entry = price
-                self._layers = max(1, self._layers)
+        if abs(held_qty - self._position) <= 1e-9:
+            return
+
+        increasing = held_qty > self._position
+        self._position = held_qty
+
+        if held_qty <= 0:
+            self._avg_entry = None
+            self._layers = 0
+            return
+
+        if held_avg is not None:
+            self._avg_entry = held_avg
+        elif self._avg_entry is None:
+            self._avg_entry = price
+
+        if increasing:
+            self._layers = min(self._layers + 1, self._max_layers)
+        else:
+            # Partial reductions reduce layer count but keep at least one while position remains.
+            self._layers = max(1, self._layers - 1)
+
+    def generate_signals(self, context: StrategyContext) -> Iterable[StrategySignal]:
+        market = context.data(self._market_key)
+        price = market.price
+        self._sync_with_portfolio(context, price)
+
+        signals: List[StrategySignal] = []
 
         if self._position <= 0:
             signals.append(
@@ -76,9 +89,6 @@ class DCAMartingaleStrategy(Strategy):
                     },
                 )
             )
-            self._position = self._base_size
-            self._avg_entry = price
-            self._layers = 1
             return signals
 
         assert self._avg_entry is not None
@@ -96,15 +106,11 @@ class DCAMartingaleStrategy(Strategy):
                     venue=self._venue,
                     tags={
                         "type": "dca",
-                        "layer": self._layers + 1,
+                        "layer": min(self._layers + 1, self._max_layers),
                         "market_key": self._market_key,
                     },
                 )
             )
-            total_qty = self._position + qty
-            self._avg_entry = (self._avg_entry * self._position + price * qty) / total_qty
-            self._position = total_qty
-            self._layers += 1
             return signals
 
         target_sell = self._avg_entry * (1.0 + self._take_profit)
@@ -124,9 +130,6 @@ class DCAMartingaleStrategy(Strategy):
                     },
                 )
             )
-            self._position = 0.0
-            self._avg_entry = None
-            self._layers = 0
 
         return signals
 
