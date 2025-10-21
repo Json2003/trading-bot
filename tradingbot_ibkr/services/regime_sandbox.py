@@ -56,12 +56,12 @@ class RegimeSandbox:
     def inject_shock(self, scale: float = 3.0) -> "RegimeSandbox":
         """Return a new sandbox with synthetic volatility shocks applied."""
         shocked: List[RegimeScenario] = []
-        for scenario in self.scenarios:
+        for idx, scenario in enumerate(self.scenarios):
             noise = torch.randn_like(scenario.features) * scale
             shocked_features = scenario.features + noise
             shocked.append(
                 RegimeScenario(
-                    name=f"{scenario.name}_shock{x}",
+                    name=f"{scenario.name}_shock{idx}",
                     features=shocked_features,
                     targets=scenario.targets,
                     metadata={"base": scenario.name, "shock_scale": scale},
