@@ -1,0 +1,105 @@
+name: Backtest Summary
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths: 
+      - 'backtest*.json'
+      - 'report_*.json'
+
+jobs:
+  generate-summary:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+      
+    - name: Install dependencies
+      run: |
+        pip install numpy pandas
+      
+    - name: Generate backtest summary
+      run: |
+        python -c "
+        import json
+        import glob
+        import numpy as np
+        
+        def eq_to_rets(eq):
+          return np.diff(eq) / eq[:-1] if len(eq) > 1 else [0]
+        
+        def mdd(eq):
+          peak = np.maximum.accumulate(eq)
+          return np.min((eq - peak) / peak) if len(eq) > 0 else 0
+        
+        def pct(val):
+          return f'{val*100:.1f}%'
+        
+        print('# Backtest Summary')
+        for fp in sorted(glob.glob('backtest*.json') + glob.glob('report_*.json')):
+          try:
+            with open(fp) as f:
+              data = json.load(f)
+            if 'equity_curve' in data:
+              eq = data['equity_curve']
+              rets = eq_to_rets(eq)
+              ann = np.mean(rets) * 252 if len(rets) > 0 else 0
+              dd = mdd(eq)
+              sh = (np.mean(rets) / np.std(rets) * np.sqrt(252)) if len(rets) > 0 and np.std(rets) > 0 else 0
+              print(f'**{fp}**: Annualized: {pct(ann)} | MaxDD: {pct(dd)} | Sharpe: {sh:.2f}')
+          except Exception as e:
+          print(f'Error processing {fp}: {e}')
+      "
+  
+  - name: Update summary file
+    if: github.ref == 'refs/heads/main'
+    run: |
+      python -c "
+      import json
+      import glob
+      import numpy as np
+      
+      def eq_to_rets(eq):
+        return np.diff(eq) / eq[:-1] if len(eq) > 1 else [0]
+      
+      def mdd(eq):
+        peak = np.maximum.accumulate(eq)
+        return np.min((eq - peak) / peak) if len(eq) > 0 else 0
+      
+      def pct(val):
+        return f'{val*100:.1f}%'
+      
+      summary = '# Backtest Summary\n\n'
+      for fp in sorted(glob.glob('backtest*.json') + glob.glob('report_*.json')):
+        try:
+          with open(fp) as f:
+            data = json.load(f)
+          if 'equity_curve' in data:
+            eq = data['equity_curve']
+            rets = eq_to_rets(eq)
+            ann = np.mean(rets) * 252 if len(rets) > 0 else 0
+            dd = mdd(eq)
+            sh = (np.mean(rets) / np.std(rets) * np.sqrt(252)) if len(rets) > 0 and np.std(rets) > 0 else 0
+            summary += f'**{fp}**: Annualized: {pct(ann)} | MaxDD: {pct(dd)} | Sharpe: {sh:.2f}\n'
+        except Exception as e:
+          summary += f'Error processing {fp}: {e}\n'
+      
+      with open('BACKTEST_SUMMARY.md', 'w') as f:
+      f.write(summary)
+      "
+  
+  - name: Commit summary
+    if: github.ref == 'refs/heads/main'
+    run: |
+      git config --local user.email "action@github.com"
+      git config --local user.name "GitHub Action"
+      git add BACKTEST_SUMMARY.md
+      git diff --staged --quiet || git commit -m "Update backtest summary"
+      git push
