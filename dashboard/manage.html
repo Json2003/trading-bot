@@ -119,6 +119,8 @@
         <div class="value" id="sharpe">-</div>
         <div class="label">Drawdown</div>
         <div class="value" id="drawdown">-</div>
+        <div class="label" style="margin-top:8px;">Equity Curve</div>
+        <svg id="equitySpark" width="100%" height="60" viewBox="0 0 300 60"></svg>
       </div>
 
       <div class="card stack">
@@ -143,6 +145,11 @@
             <tbody></tbody>
           </table>
         </div>
+      </div>
+
+      <div class="card stack">
+        <h2>Live Price + Signals</h2>
+        <canvas id="ohlcvChart" height="140" style="width:100%; background:#0b1220; border:1px solid var(--border); border-radius:8px;"></canvas>
       </div>
 
       <div class="card stack">
