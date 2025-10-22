@@ -91,6 +91,20 @@
       </div>
 
       <div class="card stack">
+        <h2>Account</h2>
+        <div class="label">Equity</div>
+        <div class="value" id="acct_equity">-</div>
+        <div class="label">Daily PnL</div>
+        <div class="value" id="acct_daily_pnl">-</div>
+        <div class="label">Total PnL</div>
+        <div class="value" id="acct_total_pnl">-</div>
+        <div class="label">Total Trades</div>
+        <div class="value" id="acct_total_trades">-</div>
+        <div class="label">Updated</div>
+        <div class="value muted" id="acct_updated">-</div>
+      </div>
+
+      <div class="card stack">
         <h2>Markets</h2>
         <div class="scroll">
           <table class="table" id="tblMarkets">
@@ -144,7 +158,24 @@
     function applySettings(s){ document.getElementById('paper').checked = !!s.PAPER; document.getElementById('cont').checked = !!s.CONTINUOUS_BACKTEST; document.getElementById('strategy').value = s.STRATEGY || 'sma_cross'; document.getElementById('interval').value = s.BACKTEST_INTERVAL ?? 60; document.getElementById('risk').value = s.RISK_PCT ?? 0.01; document.getElementById('sl').value = s.STOP_LOSS_PCT ?? 0.02; document.getElementById('tp').value = s.TAKE_PROFIT_PCT ?? 0.04; document.getElementById('exchange').value = s.EXCHANGE || 'binance'; }
     function renderMetrics(m){ document.getElementById('equity').textContent = new Intl.NumberFormat(undefined,{style:'currency',currency:'USD',maximumFractionDigits:2}).format(m.equity||0); const pnlEl=document.getElementById('pnl'); pnlEl.textContent = new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(m.daily_pnl||0); pnlEl.className='value '+((m.daily_pnl||0)>=0?'ok':'bad'); document.getElementById('sharpe').textContent=((m.sharpe||0)).toFixed(2); document.getElementById('drawdown').textContent=((m.drawdown||0)*100).toFixed(2)+'%'; }
     function renderServerStats(s){ document.getElementById('uptime').textContent = `${Math.floor((s.uptime_seconds||0)/3600)}h ${Math.floor(((s.uptime_seconds||0)%3600)/60)}m ${Math.floor((s.uptime_seconds||0)%60)}s`; document.getElementById('conns').textContent = s.active_connections ?? 0; }
-  async function loadInitialMetrics(){ try { const m = await (await fetch(API + '/metrics')).json(); renderMetrics(m); const h = await (await fetch(API + '/health')).json(); renderServerStats({ uptime_seconds: h.uptime_seconds, active_connections: h.active_connections }); const mk = await (await fetch(API + '/feed/markets')).json(); renderMarkets(mk.markets||[]); const nw = await (await fetch(API + '/feed/news')).json(); renderNews(nw.news||[]); const tc = await (await fetch(API + '/trades/current')).json(); renderCurrent(tc.trades||[]); const tp = await (await fetch(API + '/trades/proposed')).json(); renderProposed(tp.trades||[]); const ac = await (await fetch(API + '/activity/log')).json(); renderActivity(ac.activity||[]); } catch(e){} }
+  async function loadInitialMetrics(){ try { const m = await (await fetch(API + '/metrics')).json(); renderMetrics(m); const a = await (await fetch(API + '/account')).json(); renderAccount(a); const h = await (await fetch(API + '/health')).json(); renderServerStats({ uptime_seconds: h.uptime_seconds, active_connections: h.active_connections }); const mk = await (await fetch(API + '/feed/markets')).json(); renderMarkets(mk.markets||[]); const nw = await (await fetch(API + '/feed/news')).json(); renderNews(nw.news||[]); const tc = await (await fetch(API + '/trades/current')).json(); renderCurrent(tc.trades||[]); const tp = await (await fetch(API + '/trades/proposed')).json(); renderProposed(tp.trades||[]); const ac = await (await fetch(API + '/activity/log')).json(); renderActivity(ac.activity||[]); } catch(e){} }
+  function renderAccount(a){
+    const fmtUsd = (v)=> new Intl.NumberFormat(undefined,{style:'currency',currency:'USD',maximumFractionDigits:2}).format(v||0);
+    const eq = document.getElementById('acct_equity');
+    const d = document.getElementById('acct_daily_pnl');
+    const t = document.getElementById('acct_total_pnl');
+    const n = document.getElementById('acct_total_trades');
+    const u = document.getElementById('acct_updated');
+    eq.textContent = fmtUsd(a.equity||0);
+    d.textContent = (a.daily_pnl||0).toLocaleString(undefined,{maximumFractionDigits:2});
+    d.className = 'value ' + ((a.daily_pnl||0)>=0?'ok':'bad');
+    t.textContent = (a.total_pnl||0).toLocaleString(undefined,{maximumFractionDigits:2});
+    t.className = 'value ' + ((a.total_pnl||0)>=0?'ok':'bad');
+    n.textContent = a.total_trades ?? 0;
+    try { const dt = a.timestamp ? new Date(a.timestamp) : new Date(); u.textContent = dt.toLocaleString(); } catch(e){ u.textContent = '-'; }
+  }
+  // Extend WS handler to render account if present
+  ;(function(){ const _old = connectWS; connectWS = function(){ const proto = location.protocol === 'https:' ? 'wss' : 'ws'; ws = new WebSocket(`${proto}://` + location.hostname + ':8000/ws'); ws.onmessage = (ev) => { try { const msg = JSON.parse(ev.data); if (msg.metrics) renderMetrics(msg.metrics); if (msg.account) renderAccount(msg.account); if (msg.settings) applySettings(msg.settings); if (msg.server_stats) renderServerStats(msg.server_stats); if (msg.markets) renderMarkets(msg.markets); if (msg.news) renderNews(msg.news); if (msg.trades_current) renderCurrent(msg.trades_current); if (msg.trades_proposed) renderProposed(msg.trades_proposed); if (msg.activity) renderActivity(msg.activity); } catch(e){} }; ws.onopen = () => document.getElementById('wsdot').classList.add('ws-ok'); ws.onclose = () => { document.getElementById('wsdot').classList.remove('ws-ok'); document.getElementById('wsdot').classList.add('ws-bad'); setTimeout(connectWS, 2000); }; } })();
   function renderMarkets(rows){ const tb = document.querySelector('#tblMarkets tbody'); tb.innerHTML = ''; (rows||[]).forEach(r=>{ const tr=document.createElement('tr'); const ch = (r.change_pct||0); tr.innerHTML = `<td class="mono">${r.symbol||''}</td><td class="mono">${(r.bid??'').toLocaleString()}</td><td class="mono">${(r.ask??'').toLocaleString()}</td><td class="mono">${(r.last??'').toLocaleString()}</td><td class="${ch>=0?'ok':'bad'}">${ch.toFixed(2)}%</td>`; tb.appendChild(tr); }); }
   function renderNews(list){ const box = document.getElementById('newsList'); box.innerHTML = ''; (list||[]).slice(-50).reverse().forEach(n=>{ const div=document.createElement('div'); div.className='headline'; const dt=new Date(n.ts||Date.now()); div.innerHTML=`<div class="src">${n.source||''}</div><div>${n.headline||''}</div><div class="ts">${dt.toLocaleTimeString()}</div>`; box.appendChild(div); }); }
   function renderCurrent(rows){ const tb = document.querySelector('#tblCurrent tbody'); tb.innerHTML = ''; (rows||[]).forEach(r=>{ const tr=document.createElement('tr'); const pnl = r.pnl||0; tr.innerHTML = `<td class="mono">${r.symbol||''}</td><td>${r.side||''}</td><td class="mono">${r.qty||''}</td><td class="mono">${r.entry||''}</td><td class="mono ${pnl>=0?'ok':'bad'}">${pnl.toFixed(2)}</td>`; tb.appendChild(tr); }); }
