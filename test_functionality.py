@@ -10,6 +10,7 @@ import types
 import importlib
 import importlib.util
 from pathlib import Path
+os.environ.setdefault("DISABLE_STUBS", "1")
 import pandas as pd
 import numpy as np
 from datetime import datetime, timezone, timedelta

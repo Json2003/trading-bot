@@ -13,6 +13,7 @@ from __future__ import annotations
 import importlib.abc
 import importlib.util
 from pathlib import Path
+import os
 from typing import Dict
 import sys
 
@@ -29,6 +30,9 @@ class _StubFinder(importlib.abc.MetaPathFinder):
     }
 
     def find_spec(self, fullname: str, path, target=None):  # type: ignore[override]
+        # Allow disabling stubs to prefer real third-party packages (e.g., in CI/tests)
+        if os.environ.get("DISABLE_STUBS") == "1":
+            return None
         top_level = fullname.split(".", 1)[0]
         package_root = self._packages.get(top_level)
         if package_root is None:

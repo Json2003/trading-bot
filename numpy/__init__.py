@@ -52,6 +52,7 @@ __all__ = [
     "sign",
     "where",
     "maximum",
+    "minimum",
     "concatenate",
     "abs",
     "random",
@@ -67,6 +68,7 @@ __version__ = "1.26.0"
 
 # Common dtype aliases expected by some libraries/tests
 int_ = int
+int64 = int
 uint = int
 
 Number = Union[int, float]
@@ -629,6 +631,13 @@ class _MaximumUfunc:
 
 maximum = _MaximumUfunc()
 
+def minimum(a, b):
+    aa = array(a)
+    bb = array(b)
+    def _elem(x, y):
+        return x if x <= y else y
+    return ndarray(_broadcast_binary(aa._data, bb._data, _elem))
+
 
 def nanmin(x):
     values = [v for v in array(x)._iter_flat() if not math.isnan(v)]
@@ -669,6 +678,30 @@ def datetime64(value, unit=None):
                 return datetime.fromisoformat(value)
             except Exception:
                 return value
+        return value
+    except Exception:
+        return value
+
+
+def timedelta64(value, unit=None):
+    try:
+        from datetime import timedelta
+        if isinstance(value, (int, float)):
+            # Interpret numeric with unit (only basic units supported)
+            unit = (unit or 's').lower()
+            if unit in ('s', 'sec', 'second', 'seconds'):
+                return timedelta(seconds=float(value))
+            if unit in ('ms', 'millisecond', 'milliseconds'):
+                return timedelta(milliseconds=float(value))
+            if unit in ('us', 'microsecond', 'microseconds'):
+                return timedelta(microseconds=float(value))
+            if unit in ('m', 'min', 'minute', 'minutes'):
+                return timedelta(minutes=float(value))
+            if unit in ('h', 'hour', 'hours'):
+                return timedelta(hours=float(value))
+            if unit in ('d', 'day', 'days'):
+                return timedelta(days=float(value))
+            return timedelta(seconds=float(value))
         return value
     except Exception:
         return value
@@ -748,6 +781,9 @@ class _RandomModule:
 
     def random(self, size=None):
         return self.default_rng().random(size=size)
+
+    def uniform(self, low: float = 0.0, high: float = 1.0, size=None):
+        return self.default_rng().uniform(low=low, high=high, size=size)
 
     def default_random(self):
         return self._rng.random()
