@@ -1,5 +1,5 @@
 """
-Enhanced WebSocket server for trading bot with comprehensive features:
+Splitstar Operations Console FastAPI server with comprehensive features:
 
 Features:
 - JWT-based authentication for sensitive endpoints
@@ -49,7 +49,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 RATE_LIMIT_PER_MINUTE = 60
 RATE_LIMIT_WINDOW = 60  # seconds
 
-app = FastAPI(title="Trading Bot Server", version="1.0.0")
+# Brand configuration
+APP_BRAND = os.getenv("APP_BRAND", "Splitstar Operations Console")
+
+app = FastAPI(title=f"{APP_BRAND} API", version="1.0.0")
 security = HTTPBearer(auto_error=False)
 
 # Add CORS middleware
@@ -359,7 +362,7 @@ async def login(user_credentials: UserLogin):
 # Public endpoints
 @app.get("/status")
 async def get_status():
-    """Get trading bot status."""
+    """Get Splitstar Operations Console status."""
     return {
         "running": STATE["running"],
         "timestamp": datetime.now(timezone.utc).isoformat()
@@ -382,7 +385,7 @@ async def manage_page():
 <head>
     <meta charset=\"utf-8\" />
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-    <title>Trading Bot — Manage</title>
+    <title>{APP_BRAND} — Manage</title>
     <style>
         body {{ font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 20px; color: #111; }}
         .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }}
@@ -452,7 +455,8 @@ async def manage_page():
     </script>
     </head>
     <body>
-        <h1>Manage</h1>
+        <h1>{APP_BRAND} — Manage</h1>
+        <p class="label" style="margin-top:-8px; margin-bottom:16px;">Live controls, telemetry, and configuration switches for Splitstar operations.</p>
         <div class="grid">
             <div class="card">
                 <div class="row"><input type="checkbox" id="paper" /> <label for="paper">Paper Trading</label></div>
@@ -616,45 +620,47 @@ async def agents_run(
 # Protected endpoints
 @app.post("/control/start")
 async def start(current_user: dict = Depends(require_permission("control"))):
-    """Start the trading bot."""
+    """Start the Splitstar Operations Console execution loop."""
     try:
         STATE["running"] = True
-        logger.info(f"Trading bot started by user: {current_user['username']}")
-        
+        logger.info(f"{APP_BRAND} started by user: {current_user['username']}")
+
         # Broadcast to all connected clients
         await manager.broadcast(json.dumps({
             "event": "bot_started",
+            "brand_event": "console_started",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "user": current_user['username']
         }))
-        
-        return {"ok": True, "message": "Trading bot started"}
+
+        return {"ok": True, "message": f"{APP_BRAND} started"}
         
     except Exception as e:
-        logger.error(f"Failed to start bot: {e}")
+        logger.error(f"Failed to start console: {e}")
         STATE['server_stats']['error_count'] += 1
-        raise HTTPException(status_code=500, detail="Failed to start bot")
+        raise HTTPException(status_code=500, detail="Failed to start console")
 
 @app.post("/control/stop")
 async def stop(current_user: dict = Depends(require_permission("control"))):
-    """Stop the trading bot."""
+    """Stop the Splitstar Operations Console execution loop."""
     try:
         STATE["running"] = False
-        logger.info(f"Trading bot stopped by user: {current_user['username']}")
-        
+        logger.info(f"{APP_BRAND} stopped by user: {current_user['username']}")
+
         # Broadcast to all connected clients
         await manager.broadcast(json.dumps({
-            "event": "bot_stopped", 
+            "event": "bot_stopped",
+            "brand_event": "console_stopped",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "user": current_user['username']
         }))
-        
-        return {"ok": True, "message": "Trading bot stopped"}
+
+        return {"ok": True, "message": f"{APP_BRAND} stopped"}
         
     except Exception as e:
-        logger.error(f"Failed to stop bot: {e}")
+        logger.error(f"Failed to stop console: {e}")
         STATE['server_stats']['error_count'] += 1
-        raise HTTPException(status_code=500, detail="Failed to stop bot")
+        raise HTTPException(status_code=500, detail="Failed to stop console")
 
 @app.get("/positions")
 async def get_positions(current_user: dict = Depends(require_permission("read"))):

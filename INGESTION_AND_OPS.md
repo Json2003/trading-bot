@@ -1,6 +1,9 @@
-# Ingestion & Ops — trading-bot
+# Ingestion & Ops — Splitstar Operations Console
 
-This README is a concise operations checklist and mapping for the repo's data ingestion pipelines. It covers bootstrap commands to run on a VM, local re-activation steps, a map of ingestion scripts (inputs → outputs), common troubleshooting, and alternative exchanges for CCXT.
+This README is a concise operations checklist and mapping for the Splitstar
+Operations Console data ingestion pipelines. It covers bootstrap commands to
+run on a VM, local re-activation steps, a map of ingestion scripts (inputs →
+outputs), common troubleshooting, and alternative exchanges for CCXT.
 
 ## VM bootstrap checklist (minimal)
 Run these steps on a VM (Ubuntu 22.04/24.04 recommended) to create a reproducible ingestion node.
@@ -15,8 +18,8 @@ Run these steps on a VM (Ubuntu 22.04/24.04 recommended) to create a reproducibl
 
 3. Clone repo and create Python environment
 
-   git clone <REPO_URL> trading-bot
-   cd trading-bot
+   git clone <REPO_URL> splitstar-operations-console
+   cd splitstar-operations-console
    python3 -m venv .venv
    source .venv/bin/activate
    python -m pip install --upgrade pip

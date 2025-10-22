@@ -1,7 +1,9 @@
-# Trading Bot - Issue Resolution Summary
+# Splitstar Operations Console - Issue Resolution Summary
 
 ## Overview
-This document summarizes the resolution of the "Cannot GET /" error in the Electron app and the implementation of comprehensive backtesting functionality.
+This document summarizes the resolution of the "Cannot GET /" error in the
+Splitstar Operations Console Electron app and the implementation of
+comprehensive backtesting functionality.
 
 ## Issues Resolved
 

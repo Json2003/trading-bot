@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-End-to-end automation runner for the trading bot.
+End-to-end automation runner for the Splitstar Operations Console.
 
 Steps:
  1. Optional feature ingestion (macro + news) into the feature store.
