@@ -372,13 +372,8 @@ def run_comprehensive_test():
 def main():
     """Main entry point for testing."""
     parser = argparse.ArgumentParser(
-<<<<<<< HEAD
-        description='Test Splitstar Operations Console enhancements',
+        description='Test trading bot enhancements',
         formatter_class=argparse.RawDescriptionHelpFormatter
-=======
-        description="Test trading bot enhancements",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
->>>>>>> origin/main
     )
 
     parser.add_argument(

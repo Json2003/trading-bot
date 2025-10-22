@@ -71,19 +71,18 @@ try:
 except ImportError:
     optuna_available = False
 
-<<<<<<< HEAD
-MODEL_DIR = Path(__file__).resolve().parents[1] / 'model_store'
-=======
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(funcName)s - %(message)s",
-    handlers=[logging.FileHandler("model_training.log"), logging.StreamHandler()],
+    format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s',
+    handlers=[
+        logging.FileHandler('model_training.log'),
+        logging.StreamHandler()
+    ]
 )
 logger = logging.getLogger(__name__)
 
-MODEL_DIR = Path(__file__).resolve().parents[1] / "model_store"
->>>>>>> origin/main
+MODEL_DIR = Path(__file__).resolve().parents[1] / 'model_store'
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -293,16 +292,10 @@ class OptimizedModelTrainer:
             model = config.model_class(**params)
 
             if config.needs_scaling:
-<<<<<<< HEAD
-                from sklearn.preprocessing import StandardScaler
-                from sklearn.pipeline import Pipeline
                 pipeline = Pipeline([
                     ('scaler', StandardScaler()),
                     ('model', model)
                 ])
-=======
-                pipeline = Pipeline([("scaler", StandardScaler()), ("model", model)])
->>>>>>> origin/main
             else:
                 pipeline = model
 
@@ -322,46 +315,29 @@ class OptimizedModelTrainer:
         logger.info(f"Best params for {config.name}: {study.best_params}")
 
         return study.best_params
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main
+    
     def optimize_hyperparameters_grid(self, model_name: str, X: pd.DataFrame, y: pd.Series) -> Dict:
         """Optimize hyperparameters using GridSearchCV."""
         if not sklearn_available:
             raise RuntimeError("scikit-learn not available for optimization")
             
         config = MODEL_CONFIGS[model_name]
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main
+        
         logger.info(f"Starting GridSearchCV for {config.name}")
 
         model = config.model_class()
 
         if config.needs_scaling:
-<<<<<<< HEAD
-            from sklearn.preprocessing import StandardScaler
-            from sklearn.pipeline import Pipeline
             pipeline = Pipeline([
                 ('scaler', StandardScaler()),
                 ('model', model)
             ])
-=======
-            pipeline = Pipeline([("scaler", StandardScaler()), ("model", model)])
->>>>>>> origin/main
             # Adjust parameter names for pipeline
             param_grid = {f"model__{k}": v for k, v in config.param_grid.items()}
         else:
             pipeline = model
             param_grid = config.param_grid
-<<<<<<< HEAD
         
-        from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
-=======
-
->>>>>>> origin/main
         tscv = TimeSeriesSplit(n_splits=self.cv_folds)
 
         grid_search = GridSearchCV(
@@ -377,21 +353,13 @@ class OptimizedModelTrainer:
             best_params = {k.replace("model__", ""): v for k, v in grid_search.best_params_.items()}
         else:
             best_params = grid_search.best_params_
-<<<<<<< HEAD
+        
+        logger.info(f"Best params for {config.name}: {best_params}")
         
         return best_params
+    
     def train_single_model(self, model_name: str, X: pd.DataFrame, y: pd.Series, 
                           optimize_hyperparams: bool = True) -> Dict:
-=======
-
-        logger.info(f"Best params for {config.name}: {best_params}")
-
-        return best_params
-
-    def train_single_model(
-        self, model_name: str, X: pd.DataFrame, y: pd.Series, optimize_hyperparams: bool = True
-    ) -> Dict:
->>>>>>> origin/main
         """Train a single model with optional hyperparameter optimization."""
         if not sklearn_available:
             logger.warning(f"scikit-learn not available, skipping {model_name}")
@@ -415,13 +383,8 @@ class OptimizedModelTrainer:
                     best_params = self.optimize_hyperparameters_grid(model_name, X, y)
             else:
                 best_params = config.default_params or {}
-<<<<<<< HEAD
             
-            # Create model with optimized parameters
-=======
-
             # Train final model with best parameters
->>>>>>> origin/main
             model = config.model_class(**best_params)
 
             if config.needs_scaling:
@@ -454,17 +417,8 @@ class OptimizedModelTrainer:
             # Save model
             model_filename = f"{model_name}_optimized.joblib"
             model_path = MODEL_DIR / model_filename
-<<<<<<< HEAD
-            if joblib is not None:
-                joblib.dump(final_model, model_path)
-            else:
-                logger.warning("joblib not available, cannot save model to disk")
-                model_path = None
-            
-=======
             joblib.dump(final_model, model_path)
-
->>>>>>> origin/main
+            
             training_time = time.time() - start_time
 
             result = {

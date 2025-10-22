@@ -29,51 +29,18 @@ logger = logging.getLogger(__name__)
 try:
     from .money_engine import choose_position_size, round_qty
 except ImportError:
-<<<<<<< HEAD
-    try:
-        from tradingbot_ibkr.money_engine import choose_position_size, fixed_fractional, round_qty, round_price  # type: ignore
-    except ImportError:
-        logger.warning("Money engine not available, using simplified position sizing")
-
-        def choose_position_size(balance, risk_pct, entry_price, stop_price, leverage=1.0, min_qty=0.0):
-            return balance * risk_pct / abs(entry_price - stop_price), balance * risk_pct
-
-try:
-    from .models.online_trainer import OnlineTrainer  # type: ignore
-    ONLINE_TRAINER_AVAILABLE = True
-except ImportError:
-    try:
-        from tradingbot_ibkr.models.online_trainer import OnlineTrainer  # type: ignore
-        ONLINE_TRAINER_AVAILABLE = True
-    except ImportError:
-        ONLINE_TRAINER_AVAILABLE = False
-        logger.warning("Online trainer not available, adaptive learning disabled")
-
-        class OnlineTrainer:
-            def load(self):  # pragma: no cover - fallback stub
-                pass
-
-            def predict_proba(self, features):
-                return 0.5
-
-            def learn_one(self, features, outcome):  # pragma: no cover - fallback stub
-                pass
-
-            def save(self):  # pragma: no cover - fallback stub
-                pass
-
-            def is_ready(self):  # pragma: no cover - fallback stub
-                return True
-=======
     logger.warning("Money engine not available, using simplified position sizing")
-
     def choose_position_size(balance, risk_pct, entry_price, stop_price, leverage=1.0, min_qty=0.0):
         return balance * risk_pct / abs(entry_price - stop_price), balance * risk_pct
 
-
-from .feature_extraction import fundamental_indicators, orderflow_features
-from .signal_prediction import FundamentalFilter, SignalEnsemble, SignalPredictor
->>>>>>> origin/main
+try:
+    from .models.online_trainer import OnlineTrainer
+except ImportError:
+    logger.warning("Online trainer not available, adaptive learning disabled")
+    class OnlineTrainer:
+        def load(self): pass
+        def predict_proba(self, features): return 0.5
+        def learn_one(self, features, outcome): pass
 
 load_dotenv()
 EXCHANGE = os.getenv("EXCHANGE", "binance")
@@ -188,16 +155,12 @@ def calculate_performance_metrics(
     downside_returns = returns[returns < 0]
     if len(downside_returns) > 0:
         downside_deviation = np.std(downside_returns) * np.sqrt(252)
-<<<<<<< HEAD
         sortino_ratio = (np.mean(returns) * 252 - risk_free_rate) / downside_deviation if downside_deviation > 0 else 0
     
-    annualized_return = (1 + total_return) ** (252 / len(equity)) - 1
-
     metrics = {
         'total_return': total_return,
         'total_return_pct': total_return * 100,
-        'annualized_return': annualized_return,
-        'annualized_return_pct': annualized_return * 100,
+        'annualized_return': (1 + total_return) ** (252 / len(equity)) - 1,
         'volatility': volatility,
         'sharpe_ratio': sharpe_ratio,
         'sortino_ratio': sortino_ratio,
@@ -215,35 +178,6 @@ def calculate_performance_metrics(
         'losing_trades': len(losing_trades),
         'avg_trade_duration': np.mean([t.get('duration_bars', 1) for t in trades]) if trades else 0,
         'risk_reward_ratio': abs(avg_win / avg_loss) if avg_loss > 0 else float('inf')
-=======
-        sortino_ratio = (
-            (np.mean(returns) * 252 - risk_free_rate) / downside_deviation
-            if downside_deviation > 0
-            else 0
-        )
-
-    metrics = {
-        "total_return": total_return,
-        "total_return_pct": total_return * 100,
-        "annualized_return": (1 + total_return) ** (252 / len(equity)) - 1,
-        "volatility": volatility,
-        "sharpe_ratio": sharpe_ratio,
-        "sortino_ratio": sortino_ratio,
-        "calmar_ratio": calmar_ratio,
-        "max_drawdown": max_drawdown,
-        "max_drawdown_pct": max_drawdown * 100,
-        "max_drawdown_duration": max_drawdown_duration,
-        "win_rate": win_rate,
-        "win_rate_pct": win_rate * 100,
-        "profit_factor": profit_factor,
-        "avg_win": avg_win,
-        "avg_loss": avg_loss,
-        "total_trades": len(trades),
-        "winning_trades": len(winning_trades),
-        "losing_trades": len(losing_trades),
-        "avg_trade_duration": np.mean([t.get("duration_bars", 1) for t in trades]) if trades else 0,
-        "risk_reward_ratio": abs(avg_win / avg_loss) if avg_loss > 0 else float("inf"),
->>>>>>> origin/main
     }
 
     logger.info(
@@ -303,10 +237,9 @@ def simple_backtest(df: pd.DataFrame) -> Tuple[float, List[Tuple]]:
     return pnl, trades
 
 
-<<<<<<< HEAD
-def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.004,
+def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.004, 
                                 stop_loss_pct: float = 0.002, max_holding_bars: int = 12,
-                                fee_pct: float = 0.0, slippage_pct: float = 0.0,
+                                fee_pct: float = 0.0, slippage_pct: float = 0.0, 
                                 starting_balance: float = 10000.0,
                                 trend_filter: bool = False, ema_fast: int = 50, ema_slow: int = 200,
                                 vol_filter: bool = False, vol_lookback: int = 20, vol_multiplier: float = 1.0,
@@ -315,35 +248,7 @@ def aggressive_strategy_backtest(df: pd.DataFrame, take_profit_pct: float = 0.00
                                 leverage: float = 1.0, min_qty: float = 0.0,
                                 slippage_vs_volume: bool = False,
                                 slippage_k: float = 0.0, slippage_cap: float = 0.05,
-                                enable_logging: bool = True,
-                                ml_min_prob: float = 0.75,
-                                ml_min_prob_cold: float = 0.6,
-                                persist_online_model: bool = False) -> Dict:
-=======
-def aggressive_strategy_backtest(
-    df: pd.DataFrame,
-    take_profit_pct: float = 0.004,
-    stop_loss_pct: float = 0.002,
-    max_holding_bars: int = 12,
-    fee_pct: float = 0.0,
-    slippage_pct: float = 0.0,
-    starting_balance: float = 10000.0,
-    trend_filter: bool = False,
-    ema_fast: int = 50,
-    ema_slow: int = 200,
-    vol_filter: bool = False,
-    vol_lookback: int = 20,
-    vol_multiplier: float = 1.0,
-    trailing_stop_pct: Optional[float] = None,
-    risk_per_trade: Optional[float] = None,
-    leverage: float = 1.0,
-    min_qty: float = 0.0,
-    slippage_vs_volume: bool = False,
-    slippage_k: float = 0.0,
-    slippage_cap: float = 0.05,
-    enable_logging: bool = True,
-) -> Dict:
->>>>>>> origin/main
+                                enable_logging: bool = True) -> Dict:
     """
     Enhanced aggressive intraday-style strategy with comprehensive analytics.
 
@@ -426,41 +331,19 @@ def aggressive_strategy_backtest(
         df["vol"] = df["ret"].rolling(vol_lookback).std()
 
     # Additional features for adaptive learning (vectorized)
-<<<<<<< HEAD
     df['ret1'] = df['close'].pct_change().fillna(0.0)
     df['ma3'] = df['close'].rolling(3, min_periods=1).mean()
-    df['ma6'] = df['close'].rolling(6, min_periods=1).mean()
     df['mom5'] = df['close'].pct_change(5).fillna(0.0)
     df['mom10'] = df['close'].pct_change(10).fillna(0.0)
-    df['ret2'] = df['close'].pct_change(2).fillna(0.0)
-    df['ret4'] = df['close'].pct_change(4).fillna(0.0)
-    df['ret8'] = df['close'].pct_change(8).fillna(0.0)
     
     # Volume-based features
     if 'volume' in df.columns:
         df['vol_mean20'] = df['volume'].rolling(20, min_periods=1).mean()
         df['vol_ratio'] = df['volume'] / df['vol_mean20'].replace(0, 1)
-        df['vol_z'] = ((df['volume'] - df['vol_mean20']) /
-                       df['vol_mean20'].replace(0, 1)).fillna(0.0)
     else:
         df['vol_mean20'] = 1.0
         df['vol_ratio'] = 1.0
-        df['vol_z'] = 0.0
-=======
-    df["ret1"] = df["close"].pct_change().fillna(0.0)
-    df["ma3"] = df["close"].rolling(3, min_periods=1).mean()
-    df["mom5"] = df["close"].pct_change(5).fillna(0.0)
-    df["mom10"] = df["close"].pct_change(10).fillna(0.0)
-
-    # Volume-based features
-    if "volume" in df.columns:
-        df["vol_mean20"] = df["volume"].rolling(20, min_periods=1).mean()
-        df["vol_ratio"] = df["volume"] / df["vol_mean20"].replace(0, 1)
-    else:
-        df["vol_mean20"] = 1.0
-        df["vol_ratio"] = 1.0
->>>>>>> origin/main
-
+    
     # Volatility and ATR indicators
     df["vol20"] = df["ret1"].rolling(20).std().fillna(0.0)
 
@@ -478,47 +361,8 @@ def aggressive_strategy_backtest(
     roll_up = up.rolling(14, min_periods=1).mean()
     roll_down = down.rolling(14, min_periods=1).mean()
     rs = roll_up / roll_down.replace(0, 1e-8)
-<<<<<<< HEAD
     df['rsi14'] = 100.0 - (100.0 / (1.0 + rs))
-
-    # Additional regime features
-    df['range_pct'] = ((df['high'] - df['low']) / df['close']).fillna(0.0)
-    df['body_pct'] = ((df['close'] - df['open']) / df['open']).fillna(0.0)
-    df['trend_slope'] = df['close'].diff(3).fillna(0.0)
-    df['ema_fast'] = df['close'].ewm(span=10, adjust=False).mean()
-    df['ema_slow'] = df['close'].ewm(span=30, adjust=False).mean()
-    df['ema_ratio'] = ((df['ema_fast'] - df['ema_slow']) / df['close']).fillna(0.0)
-    trend_ema_long = df['close'].ewm(span=100, adjust=False).mean()
-    df['trend_position'] = ((df['close'] - trend_ema_long) / trend_ema_long).fillna(0.0)
-    df['vol_long'] = df['ret1'].rolling(100).std().fillna(0.0)
-    df['vol_quartile'] = df['vol_long'].rank(pct=True).fillna(0.0)
-
-    if isinstance(df.index, pd.DatetimeIndex):
-        radians = 2 * np.pi * df.index.hour / 24
-        df['hour_sin'] = np.sin(radians)
-        df['hour_cos'] = np.cos(radians)
-        dow = df.index.dayofweek
-        df['dow_sin'] = np.sin(2 * np.pi * dow / 7)
-        df['dow_cos'] = np.cos(2 * np.pi * dow / 7)
-    else:
-        df['hour_sin'] = 0.0
-        df['hour_cos'] = 0.0
-        df['dow_sin'] = 0.0
-        df['dow_cos'] = 0.0
     
-=======
-    df["rsi14"] = 100.0 - (100.0 / (1.0 + rs))
-
-    # Fundamental and order-flow features used by ensemble/fundamental filter
-    fundamentals_df = fundamental_indicators(df)
-    for column in fundamentals_df.columns:
-        df[column] = fundamentals_df[column]
-
-    orderflow_df = orderflow_features(df)
-    for column in orderflow_df.columns:
-        df[column] = orderflow_df[column]
-
->>>>>>> origin/main
     # Initialize trading variables
     trades = []
     detailed_trades = []
@@ -526,80 +370,16 @@ def aggressive_strategy_backtest(
     entry_idx = None
     entry_price = None
     balance = starting_balance
-<<<<<<< HEAD
-    first_time = df.index[0] if len(df.index) > 0 else None
-    equity_curve = [{'time': str(first_time) if first_time is not None else None, 'balance': balance}]
-    
-    # Risk management
-    if risk_per_trade is None:
-        risk_per_trade = 0.02
-
-    ml_min_prob = max(0.0, min(1.0, ml_min_prob))
-    ml_min_prob_cold = max(0.0, min(ml_min_prob, ml_min_prob_cold))
-        
-    # Adaptive learning setup
-    trainer = OnlineTrainer()
-    try:
-        trainer.load()
-    except Exception:
-        logger.exception("Failed to load online trainer state")
-
-    trainer_dirty = False
-    trainer_has_ready = hasattr(trainer, 'is_ready') and callable(getattr(trainer, 'is_ready'))
-    
-=======
     equity_curve = [balance]
-
+    
     # Risk management
     if risk_per_trade is None:
         risk_per_trade = 0.01
-
-    # Machine learning ensemble with supervised models
-    ensemble = SignalEnsemble(
-        predictors={
-            "gbm": SignalPredictor(
-                model_type="gbm",
-                input_keys=[
-                    "close",
-                    "high",
-                    "low",
-                    "volume",
-                    "ret1",
-                    "ma3",
-                    "mom5",
-                    "mom10",
-                    "vol20",
-                    "vol_ratio",
-                    "atr14",
-                    "rsi14",
-                    "pe_ratio",
-                    "earnings_growth",
-                    "earnings_surprise",
-                    "fundamental_score",
-                ],
-            ),
-            "lstm": SignalPredictor(
-                model_type="lstm",
-                sequence_length=16,
-                input_keys=["close", "ma3", "mom5", "mom10", "atr14", "rsi14", "vol20"],
-            ),
-            "transformer": SignalPredictor(
-                model_type="transformer_orderflow",
-                sequence_length=16,
-                input_keys=[
-                    "order_imbalance",
-                    "flow_velocity",
-                    "liquidity_ratio",
-                    "order_flow_trend",
-                    "vol_ratio",
-                ],
-            ),
-        },
-        fundamental_filter=FundamentalFilter(),
-        min_confidence=0.6,
-    )
-
->>>>>>> origin/main
+        
+    # Adaptive learning setup
+    trainer = OnlineTrainer()
+    trainer.load()
+    
     # Trading statistics
     stats = {
         "entries_attempted": 0,
@@ -623,127 +403,35 @@ def aggressive_strategy_backtest(
 
     # Main trading loop with enhanced logging
     logger.debug(f"Starting trading simulation on {len(df)} bars...")
-<<<<<<< HEAD
     
-    def _safe_float(val, default=0.0):
-        if pd.isna(val):
-            return float(default)
-        try:
-            return float(val)
-        except Exception:
-            return float(default)
-=======
->>>>>>> origin/main
-
     for i, (timestamp, row) in enumerate(df.iterrows()):
         # Prepare features for ML
         features = {
-<<<<<<< HEAD
-            'close': _safe_float(row['close']),
-            'high': _safe_float(row['high']),
-            'low': _safe_float(row['low']),
-            'volume': _safe_float(row.get('volume', 1), default=1.0),
-            'ret1': _safe_float(row['ret1']),
-            'ret2': _safe_float(row.get('ret2', 0.0)),
-            'ret4': _safe_float(row.get('ret4', 0.0)),
-            'ret8': _safe_float(row.get('ret8', 0.0)),
-            'ma3': _safe_float(row['ma3']),
-            'ma6': _safe_float(row.get('ma6', row['ma3'])),
-            'mom5': _safe_float(row['mom5']),
-            'mom10': _safe_float(row['mom10']),
-            'vol20': _safe_float(row['vol20']),
-            'vol_ratio': _safe_float(row['vol_ratio'], default=1.0),
-            'vol_z': _safe_float(row.get('vol_z', 0.0)),
-            'atr14': _safe_float(row['atr14']),
-            'rsi14': _safe_float(row['rsi14']),
-            'ema_ratio': _safe_float(row.get('ema_ratio', 0.0)),
-            'trend_slope': _safe_float(row.get('trend_slope', 0.0)),
-            'range_pct': _safe_float(row.get('range_pct', 0.0)),
-            'body_pct': _safe_float(row.get('body_pct', 0.0)),
-            'hour_sin': _safe_float(row.get('hour_sin', 0.0)),
-            'hour_cos': _safe_float(row.get('hour_cos', 0.0)),
-            'dow_sin': _safe_float(row.get('dow_sin', 0.0)),
-            'dow_cos': _safe_float(row.get('dow_cos', 0.0)),
-            'trend_position': _safe_float(row.get('trend_position', 0.0)),
-            'vol_long': _safe_float(row.get('vol_long', 0.0)),
-            'vol_quartile': _safe_float(row.get('vol_quartile', 0.0))
-=======
-            "close": float(row["close"]),
-            "high": float(row["high"]),
-            "low": float(row["low"]),
-            "volume": float(row.get("volume", 1)),
-            "ret1": float(row.get("ret1", 0.0)),
-            "ma3": float(row.get("ma3", row["close"])),
-            "mom5": float(row.get("mom5", 0.0)),
-            "mom10": float(row.get("mom10", 0.0)),
-            "vol20": float(row.get("vol20", 0.0)),
-            "vol_ratio": float(row.get("vol_ratio", 0.0)),
-            "atr14": float(row.get("atr14", 0.0)),
-            "rsi14": float(row.get("rsi14", 50.0)),
-            "pe_ratio": float(row.get("pe_ratio", 0.0)),
-            "earnings_growth": float(row.get("earnings_growth", 0.0)),
-            "earnings_surprise": float(row.get("earnings_surprise", 0.0)),
-            "fundamental_score": float(row.get("fundamental_score", 0.0)),
-            "order_imbalance": float(row.get("order_imbalance", 0.0)),
-            "flow_velocity": float(row.get("flow_velocity", 0.0)),
-            "liquidity_ratio": float(row.get("liquidity_ratio", 0.0)),
-            "order_flow_trend": float(row.get("order_flow_trend", 0.0)),
->>>>>>> origin/main
+            'close': float(row['close']),
+            'high': float(row['high']),
+            'low': float(row['low']),
+            'volume': float(row.get('volume', 1)),
+            'ret1': float(row['ret1']),
+            'ma3': float(row['ma3']),
+            'mom5': float(row['mom5']),
+            'mom10': float(row['mom10']),
+            'vol20': float(row['vol20']),
+            'vol_ratio': float(row['vol_ratio']),
+            'atr14': float(row['atr14']),
+            'rsi14': float(row['rsi14'])
         }
-
-        fundamentals = {
-            "pe_ratio": float(row.get("pe_ratio", np.nan)),
-            "earnings_growth": float(row.get("earnings_growth", 0.0)),
-            "earnings_surprise": float(row.get("earnings_surprise", 0.0)),
-            "fundamental_score": float(row.get("fundamental_score", 0.0)),
-            "earnings_yield": float(row.get("earnings_yield", 0.0)),
-        }
-
-        ensemble.observe(features, fundamentals)
-
+        
         if position is None:
             # Check for entry signal
-<<<<<<< HEAD
             if not pd.isna(row['rolling_high']) and row['close'] > row['rolling_high']:
                 stats['entries_attempted'] += 1
                 
                 # ML-based filtering
                 prob = trainer.predict_proba(features)
-                samples_seen = getattr(trainer, '_samples_seen', 0)
-                warm_target = getattr(trainer, '_min_samples_ready', max(samples_seen, 1))
-                warm_fraction = min(1.0, samples_seen / max(1, warm_target))
-                if trainer_has_ready and trainer.is_ready():
-                    warm_fraction = 1.0
-                threshold = ml_min_prob_cold + (ml_min_prob - ml_min_prob_cold) * warm_fraction
-                if prob < threshold:
+                if prob < 0.6:
                     stats['entries_filtered_ml'] += 1
                     if enable_logging and i % 100 == 0:
-                        logger.debug(f"Entry filtered by ML at {timestamp}: prob={prob:.3f}, threshold={threshold:.2f}")
-=======
-            if not pd.isna(row["rolling_high"]) and row["close"] > row["rolling_high"]:
-                stats["entries_attempted"] += 1
-
-                # ML-based filtering with ensemble agreement
-                decision = ensemble.evaluate(features, fundamentals)
-                if not decision.ml_agreement:
-                    stats["entries_filtered_ml"] += 1
-                    if enable_logging and i % 100 == 0:
-                        logger.debug(
-                            "Entry filtered by ML ensemble at %s: probs=%s",
-                            timestamp,
-                            decision.probabilities,
-                        )
->>>>>>> origin/main
-                    continue
-
-                if not decision.fundamentals_pass:
-                    stats["entries_filtered_fundamental"] += 1
-                    if enable_logging and i % 100 == 0:
-                        logger.debug(
-                            "Entry blocked by fundamental filter at %s: fundamentals=%s",
-                            timestamp,
-                            fundamentals,
-                        )
+                        logger.debug(f"Entry filtered by ML at {timestamp}: prob={prob:.3f}")
                     continue
 
                 # Trend filter
@@ -904,57 +592,24 @@ def aggressive_strategy_backtest(
 
                 # Update balance and equity curve
                 balance += trade_pnl
-<<<<<<< HEAD
-                equity_curve.append({'time': str(timestamp) if timestamp is not None else None, 'balance': balance})
+                equity_curve.append(balance)
                 
                 # Complete trade record
                 if detailed_trades:
-                    base_notional = qty * entry_price if entry_price else 0.0
-                    pnl_pct = (trade_pnl / base_notional) * 100 if base_notional else 0.0
                     detailed_trades[-1].update({
                         'exit_time': timestamp,
                         'exit_price': exit_price,
                         'exit_type': exit_type,
                         'holding_bars': holding,
                         'pnl': trade_pnl,
-                        'pnl_pct': pnl_pct,
+                        'pnl_pct': (trade_pnl / (qty * entry_price)) * 100,
                         'outcome': last_outcome
                     })
                 
                 # ML learning
                 if last_features is not None and last_outcome is not None:
                     trainer.learn_one(last_features, last_outcome)
-                    trainer_dirty = True
                 
-                log_entry_price = entry_price
-                log_holding = holding
-                
-=======
-                equity_curve.append(balance)
-
-                # Complete trade record
-                if detailed_trades:
-                    detailed_trades[-1].update(
-                        {
-                            "exit_time": timestamp,
-                            "exit_price": exit_price,
-                            "exit_type": exit_type,
-                            "holding_bars": holding,
-                            "pnl": trade_pnl,
-                            "pnl_pct": (trade_pnl / (qty * entry_price)) * 100,
-                            "outcome": last_outcome,
-                        }
-                    )
-
-                # ML learning
-                if (
-                    last_features is not None
-                    and last_outcome is not None
-                    and last_fundamentals is not None
-                ):
-                    ensemble.learn(last_features, last_fundamentals, last_outcome)
-
->>>>>>> origin/main
                 # Reset position
                 position = None
                 entry_idx = None
@@ -965,37 +620,18 @@ def aggressive_strategy_backtest(
                 last_fundamentals = None
 
                 if enable_logging and len(detailed_trades) <= 5:  # Log first few trades in detail
-<<<<<<< HEAD
-                    base_notional = qty * log_entry_price if log_entry_price else 0.0
-                    pnl_pct = (trade_pnl / base_notional) * 100 if base_notional else 0.0
-                    logger.info(f"EXIT #{len(detailed_trades)}: {timestamp} @ {exit_price:.4f}, {exit_type}, PnL={trade_pnl:.2f} ({pnl_pct:.2f}%), hold={log_holding} bars")
+                    logger.info(f"EXIT #{len(detailed_trades)}: {timestamp} @ {exit_price:.4f}, {exit_type}, PnL={trade_pnl:.2f} ({trade_pnl/(qty*entry_price)*100:.2f}%), hold={holding} bars")
     
-=======
-                    logger.info(
-                        f"EXIT #{len(detailed_trades)}: {timestamp} @ {exit_price:.4f}, {exit_type}, PnL={trade_pnl:.2f} ({trade_pnl / (qty * entry_price) * 100:.2f}%), hold={holding} bars"
-                    )
-
->>>>>>> origin/main
     # Calculate final performance metrics
     execution_time = time.time() - start_time
 
     # Ensure we have equity curve
     if len(equity_curve) == 1:
-<<<<<<< HEAD
-        last_time = df.index[-1] if len(df.index) > 0 else None
-        equity_curve.append({'time': str(last_time) if last_time is not None else None, 'balance': balance})
-    
-    # Calculate comprehensive metrics
-    equity_balances = [entry['balance'] for entry in equity_curve]
-    performance_metrics = calculate_performance_metrics(equity_balances, detailed_trades)
-    
-=======
         equity_curve.append(balance)
-
+    
     # Calculate comprehensive metrics
     performance_metrics = calculate_performance_metrics(equity_curve, detailed_trades)
-
->>>>>>> origin/main
+    
     # Compile results
     wins_count = sum(1 for t in detailed_trades if t.get('pnl', 0) > 0)
 
@@ -1004,20 +640,17 @@ def aggressive_strategy_backtest(
     annual_roi_pct = performance_metrics.get('annualized_return_pct', 0.0) if performance_metrics else 0.0
 
     results = {
-<<<<<<< HEAD
         'trades': len(detailed_trades),
-        'wins': wins_count,
-        'win_rate_pct': (wins_count / len(detailed_trades) * 100) if detailed_trades else 0,
-        'pnl': total_pnl,
-        'total_return_pct': total_return_pct,
-        'annual_roi_pct': annual_roi_pct,
+        'wins': stats['exits_tp'] + sum(1 for t in detailed_trades if t.get('pnl', 0) > 0),
+        'win_rate_pct': (stats['exits_tp'] / len(detailed_trades) * 100) if detailed_trades else 0,
+        'pnl': balance - starting_balance,
         'final_balance': balance,
         'starting_balance': starting_balance,
         'execution_time_seconds': execution_time,
         'trading_stats': stats,
         'performance_metrics': performance_metrics,
         'equity_curve': equity_curve,
-        'trade_list': detailed_trades,
+        'trade_list': detailed_trades[:100],  # Limit to first 100 trades for memory efficiency
         'details': {
             'entries': len([t for t in trades if t['type'] == 'entry']),
             'exits': len([t for t in trades if not t['type'] == 'entry']),
@@ -1025,50 +658,14 @@ def aggressive_strategy_backtest(
             'avg_holding_period': np.mean([t.get('holding_bars', 0) for t in detailed_trades]) if detailed_trades else 0
         }
     }
-
-    if persist_online_model and ONLINE_TRAINER_AVAILABLE and trainer_dirty:
-        try:
-            trainer.save()
-        except Exception:
-            logger.exception("Failed to persist online trainer state")
-
-=======
-        "trades": len(detailed_trades),
-        "wins": stats["exits_tp"] + sum(1 for t in detailed_trades if t.get("pnl", 0) > 0),
-        "win_rate_pct": (stats["exits_tp"] / len(detailed_trades) * 100) if detailed_trades else 0,
-        "pnl": balance - starting_balance,
-        "final_balance": balance,
-        "starting_balance": starting_balance,
-        "execution_time_seconds": execution_time,
-        "trading_stats": stats,
-        "performance_metrics": performance_metrics,
-        "equity_curve": equity_curve,
-        "trade_list": detailed_trades[:100],  # Limit to first 100 trades for memory efficiency
-        "details": {
-            "entries": len([t for t in trades if t["type"] == "entry"]),
-            "exits": len([t for t in trades if not t["type"] == "entry"]),
-            "bars_processed": len(df),
-            "avg_holding_period": np.mean([t.get("holding_bars", 0) for t in detailed_trades])
-            if detailed_trades
-            else 0,
-        },
-    }
-
->>>>>>> origin/main
+    
     if enable_logging:
         logger.info("=" * 60)
         logger.info("BACKTEST COMPLETED")
         logger.info(f"Execution time: {execution_time:.2f}s")
         logger.info(f"Total trades: {results['trades']}")
         logger.info(f"Win rate: {results['win_rate_pct']:.1f}%")
-<<<<<<< HEAD
-        logger.info(f"Total PnL: {results['pnl']:.2f} ({results['total_return_pct']:.1f}%)")
-        logger.info(f"Annual ROI: {results['annual_roi_pct']:.1f}%")
-=======
-        logger.info(
-            f"Total PnL: {results['pnl']:.2f} ({(results['pnl'] / starting_balance) * 100:.1f}%)"
-        )
->>>>>>> origin/main
+        logger.info(f"Total PnL: {results['pnl']:.2f} ({(results['pnl']/starting_balance)*100:.1f}%)")
         if performance_metrics:
             logger.info(f"Sharpe ratio: {performance_metrics.get('sharpe_ratio', 0):.3f}")
             logger.info(f"Max drawdown: {performance_metrics.get('max_drawdown_pct', 0):.2f}%")
@@ -1076,21 +673,18 @@ def aggressive_strategy_backtest(
         logger.info("=" * 60)
 
     return results
+    rs = roll_up / roll_down
+    df['rsi14'] = 100.0 - (100.0 / (1.0 + rs))
 
-<<<<<<< HEAD
     for i in range(len(df)):
         row = df.iloc[i]
-        feature_names = ['close','high','low','volume','ret1','ret2','ret4','ret8','ma3','ma6','mom5','mom10','vol20','vol_ratio','vol_z','atr14','rsi14','ema_ratio','trend_slope','range_pct','body_pct','hour_sin','hour_cos','dow_sin','dow_cos','trend_position','vol_long','vol_quartile']
-        features = {col: float(row[col]) for col in feature_names if col in row}
+        features = {col: float(row[col]) for col in ['close','high','low','volume','ret1','ma3','mom5','mom10','vol20','vol_ratio','atr14','rsi14'] if col in row}
         if position is None:
             # entry condition: breakout
             if not pd.isna(row['rolling_high']) and row['close'] > row['rolling_high']:
                 # Adaptive filter: only enter if model predicts high probability
                 prob = trainer.predict_proba(features)
-                threshold = ml_min_prob
-                if trainer_has_ready and not trainer.is_ready():
-                    threshold = ml_min_prob_cold
-                if prob < threshold:
+                if prob < 0.6:
                     continue
                 # optional trend filter: only enter if ema_fast > ema_slow
                 if trend_filter:
@@ -1152,7 +746,6 @@ def aggressive_strategy_backtest(
                 # Learn from the outcome
                 if last_features is not None and last_outcome is not None:
                     trainer.learn_one(last_features, last_outcome)
-                    trainer_dirty = True
                 position = None
                 entry_idx = None
                 entry_price = None
@@ -1246,8 +839,6 @@ def aggressive_strategy_backtest(
         'trade_list': trade_pairs,
         'equity_curve': equity,
     }
-=======
->>>>>>> origin/main
 
 def main():
     """
@@ -1302,14 +893,7 @@ def main():
     print("Trades:", stats["trades"])
     print("Wins:", stats["wins"])
     print(f"Win rate: {stats['win_rate_pct']:.2f}%")
-<<<<<<< HEAD
     print('PnL (price units):', stats['pnl'])
-    print(f"Total return: {stats.get('total_return_pct', 0):.2f}%")
-    print(f"Annual ROI: {stats.get('annual_roi_pct', 0):.2f}%")
-=======
-    print("PnL (price units):", stats["pnl"])
->>>>>>> origin/main
-
 
 if __name__ == "__main__":
     main()

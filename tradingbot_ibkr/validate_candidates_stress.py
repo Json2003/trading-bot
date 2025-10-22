@@ -53,28 +53,11 @@ def block_bootstrap(trade_pnls, block_size=5, target_length=None):
     return sample[:target_length]
 
 
-<<<<<<< HEAD
 def run_stress(candidate, df, starting_balance=10000.0, mc_runs=5000, fee_pct=0.002, slippage_pct=0.001, block_size=5):
     tp = candidate['tp']
     sl = candidate['sl']
     hold = candidate['hold']
-    risk = candidate['risk']
     trail = candidate.get('trail')
-=======
-def run_stress(
-    candidate,
-    df,
-    starting_balance=10000.0,
-    mc_runs=5000,
-    fee_pct=0.002,
-    slippage_pct=0.001,
-    block_size=5,
-):
-    tp = candidate["tp"]
-    sl = candidate["sl"]
-    hold = candidate["hold"]
-    trail = candidate.get("trail")
->>>>>>> origin/main
 
     stats = aggressive_strategy_backtest(
         df,
@@ -85,11 +68,7 @@ def run_stress(
         slippage_pct=slippage_pct,
         starting_balance=starting_balance,
         trend_filter=True,
-        trailing_stop_pct=trail,
-<<<<<<< HEAD
-        risk_per_trade=risk
-=======
->>>>>>> origin/main
+        trailing_stop_pct=trail
     )
 
     overall_dd = max_drawdown_from_equity(stats.get("equity_curve", []))
@@ -141,13 +120,8 @@ def run_stress(
 def main():
     df = load_bars()
     candidates = [
-<<<<<<< HEAD
-        {'label': 'A', 'tp': 0.01, 'sl': 0.005, 'hold': 12, 'risk': 0.02, 'trail': None},
-        {'label': 'B', 'tp': 0.015, 'sl': 0.01, 'hold': 12, 'risk': 0.02, 'trail': 0.01}
-=======
-        {"label": "A", "tp": 0.01, "sl": 0.005, "hold": 12, "risk": 0.005, "trail": None},
-        {"label": "B", "tp": 0.01, "sl": 0.01, "hold": 12, "risk": 0.005, "trail": 0.01},
->>>>>>> origin/main
+        {'label': 'A', 'tp': 0.01, 'sl': 0.005, 'hold': 12, 'risk': 0.005, 'trail': None},
+        {'label': 'B', 'tp': 0.01, 'sl': 0.01, 'hold': 12, 'risk': 0.005, 'trail': 0.01}
     ]
 
     out_files = []

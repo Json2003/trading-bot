@@ -50,11 +50,7 @@ def create_startup_shortcut(args):
 
 def run_once(allocation_pct, capital):
     # Candidate B params
-<<<<<<< HEAD
-    candidate = {'tp': 0.015, 'sl': 0.01, 'hold': 12, 'risk': 0.02, 'trail': 0.01}
-=======
-    candidate = {"tp": 0.01, "sl": 0.01, "hold": 12, "risk": 0.005, "trail": 0.01}
->>>>>>> origin/main
+    candidate = {'tp': 0.01, 'sl': 0.01, 'hold': 12, 'risk': 0.005, 'trail': 0.01}
     # use allocation of capital for the canary
     allocation_amount = capital * allocation_pct
     df_path = HERE / "datafiles" / "BTC_USDT_bars.csv"
@@ -73,12 +69,7 @@ def run_once(allocation_pct, capital):
         slippage_pct=0.0005,
         starting_balance=allocation_amount,
         trend_filter=True,
-<<<<<<< HEAD
-        trailing_stop_pct=candidate['trail'],
-        risk_per_trade=candidate['risk']
-=======
-        trailing_stop_pct=candidate["trail"],
->>>>>>> origin/main
+        trailing_stop_pct=candidate['trail']
     )
 
     status = {

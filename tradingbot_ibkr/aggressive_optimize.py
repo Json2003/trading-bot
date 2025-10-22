@@ -49,24 +49,13 @@ def backtest_single_combination(args):
             f"[{combo_idx}/{total_combos}] Testing: tp={tp}, sl={sl}, hold={hold}, risk={risk}"
         )
         stats = aggressive_strategy_backtest(
-<<<<<<< HEAD
             df, 
             take_profit_pct=tp, 
             stop_loss_pct=sl, 
             max_holding_bars=hold, 
             fee_pct=0.001, 
             slippage_pct=0.0005, 
-            starting_balance=10000.0,
-            risk_per_trade=risk
-=======
-            df,
-            take_profit_pct=tp,
-            stop_loss_pct=sl,
-            max_holding_bars=hold,
-            fee_pct=0.001,
-            slippage_pct=0.0005,
-            starting_balance=10000.0,
->>>>>>> origin/main
+            starting_balance=10000.0
         )
         result = {
             "params": {"tp": tp, "sl": sl, "hold": hold, "risk": risk},
@@ -150,17 +139,10 @@ def run_grid(symbol="BTC/USDT", max_workers=None, early_stopping_patience=50, en
 
     # Parameter grid
     params = {
-<<<<<<< HEAD
-        'take_profit_pct': [0.002, 0.004, 0.006, 0.01],
-        'stop_loss_pct': [0.001, 0.002, 0.003, 0.005],
+        'take_profit_pct': [0.002, 0.004, 0.006],
+        'stop_loss_pct': [0.001, 0.002, 0.003],
         'max_holding_bars': [6, 12, 24],
-        'risk_pct': [0.005, 0.01, 0.02]
-=======
-        "take_profit_pct": [0.002, 0.004, 0.006],
-        "stop_loss_pct": [0.001, 0.002, 0.003],
-        "max_holding_bars": [6, 12, 24],
-        "risk_pct": [0.01, 0.02],
->>>>>>> origin/main
+        'risk_pct': [0.01, 0.02]
     }
 
     # Generate all combinations

@@ -1,13 +1,6 @@
 #!/usr/bin/env bash
-<<<<<<< HEAD
-# Simple script to set up a Python virtual environment and install dependencies for the Splitstar Operations Console.
-set -e
-=======
 # Simple script to set up a Python virtual environment and install dependencies for the trading bot.
-set -euo pipefail
-
-VENV_DIR="venv"
->>>>>>> origin/main
+set -e
 
 # Create virtual environment if it doesn't exist
 if [ ! -d "${VENV_DIR}" ]; then

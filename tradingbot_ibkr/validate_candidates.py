@@ -55,11 +55,7 @@ def run_validation(candidate, df, starting_balance=10000.0, mc_runs=1000):
         slippage_pct=0.0005,
         starting_balance=starting_balance,
         trend_filter=True,
-        trailing_stop_pct=trail,
-<<<<<<< HEAD
-        risk_per_trade=risk
-=======
->>>>>>> origin/main
+        trailing_stop_pct=trail
     )
 
     overall_dd = max_drawdown_from_equity(stats.get("equity_curve", []), starting_balance)
@@ -85,10 +81,7 @@ def run_validation(candidate, df, starting_balance=10000.0, mc_runs=1000):
                 slippage_pct=0.0005,
                 starting_balance=starting_balance,
                 trend_filter=True,
-                trailing_stop_pct=trail,
-<<<<<<< HEAD
-                risk_per_trade=risk
-=======
+                trailing_stop_pct=trail
             )
             wf.append(
                 {
@@ -100,7 +93,6 @@ def run_validation(candidate, df, starting_balance=10000.0, mc_runs=1000):
                         s.get("equity_curve", []), starting_balance
                     ),
                 }
->>>>>>> origin/main
             )
 
     # Monte Carlo on trade-level PnL
@@ -151,21 +143,12 @@ def main():
     df = load_bars()
     starting_balance = 10000.0
     candidates = [
-<<<<<<< HEAD
-        {'label': 'A', 'tp': 0.01, 'sl': 0.005, 'hold': 1, 'risk': 0.02, 'trail': None},
-        {'label': 'B', 'tp': 0.01, 'sl': 0.01, 'hold': 1, 'risk': 0.02, 'trail': 0.01},
-        # Aggressive candidate for insight with constrained risk
-        {'label': 'MAX', 'tp': 0.08, 'sl': 0.08, 'hold': 1, 'risk': 0.02, 'trail': 0.08},
-        # High reward scenario capped at modest risk
-        {'label': 'HR', 'tp': 0.05, 'sl': 0.04, 'hold': 1, 'risk': 0.02, 'trail': 0.05}
-=======
-        {"label": "A", "tp": 0.01, "sl": 0.005, "hold": 1, "risk": 0.5, "trail": None},
-        {"label": "B", "tp": 0.01, "sl": 0.01, "hold": 1, "risk": 0.5, "trail": 0.01},
+        {'label': 'A', 'tp': 0.01, 'sl': 0.005, 'hold': 1, 'risk': 0.5, 'trail': None},
+        {'label': 'B', 'tp': 0.01, 'sl': 0.01, 'hold': 1, 'risk': 0.5, 'trail': 0.01},
         # Aggressive candidate for maximum gain and insight
-        {"label": "MAX", "tp": 0.15, "sl": 0.15, "hold": 1, "risk": 0.5, "trail": 0.10},
+        {'label': 'MAX', 'tp': 0.15, 'sl': 0.15, 'hold': 1, 'risk': 0.5, 'trail': 0.10},
         # High risk, high reward candidate
-        {"label": "HR", "tp": 0.12, "sl": 0.12, "hold": 1, "risk": 0.5, "trail": 0.08},
->>>>>>> origin/main
+        {'label': 'HR', 'tp': 0.12, 'sl': 0.12, 'hold': 1, 'risk': 0.5, 'trail': 0.08}
     ]
 
     out_reports = []

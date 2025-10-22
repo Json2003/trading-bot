@@ -1,10 +1,5 @@
 from __future__ import annotations
-<<<<<<< HEAD
-"""Enumeration of supported asset classes for the Splitstar Operations Console."""
-=======
-
 """Enumeration of supported asset classes for the trading bot."""
->>>>>>> origin/main
 from enum import Enum
 
 

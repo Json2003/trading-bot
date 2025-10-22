@@ -25,19 +25,11 @@ def run_grid(symbol="BTC/USDT"):
     df = load_bars(symbol)
 
     params = {
-<<<<<<< HEAD
         'take_profit_pct': [0.002, 0.004, 0.006, 0.01],
-        'stop_loss_pct': [0.002, 0.003, 0.005, 0.01],
+        'stop_loss_pct': [0.003, 0.005, 0.01],
         'max_holding_bars': [6, 12, 24, 48],
-        'risk_pct': [0.005, 0.01, 0.015],
+        'risk_pct': [0.005, 0.01],
         'trailing_stop_pct': [None, 0.005, 0.01]
-=======
-        "take_profit_pct": [0.002, 0.004, 0.006, 0.01],
-        "stop_loss_pct": [0.003, 0.005, 0.01],
-        "max_holding_bars": [6, 12, 24, 48],
-        "risk_pct": [0.005, 0.01],
-        "trailing_stop_pct": [None, 0.005, 0.01],
->>>>>>> origin/main
     }
 
     combos = list(
@@ -67,10 +59,7 @@ def run_grid(symbol="BTC/USDT"):
             ema_fast=50,
             ema_slow=200,
             vol_filter=False,
-            trailing_stop_pct=trail,
-<<<<<<< HEAD
-            risk_per_trade=risk
-=======
+            trailing_stop_pct=trail
         )
         results.append(
             {
@@ -79,7 +68,6 @@ def run_grid(symbol="BTC/USDT"):
                 "pnl": stats.get("pnl", 0.0),
                 "trades": stats.get("trades", 0),
             }
->>>>>>> origin/main
         )
 
     results_sorted = sorted(results, key=lambda x: (x["win_rate"], x["pnl"]), reverse=True)
