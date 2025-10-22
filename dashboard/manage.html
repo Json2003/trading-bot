@@ -34,7 +34,6 @@
     #loginPanel { background: #111827; border: 1px solid var(--border); border-radius: 14px; padding: 32px; width: min(360px, 90vw); box-shadow: 0 25px 60px rgba(0,0,0,0.45); display: grid; gap: 16px; }
     #loginPanel h1 { margin: 0; font-size: 20px; font-weight: 600; }
     #loginPanel p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
-    #loginPanel .cred { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; color: var(--text); background: rgba(6,182,212,0.12); border-radius: 8px; padding: 8px 10px; display: grid; gap: 4px; font-size: 12px; }
     #loginPanel label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .02em; }
     #loginPanel input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #0b1220; color: var(--text); margin-top: 4px; }
     #loginPanel button { width: 100%; font-size: 15px; padding: 10px 14px; background: var(--accent); color: #032030; border: none; font-weight: 600; border-radius: 10px; cursor: pointer; }
@@ -54,20 +53,16 @@
     <form id="loginForm">
       <div id="loginPanel">
         <h1>Splitstar Operations Console</h1>
-        <p>Sign in to unlock live controls. Use the default credentials or your assigned account.</p>
-        <div class="cred">
-          <div>Username: <strong>gmantrading</strong></div>
-          <div>Password: <strong>kingdombuilder26$$</strong></div>
-        </div>
+        <p>Sign in to unlock live controls with your assigned credentials.</p>
         <div>
           <label for="user">Username</label>
-          <input id="user" placeholder="gmantrading" autocomplete="username" />
+          <input id="user" placeholder="Enter username" autocomplete="username" />
         </div>
         <div>
           <label for="pass">Password</label>
           <input id="pass" type="password" placeholder="Enter password" autocomplete="current-password" />
         </div>
-        <button type="submit">Sign In</button>
+        <button type="button" onclick="login()">Sign In</button>
       </div>
     </form>
   </div>
@@ -478,4 +473,3 @@
   </script>
 </body>
 </html>
-
