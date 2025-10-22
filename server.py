@@ -19,7 +19,71 @@ security = HTTPBearer(auto_error=False)
 
 
 # --------------------------------------------------------------------------------------
-# Logging
+# Mock Authentication
+# --------------------------------------------------------------------------------------
+fake_users_db = {
+    "admin": {
+        "username": "admin",
+        "hashed_password": "admin_password_hash",  # In production, use proper password hashing
+        "permissions": ["control", "view", "settings"]
+    },
+    "trader": {
+        "username": "trader", 
+        "hashed_password": "trader_password_hash",
+        "permissions": ["view"]
+    }
+}
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Mock password verification - in production use proper hashing like bcrypt"""
+    return plain_password == hashed_password.replace("_hash", "")
+
+def create_access_token(username: str) -> str:
+    """Mock token creation - in production use proper JWT"""
+    timestamp = int(time.time())
+    return f"token_{username}_{timestamp}"
+# --------------------------------------------------------------------------------------
+# Global state and settings
+# --------------------------------------------------------------------------------------
+DEFAULT_SETTINGS = {
+    "auto_trade": False,
+    "max_position_size": 1000.0,
+    "risk_level": 0.02,
+    "enable_notifications": True
+}
+
+STATE = {
+    "running": False,
+    "settings": DEFAULT_SETTINGS.copy(),
+    "metrics": {
+        "total_trades": 0,
+        "profitable_trades": 0,
+        "total_pnl": 0.0,
+        "win_rate": 0.0,
+        "sharpe_ratio": 0.0,
+        "max_drawdown": 0.0,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    },
+    "markets": [],
+    "news": [],
+    "trades_current": [],
+    "trades_proposed": [],
+    "activity": [],
+    "server_stats": {
+        "start_time": time.time(),
+        "active_connections": 0,
+        "total_connections": 0
+    }
+}
+
+dashboard_dir = Path(__file__).parent / "dashboard"
+
+def save_settings(settings: Dict[str, Any]) -> None:
+    """Mock settings persistence"""
+    logger.info(f"Settings saved: {settings}")
+
+# --------------------------------------------------------------------------------------
+# Logging configuration
 # --------------------------------------------------------------------------------------
 logging.basicConfig(
     level=logging.INFO,
@@ -41,10 +105,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# --------------------------------------------------------------------------------------
+# Authentication functions
+# --------------------------------------------------------------------------------------
 async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
     if not credentials:
         return None
