@@ -66,6 +66,7 @@ __version__ = "1.26.0"
 
 # Common dtype aliases expected by some libraries/tests
 int_ = int
+uint = int
 
 Number = Union[int, float]
 
@@ -304,6 +305,13 @@ class ndarray:
 
     def __abs__(self):
         return self._unary(abs)
+def abs(x):  # type: ignore[override]
+    if isinstance(x, ndarray):
+        return x.__abs__()
+    try:
+        return __builtins__["abs"](x)  # type: ignore[index]
+    except Exception:
+        return x
 
     def __lt__(self, other):
         return self._binary(other, lambda a, b: a < b)
