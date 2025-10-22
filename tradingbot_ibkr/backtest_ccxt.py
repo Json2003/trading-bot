@@ -293,6 +293,9 @@ def aggressive_strategy_backtest(
         slippage_k: Volume slippage factor
         slippage_cap: Maximum slippage percentage
         enable_logging: Enable detailed trade logging
+        ml_min_prob: Minimum probability from the online trainer once warmed up
+        ml_min_prob_cold: Probability threshold during warm-up / when not ready
+        persist_online_model: Save the online model to disk after the run
 
     Returns:
         Dictionary with comprehensive backtest results and analytics
@@ -513,7 +516,6 @@ def aggressive_strategy_backtest(
                             decision.probabilities,
                         )
                     continue
-
                 if not decision.fundamentals_pass:
                     stats["entries_filtered_fundamental"] += 1
                     if enable_logging and i % 100 == 0:
@@ -523,7 +525,6 @@ def aggressive_strategy_backtest(
                             fundamentals,
                         )
                     continue
-
                 # Trend filter
                 if trend_filter:
                     if pd.isna(row.get("ema_fast")) or pd.isna(row.get("ema_slow")):
@@ -595,7 +596,7 @@ def aggressive_strategy_backtest(
 
                 if enable_logging and len(trades) <= 5:  # Log first few trades in detail
                     logger.info(
-                        f"ENTRY #{len(detailed_trades)}: {timestamp} @ {entry_price:.4f}, qty={qty:.4f}, ML prob={prob:.3f}"
+                        f"ENTRY #{len(detailed_trades)}: {timestamp} @ {entry_price:.4f}, qty={qty:.4f}, ML consensus={decision.consensus:.3f}"
                     )
 
         else:  # In position
@@ -731,6 +732,12 @@ def aggressive_strategy_backtest(
     performance_metrics = calculate_performance_metrics(equity_curve, detailed_trades)
 
     # Compile results
+    wins_count = sum(1 for t in detailed_trades if t.get('pnl', 0) > 0)
+
+    total_pnl = balance - starting_balance
+    total_return_pct = (total_pnl / starting_balance * 100) if starting_balance else 0.0
+    annual_roi_pct = performance_metrics.get('annualized_return_pct', 0.0) if performance_metrics else 0.0
+
     results = {
         "trades": len(detailed_trades),
         "wins": stats["exits_tp"] + sum(1 for t in detailed_trades if t.get("pnl", 0) > 0),
@@ -825,7 +832,6 @@ def main():
     print("Wins:", stats["wins"])
     print(f"Win rate: {stats['win_rate_pct']:.2f}%")
     print("PnL (price units):", stats["pnl"])
-
 
 if __name__ == "__main__":
     main()

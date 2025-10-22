@@ -1,5 +1,5 @@
 @echo off
-REM Simple script to set up a Python virtual environment and install dependencies for the trading bot.
+REM Simple script to set up a Python virtual environment and install dependencies for the Splitstar Operations Console.
 
 if not exist venv (
     python -m venv venv

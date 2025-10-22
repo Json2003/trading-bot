@@ -214,3 +214,4 @@ def compute_rolling_beta(
         result.append(float("nan") if var <= 0 else cov / var)
 
     return pd.Series(result, index=asset_index)
+ 

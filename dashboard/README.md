@@ -1,6 +1,7 @@
-# Trading Bot Dashboard
+# Splitstar Operations Console Dashboard
 
-This directory integrates multiple frontend clients and a backend server for interacting with the trading bot.
+This directory integrates multiple frontend clients and a backend server for
+interacting with the Splitstar Operations Console runtime.
 
 ## Components
 

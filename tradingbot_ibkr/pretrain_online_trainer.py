@@ -8,20 +8,103 @@ python pretrain_online_trainer.py --files datafiles/*.csv --epochs 2 --max-sampl
 """
 
 import argparse
-from pathlib import Path
-import pandas as pd
-from models.online_trainer import OnlineTrainer
-from river import ensemble, preprocessing, tree
 import json
+import sys
 import time
-from tradingbot_ibkr.data import store
-from tradingbot_ibkr.data import store
+from pathlib import Path
+
+if __package__ is None or __package__ == "":  # Executed as a script
+    repo_root = Path(__file__).resolve().parents[1]
+    if str(repo_root) not in sys.path:
+        sys.path.append(str(repo_root))
+
+# Prioritise site-packages so we import the real pandas module (not local stub)
+site_packages = [p for p in sys.path if "site-packages" in p]
+for sp in reversed(site_packages):
+    sys.path.insert(0, sp)
+
+import math
+import random
+
+import numpy as np
+import pandas as pd
+from river import forest, linear_model, metrics, preprocessing
+
+from tradingbot_ibkr.models.online_trainer import OnlineTrainer  # noqa: E402
+from tradingbot_ibkr.data import store  # noqa: E402
 
 
-def build_examples_from_df(df, max_samples=None, feature_cols=None):
-    # require at least 2 rows to create label
-    if len(df) < 2:
-        return []
+MACRO_CACHE = {}
+
+BASE_FEATURE_COLUMNS = {
+    'close', 'high', 'low', 'open', 'volume',
+    'ret1', 'ret2', 'ret4', 'ret8',
+    'ma3', 'ma6', 'ema_ratio', 'trend_slope',
+    'mom5', 'mom10', 'range_pct', 'body_pct',
+    'vol20', 'vol_ratio', 'vol_z', 'atr14', 'rsi14',
+    'distance_high', 'distance_low',
+    'hour_sin', 'hour_cos', 'dow_sin', 'dow_cos',
+    'trend_position', 'vol_long', 'vol_quartile'
+}
+
+
+def _load_macro_file(path: Path) -> pd.DataFrame:
+    if path in MACRO_CACHE:
+        return MACRO_CACHE[path]
+
+    df = pd.read_csv(path)
+    date_col = None
+    for candidate in ('date', 'DATE', 'timestamp', 'ts', 'Date'):
+        if candidate in df.columns:
+            date_col = candidate
+            break
+    if date_col is None:
+        date_col = df.columns[0]
+
+    df[date_col] = pd.to_datetime(df[date_col])
+    df.sort_values(date_col, inplace=True)
+    value_cols = [c for c in df.columns if c != date_col]
+    if not value_cols:
+        raise ValueError(f"Macro file {path} missing value columns")
+
+    rename_map = {}
+    if len(value_cols) == 1:
+        rename_map[value_cols[0]] = path.stem
+    else:
+        for col in value_cols:
+            rename_map[col] = f"{path.stem}_{col}"
+
+    df.rename(columns=rename_map, inplace=True)
+    df.set_index(date_col, inplace=True)
+    df = df.astype(float)
+    MACRO_CACHE[path] = df
+    return df
+
+
+def load_macro_features(macro_files):
+    if not macro_files:
+        return None
+
+    frames = []
+    for file in macro_files:
+        df = _load_macro_file(Path(file))
+        frames.append(df)
+
+    if not frames:
+        return None
+
+    macro = pd.concat(frames, axis=1).sort_index()
+    macro = macro.ffill()
+    return macro
+
+
+def build_examples_from_df(df, *, horizon=6, tp_pct=0.004, sl_pct=0.002,
+                           max_samples=None, feature_cols=None,
+                           balance=True, augment_factor=1, augment_noise=0.01,
+                           rng=None):
+    if len(df) <= horizon:
+        return [], []
+
     df = df.copy()
     df["next_close"] = df["close"].shift(-1)
     df.dropna(inplace=True)
@@ -147,6 +230,11 @@ def run_pretrain(
                 prob = trainer.predict_proba(feat)
                 pred = 1 if prob >= threshold else 0
                 seen += 1
+                prob_sum += prob
+                if prob >= eval_threshold:
+                    threshold_hits += 1
+                    if label == 1:
+                        threshold_wins += 1
                 if pred == 1:
                     dist["pred1"] += 1
                 else:
@@ -154,6 +242,10 @@ def run_pretrain(
                 if pred == label:
                     correct += 1
                 trainer.learn_one(feat, label)
+                try:
+                    roc_metric.update(label, prob)
+                except Exception:
+                    pass
                 total_examples += 1
                 # periodic progress write
                 if job_file and total_examples % 500 == 0:
@@ -169,6 +261,8 @@ def run_pretrain(
                         message=f"seen {total_examples} examples",
                     )
     # final save
+    trainer._samples_seen = total_examples
+    trainer._trained = total_examples >= trainer._min_samples_ready
     trainer.save()
     try:
         import pickle
