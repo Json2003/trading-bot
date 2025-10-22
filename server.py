@@ -10,10 +10,11 @@ Features:
 - Detailed logging and metrics tracking
 """
 from fastapi import FastAPI, WebSocket, HTTPException, Depends, status, Request
+from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone, timedelta
-from typing import Optional, Dict, List, Set
+from typing import Optional, Dict, List, Set, Any
 import asyncio
 import json
 import time
@@ -61,6 +62,55 @@ app.add_middleware(
 )
 
 # Global state with enhanced tracking
+def _bool_env(name: str, default: bool) -> bool:
+    val = os.getenv(name)
+    if val is None:
+        return default
+    return str(val).lower() in ("1", "true", "yes", "on")
+
+def _int_env(name: str, default: int) -> int:
+    try:
+        return int(os.getenv(name, default))
+    except Exception:
+        return default
+
+DEFAULT_SETTINGS = {
+    "PAPER": _bool_env("PAPER", True),
+    "EXCHANGE": os.getenv("EXCHANGE", "binance"),
+    "STRATEGY": os.getenv("STRATEGY", "sma_cross"),
+    "CONTINUOUS_BACKTEST": _bool_env("CONTINUOUS_BACKTEST", False),
+    "BACKTEST_INTERVAL": _int_env("BACKTEST_INTERVAL", 60),
+    "RISK_PCT": float(os.getenv("RISK_PCT", "0.01")),
+    "STOP_LOSS_PCT": float(os.getenv("STOP_LOSS_PCT", "0.02")),
+    "TAKE_PROFIT_PCT": float(os.getenv("TAKE_PROFIT_PCT", "0.04")),
+}
+
+SETTINGS_PATH = os.path.join("tradingbot_ibkr", "model_store", "settings.json")
+
+def _ensure_dir(path: str):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+def load_settings() -> Dict[str, Any]:
+    # Start from defaults, overlay file if present
+    settings = dict(DEFAULT_SETTINGS)
+    try:
+        if os.path.exists(SETTINGS_PATH):
+            with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
+                file_settings = json.load(f)
+                if isinstance(file_settings, dict):
+                    settings.update(file_settings)
+    except Exception as exc:
+        logger.warning("Failed to load settings.json: %s", exc)
+    return settings
+
+def save_settings(settings: Dict[str, Any]) -> None:
+    try:
+        _ensure_dir(SETTINGS_PATH)
+        with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
+            json.dump(settings, f, indent=2)
+    except Exception as exc:
+        logger.error("Failed to save settings.json: %s", exc)
+
 STATE = {
     "running": False,
     "metrics": {
@@ -76,6 +126,7 @@ STATE = {
     },
     "positions": [],
     "orders": [],
+    "settings": load_settings(),
     "server_stats": {
         "start_time": time.time(),
         "active_connections": 0,
@@ -92,7 +143,7 @@ class ConnectionManager:
         self.connection_info: Dict[WebSocket, dict] = {}
         self.rate_limiter: Dict[str, deque] = defaultdict(lambda: deque())
         
-    async def connect(self, websocket: WebSocket, client_id: str = None):
+    async def connect(self, websocket: WebSocket, client_id: Optional[str] = None):
         await websocket.accept()
         self.active_connections.append(websocket)
         
@@ -307,7 +358,7 @@ async def login(user_credentials: UserLogin):
 
 # Public endpoints
 @app.get("/status")
-async def status():
+async def get_status():
     """Get trading bot status."""
     return {
         "running": STATE["running"],
@@ -320,6 +371,170 @@ async def metrics():
     STATE["metrics"]["timestamp"] = datetime.now(timezone.utc).isoformat()
     STATE["metrics"]["uptime_seconds"] = time.time() - STATE['server_stats']['start_time']
     return STATE["metrics"]
+
+
+# Simple management page (must be declared before the __main__ block)
+@app.get("/manage", response_class=HTMLResponse)
+async def manage_page():
+        html = f"""
+<!doctype html>
+<html lang=\"en\">
+<head>
+    <meta charset=\"utf-8\" />
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+    <title>Trading Bot — Manage</title>
+    <style>
+        body {{ font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 20px; color: #111; }}
+        .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }}
+        .card {{ border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }}
+        h1 {{ margin-top: 0; font-size: 20px; }}
+        .label {{ font-size: 12px; color: #555; }}
+        .value {{ font-weight: 600; }}
+        button {{ padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; }}
+        input, select {{ width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 8px; }}
+        .row {{ display: flex; align-items: center; gap: 8px; }}
+    </style>
+    <script>
+        let ws;
+        function connectWS() {{
+            const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+            ws = new WebSocket(`${{proto}}://` + location.host + '/ws');
+            ws.onmessage = (ev) => {{
+                try {{
+                    const msg = JSON.parse(ev.data);
+                    if (msg.metrics) {{
+                        document.getElementById('equity').textContent = msg.metrics.equity;
+                        document.getElementById('pnl').textContent = msg.metrics.daily_pnl;
+                        document.getElementById('sharpe').textContent = msg.metrics.sharpe;
+                        document.getElementById('drawdown').textContent = msg.metrics.drawdown;
+                    }}
+                    if (msg.settings) {{
+                        document.getElementById('paper').checked = !!msg.settings.PAPER;
+                        document.getElementById('cont').checked = !!msg.settings.CONTINUOUS_BACKTEST;
+                        document.getElementById('strategy').value = msg.settings.STRATEGY || 'sma_cross';
+                        document.getElementById('interval').value = msg.settings.BACKTEST_INTERVAL || 60;
+                    }}
+                }} catch (e) {{ console.log('WS parse error', e); }}
+            }}
+            ws.onclose = () => setTimeout(connectWS, 2000);
+        }}
+
+        async function saveSettings() {{
+            const payload = {{
+                PAPER: document.getElementById('paper').checked,
+                CONTINUOUS_BACKTEST: document.getElementById('cont').checked,
+                STRATEGY: document.getElementById('strategy').value,
+                BACKTEST_INTERVAL: parseInt(document.getElementById('interval').value || '60')
+            }};
+            try {{
+                const res = await fetch('/settings', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify(payload) }});
+                const js = await res.json();
+                console.log('Saved', js);
+            }} catch (e) {{ console.error('Save failed', e); }}
+        }}
+
+        async function loadSettings() {{
+            try {{
+                const res = await fetch('/settings');
+                const js = await res.json();
+                const s = js.settings || {{}};
+                document.getElementById('paper').checked = !!s.PAPER;
+                document.getElementById('cont').checked = !!s.CONTINUOUS_BACKTEST;
+                document.getElementById('strategy').value = s.STRATEGY || 'sma_cross';
+                document.getElementById('interval').value = s.BACKTEST_INTERVAL || 60;
+            }} catch (e) {{ console.log('Load settings failed', e); }}
+        }}
+
+        window.addEventListener('DOMContentLoaded', () => {{
+            connectWS();
+            loadSettings();
+        }});
+    </script>
+    </head>
+    <body>
+        <h1>Manage</h1>
+        <div class="grid">
+            <div class="card">
+                <div class="row"><input type="checkbox" id="paper" /> <label for="paper">Paper Trading</label></div>
+                <div class="row"><input type="checkbox" id="cont" /> <label for="cont">Continuous Backtest</label></div>
+                <div class="row">
+                    <label class="label" for="strategy">Strategy</label>
+                    <select id="strategy">
+                        <option value="sma_cross">sma_cross</option>
+                        <option value="enhanced">enhanced</option>
+                        <option value="breakout">breakout</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <label class="label" for="interval">Backtest Interval (s)</label>
+                    <input id="interval" type="number" min="5" step="5" value="60" />
+                </div>
+                <div style="margin-top:10px;" class="row">
+                    <button onclick="saveSettings()">Save Settings</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="label">Equity</div>
+                <div class="value" id="equity">-</div>
+                <div class="label">Daily PnL</div>
+                <div class="value" id="pnl">-</div>
+                <div class="label">Sharpe</div>
+                <div class="value" id="sharpe">-</div>
+                <div class="label">Drawdown</div>
+                <div class="value" id="drawdown">-</div>
+            </div>
+        </div>
+    </body>
+    </html>
+        """
+        return HTMLResponse(content=html)
+
+
+# Settings endpoints
+@app.get("/settings")
+async def get_settings():
+    """Return current runtime settings."""
+    return {"settings": STATE.get("settings", {})}
+
+
+@app.post("/settings")
+async def update_settings(payload: Dict[str, Any]):
+    """Update runtime settings (partial updates allowed)."""
+    allowed_keys = set(DEFAULT_SETTINGS.keys())
+    updates = {k: v for k, v in payload.items() if k in allowed_keys}
+    if not updates:
+        return {"ok": True, "updated": {}, "message": "No valid keys provided"}
+
+    # Basic type normalization
+    for key, default_val in DEFAULT_SETTINGS.items():
+        if key in updates:
+            val = updates[key]
+            try:
+                if isinstance(default_val, bool):
+                    updates[key] = bool(val) if isinstance(val, bool) else str(val).lower() in ("1","true","yes","on")
+                elif isinstance(default_val, int):
+                    updates[key] = int(val)
+                elif isinstance(default_val, float):
+                    updates[key] = float(val)
+                else:
+                    updates[key] = str(val)
+            except Exception:
+                updates[key] = default_val
+
+    STATE["settings"].update(updates)
+    save_settings(STATE["settings"])
+
+    # Broadcast settings update
+    try:
+        await manager.broadcast(json.dumps({
+            "event": "settings_update",
+            "settings": STATE["settings"],
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }))
+    except Exception as exc:
+        logger.warning("WS broadcast failed for settings update: %s", exc)
+
+    return {"ok": True, "updated": updates}
 
 
 @app.get("/mcp/health")
@@ -463,6 +678,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: Optional[str] = No
             "event": "connection_established",
             "client_id": manager.connection_info[websocket]['client_id'],
             "metrics": STATE["metrics"],
+            "settings": STATE.get("settings", {}),
             "server_time": datetime.now(timezone.utc).isoformat()
         }
         await websocket.send_text(json.dumps(initial_data))
@@ -478,6 +694,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: Optional[str] = No
                 message_data = {
                     "event": "metrics_update",
                     "metrics": STATE["metrics"],
+                    "settings": STATE.get("settings", {}),
                     "server_stats": {
                         "active_connections": STATE['server_stats']['active_connections'],
                         "uptime_seconds": STATE["metrics"]["uptime_seconds"]
