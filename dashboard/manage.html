@@ -86,7 +86,7 @@
   <div id="status" style="position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; background: #0b1220; color: #cbd5e1; border: 1px solid #1f2937; padding: 8px 12px; border-radius: 10px; opacity: 0; transition: opacity .3s;"></div>
 
   <script>
-    const API = location.origin.replace(/:\\d+$/, ':8000');
+  const API = `${location.protocol}//${location.hostname}:8000`;
     let ws; let token = localStorage.getItem('authToken') || ''; let currentUser = localStorage.getItem('authUser') || '';
     function setAuth(tk, user) { token = tk || ''; currentUser = user || ''; if (token) localStorage.setItem('authToken', token); else localStorage.removeItem('authToken'); if (user) localStorage.setItem('authUser', user); else localStorage.removeItem('authUser'); document.getElementById('whoami').textContent = token ? `Logged in as ${currentUser}` : 'Not authenticated'; document.getElementById('btnStart').disabled = !token; document.getElementById('btnStop').disabled = !token; }
     function authHeaders() { return token ? { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' }; }
