@@ -40,6 +40,7 @@ __all__ = [
     "zeros",
     "zeros_like",
     "ones",
+    "roll",
     "mean",
     "std",
     "sum",
@@ -62,6 +63,9 @@ __all__ = [
 # import contract intact while remaining explicit that this is a compatibility
 # shim.
 __version__ = "1.26.0"
+
+# Common dtype aliases expected by some libraries/tests
+int_ = int
 
 Number = Union[int, float]
 
@@ -538,6 +542,26 @@ def cumsum(x):
         total += _ensure_float(v)
         out.append(total)
     return ndarray(out)
+
+
+def roll(x, shift, axis=None):
+    """Roll array elements along a given axis.
+
+    Minimal 1-D implementation used by tests. For multi-dimensional inputs,
+    this flattens when axis is None, or applies along axis=0.
+    """
+    arr = array(x)
+    if arr.ndim == 0:
+        return arr.copy()
+    data = arr.flatten()._data if axis is None or arr.ndim == 1 else arr._data
+    n = len(data)
+    if n == 0:
+        return ndarray([])
+    s = int(shift) % n
+    if s == 0:
+        return ndarray(data[:]) if (axis is None or arr.ndim == 1) else ndarray(data)
+    rolled = data[-s:] + data[:-s]
+    return ndarray(rolled)
 
 
 def arange(start, stop=None, step=1):
