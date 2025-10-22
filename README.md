@@ -49,3 +49,45 @@ python tradingbot_ibkr/binance_to_gcs.py --bucket <bucket-name> \
 ```
 
 Replace the bucket name and time range as needed.
+
+## LangChain agent deployment
+
+- Treat your LangSmith API token (for example `LANGSMITH_API_KEY=<your-token>`) as a
+  secret. Export it at runtime or load it from a secrets manager, and never check the
+  real value into source control.
+- Install the latest LangChain SDK packages:
+
+  ```bash
+  pip install -U langchain langgraph langchainhub
+  ```
+
+- When you want LangSmith dashboards, set tracing environment variables before
+  launching the app:
+
+  ```bash
+  export LANGCHAIN_TRACING_V2=true
+  export LANGCHAIN_ENDPOINT=https://api.langchain.plus
+  export LANGCHAIN_PROJECT=<project-name>
+  ```
+
+- Build agents with `langchain.agents` or LangGraph primitives. Inject the API
+  key through LangChain settings (`langchain.settings.set_headers`) or by
+  supplying `headers={"x-api-key": os.environ["LANGCHAIN_API_KEY"]}` when calling
+  hosted endpoints.
+- To hit LangChain's hosted Agents API, create a client:
+
+  ```python
+  from langchain.clients import AgentsClient
+  client = AgentsClient(base_url=<your-endpoint>, api_key=os.environ["LANGCHAIN_API_KEY"])
+  ```
+
+  Each request must include the bearer token (Authorization header) and any
+  deployment-specific headers.
+- Forward run telemetry to LangSmith so you can inspect traces, tool usage, and
+  latency in production.
+- Harden operations by rotating the token regularly, limiting its scope, and
+  keeping detailed audit logs for every agent action—especially before executing
+  trades against live capital.
+- The FastAPI gateway now exposes `/agents/run` (requires authentication with
+  `write` permission) to forward payloads to a hosted LangChain agent using the
+  configured credentials.

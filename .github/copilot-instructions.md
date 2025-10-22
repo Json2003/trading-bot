@@ -63,3 +63,8 @@ Feedback needed:
 - Confirm production JWT requirements and any expected auth flows beyond current stubs.
 - Confirm if additional training scripts are desired (e.g., LightGBM); currently, use `models/train_batch.py`.
 - Identify any non-default env vars relied upon in deployments (beyond those listed in `SETUP_GUIDE.md`).
+
+## Roadmap alignment — Splitstar Development
+- External plan location (owner-provided): `C:\Users\j-mga\OneDrive\Documents\GitHub\Wcoin`
+- See `docs/splitstar_plan.md` for synced milestones and priorities.
+- When opening PRs, reference Splitstar milestone IDs in titles/descriptions.

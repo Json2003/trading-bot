@@ -21,10 +21,12 @@ import logging
 from collections import defaultdict, deque
 import uuid
 import os
+import httpx
 
 from pydantic import BaseModel
 
 from tradingbot_ibkr.services.mcp_client import MCPClient
+from tradingbot_ibkr.services.langchain_agent import LangChainAgentService
 
 # Configure logging
 logging.basicConfig(
@@ -158,6 +160,7 @@ manager = ConnectionManager()
 
 # Optional MCP integration
 MCP_CLIENT = MCPClient.from_env()
+LANGCHAIN_AGENT = LangChainAgentService.from_env()
 
 
 async def _run_in_executor(func, *args, **kwargs):
@@ -172,6 +175,12 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+class AgentInvocationRequest(BaseModel):
+    assistant_id: str
+    input: Dict[str, Any]
+    thread_id: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 # Mock user database (in production, use proper database)
 fake_users_db = {
@@ -353,6 +362,41 @@ async def mcp_push_metrics():
     except Exception as exc:
         logger.exception("Failed to push metrics to MCP")
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+@app.post("/agents/run")
+async def agents_run(
+    request: AgentInvocationRequest,
+    current_user: dict = Depends(require_permission("write")),
+):
+    if not LANGCHAIN_AGENT:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="LangChain agent integration not configured",
+        )
+    try:
+        run = await _run_in_executor(
+            LANGCHAIN_AGENT.start_run,
+            request.assistant_id,
+            request.input,
+            thread_id=request.thread_id,
+            metadata=request.metadata,
+        )
+        return {"status": "submitted", "run": run}
+    except httpx.HTTPStatusError as exc:
+        logger.error(
+            "LangChain agent invocation returned HTTP %s: %s",
+            exc.response.status_code if exc.response else "unknown",
+            exc.response.text if exc.response else str(exc),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="LangChain agent call failed",
+        ) from exc
+    except Exception as exc:
+        logger.exception("Unexpected LangChain agent error")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)
+        ) from exc
 
 # Protected endpoints
 @app.post("/control/start")
