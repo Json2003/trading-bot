@@ -7,10 +7,10 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
-    runs-on: ${{ matrix.os }}
+  test:}
     strategy:
       matrix:
+    runs-on: ${{ matrix.os }
         os: [ubuntu-latest, windows-latest]
         python-version: [3.11, 3.12]
     steps:
