@@ -366,6 +366,10 @@ async def websocket_endpoint(ws: WebSocket):
                     "trades_current": STATE["trades_current"],
                     "trades_proposed": STATE["trades_proposed"],
                     "activity": STATE["activity"],
+                    "server_stats": {
+                        "uptime_seconds": time.time() - STATE["server_stats"]["start_time"],
+                        "active_connections": len(manager.active_connections),
+                    },
                 }
             )
         )
@@ -382,6 +386,10 @@ async def websocket_endpoint(ws: WebSocket):
                         "trades_current": STATE["trades_current"],
                         "trades_proposed": STATE["trades_proposed"],
                         "activity": STATE["activity"],
+                        "server_stats": {
+                            "uptime_seconds": time.time() - STATE["server_stats"]["start_time"],
+                            "active_connections": len(manager.active_connections),
+                        },
                     }
                 )
             )
