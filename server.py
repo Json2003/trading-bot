@@ -14,6 +14,9 @@ from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
 
+# Security instance for authentication
+security = HTTPBearer(auto_error=False)
+
 
 # --------------------------------------------------------------------------------------
 # Logging
@@ -38,99 +41,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static dashboard if present
-dashboard_dir = Path(__file__).parent / "dashboard"
-if dashboard_dir.exists():
-    app.mount("/static", StaticFiles(directory=str(dashboard_dir)), name="static")
+if __name__ == "__main__":
+    import uvicorn
 
-
-# --------------------------------------------------------------------------------------
-# Settings persistence
-# --------------------------------------------------------------------------------------
-MODEL_STORE = Path("tradingbot_ibkr") / "model_store"
-MODEL_STORE.mkdir(parents=True, exist_ok=True)
-SETTINGS_FILE = MODEL_STORE / "settings.json"
-
-DEFAULT_SETTINGS: Dict[str, Any] = {
-    "PAPER": True,
-    "CONTINUOUS_BACKTEST": False,
-    "STRATEGY": "sma_cross",
-    "BACKTEST_INTERVAL": 60,
-    "RISK_PCT": 0.01,
-    "STOP_LOSS_PCT": 0.02,
-    "TAKE_PROFIT_PCT": 0.04,
-    "EXCHANGE": "binance",
-}
-
-
-def load_settings() -> Dict[str, Any]:
-    try:
-        if SETTINGS_FILE.exists():
-            data = json.loads(SETTINGS_FILE.read_text())
-            return {**DEFAULT_SETTINGS, **data}
-    except Exception as e:
-        logger.warning("Failed to load settings: %s", e)
-    return dict(DEFAULT_SETTINGS)
-
-
-def save_settings(data: Dict[str, Any]) -> None:
-    try:
-        SETTINGS_FILE.write_text(json.dumps(data, indent=2))
-    except Exception as e:
-        logger.error("Failed to save settings: %s", e)
-
-
-# --------------------------------------------------------------------------------------
-# Global state
-# --------------------------------------------------------------------------------------
-STATE: Dict[str, Any] = {
-    "running": False,
-    "settings": load_settings(),
-    "metrics": {
-        "equity": 100000.0,
-        "daily_pnl": 0.0,
-        "sharpe": 1.2,
-        "drawdown": 0.05,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "uptime_seconds": 0.0,
-        "total_trades": 0,
-        "active_positions": 0,
-    },
-    "markets": [],
-    "news": [],
-    "trades_current": [],
-    "trades_proposed": [],
-    "activity": [],
-    "server_stats": {
-        "start_time": time.time(),
-        "active_connections": 0,
-        "total_connections": 0,
-        "requests_per_minute": 0,
-        "error_count": 0,
-    },
-}
-
-
-# --------------------------------------------------------------------------------------
-# Auth (demo tokens)
-# --------------------------------------------------------------------------------------
-security = HTTPBearer(auto_error=False)
-
-fake_users_db = {
-    "admin": {"username": "admin", "hashed_password": "admin123_hashed", "permissions": ["read", "write", "control"]},
-    "readonly": {"username": "readonly", "hashed_password": "readonly123_hashed", "permissions": ["read"]},
-}
-
-
-def verify_password(plain: str, hashed: str) -> bool:
-    return f"{plain}_hashed" == hashed
-
-
-def create_access_token(username: str, minutes: int = 30) -> str:
-    exp = int((datetime.utcnow() + timedelta(minutes=minutes)).timestamp())
-    return f"token_{username}_{exp}"
-
-
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
     if not credentials:
         return None
@@ -469,94 +383,5 @@ async def on_shutdown():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)"""
-Splitstar Operations Console FastAPI server with comprehensive features:
-
-Features:
-- JWT-based authentication for sensitive endpoints
-- Rate limiting to prevent abuse  
-- Robust error handling and connection management
-- Real-time server health monitoring
-- WebSocket connection pooling and management
-- Detailed logging and metrics tracking
-"""
-from fastapi import FastAPI, WebSocket, HTTPException, Depends, status, Request
-from fastapi.responses import HTMLResponse
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime, timezone, timedelta
-from typing import Optional, Dict, List, Set, Any
-import asyncio
-import json
-import time
-import logging
-from collections import defaultdict, deque
-import uuid
-import os
-import httpx
-
-from pydantic import BaseModel
-
-from tradingbot_ibkr.services.mcp_client import MCPClient
-from tradingbot_ibkr.services.langchain_agent import LangChainAgentService
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(module)s - %(message)s',
-    handlers=[
-        logging.FileHandler('server.log'),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
-
-# Security configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")  # In production, use environment variable
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-# Rate limiting configuration
-RATE_LIMIT_PER_MINUTE = 60
-RATE_LIMIT_WINDOW = 60  # seconds
-
-# Brand configuration
-APP_BRAND = os.getenv("APP_BRAND", "Splitstar Operations Console")
-
-app = FastAPI(title=f"{APP_BRAND} API", version="1.0.0")
-security = HTTPBearer(auto_error=False)
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Global state with enhanced tracking
-def _bool_env(name: str, default: bool) -> bool:
-    val = os.getenv(name)
-    if val is None:
-        return default
-    return str(val).lower() in ("1", "true", "yes", "on")
-
-def _int_env(name: str, default: int) -> int:
-    try:
-        return int(os.getenv(name, default))
-    except Exception:
-        return default
-
-DEFAULT_SETTINGS = {
-    "PAPER": _bool_env("PAPER", True),
-    "EXCHANGE": os.getenv("EXCHANGE", "binance"),
-    "STRATEGY": os.getenv("STRATEGY", "sma_cross"),
-    "CONTINUOUS_BACKTEST": _bool_env("CONTINUOUS_BACKTEST", False),
-    "BACKTEST_INTERVAL": _int_env("BACKTEST_INTERVAL", 60),
-}
-
-if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
