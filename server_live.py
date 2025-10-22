@@ -73,6 +73,7 @@ STATE: Dict[str, Any] = {
     "metrics": {
         "equity": 100000.0,
         "daily_pnl": 0.0,
+        "total_pnl": 0.0,
         "sharpe": 1.2,
         "drawdown": 0.05,
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -185,6 +186,10 @@ manager = ConnectionManager()
 
 SYMBOLS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT"]
 
+# Trade log path (produced by live/paper bots and scripts)
+TRADES_PATH = Path(__file__).parent / "tradingbot_ibkr" / "datafiles" / "trades.csv"
+TRADES_LAST_MTIME: Optional[float] = None
+
 
 def _rand_price(base: float, vol: float = 0.02) -> float:
     return round(base * (1 + random.uniform(-vol, vol)), 2)
@@ -255,6 +260,75 @@ def log_activity(msg: str) -> None:
     STATE["activity"] = STATE["activity"][-100:]
 
 
+def _safe_float(v, default: float = 0.0) -> float:
+    try:
+        return float(v)
+    except Exception:
+        return float(default)
+
+
+def refresh_trades_from_file(max_recent: int = 20) -> None:
+    """Read trades.csv if present and update metrics and recent trades list.
+
+    Expected columns include: trade_id, symbol, entry_ts, exit_ts, entry_price, exit_price, size, side, fees, pnl, pnl_pct
+    """
+    global TRADES_LAST_MTIME
+    if not TRADES_PATH.exists():
+        return
+    try:
+        mtime = TRADES_PATH.stat().st_mtime
+        if TRADES_LAST_MTIME is not None and mtime <= TRADES_LAST_MTIME:
+            return
+        TRADES_LAST_MTIME = mtime
+        import csv
+        rows = []
+        with open(TRADES_PATH, "r", newline="") as f:
+            reader = csv.DictReader(f)
+            for r in reader:
+                rows.append(r)
+        total_pnl = 0.0
+        daily_pnl = 0.0
+        total_trades = len(rows)
+        today = datetime.now(timezone.utc).date()
+        recent = []
+        for r in rows[-max_recent:]:
+            pnl = _safe_float(r.get("pnl", 0.0))
+            total_pnl += pnl
+            try:
+                exit_ts = r.get("exit_ts") or r.get("exit_time")
+                if exit_ts:
+                    dt = datetime.fromisoformat(exit_ts.replace("Z", "+00:00"))
+                    if dt.date() == today:
+                        daily_pnl += pnl
+            except Exception:
+                pass
+            recent.append(
+                {
+                    "symbol": r.get("symbol", ""),
+                    "side": r.get("side", ""),
+                    "qty": _safe_float(r.get("size") or r.get("qty") or 0.0),
+                    "entry": _safe_float(r.get("entry_price") or 0.0),
+                    "pnl": pnl,
+                }
+            )
+        # Update state metrics and recent trades
+        STATE["metrics"]["total_pnl"] = round(total_pnl, 2)
+        STATE["metrics"]["daily_pnl"] = round(daily_pnl, 2)
+        # equity derived from starting equity + total_pnl
+        starting_equity = DEFAULT_SETTINGS.get("STARTING_EQUITY", 100000.0)
+        try:
+            starting_equity = float(STATE.get("starting_equity", starting_equity))
+        except Exception:
+            pass
+        STATE.setdefault("starting_equity", starting_equity)
+        STATE["metrics"]["equity"] = round(starting_equity + total_pnl, 2)
+        STATE["metrics"]["total_trades"] = int(total_trades)
+        STATE["trades_current"] = recent[::-1]
+        log_activity(f"Trades updated: {total_trades} total, today PnL {STATE['metrics']['daily_pnl']}")
+    except Exception as e:
+        logger.error("Failed to refresh trades: %s", e)
+
+
 @app.get("/health")
 async def health():
     uptime = time.time() - STATE["server_stats"]["start_time"]
@@ -266,6 +340,18 @@ async def metrics():
     STATE["metrics"]["timestamp"] = datetime.now(timezone.utc).isoformat()
     STATE["metrics"]["uptime_seconds"] = time.time() - STATE["server_stats"]["start_time"]
     return STATE["metrics"]
+
+
+@app.get("/account")
+async def account_snapshot():
+    m = STATE["metrics"]
+    return {
+        "equity": m.get("equity"),
+        "daily_pnl": m.get("daily_pnl"),
+        "total_pnl": m.get("total_pnl"),
+        "total_trades": m.get("total_trades"),
+        "timestamp": m.get("timestamp"),
+    }
 
 
 @app.get("/settings")
@@ -381,6 +467,12 @@ async def websocket_endpoint(ws: WebSocket):
                     {
                         "event": "tick",
                         "metrics": STATE["metrics"],
+                        "account": {
+                            "equity": STATE["metrics"].get("equity"),
+                            "daily_pnl": STATE["metrics"].get("daily_pnl"),
+                            "total_pnl": STATE["metrics"].get("total_pnl"),
+                            "total_trades": STATE["metrics"].get("total_trades"),
+                        },
                         "markets": STATE["markets"],
                         "news": STATE["news"],
                         "trades_current": STATE["trades_current"],
@@ -427,6 +519,22 @@ async def on_startup():
                 await asyncio.sleep(5)
 
     asyncio.create_task(updater())
+
+    async def trades_watcher():
+        while True:
+            try:
+                refresh_trades_from_file(max_recent=20)
+                await manager.broadcast({
+                    "event": "trades_update",
+                    "trades_current": STATE["trades_current"],
+                    "metrics": STATE["metrics"],
+                })
+                await asyncio.sleep(2)
+            except Exception as e:
+                logger.error("Trades watcher error: %s", e)
+                await asyncio.sleep(5)
+
+    asyncio.create_task(trades_watcher())
 
 
 if __name__ == "__main__":
