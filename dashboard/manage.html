@@ -24,6 +24,14 @@
     .chips { display: flex; gap: 8px; flex-wrap: wrap; }
     .chip { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #0b1220; border: 1px solid var(--border); color: #9ca3af; }
     .ok { color: var(--good); } .bad { color: var(--bad); } .muted { color: var(--muted); }
+    .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .table th, .table td { border-bottom: 1px solid var(--border); padding: 6px 8px; text-align: left; }
+    .table th { color: #9ca3af; font-weight: 600; }
+    .scroll { max-height: 280px; overflow: auto; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .headline { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+    .headline .src { color: #9ca3af; font-size: 12px; }
+    .headline .ts { color: #9ca3af; font-size: 12px; }
   </style>
 </head>
 <body>
@@ -81,6 +89,46 @@
         <div class="label">Drawdown</div>
         <div class="value" id="drawdown">-</div>
       </div>
+
+      <div class="card stack">
+        <h2>Markets</h2>
+        <div class="scroll">
+          <table class="table" id="tblMarkets">
+            <thead><tr><th>Symbol</th><th>Bid</th><th>Ask</th><th>Last</th><th>Change</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <h2>News</h2>
+        <div class="scroll" id="newsList"></div>
+      </div>
+
+      <div class="card stack">
+        <h2>Current Trades</h2>
+        <div class="scroll">
+          <table class="table" id="tblCurrent">
+            <thead><tr><th>Symbol</th><th>Side</th><th>Qty</th><th>Entry</th><th>PnL</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <h2>Proposed Trades</h2>
+        <div class="scroll">
+          <table class="table" id="tblProposed">
+            <thead><tr><th>Symbol</th><th>Side</th><th>Confidence</th><th>Reason</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <h2>Activity</h2>
+        <div class="scroll" id="activity"></div>
+      </div>
     </div>
   </div>
   <div id="status" style="position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; background: #0b1220; color: #cbd5e1; border: 1px solid #1f2937; padding: 8px 12px; border-radius: 10px; opacity: 0; transition: opacity .3s;"></div>
@@ -90,13 +138,18 @@
     let ws; let token = localStorage.getItem('authToken') || ''; let currentUser = localStorage.getItem('authUser') || '';
     function setAuth(tk, user) { token = tk || ''; currentUser = user || ''; if (token) localStorage.setItem('authToken', token); else localStorage.removeItem('authToken'); if (user) localStorage.setItem('authUser', user); else localStorage.removeItem('authUser'); document.getElementById('whoami').textContent = token ? `Logged in as ${currentUser}` : 'Not authenticated'; document.getElementById('btnStart').disabled = !token; document.getElementById('btnStop').disabled = !token; }
     function authHeaders() { return token ? { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' }; }
-    function connectWS() { const proto = location.protocol === 'https:' ? 'wss' : 'ws'; ws = new WebSocket(`${proto}://` + location.hostname + ':8000/ws'); ws.onmessage = (ev) => { try { const msg = JSON.parse(ev.data); if (msg.metrics) renderMetrics(msg.metrics); if (msg.settings) applySettings(msg.settings); if (msg.server_stats) renderServerStats(msg.server_stats); } catch(e){} }; ws.onopen = () => document.getElementById('wsdot').classList.add('ws-ok'); ws.onclose = () => { document.getElementById('wsdot').classList.remove('ws-ok'); document.getElementById('wsdot').classList.add('ws-bad'); setTimeout(connectWS, 2000); }; }
+  function connectWS() { const proto = location.protocol === 'https:' ? 'wss' : 'ws'; ws = new WebSocket(`${proto}://` + location.hostname + ':8000/ws'); ws.onmessage = (ev) => { try { const msg = JSON.parse(ev.data); if (msg.metrics) renderMetrics(msg.metrics); if (msg.settings) applySettings(msg.settings); if (msg.server_stats) renderServerStats(msg.server_stats); if (msg.markets) renderMarkets(msg.markets); if (msg.news) renderNews(msg.news); if (msg.trades_current) renderCurrent(msg.trades_current); if (msg.trades_proposed) renderProposed(msg.trades_proposed); if (msg.activity) renderActivity(msg.activity); } catch(e){} }; ws.onopen = () => document.getElementById('wsdot').classList.add('ws-ok'); ws.onclose = () => { document.getElementById('wsdot').classList.remove('ws-ok'); document.getElementById('wsdot').classList.add('ws-bad'); setTimeout(connectWS, 2000); }; }
     async function saveSettings() { const payload = { PAPER: document.getElementById('paper').checked, CONTINUOUS_BACKTEST: document.getElementById('cont').checked, STRATEGY: document.getElementById('strategy').value, BACKTEST_INTERVAL: parseInt(document.getElementById('interval').value || '60'), RISK_PCT: parseFloat(document.getElementById('risk').value || '0.01'), STOP_LOSS_PCT: parseFloat(document.getElementById('sl').value || '0.02'), TAKE_PROFIT_PCT: parseFloat(document.getElementById('tp').value || '0.04'), EXCHANGE: document.getElementById('exchange').value || 'binance' }; try { const res = await fetch(API + '/settings', { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) }); const js = await res.json(); console.log('Saved', js); toast('Settings saved'); } catch(e){ toast('Save failed'); } }
     async function loadSettings() { try { const res = await fetch(API + '/settings'); const js = await res.json(); applySettings(js.settings || {}); } catch(e){} }
     function applySettings(s){ document.getElementById('paper').checked = !!s.PAPER; document.getElementById('cont').checked = !!s.CONTINUOUS_BACKTEST; document.getElementById('strategy').value = s.STRATEGY || 'sma_cross'; document.getElementById('interval').value = s.BACKTEST_INTERVAL ?? 60; document.getElementById('risk').value = s.RISK_PCT ?? 0.01; document.getElementById('sl').value = s.STOP_LOSS_PCT ?? 0.02; document.getElementById('tp').value = s.TAKE_PROFIT_PCT ?? 0.04; document.getElementById('exchange').value = s.EXCHANGE || 'binance'; }
     function renderMetrics(m){ document.getElementById('equity').textContent = new Intl.NumberFormat(undefined,{style:'currency',currency:'USD',maximumFractionDigits:2}).format(m.equity||0); const pnlEl=document.getElementById('pnl'); pnlEl.textContent = new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(m.daily_pnl||0); pnlEl.className='value '+((m.daily_pnl||0)>=0?'ok':'bad'); document.getElementById('sharpe').textContent=((m.sharpe||0)).toFixed(2); document.getElementById('drawdown').textContent=((m.drawdown||0)*100).toFixed(2)+'%'; }
     function renderServerStats(s){ document.getElementById('uptime').textContent = `${Math.floor((s.uptime_seconds||0)/3600)}h ${Math.floor(((s.uptime_seconds||0)%3600)/60)}m ${Math.floor((s.uptime_seconds||0)%60)}s`; document.getElementById('conns').textContent = s.active_connections ?? 0; }
-    async function loadInitialMetrics(){ try { const m = await (await fetch(API + '/metrics')).json(); renderMetrics(m); const h = await (await fetch(API + '/health')).json(); renderServerStats({ uptime_seconds: h.uptime_seconds, active_connections: h.active_connections }); } catch(e){} }
+  async function loadInitialMetrics(){ try { const m = await (await fetch(API + '/metrics')).json(); renderMetrics(m); const h = await (await fetch(API + '/health')).json(); renderServerStats({ uptime_seconds: h.uptime_seconds, active_connections: h.active_connections }); const mk = await (await fetch(API + '/feed/markets')).json(); renderMarkets(mk.markets||[]); const nw = await (await fetch(API + '/feed/news')).json(); renderNews(nw.news||[]); const tc = await (await fetch(API + '/trades/current')).json(); renderCurrent(tc.trades||[]); const tp = await (await fetch(API + '/trades/proposed')).json(); renderProposed(tp.trades||[]); const ac = await (await fetch(API + '/activity/log')).json(); renderActivity(ac.activity||[]); } catch(e){} }
+  function renderMarkets(rows){ const tb = document.querySelector('#tblMarkets tbody'); tb.innerHTML = ''; (rows||[]).forEach(r=>{ const tr=document.createElement('tr'); const ch = (r.change_pct||0); tr.innerHTML = `<td class="mono">${r.symbol||''}</td><td class="mono">${(r.bid??'').toLocaleString()}</td><td class="mono">${(r.ask??'').toLocaleString()}</td><td class="mono">${(r.last??'').toLocaleString()}</td><td class="${ch>=0?'ok':'bad'}">${ch.toFixed(2)}%</td>`; tb.appendChild(tr); }); }
+  function renderNews(list){ const box = document.getElementById('newsList'); box.innerHTML = ''; (list||[]).slice(-50).reverse().forEach(n=>{ const div=document.createElement('div'); div.className='headline'; const dt=new Date(n.ts||Date.now()); div.innerHTML=`<div class="src">${n.source||''}</div><div>${n.headline||''}</div><div class="ts">${dt.toLocaleTimeString()}</div>`; box.appendChild(div); }); }
+  function renderCurrent(rows){ const tb = document.querySelector('#tblCurrent tbody'); tb.innerHTML = ''; (rows||[]).forEach(r=>{ const tr=document.createElement('tr'); const pnl = r.pnl||0; tr.innerHTML = `<td class="mono">${r.symbol||''}</td><td>${r.side||''}</td><td class="mono">${r.qty||''}</td><td class="mono">${r.entry||''}</td><td class="mono ${pnl>=0?'ok':'bad'}">${pnl.toFixed(2)}</td>`; tb.appendChild(tr); }); }
+  function renderProposed(rows){ const tb = document.querySelector('#tblProposed tbody'); tb.innerHTML = ''; (rows||[]).forEach(r=>{ const tr=document.createElement('tr'); const conf = r.confidence||0; tr.innerHTML = `<td class="mono">${r.symbol||''}</td><td>${r.side||''}</td><td class="mono">${(conf*100).toFixed(conf<1?0:2)}%</td><td>${r.reason||''}</td>`; tb.appendChild(tr); }); }
+  function renderActivity(list){ const box=document.getElementById('activity'); box.innerHTML=''; (list||[]).slice(-100).reverse().forEach(a=>{ const dt=new Date(a.ts||Date.now()); const div=document.createElement('div'); div.className='row'; div.style.borderBottom='1px solid var(--border)'; div.style.padding='6px 0'; div.innerHTML=`<span class="muted" style="width:120px;">${dt.toLocaleTimeString()}</span><span>${a.message||''}</span>`; box.appendChild(div); }); }
     async function login(){ const u=document.getElementById('user').value.trim(); const p=document.getElementById('pass').value; if(!u||!p){ toast('Enter username and password'); return; } try { const r = await fetch(API + '/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) }); if(!r.ok) throw new Error(); const js=await r.json(); setAuth(js.access_token, u); toast('Logged in'); } catch(e){ toast('Login failed'); } }
     function logout(){ setAuth('',''); toast('Logged out'); }
     async function startBot(){ try { const r=await fetch(API + '/control/start',{method:'POST', headers:authHeaders()}); const js=await r.json(); toast(js.message||'Started'); } catch(e){ toast('Start failed'); } }

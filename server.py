@@ -1,3 +1,23 @@
+<<<<<<< ours
+=======
+"""
+Splitstar Operations Console FastAPI server with comprehensive features:
+
+Features:
+- JWT-based authentication for sensitive endpoints
+- Rate limiting to prevent abuse  
+- Robust error handling and connection management
+- Real-time server health monitoring
+- WebSocket connection pooling and management
+- Detailed logging and metrics tracking
+"""
+from fastapi import FastAPI, WebSocket, HTTPException, Depends, status, Request
+from fastapi.responses import HTMLResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime, timezone, timedelta
+from typing import Optional, Dict, List, Set, Any
+>>>>>>> theirs
 import asyncio
 import json
 import logging
@@ -93,10 +113,24 @@ logging.basicConfig(
 logger = logging.getLogger("server")
 
 
+<<<<<<< ours
 # --------------------------------------------------------------------------------------
 # App and CORS
 # --------------------------------------------------------------------------------------
 app = FastAPI(title="Trading Bot Server", version="1.1.0")
+=======
+# Rate limiting configuration
+RATE_LIMIT_PER_MINUTE = 60
+RATE_LIMIT_WINDOW = 60  # seconds
+
+# Brand configuration
+APP_BRAND = os.getenv("APP_BRAND", "Splitstar Operations Console")
+
+app = FastAPI(title=f"{APP_BRAND} API", version="1.0.0")
+security = HTTPBearer(auto_error=False)
+
+# Add CORS middleware
+>>>>>>> theirs
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -270,6 +304,43 @@ async def health():
     uptime = time.time() - STATE["server_stats"]["start_time"]
     return {"status": "healthy", "uptime_seconds": uptime, "active_connections": len(manager.active_connections)}
 
+<<<<<<< ours
+=======
+# Authentication endpoints
+@app.post("/auth/login", response_model=Token)
+async def login(user_credentials: UserLogin):
+    """Authenticate user and return access token."""
+    try:
+        user = authenticate_user(user_credentials.username, user_credentials.password)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password"
+            )
+        
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user["username"]}, expires_delta=access_token_expires
+        )
+        
+        logger.info(f"User {user['username']} logged in successfully")
+        
+        return {"access_token": access_token, "token_type": "bearer"}
+        
+    except Exception as e:
+        logger.error(f"Login error: {e}")
+        STATE['server_stats']['error_count'] += 1
+        raise HTTPException(status_code=500, detail="Login failed")
+
+# Public endpoints
+@app.get("/status")
+async def get_status():
+    """Get Splitstar Operations Console status."""
+    return {
+        "running": STATE["running"],
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+>>>>>>> theirs
 
 @app.get("/metrics")
 async def metrics():
@@ -278,6 +349,128 @@ async def metrics():
     return STATE["metrics"]
 
 
+<<<<<<< ours
+=======
+# Simple management page (must be declared before the __main__ block)
+@app.get("/manage", response_class=HTMLResponse)
+async def manage_page():
+        html = f"""
+<!doctype html>
+<html lang=\"en\">
+<head>
+    <meta charset=\"utf-8\" />
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+    <title>{APP_BRAND} — Manage</title>
+    <style>
+        body {{ font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 20px; color: #111; }}
+        .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }}
+        .card {{ border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }}
+        h1 {{ margin-top: 0; font-size: 20px; }}
+        .label {{ font-size: 12px; color: #555; }}
+        .value {{ font-weight: 600; }}
+        button {{ padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; }}
+        input, select {{ width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 8px; }}
+        .row {{ display: flex; align-items: center; gap: 8px; }}
+    </style>
+    <script>
+        let ws;
+        function connectWS() {{
+            const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+            ws = new WebSocket(`${{proto}}://` + location.host + '/ws');
+            ws.onmessage = (ev) => {{
+                try {{
+                    const msg = JSON.parse(ev.data);
+                    if (msg.metrics) {{
+                        document.getElementById('equity').textContent = msg.metrics.equity;
+                        document.getElementById('pnl').textContent = msg.metrics.daily_pnl;
+                        document.getElementById('sharpe').textContent = msg.metrics.sharpe;
+                        document.getElementById('drawdown').textContent = msg.metrics.drawdown;
+                    }}
+                    if (msg.settings) {{
+                        document.getElementById('paper').checked = !!msg.settings.PAPER;
+                        document.getElementById('cont').checked = !!msg.settings.CONTINUOUS_BACKTEST;
+                        document.getElementById('strategy').value = msg.settings.STRATEGY || 'sma_cross';
+                        document.getElementById('interval').value = msg.settings.BACKTEST_INTERVAL || 60;
+                    }}
+                }} catch (e) {{ console.log('WS parse error', e); }}
+            }}
+            ws.onclose = () => setTimeout(connectWS, 2000);
+        }}
+
+        async function saveSettings() {{
+            const payload = {{
+                PAPER: document.getElementById('paper').checked,
+                CONTINUOUS_BACKTEST: document.getElementById('cont').checked,
+                STRATEGY: document.getElementById('strategy').value,
+                BACKTEST_INTERVAL: parseInt(document.getElementById('interval').value || '60')
+            }};
+            try {{
+                const res = await fetch('/settings', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify(payload) }});
+                const js = await res.json();
+                console.log('Saved', js);
+            }} catch (e) {{ console.error('Save failed', e); }}
+        }}
+
+        async function loadSettings() {{
+            try {{
+                const res = await fetch('/settings');
+                const js = await res.json();
+                const s = js.settings || {{}};
+                document.getElementById('paper').checked = !!s.PAPER;
+                document.getElementById('cont').checked = !!s.CONTINUOUS_BACKTEST;
+                document.getElementById('strategy').value = s.STRATEGY || 'sma_cross';
+                document.getElementById('interval').value = s.BACKTEST_INTERVAL || 60;
+            }} catch (e) {{ console.log('Load settings failed', e); }}
+        }}
+
+        window.addEventListener('DOMContentLoaded', () => {{
+            connectWS();
+            loadSettings();
+        }});
+    </script>
+    </head>
+    <body>
+        <h1>{APP_BRAND} — Manage</h1>
+        <p class="label" style="margin-top:-8px; margin-bottom:16px;">Live controls, telemetry, and configuration switches for Splitstar operations.</p>
+        <div class="grid">
+            <div class="card">
+                <div class="row"><input type="checkbox" id="paper" /> <label for="paper">Paper Trading</label></div>
+                <div class="row"><input type="checkbox" id="cont" /> <label for="cont">Continuous Backtest</label></div>
+                <div class="row">
+                    <label class="label" for="strategy">Strategy</label>
+                    <select id="strategy">
+                        <option value="sma_cross">sma_cross</option>
+                        <option value="enhanced">enhanced</option>
+                        <option value="breakout">breakout</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <label class="label" for="interval">Backtest Interval (s)</label>
+                    <input id="interval" type="number" min="5" step="5" value="60" />
+                </div>
+                <div style="margin-top:10px;" class="row">
+                    <button onclick="saveSettings()">Save Settings</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="label">Equity</div>
+                <div class="value" id="equity">-</div>
+                <div class="label">Daily PnL</div>
+                <div class="value" id="pnl">-</div>
+                <div class="label">Sharpe</div>
+                <div class="value" id="sharpe">-</div>
+                <div class="label">Drawdown</div>
+                <div class="value" id="drawdown">-</div>
+            </div>
+        </div>
+    </body>
+    </html>
+        """
+        return HTMLResponse(content=html)
+
+
+# Settings endpoints
+>>>>>>> theirs
 @app.get("/settings")
 async def get_settings():
     return {"settings": STATE["settings"]}
@@ -323,6 +516,7 @@ async def stop_bot(user=Depends(require_permission("control"))):
     return {"ok": True}
 
 
+<<<<<<< ours
 @app.get("/feed/markets")
 async def feed_markets():
     return {"markets": STATE["markets"]}
@@ -337,6 +531,116 @@ async def feed_news():
 async def trades_current():
     return {"trades": STATE["trades_current"]}
 
+=======
+@app.get("/mcp/signals")
+async def mcp_fetch_signals():
+    if not MCP_CLIENT:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="MCP integration not configured")
+    try:
+        signals = await _run_in_executor(MCP_CLIENT.fetch_signal_batch)
+        return {"signals": signals}
+    except Exception as exc:
+        logger.exception("Failed to fetch signals from MCP")
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+
+@app.post("/mcp/metrics")
+async def mcp_push_metrics():
+    if not MCP_CLIENT:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="MCP integration not configured")
+    payload = {
+        "metrics": STATE.get("metrics", {}),
+        "orders": STATE.get("orders", []),
+        "positions": STATE.get("positions", []),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    try:
+        response = await _run_in_executor(MCP_CLIENT.push_metrics, payload)
+        return {"status": "ok", "response": response}
+    except Exception as exc:
+        logger.exception("Failed to push metrics to MCP")
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+@app.post("/agents/run")
+async def agents_run(
+    request: AgentInvocationRequest,
+    current_user: dict = Depends(require_permission("write")),
+):
+    if not LANGCHAIN_AGENT:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="LangChain agent integration not configured",
+        )
+    try:
+        run = await _run_in_executor(
+            LANGCHAIN_AGENT.start_run,
+            request.assistant_id,
+            request.input,
+            thread_id=request.thread_id,
+            metadata=request.metadata,
+        )
+        return {"status": "submitted", "run": run}
+    except httpx.HTTPStatusError as exc:
+        logger.error(
+            "LangChain agent invocation returned HTTP %s: %s",
+            exc.response.status_code if exc.response else "unknown",
+            exc.response.text if exc.response else str(exc),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="LangChain agent call failed",
+        ) from exc
+    except Exception as exc:
+        logger.exception("Unexpected LangChain agent error")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)
+        ) from exc
+
+# Protected endpoints
+@app.post("/control/start")
+async def start(current_user: dict = Depends(require_permission("control"))):
+    """Start the Splitstar Operations Console execution loop."""
+    try:
+        STATE["running"] = True
+        logger.info(f"{APP_BRAND} started by user: {current_user['username']}")
+
+        # Broadcast to all connected clients
+        await manager.broadcast(json.dumps({
+            "event": "bot_started",
+            "brand_event": "console_started",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "user": current_user['username']
+        }))
+
+        return {"ok": True, "message": f"{APP_BRAND} started"}
+        
+    except Exception as e:
+        logger.error(f"Failed to start console: {e}")
+        STATE['server_stats']['error_count'] += 1
+        raise HTTPException(status_code=500, detail="Failed to start console")
+
+@app.post("/control/stop")
+async def stop(current_user: dict = Depends(require_permission("control"))):
+    """Stop the Splitstar Operations Console execution loop."""
+    try:
+        STATE["running"] = False
+        logger.info(f"{APP_BRAND} stopped by user: {current_user['username']}")
+
+        # Broadcast to all connected clients
+        await manager.broadcast(json.dumps({
+            "event": "bot_stopped",
+            "brand_event": "console_stopped",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "user": current_user['username']
+        }))
+
+        return {"ok": True, "message": f"{APP_BRAND} stopped"}
+        
+    except Exception as e:
+        logger.error(f"Failed to stop console: {e}")
+        STATE['server_stats']['error_count'] += 1
+        raise HTTPException(status_code=500, detail="Failed to stop console")
+>>>>>>> theirs
 
 @app.get("/trades/proposed")
 async def trades_proposed():
