@@ -27,9 +27,9 @@ Run these steps on a VM (Ubuntu 22.04/24.04 recommended) to create a reproducibl
 
 4. Install system deps (optional via conda)
 
-   # Optional: if you prefer conda for binary wheel performance
+   Optional: if you prefer conda for binary wheel performance
 
-   # Install miniconda and create env then install pyarrow/fastparquet there
+   Install miniconda and create env then install pyarrow/fastparquet there
 
 5. Install Python dependencies
 
@@ -38,17 +38,17 @@ Run these steps on a VM (Ubuntu 22.04/24.04 recommended) to create a reproducibl
 
 6. (If uploading to GCS) Configure GCP credentials
 
-   # Use either gcloud auth or a service account key
+   Use either gcloud auth or a service account key
 
    gcloud auth login
 
-   # OR
+   OR
 
    export GOOGLE_APPLICATION_CREDENTIALS=/path/to/sa-key.json
 
 7. Ensure gsutil or google-cloud-storage is available
 
-   # If gsutil is available via gcloud, fine. Otherwise
+   If gsutil is available via gcloud, fine. Otherwise
 
    pip install google-cloud-storage
 
@@ -58,11 +58,11 @@ Run these steps on a VM (Ubuntu 22.04/24.04 recommended) to create a reproducibl
 
 9. Run the pilot pipeline (quick end-to-end test)
 
-   # Run the pipeline startup script which downloads small pilot symbols and uploads to GCS
+   Run the pipeline startup script which downloads small pilot symbols and uploads to GCS
 
    bash tradingbot_ibkr/scripts/pipeline_startup.sh
 
-   # Or run steps individually (safer, inspect each step)
+   Or run steps individually (safer, inspect each step)
 
    python tradingbot_ibkr/scripts/binance_download_all.py --since 2021-01 --until 2021-03 --symbols-regex ".*USDT$" --list-only --out /tmp/raw_all
    python tradingbot_ibkr/scripts/binance_vision_full_download.py --symbol BTCUSDT --since 2021-01 --until 2021-03 --out /tmp/raw_all --threads 4
@@ -81,7 +81,7 @@ Run these steps on a VM (Ubuntu 22.04/24.04 recommended) to create a reproducibl
 
 - Train model (LightGBM):
 
-  python scripts/train_lightgbm.py --source csv --path tradingbot_ibkr/datafiles/BTC_USDT_bars.csv --out tradingbot_ibkr/model_store
+  python tradingbot_ibkr/models/train_batch.py --source csv --path tradingbot_ibkr/datafiles/BTC_USDT_bars.csv --out tradingbot_ibkr/model_store
 
 - Convert raw CSV.GZ -> Parquet
 
@@ -116,7 +116,7 @@ Run these steps on a VM (Ubuntu 22.04/24.04 recommended) to create a reproducibl
   - Inputs: `--source csv` reads `tradingbot_ibkr/datafiles/<SYMBOL>_bars.csv`; `--source ccxt` fetches via CCXT
   - Outputs: backtest JSON reports in repo root (backtest_*.json)
 
-- `scripts/train_lightgbm.py`
+- `tradingbot_ibkr/models/train_batch.py`
   - Inputs: OHLCV via CSV or CCXT
   - Outputs: model artifacts and reports under `tradingbot_ibkr/model_store/`
 
