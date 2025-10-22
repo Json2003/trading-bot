@@ -1,8 +1,9 @@
-# Enhanced Trading Bot - Setup Guide
+# Splitstar Operations Console - Setup Guide
 
 ## Overview
 
-This trading bot provides comprehensive backtesting, optimization, and live trading capabilities with advanced features including:
+The Splitstar Operations Console provides comprehensive backtesting,
+optimization, and live trading capabilities with advanced features including:
 
 - **Grid Search Optimization** with parallel processing and adaptive pruning
 - **Multiple ML Models** with hyperparameter optimization (Random Forest, Gradient Boosting, Neural Networks)
@@ -23,7 +24,7 @@ This trading bot provides comprehensive backtesting, optimization, and live trad
 1. **Clone and setup environment:**
 ```bash
 git clone <repository-url>
-cd trading-bot
+cd splitstar-operations-console
 ./install.sh  # Linux/macOS
 # OR
 install.bat   # Windows
@@ -242,7 +243,7 @@ python binance_vision_size.py \
 
 ### Project Structure
 ```
-trading-bot/
+splitstar-operations-console/
 ├── server.py                          # Enhanced WebSocket server
 ├── tradingbot_ibkr/
 │   ├── aggressive_optimize.py         # Basic grid search optimization  

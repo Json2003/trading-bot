@@ -1,5 +1,5 @@
-name: trading_bot_dashboard
-description: A minimal Flutter client for the trading bot dashboard.
+name: splitstar_ops_console_dashboard
+description: A minimal Flutter client for the Splitstar Operations Console dashboard.
 publish_to: 'none'
 version: 1.0.0+1
 

@@ -1,6 +1,7 @@
 # Docker & MCP Deployment Guide
 
-This guide covers running the trading bot inside Docker and wiring it to an MCP (Model Control Platform) server.
+This guide covers running the Splitstar Operations Console inside Docker and
+wiring it to an MCP (Model Control Platform) server.
 
 ## 1. Prepare environment variables
 
@@ -22,7 +23,7 @@ Key variables:
 From the repo root:
 
 ```bash
-docker build -f docker/Dockerfile -t trading-bot:latest .
+docker build -f docker/Dockerfile -t splitstar-ops-console:latest .
 ```
 
 ## 3. Run with docker-compose
@@ -55,7 +56,7 @@ If MCP is disabled or misconfigured, the API returns `404` or `502`. Check conta
     -e SECRET_KEY=change-this \
     -e MCP_BASE_URL=https://mcp.example.com/api \
     -e MCP_API_KEY=token \
-    trading-bot:latest
+    splitstar-ops-console:latest
   ```
 
 - Disable MCP integration by omitting `MCP_BASE_URL`.

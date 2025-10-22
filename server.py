@@ -1,83 +1,43 @@
 """
-Enhanced WebSocket server for trading bot with comprehensive features:
+Splitstar Operations Console FastAPI server with comprehensive features:
 
 Features:
 - JWT-based authentication for sensitive endpoints
-        html = f"""
+- Rate limiting to prevent abuse  
 - Robust error handling and connection management
 - Real-time server health monitoring
 - WebSocket connection pooling and management
 - Detailed logging and metrics tracking
 """
-    <title>Trading Bot — Manage</title>
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
-        :root {{
-          --bg: #0b0f19; --card: #111827; --muted: #6b7280; --text: #e5e7eb; --accent: #06b6d4; --good: #10b981; --bad: #ef4444;
-          --border: #1f2937; --chip: #0f172a;
-        }}
-        body {{ font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; color: var(--text); background: linear-gradient(180deg, #0b0f19, #0c111c); }}
-        header {{ display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(11,15,25,0.9); backdrop-filter: blur(6px); }}
-        .title {{ font-size: 18px; font-weight: 600; letter-spacing: 0.2px; }}
-        .ws-dot {{ width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; background: #f59e0b; }}
-        .ws-ok {{ background: var(--good); }} .ws-bad {{ background: var(--bad); }}
-        .container {{ padding: 20px; max-width: 1200px; margin: 0 auto; }}
-        .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 16px; }}
-        .card {{ background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.25); }}
-        .card h2 {{ font-size: 14px; margin: 0 0 10px; color: #cbd5e1; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }}
-        .label {{ font-size: 12px; color: var(--muted); }}
-        .value {{ font-weight: 600; font-size: 16px; }}
-        .row {{ display: flex; align-items: center; gap: 10px; }}
-        .stack {{ display: grid; gap: 10px; }}
-        button {{ padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: #0b1220; color: var(--text); cursor: pointer; transition: .2s; }}
-        button:hover {{ border-color: #334155; transform: translateY(-1px); }}
-        input, select {{ width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: #0b1220; color: var(--text); }}
-        .chips {{ display: flex; gap: 8px; flex-wrap: wrap; }}
-        .chip {{ font-size: 12px; padding: 4px 8px; border-radius: 999px; background: var(--chip); border: 1px solid var(--border); color: #9ca3af; }}
-        .ok {{ color: var(--good); }} .bad {{ color: var(--bad); }} .muted {{ color: var(--muted); }}
-        .footer {{ color: #64748b; font-size: 12px; padding: 10px 20px 20px; text-align: center; }}
+from fastapi import FastAPI, WebSocket, HTTPException, Depends, status, Request
+from fastapi.responses import HTMLResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime, timezone, timedelta
+from typing import Optional, Dict, List, Set, Any
+import asyncio
+import json
+import time
+import logging
+from collections import defaultdict, deque
 import uuid
 import os
 import httpx
-        let token = localStorage.getItem('authToken') || '';
-        let currentUser = localStorage.getItem('authUser') || '';
-
-        function setAuth(tk, user) {{
-            token = tk || '';
-            currentUser = user || '';
-            if (token) {{ localStorage.setItem('authToken', token); }} else {{ localStorage.removeItem('authToken'); }}
-            if (user) {{ localStorage.setItem('authUser', user); }} else {{ localStorage.removeItem('authUser'); }}
-            document.getElementById('whoami').textContent = token ? `Logged in as ${currentUser}` : 'Not authenticated';
-            document.getElementById('btnStart').disabled = !token;
-            document.getElementById('btnStop').disabled = !token;
-        }}
-
-        function authHeaders() {{
-            return token ? {{ 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }} : {{ 'Content-Type': 'application/json' }};
-        }}
 
 from pydantic import BaseModel
 
-try:
-    from tradingbot_ibkr.services.mcp_client import MCPClient  # optional
-except Exception:
-    MCPClient = None  # type: ignore
-
-                        renderMetrics(msg.metrics);
+from tradingbot_ibkr.services.mcp_client import MCPClient
+from tradingbot_ibkr.services.langchain_agent import LangChainAgentService
 
 # Configure logging
-                        applySettings(msg.settings);
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(module)s - %(message)s',
+    handlers=[
         logging.FileHandler('server.log'),
-                    if (msg.server_stats) {{
-                        renderServerStats(msg.server_stats);
-                    }}
         logging.StreamHandler()
     ]
-            ws.onopen = () => document.getElementById('wsdot').classList.add('ws-ok');
-            ws.onclose = () => {{
-                document.getElementById('wsdot').classList.remove('ws-ok');
-                document.getElementById('wsdot').classList.add('ws-bad');
-                setTimeout(connectWS, 2000);
-            }};
+)
 logger = logging.getLogger(__name__)
 
 # Security configuration
@@ -85,17 +45,15 @@ SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")  # In production, u
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-                BACKTEST_INTERVAL: parseInt(document.getElementById('interval').value || '60'),
-                RISK_PCT: parseFloat(document.getElementById('risk').value || '0.01'),
-                STOP_LOSS_PCT: parseFloat(document.getElementById('sl').value || '0.02'),
-                TAKE_PROFIT_PCT: parseFloat(document.getElementById('tp').value || '0.04'),
-                EXCHANGE: document.getElementById('exchange').value || 'binance'
+# Rate limiting configuration
 RATE_LIMIT_PER_MINUTE = 60
 RATE_LIMIT_WINDOW = 60  # seconds
-                const res = await fetch('/settings', {{ method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) }});
-app = FastAPI(title="Trading Bot Server", version="1.0.0")
+
+# Brand configuration
+APP_BRAND = os.getenv("APP_BRAND", "Splitstar Operations Console")
+
+app = FastAPI(title=f"{APP_BRAND} API", version="1.0.0")
 security = HTTPBearer(auto_error=False)
-                toast('Settings saved');
 
 # Add CORS middleware
 app.add_middleware(
@@ -103,191 +61,67 @@ app.add_middleware(
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-                applySettings(js.settings || {{}});
+    allow_headers=["*"],
+)
+
+# Global state with enhanced tracking
+def _bool_env(name: str, default: bool) -> bool:
     val = os.getenv(name)
     if val is None:
         return default
-        function applySettings(s) {{
-            document.getElementById('paper').checked = !!s.PAPER;
-            document.getElementById('cont').checked = !!s.CONTINUOUS_BACKTEST;
-            document.getElementById('strategy').value = s.STRATEGY || 'sma_cross';
-            document.getElementById('interval').value = s.BACKTEST_INTERVAL ?? 60;
-            document.getElementById('risk').value = s.RISK_PCT ?? 0.01;
-            document.getElementById('sl').value = s.STOP_LOSS_PCT ?? 0.02;
-            document.getElementById('tp').value = s.TAKE_PROFIT_PCT ?? 0.04;
-            document.getElementById('exchange').value = s.EXCHANGE || 'binance';
-        }
-
-        function renderMetrics(m) {{
-            document.getElementById('equity').textContent = fmtCurrency(m.equity);
-            const pnlEl = document.getElementById('pnl');
-            pnlEl.textContent = fmtNumber(m.daily_pnl);
-            pnlEl.className = 'value ' + (m.daily_pnl >= 0 ? 'ok' : 'bad');
-            document.getElementById('sharpe').textContent = (m.sharpe ?? 0).toFixed(2);
-            document.getElementById('drawdown').textContent = fmtPct(m.drawdown);
-        }
-
-        function renderServerStats(s) {{
-            document.getElementById('uptime').textContent = fmtDuration(s.uptime_seconds || 0);
-            document.getElementById('conns').textContent = s.active_connections ?? 0;
-        }
-
-        function fmtCurrency(x) {{
-            const v = Number(x||0);
-            return new Intl.NumberFormat(undefined, {{ style: 'currency', currency: 'USD', maximumFractionDigits: 2 }}).format(v);
-        }}
-        function fmtNumber(x) {{
-            const v = Number(x||0);
-            return new Intl.NumberFormat(undefined, {{ maximumFractionDigits: 2 }}).format(v);
-        }}
-        function fmtPct(x) {{
-            const v = Number(x||0);
-            return (v*100).toFixed(2) + '%';
-        }}
-        function fmtDuration(sec) {{
-            const s = Math.floor(sec||0);
-            const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), r = s%60;
-            return `${h}h ${m}m ${r}s`;
-        }}
-
-        async function loadInitialMetrics() {{
-            try {{
-                const r = await fetch('/metrics');
-                const m = await r.json();
-                renderMetrics(m);
-                // server_stats via WS; also fetch health for snapshot
-                const h = await (await fetch('/health')).json();
-                renderServerStats({{ uptime_seconds: h.uptime_seconds, active_connections: h.active_connections }});
-            }} catch (e) {{ console.log('Initial metrics load failed', e); }}
-        }}
-
-        async function login() {{
-            const username = document.getElementById('user').value.trim();
-            const password = document.getElementById('pass').value;
-            if (!username || !password) return toast('Enter username and password');
-            try {{
-                const res = await fetch('/auth/login', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify({{ username, password }}) }});
-                if (!res.ok) throw new Error('Login failed');
-                const js = await res.json();
-                setAuth(js.access_token, username);
-                toast('Logged in');
-            }} catch (e) {{ toast('Login failed'); console.error(e); }}
-        }}
-
-        function logout() {{ setAuth('', ''); toast('Logged out'); }}
-
-        async function startBot() {{
-            try {{
-                const r = await fetch('/control/start', {{ method: 'POST', headers: authHeaders() }});
-                const js = await r.json();
-                toast(js.message || 'Started');
-            }} catch (e) {{ toast('Start failed'); }}
-        }}
-        async function stopBot() {{
-            try {{
-                const r = await fetch('/control/stop', {{ method: 'POST', headers: authHeaders() }});
-                const js = await r.json();
-                toast(js.message || 'Stopped');
-            }} catch (e) {{ toast('Stop failed'); }}
-        }}
-
-        function toast(msg) {{
-            const el = document.getElementById('status');
-            el.textContent = msg; el.style.opacity = 1;
-            setTimeout(() => el.style.opacity = 0.0, 1800);
-        }}
     return str(val).lower() in ("1", "true", "yes", "on")
+
+def _int_env(name: str, default: int) -> int:
+    try:
+        return int(os.getenv(name, default))
+    except Exception:
+        return default
+
+DEFAULT_SETTINGS = {
+    "PAPER": _bool_env("PAPER", True),
+    "EXCHANGE": os.getenv("EXCHANGE", "binance"),
+    "STRATEGY": os.getenv("STRATEGY", "sma_cross"),
     "CONTINUOUS_BACKTEST": _bool_env("CONTINUOUS_BACKTEST", False),
     "BACKTEST_INTERVAL": _int_env("BACKTEST_INTERVAL", 60),
     "RISK_PCT": float(os.getenv("RISK_PCT", "0.01")),
     "STOP_LOSS_PCT": float(os.getenv("STOP_LOSS_PCT", "0.02")),
-            setAuth(token, currentUser);
     "TAKE_PROFIT_PCT": float(os.getenv("TAKE_PROFIT_PCT", "0.04")),
 }
 
-    <body>
-        <header>
-          <div class="title"><span id="wsdot" class="ws-dot"></span>Trading Bot Manager</div>
-          <div class="chips">
-            <span id="whoami" class="chip">Not authenticated</span>
-            <button onclick="login()">Login</button>
-            <button onclick="logout()">Logout</button>
-          </div>
-        </header>
-        <div class="container">
-          <div class="grid">
-            <div class="card stack">
-              <h2>Settings</h2>
-              <div class="row"><input type="checkbox" id="paper" /> <label for="paper">Paper Trading</label></div>
-              <div class="row"><input type="checkbox" id="cont" /> <label for="cont">Continuous Backtest</label></div>
-              <div class="row">
-                <label class="label" for="exchange" style="width: 160px;">Exchange</label>
-                <input id="exchange" placeholder="binance" />
-              </div>
-              <div class="row">
-                <label class="label" for="strategy" style="width: 160px;">Strategy</label>
-                <select id="strategy">
-                    <option value="sma_cross">sma_cross</option>
-                    <option value="enhanced">enhanced</option>
-                    <option value="breakout">breakout</option>
-                </select>
-              </div>
-              <div class="row">
-                <label class="label" for="interval" style="width: 160px;">Backtest Interval (s)</label>
-                <input id="interval" type="number" min="5" step="5" value="60" />
-              </div>
-              <div class="row">
-                <label class="label" for="risk" style="width: 160px;">Risk %</label>
-                <input id="risk" type="number" step="0.001" min="0" max="1" />
-              </div>
-              <div class="row">
-                <label class="label" for="sl" style="width: 160px;">Stop Loss %</label>
-                <input id="sl" type="number" step="0.001" min="0" max="1" />
-              </div>
-              <div class="row">
-                <label class="label" for="tp" style="width: 160px;">Take Profit %</label>
-                <input id="tp" type="number" step="0.001" min="0" max="1" />
-              </div>
-              <div class="row" style="margin-top:8px;">
-                <button onclick="saveSettings()">Save Settings</button>
-              </div>
-            </div>
+SETTINGS_PATH = os.path.join("tradingbot_ibkr", "model_store", "settings.json")
 
-            <div class="card stack">
-              <h2>Controls</h2>
-              <div class="row">
-                <button id="btnStart" onclick="startBot()" disabled>Start Bot</button>
-                <button id="btnStop" onclick="stopBot()" disabled>Stop Bot</button>
-                <button onclick="loadInitialMetrics()">Refresh</button>
-              </div>
-              <div class="chips" style="margin-top:8px;">
-                <span class="chip">WS: <span class="muted">watching metrics</span></span>
-                <span class="chip">API: <span class="muted">/settings, /metrics, /health</span></span>
-              </div>
-              <div class="stack" style="margin-top:8px;">
-                <div class="label">Uptime</div>
-                <div class="value" id="uptime">-</div>
-                <div class="label">Active Connections</div>
-                <div class="value" id="conns">-</div>
-              </div>
-            </div>
+def _ensure_dir(path: str):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
 
-            <div class="card stack">
-              <h2>Key Metrics</h2>
-              <div class="label">Equity</div>
-              <div class="value" id="equity">-</div>
-              <div class="label">Daily PnL</div>
-              <div class="value" id="pnl">-</div>
-              <div class="label">Sharpe</div>
-              <div class="value" id="sharpe">-</div>
-              <div class="label">Drawdown</div>
-              <div class="value" id="drawdown">-</div>
-            </div>
-          </div>
-        </div>
-        <div id="status" style="position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; background: #0b1220; color: #cbd5e1; border: 1px solid var(--border); padding: 8px 12px; border-radius: 10px; opacity: 0; transition: opacity .3s;"></div>
-        <div class="footer">UI is a lightweight control surface; sensitive endpoints require login. Default demo users: admin/admin123 or readonly/readonly123.</div>
-    </body>
+def load_settings() -> Dict[str, Any]:
+    # Start from defaults, overlay file if present
+    settings = dict(DEFAULT_SETTINGS)
+    try:
+        if os.path.exists(SETTINGS_PATH):
+            with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
+                file_settings = json.load(f)
+                if isinstance(file_settings, dict):
+                    settings.update(file_settings)
+    except Exception as exc:
+        logger.warning("Failed to load settings.json: %s", exc)
+    return settings
+
+def save_settings(settings: Dict[str, Any]) -> None:
+    try:
+        _ensure_dir(SETTINGS_PATH)
+        with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
+            json.dump(settings, f, indent=2)
+    except Exception as exc:
+        logger.error("Failed to save settings.json: %s", exc)
+
+STATE = {
+    "running": False,
+    "metrics": {
+        "equity": 100000,
+        "daily_pnl": 0,
+        "win_rate": 0.55,
+        "sharpe": 1.2,
+        "drawdown": 0.05,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "uptime_seconds": 0,
         "total_trades": 0,
@@ -379,8 +213,8 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 # Optional MCP integration
-MCP_CLIENT = MCPClient.from_env() if MCPClient else None
-LANGCHAIN_AGENT = LangChainAgentService.from_env() if LangChainAgentService else None
+MCP_CLIENT = MCPClient.from_env()
+LANGCHAIN_AGENT = LangChainAgentService.from_env()
 
 
 async def _run_in_executor(func, *args, **kwargs):
@@ -528,7 +362,7 @@ async def login(user_credentials: UserLogin):
 # Public endpoints
 @app.get("/status")
 async def get_status():
-    """Get trading bot status."""
+    """Get Splitstar Operations Console status."""
     return {
         "running": STATE["running"],
         "timestamp": datetime.now(timezone.utc).isoformat()
@@ -542,192 +376,122 @@ async def metrics():
     return STATE["metrics"]
 
 
-# Root redirect for convenience
-@app.get("/")
-async def root_redirect():
-    return RedirectResponse(url="/manage", status_code=307)
-
-# Quiet the favicon 404s
-@app.get("/favicon.ico")
-async def favicon():
-    return Response(status_code=204)
-
 # Simple management page (must be declared before the __main__ block)
 @app.get("/manage", response_class=HTMLResponse)
 async def manage_page():
-                html = """
+        html = f"""
 <!doctype html>
 <html lang=\"en\">
 <head>
     <meta charset=\"utf-8\" />
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-    <title>Trading Bot — Manage</title>
+    <title>{APP_BRAND} — Manage</title>
     <style>
-        :root { --bg: #0b0f19; --card: #111827; --muted: #6b7280; --text: #e5e7eb; --accent: #06b6d4; --good: #10b981; --bad: #ef4444; --border: #1f2937; }
-        body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; color: var(--text); background: #0b0f19; }
-        header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(11,15,25,0.9); backdrop-filter: blur(6px); }
-        .title { font-size: 16px; font-weight: 600; letter-spacing: .2px; }
-        .ws-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; background: #f59e0b; }
-        .ws-ok { background: var(--good); } .ws-bad { background: var(--bad); }
-        .container { padding: 20px; max-width: 1100px; margin: 0 auto; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
-        .card h2 { font-size: 13px; margin: 0 0 10px; color: #cbd5e1; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
-        .label { font-size: 12px; color: var(--muted); }
-        .value { font-weight: 600; font-size: 16px; }
-        .row { display: flex; align-items: center; gap: 10px; }
-        .stack { display: grid; gap: 10px; }
-        button { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: #0b1220; color: var(--text); cursor: pointer; }
-        input, select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: #0b1220; color: var(--text); }
-        .chips { display: flex; gap: 8px; flex-wrap: wrap; }
-        .chip { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #0b1220; border: 1px solid var(--border); color: #9ca3af; }
-        .ok { color: var(--good); } .bad { color: var(--bad); } .muted { color: var(--muted); }
+        body {{ font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 20px; color: #111; }}
+        .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }}
+        .card {{ border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }}
+        h1 {{ margin-top: 0; font-size: 20px; }}
+        .label {{ font-size: 12px; color: #555; }}
+        .value {{ font-weight: 600; }}
+        button {{ padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; }}
+        input, select {{ width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 8px; }}
+        .row {{ display: flex; align-items: center; gap: 8px; }}
     </style>
     <script>
         let ws;
-        let token = localStorage.getItem('authToken') || '';
-        let currentUser = localStorage.getItem('authUser') || '';
-
-        function setAuth(tk, user) {
-            token = tk || '';
-            currentUser = user || '';
-            if (token) { localStorage.setItem('authToken', token); } else { localStorage.removeItem('authToken'); }
-            if (user) { localStorage.setItem('authUser', user); } else { localStorage.removeItem('authUser'); }
-            document.getElementById('whoami').textContent = token ? `Logged in as ${currentUser}` : 'Not authenticated';
-            document.getElementById('btnStart').disabled = !token;
-            document.getElementById('btnStop').disabled = !token;
-        }
-        function authHeaders() { return token ? { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' }; }
-
-        function connectWS() {
+        function connectWS() {{
             const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-            ws = new WebSocket(`${proto}://` + location.host + '/ws');
-            ws.onmessage = (ev) => {
-                try {
+            ws = new WebSocket(`${{proto}}://` + location.host + '/ws');
+            ws.onmessage = (ev) => {{
+                try {{
                     const msg = JSON.parse(ev.data);
-                    if (msg.metrics) { renderMetrics(msg.metrics); }
-                    if (msg.settings) { applySettings(msg.settings); }
-                    if (msg.server_stats) { renderServerStats(msg.server_stats); }
-                } catch (e) { console.log('WS parse error', e); }
-            }
-            ws.onopen = () => document.getElementById('wsdot').classList.add('ws-ok');
-            ws.onclose = () => { document.getElementById('wsdot').classList.remove('ws-ok'); document.getElementById('wsdot').classList.add('ws-bad'); setTimeout(connectWS, 2000); }
-        }
+                    if (msg.metrics) {{
+                        document.getElementById('equity').textContent = msg.metrics.equity;
+                        document.getElementById('pnl').textContent = msg.metrics.daily_pnl;
+                        document.getElementById('sharpe').textContent = msg.metrics.sharpe;
+                        document.getElementById('drawdown').textContent = msg.metrics.drawdown;
+                    }}
+                    if (msg.settings) {{
+                        document.getElementById('paper').checked = !!msg.settings.PAPER;
+                        document.getElementById('cont').checked = !!msg.settings.CONTINUOUS_BACKTEST;
+                        document.getElementById('strategy').value = msg.settings.STRATEGY || 'sma_cross';
+                        document.getElementById('interval').value = msg.settings.BACKTEST_INTERVAL || 60;
+                    }}
+                }} catch (e) {{ console.log('WS parse error', e); }}
+            }}
+            ws.onclose = () => setTimeout(connectWS, 2000);
+        }}
 
-        async function saveSettings() {
-            const payload = {
+        async function saveSettings() {{
+            const payload = {{
                 PAPER: document.getElementById('paper').checked,
                 CONTINUOUS_BACKTEST: document.getElementById('cont').checked,
                 STRATEGY: document.getElementById('strategy').value,
-                BACKTEST_INTERVAL: parseInt(document.getElementById('interval').value || '60'),
-                RISK_PCT: parseFloat(document.getElementById('risk').value || '0.01'),
-                STOP_LOSS_PCT: parseFloat(document.getElementById('sl').value || '0.02'),
-                TAKE_PROFIT_PCT: parseFloat(document.getElementById('tp').value || '0.04'),
-                EXCHANGE: document.getElementById('exchange').value || 'binance'
-            };
-            try { const res = await fetch('/settings', { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) }); const js = await res.json(); console.log('Saved', js); toast('Settings saved'); } catch (e) { console.error('Save failed', e); }
-        }
-        async function loadSettings() {
-            try { const res = await fetch('/settings'); const js = await res.json(); applySettings(js.settings || {}); } catch (e) { console.log('Load settings failed', e); }
-        }
-        function applySettings(s) {
-            document.getElementById('paper').checked = !!s.PAPER;
-            document.getElementById('cont').checked = !!s.CONTINUOUS_BACKTEST;
-            document.getElementById('strategy').value = s.STRATEGY || 'sma_cross';
-            document.getElementById('interval').value = s.BACKTEST_INTERVAL ?? 60;
-            document.getElementById('risk').value = s.RISK_PCT ?? 0.01;
-            document.getElementById('sl').value = s.STOP_LOSS_PCT ?? 0.02;
-            document.getElementById('tp').value = s.TAKE_PROFIT_PCT ?? 0.04;
-            document.getElementById('exchange').value = s.EXCHANGE || 'binance';
-        }
-        function renderMetrics(m) {
-            document.getElementById('equity').textContent = fmtCurrency(m.equity);
-            const pnlEl = document.getElementById('pnl'); pnlEl.textContent = fmtNumber(m.daily_pnl); pnlEl.className = 'value ' + ((m.daily_pnl||0) >= 0 ? 'ok' : 'bad');
-            document.getElementById('sharpe').textContent = ((m.sharpe||0)).toFixed(2);
-            document.getElementById('drawdown').textContent = fmtPct(m.drawdown);
-        }
-        function renderServerStats(s) { document.getElementById('uptime').textContent = fmtDuration(s.uptime_seconds || 0); document.getElementById('conns').textContent = s.active_connections ?? 0; }
-        function fmtCurrency(x) { const v = Number(x||0); return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(v); }
-        function fmtNumber(x) { const v = Number(x||0); return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(v); }
-        function fmtPct(x) { const v = Number(x||0); return (v*100).toFixed(2) + '%'; }
-        function fmtDuration(sec) { const s = Math.floor(sec||0); const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), r = s%60; return `${h}h ${m}m ${r}s`; }
-        async function loadInitialMetrics() {
-            try { const r = await fetch('/metrics'); const m = await r.json(); renderMetrics(m); const h = await (await fetch('/health')).json(); renderServerStats({ uptime_seconds: h.uptime_seconds, active_connections: h.active_connections }); } catch (e) { console.log('Initial metrics load failed', e); }
-        }
-        async function login() {
-            const username = document.getElementById('user').value.trim(); const password = document.getElementById('pass').value;
-            if (!username || !password) return toast('Enter username and password');
-            try { const res = await fetch('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) }); if (!res.ok) throw new Error('Login failed'); const js = await res.json(); setAuth(js.access_token, username); toast('Logged in'); } catch (e) { toast('Login failed'); console.error(e); }
-        }
-        function logout() { setAuth('', ''); toast('Logged out'); }
-        async function startBot() { try { const r = await fetch('/control/start', { method: 'POST', headers: authHeaders() }); const js = await r.json(); toast(js.message || 'Started'); } catch (e) { toast('Start failed'); } }
-        async function stopBot() { try { const r = await fetch('/control/stop', { method: 'POST', headers: authHeaders() }); const js = await r.json(); toast(js.message || 'Stopped'); } catch (e) { toast('Stop failed'); } }
-        function toast(msg) { const el = document.getElementById('status'); el.textContent = msg; el.style.opacity = 1; setTimeout(() => el.style.opacity = 0.0, 1800); }
-        window.addEventListener('DOMContentLoaded', () => { connectWS(); loadSettings(); loadInitialMetrics(); setAuth(token, currentUser); });
+                BACKTEST_INTERVAL: parseInt(document.getElementById('interval').value || '60')
+            }};
+            try {{
+                const res = await fetch('/settings', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: JSON.stringify(payload) }});
+                const js = await res.json();
+                console.log('Saved', js);
+            }} catch (e) {{ console.error('Save failed', e); }}
+        }}
+
+        async function loadSettings() {{
+            try {{
+                const res = await fetch('/settings');
+                const js = await res.json();
+                const s = js.settings || {{}};
+                document.getElementById('paper').checked = !!s.PAPER;
+                document.getElementById('cont').checked = !!s.CONTINUOUS_BACKTEST;
+                document.getElementById('strategy').value = s.STRATEGY || 'sma_cross';
+                document.getElementById('interval').value = s.BACKTEST_INTERVAL || 60;
+            }} catch (e) {{ console.log('Load settings failed', e); }}
+        }}
+
+        window.addEventListener('DOMContentLoaded', () => {{
+            connectWS();
+            loadSettings();
+        }});
     </script>
-</head>
-<body>
-    <header>
-        <div class=\"title\"><span id=\"wsdot\" class=\"ws-dot\"></span>Trading Bot Manager</div>
-        <div class=\"chips\">
-            <input id=\"user\" placeholder=\"username\" style=\"width: 130px;\" />
-            <input id=\"pass\" placeholder=\"password\" type=\"password\" style=\"width: 130px;\" />
-            <span id=\"whoami\" class=\"chip\">Not authenticated</span>
-            <button onclick=\"login()\">Login</button>
-            <button onclick=\"logout()\">Logout</button>
-        </div>
-    </header>
-    <div class=\"container\">
-        <div class=\"grid\">
-            <div class=\"card stack\">
-                <h2>Settings</h2>
-                <div class=\"row\"><input type=\"checkbox\" id=\"paper\" /> <label for=\"paper\">Paper Trading</label></div>
-                <div class=\"row\"><input type=\"checkbox\" id=\"cont\" /> <label for=\"cont\">Continuous Backtest</label></div>
-                <div class=\"row\"><label class=\"label\" for=\"exchange\" style=\"width: 160px;\">Exchange</label><input id=\"exchange\" placeholder=\"binance\" /></div>
-                <div class=\"row\">
-                    <label class=\"label\" for=\"strategy\" style=\"width: 160px;\">Strategy</label>
-                    <select id=\"strategy\"><option value=\"sma_cross\">sma_cross</option><option value=\"enhanced\">enhanced</option><option value=\"breakout\">breakout</option></select>
+    </head>
+    <body>
+        <h1>{APP_BRAND} — Manage</h1>
+        <p class="label" style="margin-top:-8px; margin-bottom:16px;">Live controls, telemetry, and configuration switches for Splitstar operations.</p>
+        <div class="grid">
+            <div class="card">
+                <div class="row"><input type="checkbox" id="paper" /> <label for="paper">Paper Trading</label></div>
+                <div class="row"><input type="checkbox" id="cont" /> <label for="cont">Continuous Backtest</label></div>
+                <div class="row">
+                    <label class="label" for="strategy">Strategy</label>
+                    <select id="strategy">
+                        <option value="sma_cross">sma_cross</option>
+                        <option value="enhanced">enhanced</option>
+                        <option value="breakout">breakout</option>
+                    </select>
                 </div>
-                <div class=\"row\"><label class=\"label\" for=\"interval\" style=\"width: 160px;\">Backtest Interval (s)</label><input id=\"interval\" type=\"number\" min=\"5\" step=\"5\" value=\"60\" /></div>
-                <div class=\"row\"><label class=\"label\" for=\"risk\" style=\"width: 160px;\">Risk %</label><input id=\"risk\" type=\"number\" step=\"0.001\" min=\"0\" max=\"1\" /></div>
-                <div class=\"row\"><label class=\"label\" for=\"sl\" style=\"width: 160px;\">Stop Loss %</label><input id=\"sl\" type=\"number\" step=\"0.001\" min=\"0\" max=\"1\" /></div>
-                <div class=\"row\"><label class=\"label\" for=\"tp\" style=\"width: 160px;\">Take Profit %</label><input id=\"tp\" type=\"number\" step=\"0.001\" min=\"0\" max=\"1\" /></div>
-                <div class=\"row\" style=\"margin-top:8px;\"><button onclick=\"saveSettings()\">Save Settings</button></div>
-            </div>
-
-            <div class=\"card stack\">
-                <h2>Controls</h2>
-                <div class=\"row\">
-                    <button id=\"btnStart\" onclick=\"startBot()\" disabled>Start Bot</button>
-                    <button id=\"btnStop\" onclick=\"stopBot()\" disabled>Stop Bot</button>
-                    <button onclick=\"loadInitialMetrics()\">Refresh</button>
+                <div class="row">
+                    <label class="label" for="interval">Backtest Interval (s)</label>
+                    <input id="interval" type="number" min="5" step="5" value="60" />
                 </div>
-                <div class=\"stack\" style=\"margin-top:8px;\">
-                    <div class=\"label\">Uptime</div>
-                    <div class=\"value\" id=\"uptime\">-</div>
-                    <div class=\"label\">Active Connections</div>
-                    <div class=\"value\" id=\"conns\">-</div>
+                <div style="margin-top:10px;" class="row">
+                    <button onclick="saveSettings()">Save Settings</button>
                 </div>
             </div>
-
-            <div class=\"card stack\">
-                <h2>Key Metrics</h2>
-                <div class=\"label\">Equity</div>
-                <div class=\"value\" id=\"equity\">-</div>
-                <div class=\"label\">Daily PnL</div>
-                <div class=\"value\" id=\"pnl\">-</div>
-                <div class=\"label\">Sharpe</div>
-                <div class=\"value\" id=\"sharpe\">-</div>
-                <div class=\"label\">Drawdown</div>
-                <div class=\"value\" id=\"drawdown\">-</div>
+            <div class="card">
+                <div class="label">Equity</div>
+                <div class="value" id="equity">-</div>
+                <div class="label">Daily PnL</div>
+                <div class="value" id="pnl">-</div>
+                <div class="label">Sharpe</div>
+                <div class="value" id="sharpe">-</div>
+                <div class="label">Drawdown</div>
+                <div class="value" id="drawdown">-</div>
             </div>
         </div>
-    </div>
-    <div id=\"status\" style=\"position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; background: #0b1220; color: #cbd5e1; border: 1px solid #1f2937; padding: 8px 12px; border-radius: 10px; opacity: 0; transition: opacity .3s;\"></div>
-</body>
-</html>
-                """
-                return HTMLResponse(content=html)
+    </body>
+    </html>
+        """
+        return HTMLResponse(content=html)
 
 
 # Settings endpoints
@@ -856,45 +620,47 @@ async def agents_run(
 # Protected endpoints
 @app.post("/control/start")
 async def start(current_user: dict = Depends(require_permission("control"))):
-    """Start the trading bot."""
+    """Start the Splitstar Operations Console execution loop."""
     try:
         STATE["running"] = True
-        logger.info(f"Trading bot started by user: {current_user['username']}")
-        
+        logger.info(f"{APP_BRAND} started by user: {current_user['username']}")
+
         # Broadcast to all connected clients
         await manager.broadcast(json.dumps({
             "event": "bot_started",
+            "brand_event": "console_started",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "user": current_user['username']
         }))
-        
-        return {"ok": True, "message": "Trading bot started"}
+
+        return {"ok": True, "message": f"{APP_BRAND} started"}
         
     except Exception as e:
-        logger.error(f"Failed to start bot: {e}")
+        logger.error(f"Failed to start console: {e}")
         STATE['server_stats']['error_count'] += 1
-        raise HTTPException(status_code=500, detail="Failed to start bot")
+        raise HTTPException(status_code=500, detail="Failed to start console")
 
 @app.post("/control/stop")
 async def stop(current_user: dict = Depends(require_permission("control"))):
-    """Stop the trading bot."""
+    """Stop the Splitstar Operations Console execution loop."""
     try:
         STATE["running"] = False
-        logger.info(f"Trading bot stopped by user: {current_user['username']}")
-        
+        logger.info(f"{APP_BRAND} stopped by user: {current_user['username']}")
+
         # Broadcast to all connected clients
         await manager.broadcast(json.dumps({
-            "event": "bot_stopped", 
+            "event": "bot_stopped",
+            "brand_event": "console_stopped",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "user": current_user['username']
         }))
-        
-        return {"ok": True, "message": "Trading bot stopped"}
+
+        return {"ok": True, "message": f"{APP_BRAND} stopped"}
         
     except Exception as e:
-        logger.error(f"Failed to stop bot: {e}")
+        logger.error(f"Failed to stop console: {e}")
         STATE['server_stats']['error_count'] += 1
-        raise HTTPException(status_code=500, detail="Failed to stop bot")
+        raise HTTPException(status_code=500, detail="Failed to stop console")
 
 @app.get("/positions")
 async def get_positions(current_user: dict = Depends(require_permission("read"))):

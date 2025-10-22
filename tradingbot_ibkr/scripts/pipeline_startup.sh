@@ -2,7 +2,12 @@
 set -euo pipefail
 
 # config
-REPO_DIR="$HOME/trading-bot"
+DEFAULT_REPO_DIR="$HOME/splitstar-operations-console"
+LEGACY_REPO_DIR="$HOME/trading-bot"
+REPO_DIR="${REPO_DIR:-$DEFAULT_REPO_DIR}"
+if [ ! -d "${REPO_DIR}" ] && [ -d "${LEGACY_REPO_DIR}" ]; then
+  REPO_DIR="${LEGACY_REPO_DIR}"
+fi
 CONDA_DIR="$HOME/miniconda"
 ENV_NAME="pipeline"
 PILOT_SYMBOLS=("BTCUSDT" "ETHUSDT" "ADAUSDT")

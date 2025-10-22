@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Comprehensive test suite for trading bot enhancements.
+Comprehensive test suite for Splitstar Operations Console enhancements.
 
 This script validates all major improvements and demonstrates usage of enhanced features:
 - Grid search optimization with parallel processing
@@ -363,7 +363,7 @@ def run_comprehensive_test():
 def main():
     """Main entry point for testing."""
     parser = argparse.ArgumentParser(
-        description='Test trading bot enhancements',
+        description='Test Splitstar Operations Console enhancements',
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
