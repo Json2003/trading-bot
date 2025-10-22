@@ -31,6 +31,7 @@ from __future__ import annotations
 import math
 import random as _stdlib_random
 from typing import Iterable, Iterator, List, Sequence, Tuple, Union, overload
+import builtins as _bi
 
 __all__ = [
     "__version__",
@@ -238,7 +239,7 @@ class ndarray:
             return 0.0
         mean = sum(flat) / len(flat)
         var = sum((x - mean) ** 2 for x in flat)
-        denom = max(1, len(flat) - ddof)
+        denom = _bi.max(1, len(flat) - ddof)
         return float(math.sqrt(var / denom))
 
     def _iter_flat(self) -> Iterator[float]:
@@ -608,7 +609,25 @@ class _MaximumHelper:
         return ndarray(out)
 
 
-maximum = _MaximumHelper()
+class _MaximumUfunc:
+    def __call__(self, a, b):
+        aa = array(a)
+        bb = array(b)
+        def _elem(x, y):
+            return x if x >= y else y
+        return ndarray(_broadcast_binary(aa._data, bb._data, _elem))
+
+    def accumulate(self, arr):
+        values = array(arr).flatten()._data
+        out = []
+        current = -float("inf")
+        for v in values:
+            if v > current:
+                current = v
+            out.append(current)
+        return ndarray(out)
+
+maximum = _MaximumUfunc()
 
 
 def nanmin(x):
@@ -621,7 +640,7 @@ def nanpercentile(x, q):
     if not values:
         return float("nan")
     pos = int(round((q / 100.0) * (len(values) - 1)))
-    pos = max(0, min(len(values) - 1, pos))
+    pos = _bi.max(0, _bi.min(len(values) - 1, pos))
     return float(values[pos])
 
 
@@ -636,6 +655,23 @@ def quantile(x, q):
         return float(values[low])
     frac = pos - low
     return float(values[low] * (1 - frac) + values[high] * frac)
+
+
+# Minimal datetime64 constructor for compatibility
+def datetime64(value, unit=None):
+    # Return Python datetime or pass-through string/number if parsing fails.
+    try:
+        from datetime import datetime
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value)
+            except Exception:
+                return value
+        return value
+    except Exception:
+        return value
 
 
 def array_equal(a, b):
