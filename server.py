@@ -95,6 +95,7 @@ def load_secret_key() -> bytes:
 PBKDF2_ITERATIONS = int(os.getenv("PBKDF2_ITERATIONS", "200000"))
 SECRET_FILE = Path(os.getenv("SECRET_FILE", ".server_secret_key"))
 SETTINGS_FILE = Path(os.getenv("SETTINGS_FILE", "server_settings.json"))
+USERS_FILE = Path(os.getenv("USERS_FILE", "server_users.json"))
 DEFAULT_SETTINGS: Dict[str, Any] = {}
 ACCESS_TOKEN_MINUTES = int(os.getenv("ACCESS_TOKEN_MINUTES", "30"))
 
@@ -169,7 +170,11 @@ def load_users() -> Dict[str, Any]:
     return payload
 
 
-USERS: Dict[str, Dict[str, Any]] = load_users()
+try:
+    USERS: Dict[str, Dict[str, Any]] = load_users()
+except Exception as exc:
+    logger.warning("User loading failed: %s; using empty user db", exc)
+    USERS = {}
 
 
 def verify_password(password: str, user_record: Dict[str, Any]) -> bool:
@@ -324,7 +329,7 @@ class ConnectionManager:
         self.connection_info: Dict[WebSocket, dict] = {}
         self.rate_limiter: Dict[str, deque] = defaultdict(lambda: deque())
 
-    async def connect(self, websocket: WebSocket, client_id: str = None):
+    async def connect(self, websocket: WebSocket, client_id: Optional[str] = None):
         await websocket.accept()
         self.active_connections.append(websocket)
 
