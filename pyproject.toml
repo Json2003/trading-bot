@@ -71,6 +71,15 @@ known-first-party = ["tradingbot_core", "tradingbot_ibkr"]
 python_version = "3.10"
 warn_unused_ignores = true
 ignore_missing_imports = true
+# Limit type-checking scope to core modules to avoid noise from stubbed libs and demo scripts
+files = [
+  "server.py",
+  "server_live.py",
+  "server_basic.py",
+  "config/**/*.py",
+  "engine/overlays.py",
+  "src/**/*.py",
+]
 
 [tool.pytest.ini_options]
 addopts = "-q --maxfail=1 --disable-warnings"
