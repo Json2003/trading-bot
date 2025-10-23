@@ -120,8 +120,14 @@ def drop_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     """Drop bars with broken OHLCV or negative volume."""
     mask = (df["high"] >= df["low"]) & (df["volume"] >= 0)
     body_at_low = (df["open"] == df["close"]) & (df["close"] == df["low"])
-    mask &= ~body_at_low
-    return df[mask].copy()
+    mask = mask & (~body_at_low)
+    # Normalize to a plain NumPy boolean array to avoid edge cases with
+    # extension dtypes or NA boolean masks on some numpy/pandas versions.
+    mask_np = mask.fillna(False).to_numpy(dtype=bool)
+    # Use iloc with explicit integer indices to avoid RangeIndex boolean
+    # masking edge-cases observed on some numpy/pandas combinations.
+    positions = np.flatnonzero(mask_np)
+    return df.iloc[positions].copy()
 
 
 def attach_cost_columns(
