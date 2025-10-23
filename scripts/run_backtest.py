@@ -420,34 +420,69 @@ def run_backtest(args: argparse.Namespace) -> dict:
             df = _bx_fetch(args.exchange, args.symbol, args.timeframe, since_str, until_str)
 
         # Strategy
-        spec = args.strategy or "backtest.strategies.sma_filtered:generate_signals"
-        import importlib as _il
-
-        mod_name, fn_name = spec.split(":")
-        fn = getattr(_il.import_module(mod_name), fn_name)
+        strat = None
         kwargs = {}
-        if args.strategy_args:
-            # Support comma and/or whitespace separated key=value assignments while
-            # preserving quoted values. This allows invocations such as
-            # ``--strategy_args fast=8 slow=34`` in addition to the legacy
-            # comma-delimited form.
-            if isinstance(args.strategy_args, str):
-                parts = [args.strategy_args]
-            else:
-                parts = list(args.strategy_args)
-            normalized = " ".join(parts).replace(",", " ")
-            for pair in shlex.split(normalized):
-                if not pair or "=" not in pair:
-                    continue
-                k, v = pair.split("=", 1)
-                k = k.strip()
-                v = v.strip()
-                try:
-                    v_cast = float(v) if ("." in v or "e" in v.lower() or "-" in v) else int(v)
-                except ValueError:
-                    v_cast = v
-                kwargs[k] = v_cast
-        strat = (lambda _d, _fn=fn, _kw=kwargs: _fn(_d, **_kw)) if kwargs else fn
+        if args.strategy and ":" not in args.strategy:
+            # Allow simple aliases via tradingbot_ibkr.signal_generators
+            try:
+                from tradingbot_ibkr.signal_generators import get_signal_generator
+
+                fn = get_signal_generator(args.strategy)
+                if args.strategy_args:
+                    if isinstance(args.strategy_args, str):
+                        parts = [args.strategy_args]
+                    else:
+                        parts = list(args.strategy_args)
+                    normalized = " ".join(parts).replace(",", " ")
+                    for pair in shlex.split(normalized):
+                        if not pair or "=" not in pair:
+                            continue
+                        k, v = pair.split("=", 1)
+                        k = k.strip()
+                        v = v.strip()
+                        try:
+                            v_cast = (
+                                float(v)
+                                if ("." in v or "e" in v.lower() or "-" in v)
+                                else int(v)
+                            )
+                        except ValueError:
+                            v_cast = v
+                        kwargs[k] = v_cast
+                strat = (lambda _d, _fn=fn, _kw=kwargs: _fn(_d, **_kw)) if kwargs else fn
+            except Exception:
+                strat = None
+
+        if strat is None:
+            # Fallback: explicit module:function spec
+            spec = args.strategy or "backtest.strategies.sma_filtered:generate_signals"
+            import importlib as _il
+
+            if ":" not in spec:
+                # If still no module:function, map to default
+                spec = "backtest.strategies.sma_filtered:generate_signals"
+            mod_name, fn_name = spec.split(":")
+            fn = getattr(_il.import_module(mod_name), fn_name)
+            if args.strategy_args:
+                if isinstance(args.strategy_args, str):
+                    parts = [args.strategy_args]
+                else:
+                    parts = list(args.strategy_args)
+                normalized = " ".join(parts).replace(",", " ")
+                for pair in shlex.split(normalized):
+                    if not pair or "=" not in pair:
+                        continue
+                    k, v = pair.split("=", 1)
+                    k = k.strip()
+                    v = v.strip()
+                    try:
+                        v_cast = (
+                            float(v) if ("." in v or "e" in v.lower() or "-" in v) else int(v)
+                        )
+                    except ValueError:
+                        v_cast = v
+                    kwargs[k] = v_cast
+            strat = (lambda _d, _fn=fn, _kw=kwargs: _fn(_d, **_kw)) if kwargs else fn
 
         # Exec config
         fees_bps = args.fees_bps if args.fees_bps is not None else 0.0
@@ -497,10 +532,12 @@ def run_backtest(args: argparse.Namespace) -> dict:
         data = pd_mod.Series(bar_ret, name="StrategyReturn").to_frame()
         returns = data["StrategyReturn"].dropna()
         downside_std = returns[returns < 0].std()
+        _isfinite = getattr(np, "isfinite", lambda x: True)
+        _isclose = getattr(np, "isclose", lambda a, b, **kw: abs(float(a) - float(b)) <= float(kw.get("atol", 1e-12)))
         if (
             downside_std is not None
-            and np.isfinite(downside_std)
-            and not np.isclose(downside_std, 0.0)
+            and _isfinite(downside_std)
+            and not _isclose(downside_std, 0.0)
         ):
             sortino = returns.mean() / downside_std * np.sqrt(252)
         else:
