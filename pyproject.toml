@@ -112,6 +112,12 @@ module = [
 disallow_untyped_defs = true
 check_untyped_defs = true
 
+[[tool.mypy.overrides]]
+module = [
+  "server_live",
+]
+check_untyped_defs = true
+
 [tool.pytest.ini_options]
 addopts = "-q --maxfail=1 --disable-warnings"
 testpaths = ["tests"]
