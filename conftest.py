@@ -96,3 +96,32 @@ def _force_real_requests() -> None:
 
 _maybe_enable_local_stubs()
 _force_real_requests()
+
+
+def _force_real_numpy_pandas() -> None:
+    """Ensure real numpy and pandas are imported, not local demo folders.
+
+    Temporarily remove repo root from sys.path, import site-packages modules,
+    restore sys.path, and pin them in sys.modules to prevent later shadowing.
+    """
+    try:
+        removed = False
+        if str(ROOT) in sys.path:
+            sys.path.remove(str(ROOT))
+            removed = True
+        try:
+            import importlib
+
+            real_numpy = importlib.import_module("numpy")
+            real_pandas = importlib.import_module("pandas")
+        finally:
+            if removed:
+                sys.path.insert(0, str(ROOT))
+        sys.modules["numpy"] = real_numpy
+        sys.modules["pandas"] = real_pandas
+    except Exception:
+        # Non-fatal; specific tests may not need these libs
+        pass
+
+
+_force_real_numpy_pandas()
