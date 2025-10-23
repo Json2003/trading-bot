@@ -51,7 +51,7 @@ class TradingMetrics:
 class TradingEnv(gym.Env):
     """Simple long-only trading environment with buy/sell/hold actions."""
 
-    metadata = {"render_modes": []}
+    metadata: dict[str, list[str]] = {"render_modes": []}
 
     def __init__(
         self,
@@ -81,7 +81,7 @@ class TradingEnv(gym.Env):
             dtype=np.float32,
         )
 
-    def reset(self, *, seed: int | None = None, options: dict[str, Any] | None = None):  # type: ignore[override]
+    def reset(self, *, seed: int | None = None, options: dict[str, Any] | None = None) -> tuple[np.ndarray, dict[str, Any]]:
         super().reset(seed=seed)
         self.current_step = 0
         self.balance = self.initial_balance
@@ -100,7 +100,7 @@ class TradingEnv(gym.Env):
             portfolio_value=portfolio_value, balance=self.balance, position=self.position
         )
 
-    def step(self, action: int):  # type: ignore[override]
+    def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
         if action not in (0, 1, 2):
             raise ValueError(f"Invalid action {action}; expected 0 (hold), 1 (buy), or 2 (sell)")
 

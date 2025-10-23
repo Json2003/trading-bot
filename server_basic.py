@@ -1,10 +1,11 @@
 from fastapi import FastAPI, WebSocket
 from datetime import datetime, timezone
+from typing import Any, Dict
 import asyncio, json
 
 app = FastAPI()
 
-STATE = {
+STATE: Dict[str, Any] = {
     "running": False,
     "metrics": {
         "equity": 100000,

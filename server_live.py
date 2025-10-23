@@ -150,7 +150,7 @@ async def login(payload: Dict[str, str]):
     username = payload.get("username", "")
     password = payload.get("password", "")
     user = fake_users_db.get(username)
-    if not user or not verify_password(password, user["hashed_password"]):
+    if not user or not verify_password(password, str(user.get("hashed_password", ""))):
         raise HTTPException(status_code=401, detail="Incorrect username or password")
     token = create_access_token(username)
     return {"access_token": token, "token_type": "bearer"}

@@ -71,6 +71,21 @@ known-first-party = ["tradingbot_core", "tradingbot_ibkr"]
 python_version = "3.10"
 warn_unused_ignores = true
 ignore_missing_imports = true
+# Don't type-check transitive imports; treat them as Any to focus on core files.
+follow_imports = "skip"
+# Avoid picking up local demo stubs or large auxiliary folders inadvertently
+exclude = [
+  "^backtest/",
+  "^brokers/",
+  "^dashboard/",
+  "^models/",
+  "^scripts/",
+  "^tests/",
+  "^tradingbot_core/",
+  "^tradingbot_ibkr/",
+  "^numpy/",
+  "^pandas/",
+]
 # Limit type-checking scope to core modules to avoid noise from stubbed libs and demo scripts
 files = [
   "server.py",

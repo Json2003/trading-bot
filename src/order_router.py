@@ -190,7 +190,8 @@ class OrderRouter:
     def _serialize(self, value: Any) -> Any:
         if isinstance(value, SupportsToDict):
             return value.to_dict()
-        if is_dataclass(value):
+        if is_dataclass(value) and not isinstance(value, type):
+            # Only serialize dataclass instances (not classes)
             return asdict(value)
         if isinstance(value, Mapping):
             return dict(value)

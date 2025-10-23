@@ -41,9 +41,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Security configuration
-SECRET_KEY = os.getenv(
-    "SECRET_KEY", "your-secret-key-here"
-)  # In production, use environment variable
+# Always treat SECRET_KEY as bytes for HMAC
+SECRET_KEY: bytes = os.getenv("SECRET_KEY", "your-secret-key-here").encode("utf-8")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

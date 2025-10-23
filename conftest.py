@@ -1,10 +1,18 @@
-"""Pytest configuration ensuring local stub packages shadow binary wheels."""
+"""Pytest configuration.
+
+Defaults to using real third-party packages. Optional local stubs for numpy/pandas
+can be enabled by setting USE_LOCAL_STUBS=1 in the environment.
+
+Also ensures the real 'requests' package is used (avoids accidental shadowing by
+the demo 'requests.py' file in the repo root).
+"""
 
 from __future__ import annotations
 
 import importlib.abc
 import importlib.util
 from pathlib import Path
+import os
 from typing import Dict
 import sys
 
@@ -44,5 +52,47 @@ class _StubFinder(importlib.abc.MetaPathFinder):
         return importlib.util.spec_from_file_location(fullname, py_path)
 
 
-# Insert at the front so it takes precedence over the default path-based finder
-sys.meta_path.insert(0, _StubFinder())
+def _maybe_enable_local_stubs() -> None:
+    """Enable local stubs finder only if explicitly requested via env var.
+
+    Set USE_LOCAL_STUBS=1 to route numpy/pandas imports to local pure-Python shims.
+    """
+    use_stubs = os.getenv("USE_LOCAL_STUBS", "0") in ("1", "true", "yes")
+    if use_stubs:
+        # Insert at the front so it takes precedence over the default path-based finder
+        sys.meta_path.insert(0, _StubFinder())
+
+
+def _force_real_requests() -> None:
+    """Ensure site-packages 'requests' is imported instead of local demo module.
+
+    Temporarily remove the repository root from sys.path to import the real package,
+    then restore path ordering and pin the loaded module in sys.modules.
+    """
+    try:
+        removed = False
+        if str(ROOT) in sys.path:
+            # Remove repo root to avoid importing the local demo file
+            sys.path.remove(str(ROOT))
+            removed = True
+        try:
+            import importlib
+
+            real_requests = importlib.import_module("requests")
+        except Exception:
+            # Fallback to pip vendored requests if standard import fails
+            import importlib
+
+            real_requests = importlib.import_module("pip._vendor.requests")
+        finally:
+            if removed:
+                sys.path.insert(0, str(ROOT))
+
+        sys.modules["requests"] = real_requests
+    except Exception:
+        # Non-fatal; tests that don't use requests won't be affected
+        pass
+
+
+_maybe_enable_local_stubs()
+_force_real_requests()

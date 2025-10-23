@@ -31,7 +31,7 @@ import json
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import duckdb
@@ -64,11 +64,11 @@ def _ensure_timezone(values: Sequence) -> list[datetime]:
                 dt_val = datetime.fromisoformat(str(val))
             except ValueError:
                 dt_val = datetime.utcfromtimestamp(float(val))
-                dt_val = dt_val.replace(tzinfo=UTC)
+                dt_val = dt_val.replace(tzinfo=timezone.utc)
         if dt_val.tzinfo is None:
-            dt_val = dt_val.replace(tzinfo=UTC)
+            dt_val = dt_val.replace(tzinfo=timezone.utc)
         else:
-            dt_val = dt_val.astimezone(UTC)
+            dt_val = dt_val.astimezone(timezone.utc)
         normalised.append(dt_val)
     return normalised
 
@@ -99,9 +99,9 @@ def _load_existing_frames(base_dir: Path) -> list[MarketSnapshot]:
 
 
 def _synthetic_series(symbol: str, *, asset_class: str, periods: int = 30) -> MarketSnapshot:
-    end = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+    end = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     start = end - timedelta(days=periods - 1)
-    idx = pd.date_range(start=start, end=end, freq="1D", tz=UTC)
+    idx = pd.date_range(start=start, end=end, freq="1D", tz=timezone.utc)
     length = len(idx)
     base = np.linspace(-3, 3, length).tolist()
     oscillation = [2 * math.sin(math.pi * i / max(length - 1, 1)) for i in range(length)]
@@ -221,7 +221,7 @@ def _append_trends_from_fetch(entries: Sequence[dict]) -> pd.DataFrame:
                 "vol_20d",
             ],
         )
-    today = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     records = []
     for idx, entry in enumerate(entries):
         records.append(
@@ -286,7 +286,7 @@ def _write_parquet(df: pd.DataFrame, out_dir: Path) -> Path:
 def _write_duckdb(df: pd.DataFrame, db_path: Path) -> None:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     records = df.to_dict("records")
-    with duckdb.connect(db_path) as con:
+    with duckdb.connect(str(db_path)) as con:
         con.execute(f"DROP TABLE IF EXISTS {TABLE_NAME}")
         con.execute(
             f"""
@@ -326,7 +326,7 @@ def main() -> tuple[Path, Path]:
     """Entry point used by the Makefile and manual executions."""
 
     combined = build_market_trends(DATA_DIR)
-    run_date = datetime.now(UTC).date().isoformat()
+    run_date = datetime.now(timezone.utc).date().isoformat()
     parquet_dir = DATA_DIR / run_date
     parquet_path = _write_parquet(combined, parquet_dir)
     db_path = DATA_DIR / DUCKDB_NAME
