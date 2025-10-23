@@ -11,10 +11,12 @@ Features:
 """
 
 from fastapi import FastAPI, WebSocket, HTTPException, Depends, status, Request, Body
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone, timedelta
-from typing import Optional, Dict, List, Set
+from typing import Optional, Dict, List, Set, Any
 import asyncio
 import base64
 import hashlib
@@ -25,6 +27,10 @@ import os
 import glob
 import subprocess
 from pathlib import Path
+import time
+import uuid
+import secrets
+from collections import deque, defaultdict
 
 # Configure logging
 logging.basicConfig(
@@ -57,8 +63,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-if DASHBOARD_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(DASHBOARD_DIR)), name="static")
+# Optional static dashboard mounting
+try:
+    DASHBOARD_DIR = (Path(__file__).resolve().parent / "dashboard").resolve()
+    if DASHBOARD_DIR.exists():
+        app.mount("/static", StaticFiles(directory=str(DASHBOARD_DIR)), name="static")
+except Exception:
+    # Non-fatal: static dashboard is optional
+    pass
 
 security = HTTPBearer(auto_error=False)
 
@@ -79,8 +91,20 @@ def load_secret_key() -> bytes:
     SECRET_FILE.write_bytes(key)
     return key
 
+# Minimal defaults for optional security/settings files
+PBKDF2_ITERATIONS = int(os.getenv("PBKDF2_ITERATIONS", "200000"))
+SECRET_FILE = Path(os.getenv("SECRET_FILE", ".server_secret_key"))
+SETTINGS_FILE = Path(os.getenv("SETTINGS_FILE", "server_settings.json"))
+USERS_FILE = Path(os.getenv("USERS_FILE", "server_users.json"))
+DEFAULT_SETTINGS: Dict[str, Any] = {}
+ACCESS_TOKEN_MINUTES = int(os.getenv("ACCESS_TOKEN_MINUTES", "30"))
 
-SECRET_KEY = load_secret_key()
+# Generate a secret key for HMAC if needed
+try:
+    SECRET_KEY = load_secret_key()
+except Exception:
+    # Fallback to simple bytes from string
+    SECRET_KEY = (os.getenv("SECRET_KEY", "fallback-secret")).encode("utf-8")
 
 
 def _write_json(path: Path, payload: Dict[str, Any]) -> None:
@@ -146,7 +170,11 @@ def load_users() -> Dict[str, Any]:
     return payload
 
 
-USERS: Dict[str, Dict[str, Any]] = load_users()
+try:
+    USERS: Dict[str, Dict[str, Any]] = load_users()
+except Exception as exc:
+    logger.warning("User loading failed: %s; using empty user db", exc)
+    USERS = {}
 
 
 def verify_password(password: str, user_record: Dict[str, Any]) -> bool:
@@ -301,7 +329,7 @@ class ConnectionManager:
         self.connection_info: Dict[WebSocket, dict] = {}
         self.rate_limiter: Dict[str, deque] = defaultdict(lambda: deque())
 
-    async def connect(self, websocket: WebSocket, client_id: str = None):
+    async def connect(self, websocket: WebSocket, client_id: Optional[str] = None):
         await websocket.accept()
         self.active_connections.append(websocket)
 
