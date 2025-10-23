@@ -1,0 +1,26 @@
+{
+  "admin": {
+    "username": "admin",
+    "salt": "SnnKF8kF31qsLJ4HlV_n_A",
+    "hash": "Y7o6TLRBWC7K025qkZYlHC339-abDOHF02BWx6kWL2A",
+    "iterations": 200000,
+    "permissions": [
+      "read",
+      "write",
+      "control"
+    ],
+    "created_at": "2025-10-23T00:41:01.261896+00:00"
+  },
+  "gmantrading": {
+    "username": "gmantrading",
+    "salt": "PWETYzspGMWI0pgVKL7XxQ",
+    "hash": "gT4UsANvolxKCtFBaIR_1BoDYScsD-Q42jRJyyPAJ7I",
+    "iterations": 200000,
+    "permissions": [
+      "read",
+      "write",
+      "control"
+    ],
+    "created_at": "2025-10-23T00:41:01.328071+00:00"
+  }
+}

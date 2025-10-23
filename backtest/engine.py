@@ -228,7 +228,7 @@ def run_backtest(
     if dyn_risk_enabled:
         lookback = max(int(getattr(cfg, "risk_vol_lookback", 0) or 0), 1)
         median_series = pd.Series(atr_norm).rolling(lookback, min_periods=lookback).median()
-        median_series = median_series.fillna(method="bfill").fillna(method="ffill")
+        median_series = median_series.bfill().ffill()
         med_val = float(np.nanmedian(atr_norm))
         if not np.isfinite(med_val) or med_val <= 0:
             med_val = 1e-6

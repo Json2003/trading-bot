@@ -71,7 +71,7 @@ def technical_indicators(df: pd.DataFrame, *, rsi_period: int = 14) -> pd.DataFr
     roll_down = down.ewm(span=rsi_period, adjust=False).mean().replace(0, np.nan)
     rs = roll_up / roll_down
     out["rsi14"] = 100.0 - (100.0 / (1.0 + rs))
-    out["rsi14"] = out["rsi14"].fillna(method="bfill").fillna(50.0)
+    out["rsi14"] = out["rsi14"].bfill().fillna(50.0)
 
     return out
 
@@ -98,11 +98,15 @@ def fundamental_indicators(
     out = pd.DataFrame(index=df.index)
 
     if earnings is not None and not earnings.empty:
-        eps_actual = earnings.get("eps_actual")
-        eps_est = earnings.get("eps_estimate")
         aligned = earnings.reindex(df.index, method="ffill")
-        trailing_eps = aligned.get("eps_actual", eps_actual)
-        surprise = (aligned.get("eps_actual", 0) - aligned.get("eps_estimate", 0)).fillna(0.0)
+        eps_actual_aligned = (
+            aligned["eps_actual"] if "eps_actual" in aligned.columns else pd.Series(np.nan, index=df.index)
+        )
+        eps_est_aligned = (
+            aligned["eps_estimate"] if "eps_estimate" in aligned.columns else pd.Series(0.0, index=df.index)
+        )
+        trailing_eps = eps_actual_aligned
+        surprise = (eps_actual_aligned - eps_est_aligned).fillna(0.0)
         trailing_eps = trailing_eps.replace(0, np.nan)
     else:
         # Proxy EPS using a conservative earnings yield derived from long-term
@@ -122,8 +126,8 @@ def fundamental_indicators(
         + 0.3 * earnings_yield.fillna(0.0)
     )
 
-    out["pe_ratio"] = pe_ratio.fillna(method="ffill").fillna(pe_ratio.median())
-    out["earnings_yield"] = earnings_yield.fillna(method="ffill").fillna(0.0)
+    out["pe_ratio"] = pe_ratio.ffill().fillna(pe_ratio.median())
+    out["earnings_yield"] = earnings_yield.ffill().fillna(0.0)
     out["earnings_growth"] = earnings_growth.fillna(0.0)
     out["earnings_surprise"] = earnings_surprise.fillna(0.0)
     out["fundamental_score"] = fundamental_score.fillna(0.0)

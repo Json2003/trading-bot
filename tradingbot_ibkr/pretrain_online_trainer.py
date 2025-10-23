@@ -111,13 +111,13 @@ def build_examples_from_df(df, *, horizon=6, tp_pct=0.004, sl_pct=0.002,
     # simple features: close, high, low, volume, pct change, 3-bar MA
     # basic returns and moving averages
     df["ret1"] = df["close"].pct_change().fillna(0.0)
-    df["ma3"] = df["close"].rolling(3).mean().fillna(method="bfill")
+    df["ma3"] = df["close"].rolling(3).mean().bfill()
     # momentum features
     df["mom5"] = df["close"].pct_change(5).fillna(0.0)
     df["mom10"] = df["close"].pct_change(10).fillna(0.0)
     # volume-based features
     df["vol_mean20"] = (
-        df["volume"].rolling(20).mean().fillna(method="bfill") if "volume" in df.columns else 0.0
+        df["volume"].rolling(20).mean().bfill() if "volume" in df.columns else 0.0
     )
     df["vol_ratio"] = df["volume"] / (df["vol_mean20"].replace(0, 1))
     # volatility
@@ -127,7 +127,7 @@ def build_examples_from_df(df, *, horizon=6, tp_pct=0.004, sl_pct=0.002,
     high_pc = (df["high"] - df["close"].shift(1)).abs()
     low_pc = (df["low"] - df["close"].shift(1)).abs()
     tr = pd.concat([high_low, high_pc, low_pc], axis=1).max(axis=1)
-    df["atr14"] = tr.rolling(14).mean().fillna(method="bfill")
+    df["atr14"] = tr.rolling(14).mean().bfill()
     # RSI (14)
     delta = df["close"].diff()
     up = delta.clip(lower=0)
