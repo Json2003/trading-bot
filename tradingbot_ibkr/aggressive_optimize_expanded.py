@@ -19,7 +19,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 import pandas as pd
 
-from backtest_ccxt import aggressive_strategy_backtest
+from tradingbot_ibkr.backtest_ccxt import aggressive_strategy_backtest
 
 # Configure logging
 logging.basicConfig(
