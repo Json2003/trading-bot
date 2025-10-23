@@ -89,12 +89,11 @@ def generate_sample_ohlcv_data(bars: int = 1000) -> pd.DataFrame:
     price_changes += trend
 
     # Calculate prices using cumulative sum
-    prices = base_price * np.exp(np.cumsum(price_changes))
+    prices: np.ndarray = np.asarray(base_price * np.exp(np.cumsum(price_changes)), dtype=float)
 
     # Generate OHLCV data
     data = []
-    # Cast to list for static type-checkers while preserving behavior
-    for i, price in enumerate(prices.tolist()):
+    for i, price in enumerate(prices):  # type: ignore[arg-type]
         # Add some intrabar volatility
         volatility = abs(np.random.normal(0, 0.005))  # 0.5% intrabar volatility
 

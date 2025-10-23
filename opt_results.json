@@ -3,24 +3,12 @@
     "symbol": "BTC/USDT",
     "total_combinations_tested": 5,
     "total_combinations_possible": 54,
-    "optimization_time_seconds": 2.133075714111328,
+    "optimization_time_seconds": 1.7320501804351807,
     "best_win_rate": 0,
     "early_stopping_triggered": true,
     "pruned_parameters": []
   },
   "results": [
-    {
-      "params": {
-        "tp": 0.002,
-        "sl": 0.001,
-        "hold": 6,
-        "risk": 0.02
-      },
-      "win_rate": 0,
-      "pnl": 0.0,
-      "trades": 0,
-      "combo_idx": 2
-    },
     {
       "params": {
         "tp": 0.002,
@@ -32,6 +20,18 @@
       "pnl": 0.0,
       "trades": 0,
       "combo_idx": 1
+    },
+    {
+      "params": {
+        "tp": 0.002,
+        "sl": 0.001,
+        "hold": 6,
+        "risk": 0.02
+      },
+      "win_rate": 0,
+      "pnl": 0.0,
+      "trades": 0,
+      "combo_idx": 2
     },
     {
       "params": {
