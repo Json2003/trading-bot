@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Mapping
+from typing import Mapping, Any
 import math
 
 import pandas as pd
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from factors.beta import compute_rolling_beta
 from factors.comp_m import compute_comp_m_factor
@@ -88,7 +88,8 @@ class OverlayEngine:
         return pd.DataFrame(combined)
 
     def _compute_betas(self, factors_cfg: Mapping[str, object]) -> pd.DataFrame:
-        beta_cfg = factors_cfg.get("beta") or {}
+        raw_beta = factors_cfg.get("beta") or {}
+        beta_cfg: dict[str, Any] = raw_beta if isinstance(raw_beta, dict) else {}
         window = int(beta_cfg.get("window", 240))
         min_periods = int(beta_cfg.get("min_periods", window))
         market_symbol = str(beta_cfg.get("market_symbol", "BTCUSDT"))
@@ -118,8 +119,10 @@ class OverlayEngine:
         self, factors_cfg: Mapping[str, object], overlays_cfg: Mapping[str, object]
     ) -> tuple[float, float] | None:
         target = None
-        beta_cfg = factors_cfg.get("beta") or {}
-        overlay_cfg = overlays_cfg.get("beta_hedge") or {}
+        raw_beta = factors_cfg.get("beta") or {}
+        beta_cfg: dict[str, Any] = raw_beta if isinstance(raw_beta, dict) else {}
+        raw_overlay = overlays_cfg.get("beta_hedge") or {}
+        overlay_cfg: dict[str, Any] = raw_overlay if isinstance(raw_overlay, dict) else {}
         for key in ("target_beta", "target"):
             value = overlay_cfg.get(key) if key in overlay_cfg else beta_cfg.get(key)
             if isinstance(value, (list, tuple)) and len(value) == 2:
@@ -131,9 +134,10 @@ class OverlayEngine:
     def _compute_comp_m(self, comp_cfg: Mapping[str, object]) -> pd.DataFrame | None:
         if not comp_cfg:
             return None
-        lookback = int(comp_cfg.get("lookback", 60))
-        skip = int(comp_cfg.get("skip", 0))
-        lag = int(comp_cfg.get("lag", 1))
+        raw_cfg: dict[str, Any] = comp_cfg if isinstance(comp_cfg, dict) else {}
+        lookback = int(raw_cfg.get("lookback", 60))
+        skip = int(raw_cfg.get("skip", 0))
+        lag = int(raw_cfg.get("lag", 1))
         frame = self._symbol_prices.copy()
         if not hasattr(frame, "columns") or not frame.columns:
             return None

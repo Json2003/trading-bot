@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 __all__ = [
     "PortfolioConfig",
