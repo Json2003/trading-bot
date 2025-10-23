@@ -71,7 +71,7 @@ def fetch_ohlcv(symbol: str, timeframe: str = "1h", limit: int = 500) -> pd.Data
         # Validate data quality
         if df.isnull().any().any():
             logger.warning("Missing values detected in OHLCV data")
-            df = df.fillna(method="ffill")
+            df = df.ffill()
 
         logger.info(f"Successfully fetched {len(df)} candles from {df.index[0]} to {df.index[-1]}")
         return df

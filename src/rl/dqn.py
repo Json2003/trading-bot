@@ -156,7 +156,7 @@ def prepare_rl_features(
         raise ValueError("Cannot prepare features for an empty DataFrame")
 
     df = _lowercase_columns(data)
-    close = _ensure_column(df, ["close"]).fillna(method="ffill").fillna(method="bfill")
+    close = _ensure_column(df, ["close"]).ffill().bfill()
     volume = _ensure_column(df, ["volume"], default=0.0)
 
     features = pd.DataFrame(index=df.index)

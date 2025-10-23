@@ -1,10 +1,10 @@
 {
   "metadata": {
     "symbol": "BTC/USDT",
-    "total_combinations_tested": 6,
+    "total_combinations_tested": 5,
     "total_combinations_possible": 54,
-    "optimization_time_seconds": 3.0588440895080566,
-    "best_win_rate": 42.30769230769231,
+    "optimization_time_seconds": 1.7320501804351807,
+    "best_win_rate": 0,
     "early_stopping_triggered": true,
     "pruned_parameters": []
   },
@@ -14,24 +14,24 @@
         "tp": 0.002,
         "sl": 0.001,
         "hold": 6,
-        "risk": 0.02
+        "risk": 0.01
       },
-      "win_rate": 42.30769230769231,
-      "pnl": -5146.843245121681,
-      "trades": 26,
-      "combo_idx": 2
+      "win_rate": 0,
+      "pnl": 0.0,
+      "trades": 0,
+      "combo_idx": 1
     },
     {
       "params": {
         "tp": 0.002,
         "sl": 0.001,
         "hold": 6,
-        "risk": 0.01
+        "risk": 0.02
       },
-      "win_rate": 42.30769230769231,
-      "pnl": -5146.843245121681,
-      "trades": 26,
-      "combo_idx": 1
+      "win_rate": 0,
+      "pnl": 0.0,
+      "trades": 0,
+      "combo_idx": 2
     },
     {
       "params": {
@@ -40,9 +40,9 @@
         "hold": 12,
         "risk": 0.01
       },
-      "win_rate": 42.30769230769231,
-      "pnl": -5146.843245121681,
-      "trades": 26,
+      "win_rate": 0,
+      "pnl": 0.0,
+      "trades": 0,
       "combo_idx": 3
     },
     {
@@ -52,9 +52,9 @@
         "hold": 12,
         "risk": 0.02
       },
-      "win_rate": 42.30769230769231,
-      "pnl": -5146.843245121681,
-      "trades": 26,
+      "win_rate": 0,
+      "pnl": 0.0,
+      "trades": 0,
       "combo_idx": 4
     },
     {
@@ -64,22 +64,10 @@
         "hold": 24,
         "risk": 0.01
       },
-      "win_rate": 42.30769230769231,
-      "pnl": -5146.843245121681,
-      "trades": 26,
+      "win_rate": 0,
+      "pnl": 0.0,
+      "trades": 0,
       "combo_idx": 5
-    },
-    {
-      "params": {
-        "tp": 0.002,
-        "sl": 0.001,
-        "hold": 24,
-        "risk": 0.02
-      },
-      "win_rate": 42.30769230769231,
-      "pnl": -5146.843245121681,
-      "trades": 26,
-      "combo_idx": 6
     }
   ]
 }

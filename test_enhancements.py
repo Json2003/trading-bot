@@ -74,7 +74,8 @@ def generate_sample_ohlcv_data(bars: int = 1000) -> pd.DataFrame:
     # Create date range
     end_date = datetime.now()
     start_date = end_date - timedelta(hours=bars)
-    dates = pd.date_range(start=start_date, end=end_date, freq="H")[:bars]
+    # Use lowercase 'h' to avoid pandas deprecation warning for hourly frequency
+    dates = pd.date_range(start=start_date, end=end_date, freq="h")[:bars]
 
     # Generate realistic price data with trend and volatility
     np.random.seed(42)  # For reproducible results
@@ -88,11 +89,11 @@ def generate_sample_ohlcv_data(bars: int = 1000) -> pd.DataFrame:
     price_changes += trend
 
     # Calculate prices using cumulative sum
-    prices = base_price * np.exp(np.cumsum(price_changes))
+    prices: np.ndarray = np.asarray(base_price * np.exp(np.cumsum(price_changes)), dtype=float)
 
     # Generate OHLCV data
     data = []
-    for i, price in enumerate(prices):
+    for i, price in enumerate(prices):  # type: ignore[arg-type]
         # Add some intrabar volatility
         volatility = abs(np.random.normal(0, 0.005))  # 0.5% intrabar volatility
 
