@@ -21,10 +21,11 @@ jobs:
       - run: bandit -r . -x tests || true
       - run: pip-audit || true
       - run: pytest --cov --cov-report=term-missing
-      - name: FutureWarnings check (project code only)
+      - name: FutureWarnings check (treat as errors, ignore in tests)
         run: |
-          # Treat FutureWarnings as errors for project modules, but ignore warnings raised inside tests
-          pytest -q -k "backtest or models or server" -W "ignore::FutureWarning:test_.*" -W "error::FutureWarning"
+          # Treat FutureWarnings as errors, but ignore any FutureWarnings originating from test_.* modules.
+          # Order matters: apply 'error' first, then override with 'ignore' for test modules.
+          pytest -q -W "error::FutureWarning" -W "ignore::FutureWarning:test_.*"
       - name: pip-audit requirements files
         run: |
           python -m pip install --upgrade pip-audit
