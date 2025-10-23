@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+import numpy as np
 import pandas as pd
 
 
@@ -76,7 +77,7 @@ def size_btc_beta_hedge(
 
         df["notional"] = df["position"] * df["price"]
         portfolio_value = df["notional"].sum()
-        if not pd.isfinite(portfolio_value) or portfolio_value == 0.0:
+        if not np.isfinite(portfolio_value) or portfolio_value == 0.0:
             return 0.0
 
         beta_contrib = (df["notional"] * df["beta"]).sum()
@@ -114,31 +115,26 @@ def size_btc_beta_hedge(
             return 0.0
 
         portfolio_beta = beta_contrib / portfolio_value
-    target = _resolve_target(portfolio_beta, target_beta)
-    beta_gap = portfolio_beta - target
-    hedge_notional = -beta_gap * portfolio_value
-
-    buffered_lower = lower - rebalance_buffer
-    buffered_upper = upper + rebalance_buffer
-    if buffered_lower <= portfolio_beta <= buffered_upper:
-        return 0.0
-
-    if portfolio_beta > upper:
-        target = upper
-    elif portfolio_beta < lower:
-        target = lower
+    # Determine target handling single value or a range
+    if isinstance(target_beta, Sequence) and not isinstance(target_beta, (str, bytes)):
+        vals = [float(v) for v in target_beta if v is not None]
+        if len(vals) >= 2:
+            lower, upper = (min(vals), max(vals))
+            buffered_lower = lower - float(rebalance_buffer)
+            buffered_upper = upper + float(rebalance_buffer)
+            if buffered_lower <= portfolio_beta <= buffered_upper:
+                return 0.0
+            target = upper if portfolio_beta > upper else lower
+        else:
+            target = float(vals[0]) if vals else 0.0
     else:
-        midpoint = (lower + upper) / 2
-        target = upper if portfolio_beta >= midpoint else lower
+        target = float(target_beta)
 
     beta_gap = portfolio_beta - target
     hedge_notional = -beta_gap * portfolio_value
 
     contracts = hedge_notional / (btc_price * contract_size)
-    if hasattr(pd, "isfinite"):
-        finite = pd.isfinite(contracts)
-    else:
-        finite = contracts == contracts and contracts not in (float("inf"), float("-inf"))
+    finite = np.isfinite(contracts)
     if not finite:
         return 0.0
     return float(contracts)

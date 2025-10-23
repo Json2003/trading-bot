@@ -139,12 +139,16 @@ class OverlayEngine:
         skip = int(raw_cfg.get("skip", 0))
         lag = int(raw_cfg.get("lag", 1))
         frame = self._symbol_prices.copy()
-        if not hasattr(frame, "columns") or not frame.columns:
+        if not hasattr(frame, "columns") or getattr(frame.columns, "empty", False):
             return None
         return compute_comp_m_factor(frame, lookback=lookback, skip=skip, lag=lag)
 
     def _beta_scale(self, cycle: int, snapshot: PortfolioSnapshot) -> float | None:
-        if self._beta_target is None or not hasattr(self._betas, "columns") or not self._betas.columns:
+        if (
+            self._beta_target is None
+            or not hasattr(self._betas, "columns")
+            or getattr(self._betas.columns, "empty", False)
+        ):
             return None
         idx = min(cycle, len(self._betas) - 1)
         if idx < 0:

@@ -56,15 +56,22 @@ MODEL_DIR = Path(__file__).resolve().parents[1] / "model_store"
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _make_default_model():
+    """Construct the default online model, using River if available."""
+    if _HAS_RIVER:
+        # Import inside function to avoid unbound-name issues when River isn't installed
+        from river import linear_model as _lm, preprocessing as _pp  # type: ignore
+
+        return _pp.StandardScaler() | _lm.LogisticRegression()
+    return _FallbackPipeline()
+
+
 class OnlineTrainer:
     """Lightweight wrapper around a River model with persistence helpers."""
 
     def __init__(self, min_samples_ready: int = 200) -> None:
         # simple logistic regression pipeline for a binary up/down label
-        if _HAS_RIVER:
-            self.model = preprocessing.StandardScaler() | linear_model.LogisticRegression()
-        else:
-            self.model = _FallbackPipeline()
+        self.model = _make_default_model()
         self.path = MODEL_DIR / "online_model.pkl"
 
     def predict_proba(self, x: Dict) -> float:
@@ -99,4 +106,10 @@ class OnlineTrainer:
         """Load a previously saved model if present."""
         if self.path.exists():
             with open(self.path, "rb") as f:
-                self.model = pickle.load(f)
+                obj = pickle.load(f)
+            # Validate loaded object has expected API; otherwise reset to a fresh model
+            if hasattr(obj, "predict_proba_one") and hasattr(obj, "learn_one"):
+                self.model = obj
+            else:
+                logging.warning("Ignoring incompatible persisted model; resetting to default")
+                self.model = _make_default_model()

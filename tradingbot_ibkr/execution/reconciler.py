@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Callable, Iterable, Mapping, MutableMapping, Sequence
+from typing import TYPE_CHECKING, Callable, Iterable, Mapping, MutableMapping, Sequence, cast
 import logging
 import time
 
@@ -83,7 +83,7 @@ class Reconciler:
         quantity_tolerance: float = 1e-6,
         limits: RiskLimits | None = None,
         logger: logging.Logger | None = None,
-        monitor: "MonitoringHub" | None = None,
+    monitor: "MonitoringHub | None" = None,
     ) -> None:
         self._broker = broker
         self._quantity_tolerance = quantity_tolerance
@@ -95,14 +95,14 @@ class Reconciler:
         self, orders: Iterable[Order] | Mapping[str, Order]
     ) -> MutableMapping[str, Order]:
         if isinstance(orders, Mapping):
-            return dict(orders)
+            return dict(cast(Mapping[str, Order], orders))
         return {order.id: order for order in orders}
 
     def _coerce_positions(
         self, positions: Mapping[str, float] | Iterable[Position]
     ) -> MutableMapping[str, float]:
         if isinstance(positions, Mapping):
-            return dict(positions)
+            return dict(cast(Mapping[str, float], positions))
         return {pos.symbol: pos.quantity for pos in positions}
 
     def _order_key(self, order: object) -> str | None:
@@ -236,6 +236,7 @@ class Reconciler:
         if backoff <= 0:
             raise ValueError("backoff must be positive")
 
+        report: ReconciliationReport | None = None
         for attempt in range(1, attempts + 1):
             report = self.reconcile(local_orders=local_orders, local_positions=local_positions)
             if report.is_clean or attempt == attempts:
@@ -252,6 +253,7 @@ class Reconciler:
             )
             sleeper(sleep_for)
 
+        assert report is not None
         return report  # pragma: no cover - loop always returns earlier
 
     def evaluate_risk(
@@ -341,44 +343,6 @@ class Reconciler:
             return True
 
         return False
-
-    def evaluate_risk(
-        self,
-        *,
-        daily_loss_pct: float,
-        drawdown_pct: float,
-        position_risk_pct: float,
-    ) -> RiskEvaluation:
-        """Compare metrics against configured limits and log any breaches."""
-
-        limits = self._limits
-        breached: list[str] = []
-
-        if limits:
-            if daily_loss_pct > limits.max_daily_loss_pct:
-                breached.append("max_daily_loss_pct")
-            if drawdown_pct > limits.kill_switch_drawdown_pct:
-                breached.append("kill_switch_drawdown_pct")
-            if position_risk_pct > limits.max_position_risk_pct:
-                breached.append("max_position_risk_pct")
-
-            if breached:
-                self._logger.warning(
-                    "Risk limits breached",
-                    extra={
-                        "breached_limits": tuple(breached),
-                        "daily_loss_pct": daily_loss_pct,
-                        "drawdown_pct": drawdown_pct,
-                        "position_risk_pct": position_risk_pct,
-                    },
-                )
-
-        return RiskEvaluation(
-            daily_loss_pct=daily_loss_pct,
-            drawdown_pct=drawdown_pct,
-            position_risk_pct=position_risk_pct,
-            breached_limits=tuple(breached),
-        )
 
 
 __all__ = ["RiskLimits", "RiskEvaluation", "ReconciliationReport", "Reconciler"]

@@ -118,6 +118,14 @@ class Reconciler:
                 if value:
                     return str(value)
 
+        # Some brokers surface metadata within a nested 'raw' payload
+        raw = getattr(order, "raw", None)
+        if isinstance(raw, Mapping):
+            for field in id_fields:
+                value = raw.get(field)
+                if value:
+                    return str(value)
+
         for field in ("idemp_key", "client_id", "client_order_id"):
             value = getattr(order, field, None)
             if value:

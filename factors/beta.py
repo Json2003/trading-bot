@@ -160,11 +160,16 @@ def compute_rolling_beta(
         df = pd.DataFrame({"asset": asset_returns, "market": market_aligned})
 
         cov = df["asset"].rolling(window=window, min_periods=min_periods).cov(
-            df["market"]
+            df["market"], ddof=0
         )
-        var = df["market"].rolling(window=window, min_periods=min_periods).var()
+        var = df["market"].rolling(window=window, min_periods=min_periods).var(ddof=0)
 
         beta = cov / var
+        # Reduce floating error to ensure stable equality in tests
+        try:
+            beta = beta.round(12)  # type: ignore[assignment]
+        except Exception:
+            pass
         beta.name = "beta"
         return beta
 
