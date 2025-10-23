@@ -26,7 +26,8 @@ On Windows (cmd or PowerShell):
 install.bat
 ```
 
-This creates a `venv` directory and installs packages from `tradingbot_ibkr/requirements.txt`.
+This creates a `venv` directory and installs packages from
+`tradingbot_ibkr/requirements.txt`.
 
 ### Manual virtual environment setup
 

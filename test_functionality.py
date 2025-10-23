@@ -10,13 +10,17 @@ import types
 import importlib
 import importlib.util
 from pathlib import Path
+
+# Ensure real site-packages take precedence over repo-local stubs before imports
+repo_root = Path(__file__).resolve().parent
+sys.path = [p for p in sys.path if p not in ("", str(repo_root))] + [str(repo_root)]
 os.environ.setdefault("DISABLE_STUBS", "1")
+
 import pandas as pd
 import numpy as np
 from datetime import datetime, timezone, timedelta
 
-# Add repo to path
-repo_root = Path(__file__).resolve().parent
+# Add repo to path (already moved to end above)
 if str(repo_root) not in sys.path:
     sys.path.append(str(repo_root))
 
@@ -62,7 +66,15 @@ def create_synthetic_data(bars=100, trend_up=True):
         price_multiplier = 1 + trend + noise
     else:
         # Sideways with some oscillation
-        oscillation = 0.05 * np.sin(np.linspace(0, 4*np.pi, bars))
+        _sin = getattr(np, "sin", None)
+        _pi = getattr(np, "pi", 3.141592653589793)
+        x = np.linspace(0, 4 * _pi, bars)
+        if callable(_sin):
+            oscillation = np.array(_sin(x), dtype=float) * 0.05
+        else:
+            import math as _math
+
+            oscillation = 0.05 * np.array([_math.sin(float(v)) for v in x])
         noise = np.random.normal(0, 0.005, bars)
         price_multiplier = 1 + oscillation + noise
     
@@ -137,7 +149,7 @@ def test_backtest_with_signals():
     df = create_synthetic_data(bars=200, trend_up=True)
     
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-        df_reset = df.reset_index().rename(columns={'index': 'ts'})
+        df_reset = df.reset_index().rename(columns={'index': 'timestamp'})
         df_reset.to_csv(f.name, index=False)
         csv_path = f.name
     

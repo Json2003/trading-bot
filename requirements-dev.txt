@@ -1,0 +1,13 @@
+# Minimal pinned dev dependencies for reproducible CI runs.
+# Pin versions as appropriate for your environment before committing.
+pytest==7.4.0
+mypy==1.9.1
+pytest-cov==4.0.0
+pandas==2.2.3
+pyarrow==12.0.0
+types-python-dateutil==2.0.0
+pytest-mock==3.12.0
+black==24.3.0
+isort==5.12.0
+flake8==6.1.0
+# add other dev deps as needed (ccxt, google-cloud-storage, etc.)
