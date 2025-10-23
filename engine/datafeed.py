@@ -6,7 +6,7 @@ from collections import deque
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence, cast
 import logging
 
 from .atr import compute_atr
@@ -75,8 +75,9 @@ class MarketData:
         if len(self.ohlcv) < max(2, period):
             return None
         value = compute_atr(self.ohlcv, period)
-        self._atr_cache[period] = value
-        return value
+        assert value is not None
+        self._atr_cache[period] = float(value)
+        return float(value)
 
 
 class UnifiedDataFeed:
@@ -133,7 +134,9 @@ class UnifiedDataFeed:
                         exc,
                     )
                 else:
-                    transformed = tuple(self._transform_ohlcv(raw_ohlcv))
+                    transformed = tuple(
+                        self._transform_ohlcv(cast(Sequence[Sequence[Any]], raw_ohlcv))
+                    )
                     if transformed:
                         cache = self._ohlcv_cache.setdefault(
                             key, deque(maxlen=self._ohlcv_candles or None)
@@ -154,9 +157,9 @@ class UnifiedDataFeed:
             session_label = self._infer_session(timestamp)
             funding_payload: Any | None = None
             open_interest_payload: Any | None = None
-            funding_rate = None
-            open_interest = None
-            open_interest_change = None
+            funding_rate: float | None = None
+            open_interest: float | None = None
+            open_interest_change: float | None = None
 
             fetch_funding = getattr(client, "fetch_funding_rate", None)
             if callable(fetch_funding):
@@ -293,7 +296,7 @@ class UnifiedDataFeed:
         raise ValueError("Ticker payload does not contain a usable price")
 
     @staticmethod
-    def _transform_ohlcv(raw: Iterable[Iterable[Any]]) -> Iterable[OHLCV]:
+    def _transform_ohlcv(raw: Sequence[Sequence[Any]]) -> Iterable[OHLCV]:
         for candle in raw:
             if len(candle) < 6:
                 continue

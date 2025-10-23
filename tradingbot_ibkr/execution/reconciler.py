@@ -96,14 +96,16 @@ class Reconciler:
     ) -> MutableMapping[str, Order]:
         if isinstance(orders, Mapping):
             return dict(cast(Mapping[str, Order], orders))
-        return {order.id: order for order in orders}
+        iter_orders: Iterable[Order] = cast(Iterable[Order], orders)
+        return {order.id: order for order in iter_orders}
 
     def _coerce_positions(
         self, positions: Mapping[str, float] | Iterable[Position]
     ) -> MutableMapping[str, float]:
         if isinstance(positions, Mapping):
             return dict(cast(Mapping[str, float], positions))
-        return {pos.symbol: pos.quantity for pos in positions}
+        iter_positions: Iterable[Position] = cast(Iterable[Position], positions)
+        return {pos.symbol: pos.quantity for pos in iter_positions}
 
     def _order_key(self, order: object) -> str | None:
         """Extract the most stable identifier from ``order`` if available."""
@@ -203,7 +205,7 @@ class Reconciler:
                 raise AttributeError(
                     "Broker does not implement submit_order; provide a submitter"
                 )
-            placed = broker_submit(order)  # type: ignore[misc]
+            placed = broker_submit(order)
         else:
             placed = submitter(order)
 

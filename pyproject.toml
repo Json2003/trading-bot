@@ -82,7 +82,6 @@ exclude = [
   "^scripts/",
   "^tests/",
   "^tradingbot_core/",
-  "^tradingbot_ibkr/",
   "^numpy/",
   "^pandas/",
 ]
@@ -92,9 +91,26 @@ files = [
   "server_live.py",
   "server_basic.py",
   "config/**/*.py",
-  "engine/overlays.py",
+  "engine/**/*.py",
   "src/**/*.py",
+  # Incremental expansion into tradingbot_ibkr core modules
+  "tradingbot_ibkr/execution/reconciler.py",
+  "tradingbot_ibkr/models/online_trainer.py",
+  "tradingbot_ibkr/trading_engine.py",
+  "tradingbot_ibkr/risk_management.py",
+  "tradingbot_ibkr/signal_prediction.py",
+  "tradingbot_ibkr/feature_extraction.py",
 ]
+
+# Apply stricter checks selectively to high-value modules
+[[tool.mypy.overrides]]
+module = [
+  "tradingbot_ibkr.risk_management",
+  "tradingbot_ibkr.signal_prediction",
+  "tradingbot_ibkr.feature_extraction",
+]
+disallow_untyped_defs = true
+check_untyped_defs = true
 
 [tool.pytest.ini_options]
 addopts = "-q --maxfail=1 --disable-warnings"

@@ -47,9 +47,10 @@ _import_site("numpy")
 _import_site("pandas")
 
 import numpy as np
+import pytest
+pytest.importorskip("optuna")
 import optuna
 import pandas as pd
-import pytest
 
 from backtest.optimization.research_loop import (
     NightlyResearchLoop,

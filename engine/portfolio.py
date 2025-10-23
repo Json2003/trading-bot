@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Iterable, Mapping
+from typing import Iterable, Mapping, DefaultDict
 from collections import defaultdict
 import logging
 
@@ -107,7 +107,7 @@ class Portfolio:
             raise ValueError("At least one strategy allocation must be configured")
         self._allocations = {alloc.name: alloc for alloc in allocations}
         self._cash_balances = {alloc.name: alloc.capital for alloc in allocations}
-        self._realised_pnl = defaultdict(float)
+        self._realised_pnl: DefaultDict[str, float] = defaultdict(float)
         self._position_tracker: dict[str, dict[str, _TrackedPosition]] = {
             alloc.name: {} for alloc in allocations
         }

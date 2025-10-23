@@ -10,18 +10,25 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, Optional
+from typing import Any, Dict, Iterable, Optional, cast
+import math
 
 import numpy as np
+NP = cast(Any, np)
 
 try:  # scikit-learn is optional in some deployment targets
     from sklearn.ensemble import GradientBoostingClassifier
 except Exception:  # pragma: no cover - fallback when sklearn is unavailable
-    GradientBoostingClassifier = None  # type: ignore
+    GradientBoostingClassifier = None
 
 
-def _sigmoid(x: np.ndarray) -> np.ndarray:
-    return 1.0 / (1.0 + np.exp(-np.clip(x, -60.0, 60.0)))
+def _sigmoid(x: float | np.ndarray) -> float | np.ndarray:
+    clipped = NP.clip(x, -60.0, 60.0)
+    return 1.0 / (1.0 + NP.exp(-clipped))
+
+def _sigmoid_scalar(x: float) -> float:
+    s = max(min(x, 60.0), -60.0)
+    return 1.0 / (1.0 + math.exp(-s))
 
 
 @dataclass
@@ -32,7 +39,7 @@ class SignalPredictor:
     sequence_length: int = 16
     input_keys: Optional[Iterable[str]] = None
     learning_rate: float = 0.05
-    model: Optional[GradientBoostingClassifier] = None
+    model: Optional[object] = None
     _history: deque = field(default_factory=lambda: deque(maxlen=128), init=False)
     _gbm_X: list = field(default_factory=list, init=False)
     _gbm_y: list = field(default_factory=list, init=False)
@@ -49,7 +56,7 @@ class SignalPredictor:
             ordered = [features.get(key, 0.0) for key in self.input_keys]
         else:
             ordered = [features[key] for key in sorted(features.keys())]
-        vec = np.asarray(ordered, dtype=float)
+        vec = NP.asarray(ordered, dtype=float)
         if vec.ndim == 1:
             return vec
         return vec.reshape(-1)
@@ -85,26 +92,26 @@ class SignalPredictor:
         if vector is None or vector.size == 0:
             return 0.5
         if GradientBoostingClassifier is None:
-            score = float(vector.mean())
-            return float(_sigmoid(score))
+            score = float(NP.mean(vector))
+            return _sigmoid_scalar(score)
         if self.model is None:
-            score = float(vector.mean())
-            return float(_sigmoid(score))
-        proba = self.model.predict_proba(vector.reshape(1, -1))[0, 1]
+            score = float(NP.mean(vector))
+            return _sigmoid_scalar(score)
+        proba = cast(Any, self.model).predict_proba(vector.reshape(1, -1))[0, 1]
         return float(proba)
 
     # ------------------------------------------------------------------
     # LSTM-style implementation
     # ------------------------------------------------------------------
     def _init_lstm_params(self, dim: int) -> None:
-        rng = np.random.default_rng(42)
+        rng = NP.random.default_rng(42)
         self._lstm_params = {
-            "wi": rng.normal(scale=0.1, size=dim),
-            "wf": rng.normal(scale=0.1, size=dim),
-            "wo": rng.normal(scale=0.1, size=dim),
-            "wc": rng.normal(scale=0.1, size=dim),
+            "wi": cast(np.ndarray, rng.normal(scale=0.1, size=dim)),
+            "wf": cast(np.ndarray, rng.normal(scale=0.1, size=dim)),
+            "wo": cast(np.ndarray, rng.normal(scale=0.1, size=dim)),
+            "wc": cast(np.ndarray, rng.normal(scale=0.1, size=dim)),
         }
-        self._weights = rng.normal(scale=0.1, size=dim)
+        self._weights = cast(np.ndarray, rng.normal(scale=0.1, size=dim))
         self._bias = 0.0
 
     def _predict_lstm(self) -> float:
@@ -113,37 +120,40 @@ class SignalPredictor:
         dim = self._history[0].shape[0]
         if self._lstm_params is None or self._weights is None:
             self._init_lstm_params(dim)
+        params = self._lstm_params
+        assert params is not None
 
-        hidden = np.zeros(dim)
-        cell = np.zeros(dim)
+        hidden = cast(np.ndarray, NP.zeros(dim))
+        cell = cast(np.ndarray, NP.zeros(dim))
         for vec in list(self._history)[-self.sequence_length :]:
-            wi = self._lstm_params["wi"]
-            wf = self._lstm_params["wf"]
-            wo = self._lstm_params["wo"]
-            wc = self._lstm_params["wc"]
+            wi = params["wi"]
+            wf = params["wf"]
+            wo = params["wo"]
+            wc = params["wc"]
             input_gate = _sigmoid(vec * wi)
             forget_gate = _sigmoid(vec * wf)
             output_gate = _sigmoid(vec * wo)
-            candidate = np.tanh(vec * wc)
+            candidate = NP.tanh(vec * wc)
             cell = forget_gate * cell + input_gate * candidate
-            hidden = output_gate * np.tanh(cell)
+            hidden = output_gate * NP.tanh(cell)
 
         if self._weights is None:
-            self._weights = np.ones(dim) / max(dim, 1)
-        score = float(hidden @ self._weights + self._bias)
-        self._last_hidden = hidden
-        return float(_sigmoid(score))
+            self._weights = cast(np.ndarray, NP.ones(dim) / max(dim, 1))
+        score = float(NP.dot(hidden, cast(np.ndarray, self._weights)) + float(self._bias))
+        self._last_hidden = cast(np.ndarray, hidden)
+        s = max(min(score, 60.0), -60.0)
+        return 1.0 / (1.0 + math.exp(-s))
 
     # ------------------------------------------------------------------
     # Transformer-style order flow implementation
     # ------------------------------------------------------------------
     def _init_transformer_params(self, dim: int) -> None:
-        rng = np.random.default_rng(7)
+        rng = NP.random.default_rng(7)
         self._transformer_params = {
-            "query": rng.normal(scale=0.2, size=(dim, dim)),
-            "key": rng.normal(scale=0.2, size=(dim, dim)),
-            "value": rng.normal(scale=0.2, size=(dim, dim)),
-            "proj": rng.normal(scale=0.1, size=dim),
+            "query": cast(np.ndarray, rng.normal(scale=0.2, size=(dim, dim))),
+            "key": cast(np.ndarray, rng.normal(scale=0.2, size=(dim, dim))),
+            "value": cast(np.ndarray, rng.normal(scale=0.2, size=(dim, dim))),
+            "proj": cast(np.ndarray, rng.normal(scale=0.1, size=dim)),
         }
         self._bias = 0.0
 
@@ -153,25 +163,28 @@ class SignalPredictor:
         dim = self._history[0].shape[0]
         if self._transformer_params is None:
             self._init_transformer_params(dim)
+        params = self._transformer_params
+        assert params is not None
 
-        query_w = self._transformer_params["query"]
-        key_w = self._transformer_params["key"]
-        value_w = self._transformer_params["value"]
-        proj_w = self._transformer_params["proj"]
+        query_w = params["query"]
+        key_w = params["key"]
+        value_w = params["value"]
+        proj_w = params["proj"]
 
-        seq = np.vstack(list(self._history)[-self.sequence_length :])
-        queries = seq @ query_w
-        keys = seq @ key_w
-        values = seq @ value_w
+        seq = NP.vstack(list(self._history)[-self.sequence_length :])
+        queries = NP.matmul(seq, query_w)
+        keys = NP.matmul(seq, key_w)
+        values = NP.matmul(seq, value_w)
 
         last_query = queries[-1]
-        attn_scores = (last_query @ keys.T) / np.sqrt(dim)
-        weights = np.exp(attn_scores - np.max(attn_scores))
-        weights /= weights.sum() if weights.sum() != 0 else 1.0
-        context = weights @ values
-        score = float(context @ proj_w + self._bias)
-        self._last_context = context
-        return float(_sigmoid(score))
+        attn_scores = NP.matmul(last_query, keys.T) / float(NP.sqrt(dim))
+        weights = NP.exp(attn_scores - float(NP.max(attn_scores)))
+        denom = float(NP.sum(weights)) or 1.0
+        weights = weights / denom
+        context = NP.matmul(weights, values)
+        score = float(NP.dot(context, proj_w) + float(self._bias))
+        self._last_context = cast(np.ndarray, context)
+        return _sigmoid_scalar(score)
 
     # ------------------------------------------------------------------
     # Learning updates
@@ -184,8 +197,9 @@ class SignalPredictor:
             if GradientBoostingClassifier is None:
                 # Update simple linear weights as fallback
                 if self._weights is None:
-                    self._weights = np.zeros_like(vector)
-                pred = float(_sigmoid(vector @ self._weights + self._bias))
+                    self._weights = cast(np.ndarray, NP.zeros_like(vector))
+                sc = float(NP.dot(vector, cast(np.ndarray, self._weights)) + float(self._bias))
+                pred = _sigmoid_scalar(sc)
                 error = target - pred
                 self._weights += self.learning_rate * error * vector
                 self._bias += self.learning_rate * error
@@ -195,7 +209,7 @@ class SignalPredictor:
             self._gbm_y.append(target)
             if len(self._gbm_y) >= 25:
                 self.model = GradientBoostingClassifier(random_state=42)
-                self.model.fit(np.vstack(self._gbm_X), np.array(self._gbm_y))
+                cast(Any, self.model).fit(NP.vstack(self._gbm_X), NP.array(self._gbm_y))
             return
 
         if (
@@ -203,22 +217,47 @@ class SignalPredictor:
             and self._last_hidden is not None
             and self._weights is not None
         ):
-            pred = float(_sigmoid(self._last_hidden @ self._weights + self._bias))
+            sc = float(NP.dot(self._last_hidden, cast(np.ndarray, self._weights)) + float(self._bias))
+            pred = _sigmoid_scalar(sc)
             error = target - pred
             self._weights += self.learning_rate * error * self._last_hidden
             self._bias += self.learning_rate * error
             return
 
         if self.model_type == "transformer_orderflow" and self._last_context is not None:
-            proj_w = self._transformer_params["proj"] if self._transformer_params else None
-            if proj_w is None:
+            params = self._transformer_params
+            if params is None:
                 return
-            pred = float(_sigmoid(self._last_context @ proj_w + self._bias))
+            proj_w = params["proj"]
+            sc = float(NP.dot(self._last_context, proj_w) + float(self._bias))
+            pred = _sigmoid_scalar(sc)
             error = target - pred
-            self._transformer_params["proj"] = (
-                proj_w + self.learning_rate * error * self._last_context
-            )
+            params["proj"] = proj_w + self.learning_rate * error * self._last_context
             self._bias += self.learning_rate * error
+
+    # ------------------------------------------------------------------
+    # Batch fit API (optional; used by TradingEngine.train)
+    # ------------------------------------------------------------------
+    def fit(self, X: np.ndarray, y: Iterable[float]) -> None:
+        if X.size == 0:
+            return
+        if GradientBoostingClassifier is not None and self.model_type == "gbm":
+            self.model = GradientBoostingClassifier(random_state=42)
+            try:
+                cast(Any, self.model).fit(X, np.asarray(list(y), dtype=float))
+                return
+            except Exception:
+                # Fall through to simple baseline if sklearn fit fails
+                self.model = None
+        # Lightweight baseline: set weights to normalised mean direction
+        vec = NP.mean(X, axis=0)
+        if vec is None or NP.all(~NP.isfinite(vec)):
+            return
+        if vec.ndim == 0:
+            vec = NP.array([float(vec)])
+        norm = NP.linalg.norm(vec)
+        self._weights = cast(np.ndarray, (vec / norm) if norm > 0 else vec)
+        self._bias = 0.0
 
 
 @dataclass
@@ -251,7 +290,7 @@ class FundamentalFilter:
         pe_values = [f.get("pe_ratio") for f in self.history if f.get("pe_ratio") is not None]
         if not pe_values:
             return self.max_pe
-        return float(min(np.nanpercentile(pe_values, 85), self.max_pe))
+        return float(min(NP.nanpercentile(pe_values, 85), self.max_pe))
 
     def evaluate(self, fundamentals: Dict[str, float]) -> bool:
         if not fundamentals:
@@ -260,7 +299,7 @@ class FundamentalFilter:
         earnings_growth = fundamentals.get("earnings_growth")
         score = fundamentals.get("fundamental_score")
 
-        if pe_ratio is None or np.isnan(pe_ratio) or pe_ratio <= 0:
+        if pe_ratio is None or NP.isnan(pe_ratio) or pe_ratio <= 0:
             return False
         if pe_ratio > self._dynamic_pe():
             return False
@@ -303,7 +342,7 @@ class SignalEnsemble:
         probabilities = {
             name: predictor.predict(features) for name, predictor in self.predictors.items()
         }
-        consensus = float(np.mean(list(probabilities.values()))) if probabilities else 0.5
+        consensus = float(NP.mean(list(probabilities.values()))) if probabilities else 0.5
         ml_agreement = all(prob >= self.min_confidence for prob in probabilities.values())
         fundamentals_pass = self.fundamental_filter.evaluate(fundamentals)
         return EnsembleDecision(

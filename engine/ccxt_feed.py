@@ -8,9 +8,9 @@ from typing import Deque, Dict, Iterable, Mapping, Tuple
 import logging
 
 try:  # pragma: no cover - optional import for typing only
-    import ccxt  # type: ignore
+    import ccxt
 except Exception:  # pragma: no cover - the package might not be installed during tests
-    ccxt = None  # type: ignore
+    ccxt = None
 
 from backtest.indicators import ATR
 from tradingbot_core.strategy import Bar
@@ -53,7 +53,7 @@ class CCXTFeed:
 
     def __init__(
         self,
-        exchanges: Mapping[str, "ccxt.Exchange" | object],
+    exchanges: Mapping[str, object],
         symbols: Iterable[str],
         timeframe: str = "1m",
         *,

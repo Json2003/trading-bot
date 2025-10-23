@@ -142,11 +142,10 @@ class TradingEngine:
 
         The volatility filter threshold is determined by the configured asset class.
         """
-
         latest_row = self._latest_feature_row(data)
-        latest_frame = latest_row.to_frame().T
-        prob = float(self.predictor.predict(latest_frame.values)[0])
-        online_prob = self._online_trainer.predict_proba(self._features_to_dict(latest_row))
+        features_dict = self._features_to_dict(latest_row)
+        prob = float(self.predictor.predict(features_dict))
+        online_prob = self._online_trainer.predict_proba(features_dict)
         prob = self._blend_probabilities(prob, online_prob)
 
         if not volatility_filter(data["close"], threshold=self.volatility_threshold):

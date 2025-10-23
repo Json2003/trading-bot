@@ -261,3 +261,29 @@ The prioritized engineering backlog for the next wave of improvements lives in
 backtesting, risk-sizing, arbitrage, and reconciler initiatives alongside the
 latest repository health check results.
 
+## Docker
+
+You can run the FastAPI server in Docker using the files under `docker/`:
+
+1. Build and run with Compose (recommended):
+
+```bash
+docker compose -f docker/docker-compose.yml up --build
+```
+
+This maps `localhost:8000` to the container and mounts `data/` and `model_store/` for persistence.
+
+Environment configuration:
+
+- Copy `env/docker.env.example` to `env/docker.env` and adjust values, or export variables in your shell.
+- The compose file defaults to the example env file; a real `env/docker.env` will override values.
+
+1. Build the image manually:
+
+```bash
+docker build -f docker/Dockerfile -t splitstar/ops-console:dev .
+docker run --rm -p 8000:8000 splitstar/ops-console:dev
+```
+
+The image starts `uvicorn server:app` on port 8000. Update `SECRET_KEY` via env for production.
+

@@ -7,7 +7,7 @@ import math
 from typing import Dict
 
 try:  # pragma: no cover - exercised in tests via fallback
-    from river import linear_model, preprocessing  # type: ignore
+    from river import linear_model, preprocessing
 
     _HAS_RIVER = True
 except Exception:  # pragma: no cover - offline environments
@@ -60,7 +60,7 @@ def _make_default_model():
     """Construct the default online model, using River if available."""
     if _HAS_RIVER:
         # Import inside function to avoid unbound-name issues when River isn't installed
-        from river import linear_model as _lm, preprocessing as _pp  # type: ignore
+        from river import linear_model as _lm, preprocessing as _pp
 
         return _pp.StandardScaler() | _lm.LogisticRegression()
     return _FallbackPipeline()

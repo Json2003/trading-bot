@@ -7,8 +7,9 @@ services:
       dockerfile: docker/Dockerfile
     ports:
       - "8000:8000"
+    # Use the example env file by default; you can copy it to docker.env and point to that instead
     env_file:
-      - ../env/docker.env
+      - ../env/docker.env.example
     environment:
       - MCP_BASE_URL=${MCP_BASE_URL:-}
       - MCP_API_KEY=${MCP_API_KEY:-}
