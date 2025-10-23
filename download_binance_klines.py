@@ -5,6 +5,7 @@ This helper retrieves zipped candlestick data for a given symbol and interval
 across a specified month.  By default it downloads BTCUSDT 1m data for
 January 2024.
 """
+
 import argparse
 import os
 import urllib.error
@@ -12,8 +13,10 @@ import urllib.request
 
 BASE_URL = "https://data.binance.vision/data/spot/daily/klines"
 
-def download_day(symbol: str, interval: str, year: int, month: int, day: int,
-                 out_dir: str, timeout: int) -> None:
+
+def download_day(
+    symbol: str, interval: str, year: int, month: int, day: int, out_dir: str, timeout: int
+) -> None:
     """Download a single day's zip file."""
     filename = f"{symbol}-{interval}-{year}-{month:02d}-{day:02d}.zip"
     url = f"{BASE_URL}/{symbol}/{interval}/{year}/{month:02d}/{filename}"
@@ -27,6 +30,7 @@ def download_day(symbol: str, interval: str, year: int, month: int, day: int,
     out_path = os.path.join(out_dir, filename)
     with open(out_path, "wb") as f:
         f.write(data)
+
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Download Binance kline zip files")
@@ -42,10 +46,12 @@ def main() -> None:
 
     for day in range(args.start_day, args.end_day + 1):
         try:
-            download_day(args.symbol, args.interval, args.year, args.month, day,
-                         args.out_dir, args.timeout)
+            download_day(
+                args.symbol, args.interval, args.year, args.month, day, args.out_dir, args.timeout
+            )
         except Exception as e:  # pragma: no cover - logging for CLI usage
             print(f"Failed to download day {day:02d}: {e}")
+
 
 if __name__ == "__main__":
     main()

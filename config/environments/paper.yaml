@@ -1,0 +1,12 @@
+env: paper
+base_currency: USD
+risk:
+  max_daily_loss_pct: 3.0
+  max_position_risk_pct: 1.0
+  kill_switch_drawdown_pct: 8.0
+execution:
+  slippage_bps: 2
+  commission_bps: 1
+universe:
+  - BTC/USDT
+  - ETH/USDT

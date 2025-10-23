@@ -5,8 +5,7 @@ interacting with the Splitstar Operations Console runtime.
 
 ## Components
 
-- **backend/** – Flask server that exposes API endpoints by reusing the
-  Splitstar Operations Console's built-in dashboard.
+- **backend/** – Flask server that exposes API endpoints by reusing the trading bot's built-in dashboard.
 - **electron-app/** – Desktop client implemented with Electron.
 - **flutter_app/** – Mobile client implemented with Flutter.
 

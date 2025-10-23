@@ -1,0 +1,60 @@
+# Metadata describing the expected performance envelope for selected backtests.
+#
+# These profiles allow CI jobs and human operators to quickly understand whether
+# a regression in trading performance is statistically meaningful.  The
+# ``comparison`` field specifies which direction is favourable:
+#   - ``min``  -> the metric should be greater than or equal to ``target`` minus the tolerance
+#   - ``max``  -> the metric should be less than or equal to ``target`` plus the tolerance
+metadata_version: 1
+profiles:
+  btc_mean_reversion:
+    strategy: Mean Reversion Bands
+    market: BTC/USDT
+    timeframe: 1h
+    metrics:
+      win_rate:
+        target: 0.56
+        tolerance: 0.05
+        comparison: min
+        description: Minimum historical hit rate observed in validation runs.
+      max_drawdown_pct:
+        target: 11.5
+        tolerance: 1.5
+        comparison: max
+        description: Largest acceptable peak-to-trough drawdown.
+      sharpe:
+        target: 1.70
+        tolerance: 0.25
+        comparison: min
+        description: Baseline annualised Sharpe ratio across 2023 market regimes.
+    notes: |
+      Backtest executed on Binance spot data with conservative fee assumptions.
+      The profile is used to guard against volatility regime drift.
+    tags:
+      - btc
+      - mean-reversion
+
+  eth_breakout:
+    strategy: ETH Momentum Breakout
+    market: ETH/USDT
+    timeframe: 4h
+    metrics:
+      win_rate:
+        target: 0.48
+        tolerance: 0.06
+        comparison: min
+      max_drawdown_pct:
+        target: 13.0
+        tolerance: 2.0
+        comparison: max
+      profit_factor:
+        target: 1.35
+        tolerance: 0.15
+        comparison: min
+    notes: |
+      Optimised with a rolling walk-forward over the last two years.  The
+      tolerance is intentionally wider because the breakout system is sensitive
+      to trending regimes.
+    tags:
+      - eth
+      - breakout

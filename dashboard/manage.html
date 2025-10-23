@@ -119,6 +119,8 @@
         <div class="value" id="sharpe">-</div>
         <div class="label">Drawdown</div>
         <div class="value" id="drawdown">-</div>
+        <div class="label" style="margin-top:8px;">Equity Curve</div>
+        <svg id="equitySpark" width="100%" height="60" viewBox="0 0 300 60"></svg>
       </div>
 
       <div class="card stack">
@@ -143,6 +145,11 @@
             <tbody></tbody>
           </table>
         </div>
+      </div>
+
+      <div class="card stack">
+        <h2>Live Price + Signals</h2>
+        <canvas id="ohlcvChart" height="140" style="width:100%; background:#0b1220; border:1px solid var(--border); border-radius:8px;"></canvas>
       </div>
 
       <div class="card stack">
@@ -255,6 +262,8 @@
         if (Array.isArray(msg.activity)) renderActivity(msg.activity);
         if (msg.server_stats) renderServerStats(msg.server_stats);
         if (msg.account) renderAccount(msg.account);
+        if (Array.isArray(msg.equity_history)) renderEquitySpark(msg.equity_history);
+        if (msg.ohlcv && Array.isArray(msg.ohlcv.series)) renderOhlcv(msg.ohlcv);
       } catch (e) {
         console.error('WS parse error', e);
       }
@@ -362,10 +371,22 @@
       renderCurrent(tradesCurrent.trades || []);
       renderProposed(tradesProposed.trades || []);
       renderActivity(activity.activity || []);
+      // OHLCV initial draw (optional)
+      try {
+        const oh = await (await fetch(API + '/feed/ohlcv?symbol=BTC/USDT')).json();
+        if (oh && Array.isArray(oh.ohlcv)) renderOhlcv({symbol: oh.symbol, series: oh.ohlcv});
+      } catch (e) {}
     } catch (e) {
       console.error('Initial load failed', e);
     }
   }
+
+  function renderEquitySpark(hist){ const svg=document.getElementById('equitySpark'); if(!svg) return; const w=300,h=60; svg.setAttribute('viewBox',`0 0 ${w} ${h}`); const vals=(hist||[]).map(p=>p.equity).filter(v=>typeof v==='number'); svg.innerHTML=''; if(vals.length<2) return; const min=Math.min(...vals), max=Math.max(...vals); const sx=(i)=> (i/(vals.length-1))*w; const sy=(v)=> h - ((v-min)/(max-min||1))*h; let d='M '+sx(0)+' '+sy(vals[0]); for(let i=1;i<vals.length;i++){ d+=' L '+sx(i)+' '+sy(vals[i]); } const path=document.createElementNS('http://www.w3.org/2000/svg','path'); path.setAttribute('d',d); path.setAttribute('stroke', 'var(--accent)'); path.setAttribute('stroke-width','2'); path.setAttribute('fill','none'); svg.appendChild(path); }
+
+  function renderOhlcv(ohl){ const canvas=document.getElementById('ohlcvChart'); if(!canvas) return; const ctx=canvas.getContext('2d'); const dpr=window.devicePixelRatio||1; const width=canvas.clientWidth; const height=canvas.height; canvas.width=width*dpr; canvas.height=height*dpr; ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr,dpr); const series=(ohl.series||[]).slice(-150); const closes=series.map(x=>x.c); if(closes.length<5){ ctx.clearRect(0,0,width,height); return; } const sma=(arr,n)=>arr.map((_,i)=> i+1<n?null: (arr.slice(i+1-n,i+1).reduce((a,b)=>a+b,0)/n)); const s12=sma(closes,12), s26=sma(closes,26); const finite=(a)=>a.filter(Number.isFinite); const min=Math.min(...finite(closes)), max=Math.max(...finite(closes)); const x=(i)=> (i/(closes.length-1))*width; const y=(v)=> height - ((v-min)/(max-min||1))*height; ctx.clearRect(0,0,width,height); // price
+    ctx.beginPath(); ctx.strokeStyle='#60a5fa'; ctx.lineWidth=1.5; ctx.moveTo(x(0), y(closes[0])); for(let i=1;i<closes.length;i++){ ctx.lineTo(x(i), y(closes[i])); } ctx.stroke(); // sma12
+    ctx.beginPath(); ctx.strokeStyle='#10b981'; let moved=false; for(let i=0;i<s12.length;i++){ if(!Number.isFinite(s12[i])) continue; if(!moved){ ctx.moveTo(x(i), y(s12[i])); moved=true;} else { ctx.lineTo(x(i), y(s12[i])); } } ctx.stroke(); // sma26
+    ctx.beginPath(); ctx.strokeStyle='#f59e0b'; moved=false; for(let i=0;i<s26.length;i++){ if(!Number.isFinite(s26[i])) continue; if(!moved){ ctx.moveTo(x(i), y(s26[i])); moved=true;} else { ctx.lineTo(x(i), y(s26[i])); } } ctx.stroke(); }
 
   function renderMarkets(rows){ const tb = document.querySelector('#tblMarkets tbody'); tb.innerHTML = ''; (rows||[]).forEach(r=>{ const tr=document.createElement('tr'); const ch = (r.change_pct||0); tr.innerHTML = `<td class="mono">${r.symbol||''}</td><td class="mono">${(r.bid??'').toLocaleString()}</td><td class="mono">${(r.ask??'').toLocaleString()}</td><td class="mono">${(r.last??'').toLocaleString()}</td><td class="${ch>=0?'ok':'bad'}">${ch.toFixed(2)}%</td>`; tb.appendChild(tr); }); }
   function renderNews(list){ const box = document.getElementById('newsList'); box.innerHTML = ''; (list||[]).slice(-50).reverse().forEach(n=>{ const div=document.createElement('div'); div.className='headline'; const dt=new Date(n.ts||Date.now()); div.innerHTML=`<div class="src">${n.source||''}</div><div>${n.headline||''}</div><div class="ts">${dt.toLocaleTimeString()}</div>`; box.appendChild(div); }); }

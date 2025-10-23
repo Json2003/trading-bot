@@ -1,0 +1,20 @@
+rebalance:
+  cadence: 15m
+
+factors:
+  beta:
+    window: 240
+    min_periods: 180
+    market_symbol: BTCUSDT
+    target: [0.1, 0.2]
+  comp_m:
+    lookback: 60
+    skip: 0
+    tilt_strength: 0.15
+
+overlays:
+  beta_hedge:
+    target_beta: [0.1, 0.2]
+    hedge_symbol: BTCUSDT_PERP
+    contract_size: 0.001
+    rebalance_buffer: 0.02

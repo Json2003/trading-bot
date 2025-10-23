@@ -4,6 +4,7 @@ Example usage:
   python binance_vision_to_gcs.py --bucket mybucket --symbol BTCUSDT \
       --start 2024-01-01 --end 2024-01-03 --interval 1m
 """
+
 import argparse
 import datetime as dt
 import io
@@ -23,8 +24,14 @@ def daterange(start: dt.date, end: dt.date):
         cur += dt.timedelta(days=1)
 
 
-def download_and_upload(bucket_name: str, symbol: str, start: dt.date, end: dt.date,
-                         interval: str = "1m", dest_path: str = "raw/binance"):
+def download_and_upload(
+    bucket_name: str,
+    symbol: str,
+    start: dt.date,
+    end: dt.date,
+    interval: str = "1m",
+    dest_path: str = "raw/binance",
+):
     client = storage.Client()
     bucket = client.bucket(bucket_name)
     for day in daterange(start, end):

@@ -1,0 +1,8 @@
+name: paper
+mode: paper
+broker: paper
+fees_profile: binance_spot
+risk_limits:
+  daily_loss_limit: 1000
+  max_position_notional: 50000
+notes: Simulated paper-trading environment used for development and tests.

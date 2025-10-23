@@ -1,0 +1,42 @@
+env: live
+base_currency: USD
+base_equity: 100000
+allocations:
+  arbitrage: 0.25
+  grid: 0.25
+  momentum: 0.20
+  dca: 0.30
+risk:
+  per_trade_risk_pct: 1.0
+  max_daily_loss_pct: 3.0
+  kill_switch_drawdown_pct: 8.0
+  max_leverage: 5
+  max_position_risk_pct: 1.0
+execution:
+  slippage_bps: 1
+  commission_bps: 1
+exchanges:
+  BINANCE:
+    id: binance
+    api_key: ${BINANCE_API_KEY}
+    secret: ${BINANCE_SECRET}
+    testnet: false
+  COINBASE:
+    id: coinbase
+    api_key: ${COINBASE_API_KEY}
+    secret: ${COINBASE_SECRET}
+    testnet: false
+symbols:
+  - BTC/USDT
+  - ETH/USDT
+
+beta:
+  window: 240          # bars
+  rebalance_minutes: 15
+  target_beta: 0.15
+  rebalance_thresh: 0.05
+
+comp_m:
+  lookback: 60         # bars
+  skip: 0
+  tilt_strength: 0.15  # alloc multiplier per z-score (1 + s*z), clipped [0.2, 1.8]

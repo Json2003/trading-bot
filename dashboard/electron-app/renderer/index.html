@@ -2,104 +2,595 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Splitstar Operations Console Dashboard</title>
+    <title>Trading Bot Dashboard</title>
     <style>
+      :root {
+        --bg: #0b1220;
+        --panel: #0f172a;
+        --border: #1f2a44;
+        --accent: #38bdf8;
+        --accent-soft: rgba(56, 189, 248, 0.18);
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --danger: #f87171;
+        --success: #34d399;
+        --warning: #fbbf24;
+        --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         margin: 0;
-        padding: 20px;
-        background-color: #f5f5f5;
+        padding: 0;
+        background: radial-gradient(circle at top, rgba(56, 189, 248, 0.08), transparent 60%), var(--bg);
+        color: var(--text);
+        font-family: var(--font);
       }
-      
-      .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        background: white;
-        border-radius: 8px;
-        padding: 30px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      }
-      
-      .header {
-        text-align: center;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 2px solid #eee;
-      }
-      
-      .status {
+
+      header {
         display: flex;
-        justify-content: space-around;
-        margin: 20px 0;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px 8px;
       }
-      
-      .status-item {
-        text-align: center;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 5px;
-        min-width: 150px;
-      }
-      
-      .status-label {
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 5px;
-      }
-      
-      .status-value {
+
+      .brand {
         font-size: 18px;
-        font-weight: bold;
-        color: #333;
+        font-weight: 600;
+        letter-spacing: 0.6px;
       }
-      
-      .success { color: #28a745; }
-      .warning { color: #ffc107; }
-      .error { color: #dc3545; }
+
+      .brand em {
+        color: var(--accent);
+        font-style: normal;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        background: #1f2937;
+        color: var(--muted);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+      }
+
+      .badge.online {
+        background: rgba(34, 197, 94, 0.16);
+        color: #bbf7d0;
+        border-color: rgba(34, 197, 94, 0.32);
+      }
+
+      .badge.offline {
+        background: rgba(248, 113, 113, 0.12);
+        color: #fecaca;
+        border-color: rgba(248, 113, 113, 0.2);
+      }
+
+      .badge.paused {
+        background: rgba(251, 191, 36, 0.12);
+        color: #fde68a;
+        border-color: rgba(251, 191, 36, 0.3);
+      }
+
+      .badge.active {
+        background: rgba(56, 189, 248, 0.12);
+        color: #bae6fd;
+        border-color: rgba(56, 189, 248, 0.3);
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+        gap: 18px;
+        padding: 12px 20px 80px;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.32);
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #cbd5f5;
+      }
+
+      p.subtle {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+
+      .summary-tile {
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 12px;
+        padding: 12px;
+      }
+
+      .summary-value {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+
+      .summary-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--muted);
+      }
+
+      .plugin-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-height: 320px;
+        overflow-y: auto;
+        padding-right: 6px;
+      }
+
+      .plugin-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 12px;
+        padding: 14px;
+        background: rgba(15, 23, 42, 0.92);
+      }
+
+      .plugin-row .meta {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .plugin-row strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+
+      .plugin-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-end;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        background: rgba(30, 41, 59, 0.7);
+        color: var(--text);
+        cursor: pointer;
+        transition: background 0.2s ease, border 0.2s ease;
+      }
+
+      .btn:hover {
+        background: rgba(56, 189, 248, 0.16);
+        border-color: rgba(56, 189, 248, 0.38);
+      }
+
+      .btn.primary {
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.9), rgba(14, 165, 233, 0.8));
+        border: none;
+        color: #0f172a;
+        font-weight: 600;
+      }
+
+      .btn.danger {
+        background: rgba(248, 113, 113, 0.16);
+        border-color: rgba(248, 113, 113, 0.32);
+        color: #fecaca;
+      }
+
+      .btn.ghost {
+        background: rgba(15, 23, 42, 0.6);
+        border-color: rgba(148, 163, 184, 0.18);
+      }
+
+      form {
+        display: grid;
+        gap: 12px;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+      }
+
+      label {
+        display: flex;
+        flex-direction: column;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--muted);
+        gap: 6px;
+      }
+
+      input, select {
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        background: rgba(11, 18, 32, 0.9);
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      input:focus, select:focus {
+        outline: none;
+        border-color: rgba(56, 189, 248, 0.5);
+        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.14);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+
+      th, td {
+        padding: 8px 6px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+        text-align: left;
+      }
+
+      th {
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: #94a3b8;
+        font-weight: 600;
+      }
+
+      .empty-state {
+        text-align: center;
+        color: var(--muted);
+        padding: 18px 0;
+      }
+
+      .log-area {
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 12px;
+        padding: 12px;
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: 12px;
+        max-height: 260px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+      }
+
+      footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 10px 20px;
+        background: linear-gradient(to top, rgba(10, 14, 24, 0.95), rgba(10, 14, 24, 0));
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .notice {
+        margin: 0 20px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .pnl-positive {
+        color: var(--success);
+      }
+
+      .pnl-negative {
+        color: var(--danger);
+      }
+
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .switch {
+        position: relative;
+        width: 42px;
+        height: 22px;
+      }
+
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(148, 163, 184, 0.3);
+        transition: 0.2s;
+        border-radius: 999px;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 4px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.2s;
+        border-radius: 50%;
+      }
+
+      input:checked + .slider {
+        background-color: rgba(56, 189, 248, 0.6);
+      }
+
+      input:checked + .slider:before {
+        transform: translateX(18px);
+      }
+
+      .table-actions {
+        display: flex;
+        gap: 6px;
+      }
+
+      .message {
+        margin: 0 20px 12px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(56, 189, 248, 0.08);
+        border: 1px solid rgba(56, 189, 248, 0.18);
+        font-size: 13px;
+        color: #dbeafe;
+      }
+
+      .message.offline {
+        background: rgba(248, 113, 113, 0.08);
+        border-color: rgba(248, 113, 113, 0.2);
+        color: #fecaca;
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .error-text {
+        color: var(--danger);
+        font-size: 12px;
+      }
+
+      @media (max-width: 960px) {
+        main {
+          grid-template-columns: 1fr;
+        }
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+        }
+        footer {
+          flex-direction: column;
+          gap: 6px;
+        }
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="header">
-        <h1>Splitstar Operations Console Dashboard</h1>
-        <p>Real-time monitoring, research, and execution oversight for Splitstar agents.</p>
+        <h1>Trading Bot Dashboard</h1>
+        <p>Real-time monitoring and backtesting interface</p>
       </div>
-      
-      <div class="status">
-        <div class="status-item">
-          <div class="status-label">CONNECTION</div>
-          <div class="status-value success">CONNECTED</div>
-        </div>
-        <div class="status-item">
-          <div class="status-label">BACKTEST ENGINE</div>
-          <div class="status-value success">READY</div>
-        </div>
-        <div class="status-item">
-          <div class="status-label">LAST UPDATE</div>
-          <div class="status-value" id="timestamp">--:--:--</div>
-        </div>
-      </div>
-      
-      <div style="margin-top: 30px;">
-        <h3>Available Functions</h3>
-        <ul>
-          <li>📊 <strong>Backtesting</strong>: Run historical strategy analysis using CSV or CCXT data sources</li>
-          <li>📈 <strong>Signal Generation</strong>: Generate trading signals using moving average crossovers</li>
-          <li>⚙️ <strong>Parameter Optimization</strong>: Grid search for optimal trading parameters</li>
-          <li>📋 <strong>Performance Analytics</strong>: Detailed trade analysis and risk metrics</li>
-        </ul>
-        
-        <h3>Quick Commands</h3>
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 12px;">
-          # Run backtest with CSV data:<br>
-          python scripts/run_backtest.py --source csv --path data/BTCUSDT-1h.csv<br><br>
-          
-          # Run backtest with CCXT (live data):<br>
-          python scripts/run_backtest.py --source ccxt --exchange binance --symbol "BTC/USDT" --timeframe 1h --since 2023-01-01
-        </div>
-      </div>
+    </header>
+    <div id="backendMessage" class="message offline">
+      Standalone mode active — using local state for data plugins and simulated exchange execution.
     </div>
-    
+    <main>
+      <section class="card" id="pluginsCard">
+        <div>
+          <h2>Data plugins</h2>
+          <p class="subtle">Manage ingestion adapters and inspect their latest activity.</p>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-tile">
+            <div id="pluginSummary" class="summary-value">0</div>
+            <div class="summary-label">Status</div>
+          </div>
+          <div class="summary-tile">
+            <div id="pluginCoverage" class="summary-value">0</div>
+            <div class="summary-label">Symbols Covered</div>
+          </div>
+          <div class="summary-tile">
+            <div id="pluginThroughput" class="summary-value">0</div>
+            <div class="summary-label">Bars / Minute</div>
+          </div>
+        </div>
+        <div class="plugin-list" id="pluginList"></div>
+        <div>
+          <h3 style="margin:0;font-size:13px;text-transform:uppercase;letter-spacing:0.6px;color:#cbd5f5;">Add plugin</h3>
+          <form id="pluginForm" class="form-grid">
+            <label>name
+              <input name="name" placeholder="Binance Spot" required maxlength="80">
+            </label>
+            <label>provider
+              <input name="provider" placeholder="CCXT" maxlength="40">
+            </label>
+            <label>symbol
+              <input name="symbol" placeholder="BTC/USDT" maxlength="32" required>
+            </label>
+            <label>interval
+              <select name="interval">
+                <option value="1m">1m</option>
+                <option value="5m">5m</option>
+                <option value="15m">15m</option>
+                <option value="1h">1h</option>
+              </select>
+            </label>
+            <label>notes
+              <input name="notes" placeholder="Custom dataset or destination" maxlength="120">
+            </label>
+            <div class="form-actions">
+              <button type="submit" class="btn primary">Add Plugin</button>
+            </div>
+          </form>
+        </div>
+      </section>
+      <section class="card" id="exchangeCard">
+        <div>
+          <h2>Exchange execution</h2>
+          <p class="subtle">Control connectivity and simulate trade instructions for the execution adapter.</p>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-tile">
+            <div id="exchangeMode" class="summary-value">Paper</div>
+            <div class="summary-label">Mode</div>
+          </div>
+          <div class="summary-tile">
+            <div id="quoteBalance" class="summary-value">0</div>
+            <div class="summary-label">Quote Balance</div>
+          </div>
+          <div class="summary-tile">
+            <div id="realizedPnl" class="summary-value">0</div>
+            <div class="summary-label">Realized PnL</div>
+          </div>
+        </div>
+        <div class="toggle-row">
+          <label class="switch">
+            <input type="checkbox" id="exchangeConnected">
+            <span class="slider"></span>
+          </label>
+          <div>
+            <div style="text-transform:uppercase;font-size:11px;letter-spacing:0.5px;color:#cbd5f5;">Exchange link</div>
+            <div id="exchangeConnectionLabel">Disconnected</div>
+          </div>
+        </div>
+        <form id="tradeForm">
+          <div class="form-grid">
+            <label>symbol
+              <input name="symbol" placeholder="BTC/USDT" required maxlength="32">
+            </label>
+            <label>side
+              <select name="side">
+                <option value="buy">Buy</option>
+                <option value="sell">Sell</option>
+              </select>
+            </label>
+            <label>quantity
+              <input name="quantity" type="number" step="0.0001" min="0" placeholder="0.10" required>
+            </label>
+            <label>order type
+              <select name="orderType">
+                <option value="market">Market</option>
+                <option value="limit">Limit</option>
+              </select>
+            </label>
+            <label>limit price
+              <input name="price" type="number" step="0.01" min="0" placeholder="Optional">
+            </label>
+          </div>
+          <div class="form-actions">
+            <span id="tradeError" class="error-text"></span>
+            <button type="submit" class="btn primary">Send order</button>
+          </div>
+        </form>
+        <div>
+          <h3 style="margin:0 0 8px 0;font-size:13px;text-transform:uppercase;letter-spacing:0.6px;color:#cbd5f5;">Open positions</h3>
+          <div id="positionsEmpty" class="empty-state" style="display:none;">No open positions</div>
+          <table id="positionsTable">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th>Size</th>
+                <th>Avg Px</th>
+                <th>Mark</th>
+                <th>Unrealized</th>
+              </tr>
+            </thead>
+            <tbody id="positionsBody"></tbody>
+          </table>
+        </div>
+        <div>
+          <h3 style="margin:0 0 8px 0;font-size:13px;text-transform:uppercase;letter-spacing:0.6px;color:#cbd5f5;">Orders</h3>
+          <div id="ordersEmpty" class="empty-state" style="display:none;">No orders yet</div>
+          <table id="ordersTable">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="card" id="activityCard">
+        <div>
+          <h2>Activity log</h2>
+          <p class="subtle">Audit of plugin syncs and exchange actions.</p>
+        </div>
+        <div class="log-area" id="activityLog">No activity yet.</div>
+      </section>
+    </main>
+    <footer>
+      <div>Splitstar Development — Local console</div>
+      <div>Data plugins &amp; exchange execution run entirely on this desktop session.</div>
+    </footer>
     <script>
       // Update timestamp every second
       function updateTimestamp() {
@@ -111,7 +602,7 @@
       setInterval(updateTimestamp, 1000);
       
       // Log successful load
-      console.log('Splitstar Operations Console Dashboard loaded successfully');
+      console.log('Trading Bot Dashboard loaded successfully');
     </script>
   </body>
 </html>

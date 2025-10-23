@@ -10,9 +10,18 @@ Functions
 These helpers are intentionally simple and should be adapted to real exchange
 contract sizes, minimums, and margin/leverage rules before live use.
 """
+
 from typing import Tuple
 
-def choose_position_size(balance: float, risk_pct: float, entry_price: float, stop_loss_price: float, leverage: float = 1.0, min_qty: float = 0.0) -> Tuple[float, float]:
+
+def choose_position_size(
+    balance: float,
+    risk_pct: float,
+    entry_price: float,
+    stop_loss_price: float,
+    leverage: float = 1.0,
+    min_qty: float = 0.0,
+) -> Tuple[float, float]:
     """Calculate quantity sized so that potential loss equals balance * risk_pct.
 
     Args:
@@ -40,7 +49,7 @@ def choose_position_size(balance: float, risk_pct: float, entry_price: float, st
         return 0.0, 0.0
 
     qty = risk_amount / per_unit_risk
-    # apply leverage: with leverage, notional exposure can be larger; quantity remains same but 
+    # apply leverage: with leverage, notional exposure can be larger; quantity remains same but
     # effective exposure = qty * entry_price * leverage. We return qty unchanged but caller can
     # interpret notional including leverage.
     notional = qty * entry_price
@@ -50,6 +59,53 @@ def choose_position_size(balance: float, risk_pct: float, entry_price: float, st
         notional = qty * entry_price
 
     return qty, notional * leverage
+
+
+def qty_from_risk(
+    equity: float,
+    risk_pct: float,
+    atr: float,
+    atr_mult: float,
+    price: float,
+) -> float:
+    """Return position quantity sized by ATR-derived stop distance.
+
+    This helper mirrors a common ATR-based position sizing formula:
+
+        qty = (equity * (risk_pct / 100)) / (atr * atr_mult)
+
+    The calculation approximates the stop distance with ``atr * atr_mult`` and
+    allocates ``equity * (risk_pct / 100)`` of capital to risk.  The resulting
+    quantity is expressed in base units assuming *atr* is measured in the same
+    price units as ``price``.
+
+    Args:
+        equity: Account equity in quote currency.
+        risk_pct: Percent of equity to risk (e.g. ``1.0`` for 1%).
+        atr: Average True Range value in price units.
+        atr_mult: Multiplier applied to ATR to determine stop distance.
+        price: Current instrument price in quote currency (must be positive).
+
+    Returns:
+        Quantity in base units.  Returns ``0.0`` whenever inputs are invalid or
+        do not permit sizing a position safely.
+    """
+
+    if equity <= 0 or risk_pct <= 0:
+        return 0.0
+    if atr <= 0 or atr_mult <= 0 or price <= 0:
+        return 0.0
+
+    risk_cash = equity * (risk_pct / 100.0)
+    if risk_cash <= 0:
+        return 0.0
+
+    stop_distance = atr * atr_mult
+    if stop_distance <= 0:
+        return 0.0
+
+    qty = risk_cash / stop_distance
+    return max(qty, 0.0)
 
 
 def fixed_fractional(balance: float, fraction: float, entry_price: float) -> Tuple[float, float]:
@@ -90,6 +146,7 @@ def round_qty(qty: float, step: float = 0.0001, min_qty: float = 0.0) -> float:
         return 0.0
     # round down to be safe
     import math
+
     steps = math.floor(qty / step)
     q = steps * step
     if q < min_qty:
@@ -100,4 +157,5 @@ def round_qty(qty: float, step: float = 0.0001, min_qty: float = 0.0) -> float:
 def round_price(price: float, tick: float = 0.01) -> float:
     """Round price to nearest tick (round down)."""
     import math
+
     return math.floor(price / tick) * tick
