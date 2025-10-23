@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Trading Bot Server
+Comment=Launch the FastAPI trading bot locally
+Exec=/bin/bash -lc 'cd /workspaces/trading-bot && ./scripts/launch_bot.sh'
+Terminal=false
+Categories=Finance;Development;

@@ -431,6 +431,7 @@
       <div class="header-actions">
         <span id="backendStatus" class="badge offline">Standalone Mode</span>
         <button class="btn ghost" id="resetState">Reset Demo Data</button>
+        <button class="btn primary" id="launchBotBtn">Launch Bot</button>
       </div>
     </header>
     <div id="backendMessage" class="message offline">
@@ -593,8 +594,10 @@
       <div>Data plugins &amp; exchange execution run entirely on this desktop session.</div>
     </footer>
     <script>
-      const API = 'http://127.0.0.1:9000';
+  // Point to running FastAPI backend
+  const API = 'http://127.0.0.1:8000';
       const STORAGE_KEY = 'splitstar.desktop.state.v1';
+  const TOKEN_KEY = 'splitstar.desktop.token.v1';
 
       const defaultState = {
         plugins: [
@@ -659,6 +662,8 @@
 
       const state = {
         backend: { connected: false, lastChecked: null, lastError: null, health: null },
+        auth: { token: null, username: null },
+        useBackend: false,
         plugins: [],
         exchange: {},
         activity: []
@@ -687,7 +692,7 @@
             console.warn('Failed to parse saved state', err);
           }
         }
-        const src = parsed || defaultState;
+  const src = parsed || defaultState;
         state.plugins = (src.plugins || []).map((p) => ({ ...p }));
         const exchangeDefaults = defaultState.exchange;
         const srcExchange = src.exchange || {};
@@ -703,6 +708,13 @@
           realizedPnl: Number(srcExchange.realizedPnl || 0)
         };
         state.activity = (src.activity || []).map((entry) => ({ ...entry }));
+        // Load auth token
+        try {
+          const savedToken = localStorage.getItem(TOKEN_KEY);
+          if (savedToken) {
+            state.auth.token = savedToken;
+          }
+        } catch (err) {}
       }
 
       function persist() {
@@ -726,6 +738,27 @@
         } catch (err) {
           console.warn('Failed to persist state', err);
         }
+      }
+
+      function saveToken(token) {
+        state.auth.token = token;
+        try { localStorage.setItem(TOKEN_KEY, token || ''); } catch {}
+      }
+
+      function clearToken() {
+        state.auth.token = null;
+        try { localStorage.removeItem(TOKEN_KEY); } catch {}
+      }
+
+      function authHeaders() {
+        return state.auth.token ? { 'Authorization': `Bearer ${state.auth.token}` } : {};
+      }
+
+      async function backendFetch(path, opts = {}) {
+        const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}), ...authHeaders() };
+        const res = await fetch(API + path, { ...opts, headers });
+        if (res.status === 401) throw new Error('Unauthorized');
+        return res;
       }
 
       function logEvent(message) {
@@ -773,7 +806,8 @@
           const uptime = state.backend.health?.uptime_seconds ?? 0;
           const mins = Math.floor(uptime / 60);
           message.classList.remove('offline');
-          message.textContent = `Live backend detected at ${API} — uptime ${mins} min.`;
+          const authed = state.auth.token ? 'auth on' : 'auth off';
+          message.textContent = `Live backend ${API} — uptime ${mins} min, ${authed}.`;
         } else {
           badge.textContent = 'Standalone Mode';
           badge.classList.remove('online');
@@ -910,7 +944,7 @@
         }
       }
 
-      function renderExchange() {
+      async function renderExchange() {
         document.getElementById('exchangeMode').textContent = state.exchange.mode === 'live' ? 'Live' : 'Paper';
         document.getElementById('quoteBalance').textContent = `${formatNumber(state.exchange.balances[getQuote('BTC/USDT')] || 0, 2)} ${getQuote('BTC/USDT')}`;
         const pnlEl = document.getElementById('realizedPnl');
@@ -926,12 +960,22 @@
 
         const positionsBody = document.getElementById('positionsBody');
         const positionsEmpty = document.getElementById('positionsEmpty');
-        if (!state.exchange.positions.length) {
+        let positionsData = state.exchange.positions;
+        if (state.useBackend && state.backend.connected && state.auth.token) {
+          try {
+            const res = await backendFetch('/positions');
+            const json = await res.json();
+            positionsData = (json.positions || []).map(p => ({ ...p }));
+          } catch (e) {
+            logEvent('Failed to fetch backend positions.');
+          }
+        }
+        if (!positionsData.length) {
           positionsBody.innerHTML = '';
           positionsEmpty.style.display = 'block';
         } else {
           positionsEmpty.style.display = 'none';
-          positionsBody.innerHTML = state.exchange.positions
+          positionsBody.innerHTML = positionsData
             .map((pos) => {
               const mark = state.exchange.prices[pos.symbol] ?? pos.lastPrice ?? pos.avgPrice;
               const unrealized = (pos.direction === 'long' ? mark - pos.avgPrice : pos.avgPrice - mark) * pos.size;
@@ -950,23 +994,37 @@
 
         const ordersBody = document.getElementById('ordersBody');
         const ordersEmpty = document.getElementById('ordersEmpty');
-        if (!state.exchange.orders.length) {
+        let ordersData = state.exchange.orders;
+        if (state.useBackend && state.backend.connected && state.auth.token) {
+          try {
+            const res = await backendFetch('/orders');
+            const json = await res.json();
+            ordersData = (json.orders || []).map(o => ({ ...o }));
+          } catch (e) {
+            logEvent('Failed to fetch backend orders.');
+          }
+        }
+        if (!ordersData.length) {
           ordersBody.innerHTML = '';
           ordersEmpty.style.display = 'block';
         } else {
           ordersEmpty.style.display = 'none';
-          ordersBody.innerHTML = state.exchange.orders
+          ordersBody.innerHTML = ordersData
             .slice()
             .sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0))
             .map((order) => {
               const statusBadge = `<span class="badge ${order.status === 'filled' ? 'online' : order.status === 'cancelled' ? 'offline' : 'active'}">${order.status}</span>`;
               const actions =
-                order.status === 'working'
+                state.useBackend && state.auth.token
                   ? `<div class="table-actions">
-                       <button class="btn ghost order-fill" data-id="${order.id}">Mark filled</button>
-                       <button class="btn ghost order-cancel" data-id="${order.id}">Cancel</button>
+                       <button class="btn ghost order-cancel-backend" data-id="${order.id}">Cancel</button>
                      </div>`
-                  : '';
+                  : (order.status === 'working'
+                      ? `<div class="table-actions">
+                           <button class="btn ghost order-fill" data-id="${order.id}">Mark filled</button>
+                           <button class="btn ghost order-cancel" data-id="${order.id}">Cancel</button>
+                         </div>`
+                      : '');
               const displayTime = order.status === 'filled' ? order.filledAt || order.timestamp : order.timestamp;
               return `
                 <tr>
@@ -985,6 +1043,17 @@
           });
           ordersBody.querySelectorAll('.order-cancel').forEach((btn) => {
             btn.addEventListener('click', () => handleOrderAction(btn.dataset.id, 'cancel'));
+          });
+          ordersBody.querySelectorAll('.order-cancel-backend').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+              try {
+                await backendFetch('/orders/cancel', { method: 'POST', body: JSON.stringify({ id: btn.dataset.id }) });
+                logEvent(`Cancelled backend order ${btn.dataset.id}`);
+                await renderExchange();
+              } catch (e) {
+                logEvent('Failed to cancel backend order.');
+              }
+            });
           });
         }
       }
@@ -1184,6 +1253,87 @@
         }
         renderBackendStatus();
       }
+
+      // Add auth and backend controls in header
+      (function setupHeaderControls() {
+        const header = document.querySelector('.header-actions');
+        const loginBtn = document.createElement('button');
+        loginBtn.className = 'btn ghost';
+        loginBtn.id = 'loginBtn';
+        loginBtn.textContent = state.auth.token ? 'Logout' : 'Login';
+        header.appendChild(loginBtn);
+
+        const useBackendWrap = document.createElement('label');
+        useBackendWrap.className = 'toggle-row';
+        useBackendWrap.style.marginLeft = '8px';
+        useBackendWrap.innerHTML = `
+          <span style="font-size:12px;color:#94a3b8;">Backend data</span>
+          <label class="switch">
+            <input type="checkbox" id="useBackendData">
+            <span class="slider"></span>
+          </label>`;
+        header.appendChild(useBackendWrap);
+
+        const useBackendBox = useBackendWrap.querySelector('#useBackendData');
+        useBackendBox.checked = !!state.useBackend;
+
+        useBackendBox.addEventListener('change', async () => {
+          state.useBackend = useBackendBox.checked;
+          await renderExchange();
+        });
+
+        loginBtn.addEventListener('click', async () => {
+          if (state.auth.token) {
+            clearToken();
+            loginBtn.textContent = 'Login';
+            logEvent('Logged out.');
+            await renderExchange();
+            return;
+          }
+          const username = prompt('Username', 'admin');
+          if (!username) return;
+          const password = prompt('Password', 'change-me-now!');
+          if (password == null) return;
+          try {
+            const res = await fetch(API + '/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username, password })
+            });
+            if (!res.ok) throw new Error('Login failed');
+            const body = await res.json();
+            if (body && body.access_token) {
+              saveToken(body.access_token);
+              loginBtn.textContent = 'Logout';
+              logEvent(`Logged in as ${username}.`);
+              await renderExchange();
+            } else {
+              throw new Error('Malformed token response');
+            }
+          } catch (e) {
+            logEvent('Login failed.');
+          }
+        });
+      })();
+
+      // Launch Bot button: opens server docs and pings local server health on 8000
+      document.getElementById('launchBotBtn').addEventListener('click', async () => {
+        const docsUrl = 'http://127.0.0.1:8000/docs';
+        const healthUrl = 'http://127.0.0.1:8000/health';
+        try {
+          window.open(docsUrl, '_blank', 'noopener');
+          // Best-effort ping to show a helpful message
+          const res = await fetch(healthUrl, { cache: 'no-store' });
+          if (res.ok) {
+            const h = await res.json();
+            logEvent(`Bot server reachable — uptime ${Math.floor((h?.uptime_seconds||0)/60)} min.`);
+          } else {
+            logEvent('Tried to open bot UI, but health returned non-200. Is the server running?');
+          }
+        } catch (e) {
+          logEvent('Opened bot UI; if it fails to load, run scripts/launch_bot.sh.');
+        }
+      });
 
       loadState();
       refreshAll();

@@ -416,7 +416,7 @@ class Token(BaseModel):
 fake_users_db = {
     "admin": {
         "username": "admin",
-        "hashed_password": "admin123_hashed",  # In production, use proper password hashing
+        "hashed_password": "admin123_hashed",
         "permissions": ["read", "write", "control"],
     },
     "readonly": {
@@ -427,8 +427,7 @@ fake_users_db = {
 }
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    # Simplified for this example - use proper hashing in production
+def _fake_verify_password(plain_password: str, hashed_password: str) -> bool:
     return f"{plain_password}_hashed" == hashed_password
 
 
@@ -438,22 +437,28 @@ def get_user(username: str):
 
 def authenticate_user(username: str, password: str):
     user = get_user(username)
-    if not user or not verify_password(password, user["hashed_password"]):
+    if not user or not _fake_verify_password(password, user["hashed_password"]):
         return False
     return user
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    if DASHBOARD_DIR.exists():
-        app.mount("/static", StaticFiles(directory=str(DASHBOARD_DIR)), name="static")
+# --- Auth endpoints using secure USERS database and HMAC token ---
+@app.post("/auth/login", response_model=Token)
+async def auth_login(body: UserLogin):
+    """Authenticate with username/password and return access token."""
+    record = USERS.get(body.username)
+    if not record or not verify_password(body.password, record):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    token = create_access_token(body.username, minutes=ACCESS_TOKEN_MINUTES)
+    return Token(access_token=token)
 
-    security = HTTPBearer(auto_error=False)
+
+@app.get("/auth/me")
+async def auth_me(current_user: dict = Depends(get_current_user)):
+    return {
+        "username": current_user.get("username", "unknown"),
+        "permissions": current_user.get("permissions", []),
+    }
 async def stop(current_user: dict = Depends(require_permission("control"))):
     """Stop the trading bot."""
     try:
@@ -607,6 +612,24 @@ async def shutdown_event():
     logger.info("Trading bot server shutdown complete")
 
 
+# ------------------ Basic health endpoint ------------------
+@app.get("/health")
+@app.get("/healthz")
+async def health():
+    """Liveness/Readiness probe compatible endpoint."""
+    try:
+        uptime = time.time() - STATE["server_stats"].get("start_time", time.time())
+        return {
+            "status": "ok",
+            "uptime_seconds": uptime,
+            "active_connections": STATE["server_stats"].get("active_connections", 0),
+            "errors": STATE["server_stats"].get("error_count", 0),
+        }
+    except Exception:
+        # If anything goes wrong, still return a minimal shape for compatibility
+        return {"status": "ok"}
+
+
 # ------------------ Control/Config/Diagnostics endpoints ------------------
 # ------------------ Control/Config/Diagnostics endpoints ------------------
 
@@ -663,6 +686,13 @@ async def diagnostics_metrics():
     return STATE["metrics"]
 
 
+# Friendly alias for dashboards/monitoring
+@app.get("/metrics")
+async def metrics_alias():
+    """Alias for /diagnostics/metrics returning the same payload."""
+    return await diagnostics_metrics()
+
+
 @app.get("/diagnostics/equity")
 async def diagnostics_equity(limit: int = 500):
     path = _latest("*_equity.csv")
@@ -673,6 +703,22 @@ async def diagnostics_equity(limit: int = 500):
 async def diagnostics_trades(limit: int = 500):
     path = _latest("*_trades.csv")
     return {"path": str(path) if path else None, "rows": _tail_csv(path, limit) if path else []}
+
+
+# Minimal status payload for dashboards
+@app.get("/status")
+async def status_summary():
+    """Compact status for dashboards: running flag and basic stats."""
+    try:
+        uptime = time.time() - STATE["server_stats"].get("start_time", time.time())
+        return {
+            "running": bool(STATE.get("running", False)),
+            "active_connections": int(STATE["server_stats"].get("active_connections", 0)),
+            "uptime_seconds": float(uptime),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    except Exception:
+        return {"running": False}
 
 
 @app.get("/logs")
