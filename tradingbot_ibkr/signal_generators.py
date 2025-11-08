@@ -15,7 +15,7 @@ def import_third_party(mod_name: str):
     original = sys.path.copy()
     try:
         # Remove repo paths to prioritize site-packages
-        repo_paths = [p for p in original if 'trading-bot' in p]
+        repo_paths = [p for p in original if 'splitstar-operations-console' in p]
         sys.path = [p for p in original if p not in repo_paths] + repo_paths
         return importlib.import_module(mod_name)
     finally:

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Simple script to set up a Python virtual environment and install dependencies for the trading bot.
+# Simple script to set up a Python virtual environment and install dependencies
+# for the Splitstar Operations Console.
 set -e
 
 # Create virtual environment if it doesn't exist

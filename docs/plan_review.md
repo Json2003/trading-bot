@@ -5,7 +5,7 @@ Source: Full project plan shared in chat (Split Star / Vibra / WCOIN (Remittix))
 
 ## Executive summary
 
-The plan aims to launch a compliant, fiat‑redeemable, multi‑currency‑referenced stablecoin (WCOIN) with an SG issuer, consumer app (Vibracoin), and merchant rails (Vibra Payments). It is comprehensive across legal, regulatory, product/tech, and GTM. For this repository (trading-bot), the most relevant, near-term deliverables are: a management workspace (/manage), a reliable job runner and metrics, ingestion for FX/oracle data, and a PoR hash pipeline. Smart contracts, licensing, banking, and MAS workstreams will live outside this repo.
+The plan aims to launch a compliant, fiat‑redeemable, multi‑currency‑referenced stablecoin (WCOIN) with an SG issuer, consumer app (Vibracoin), and merchant rails (Vibra Payments). It is comprehensive across legal, regulatory, product/tech, and GTM. For this repository (Splitstar Operations Console), the most relevant, near-term deliverables are: a management workspace (/manage), a reliable job runner and metrics, ingestion for FX/oracle data, and a PoR hash pipeline. Smart contracts, licensing, banking, and MAS workstreams will live outside this repo.
 
 Top recommendations:
 
@@ -99,7 +99,7 @@ Top recommendations:
 
 - CEO (Jason), CFO (Mayra), COO (Caleb), Advisor (Leah), Splitstar Dev.
 
-## Alignment with this repository (trading-bot)
+## Alignment with this repository (Splitstar Operations Console)
 
 This repo is a trading/backtesting/ops toolkit with a FastAPI server and dashboard stubs. It can power several parts of the plan (off-chain and operational services), while smart contracts and consumer/merchant apps belong in a separate monorepo.
 

@@ -1,9 +1,11 @@
-# trading bot
-tradingbot
+# Splitstar Operations Console
+Splitstar's operations console for orchestrating research, execution, and risk
+pipelines across the trading stack.
 
 ## Desktop installation
 
-Run one of the provided scripts to set up a virtual environment and install dependencies.
+Run one of the provided scripts to set up a virtual environment and install
+dependencies for the console backend services.
 
 On Linux or macOS:
 
@@ -17,7 +19,8 @@ On Windows (cmd or PowerShell):
 install.bat
 ```
 
-This creates a `venv` directory and installs packages from `tradingbot_ibkr/requirements.txt`.
+This creates a `venv` directory and installs packages from
+`tradingbot_ibkr/requirements.txt`.
 
 ## Docker & MCP deployment
 
@@ -33,9 +36,9 @@ This creates a `venv` directory and installs packages from `tradingbot_ibkr/requ
 
 ## Asset classes
 
-The bot supports multiple asset classes including forex, options, futures,
-crypto, and stocks via a unified `AssetClass` enum. Trading scripts and the
-engine can adjust risk settings based on the selected class.
+The console coordinates strategies that span forex, options, futures, crypto,
+and equities via a unified `AssetClass` enum. Strategy components can adjust
+risk settings based on the selected class.
 
 ## Binance to GCS ingestion
 

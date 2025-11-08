@@ -1,5 +1,6 @@
 """
-Enhanced WebSocket server for trading bot with comprehensive features:
+Enhanced WebSocket server for the Splitstar Operations Console with
+comprehensive features:
 
 Features:
 - JWT-based authentication for sensitive endpoints
@@ -49,7 +50,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 RATE_LIMIT_PER_MINUTE = 60
 RATE_LIMIT_WINDOW = 60  # seconds
 
-app = FastAPI(title="Trading Bot Server", version="1.0.0")
+app = FastAPI(title="Splitstar Operations Console API", version="1.0.0")
 security = HTTPBearer(auto_error=False)
 
 # Add CORS middleware
@@ -359,7 +360,7 @@ async def login(user_credentials: UserLogin):
 # Public endpoints
 @app.get("/status")
 async def get_status():
-    """Get trading bot status."""
+    """Get Splitstar Operations Console status."""
     return {
         "running": STATE["running"],
         "timestamp": datetime.now(timezone.utc).isoformat()
@@ -382,7 +383,7 @@ async def manage_page():
 <head>
     <meta charset=\"utf-8\" />
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-    <title>Trading Bot — Manage</title>
+    <title>Splitstar Operations Console — Manage</title>
     <style>
         body {{ font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 20px; color: #111; }}
         .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }}
@@ -616,10 +617,13 @@ async def agents_run(
 # Protected endpoints
 @app.post("/control/start")
 async def start(current_user: dict = Depends(require_permission("control"))):
-    """Start the trading bot."""
+    """Start the Splitstar Operations Console orchestrator."""
     try:
         STATE["running"] = True
-        logger.info(f"Trading bot started by user: {current_user['username']}")
+        logger.info(
+            "Splitstar Operations Console started by user: %s",
+            current_user["username"],
+        )
         
         # Broadcast to all connected clients
         await manager.broadcast(json.dumps({
@@ -628,19 +632,22 @@ async def start(current_user: dict = Depends(require_permission("control"))):
             "user": current_user['username']
         }))
         
-        return {"ok": True, "message": "Trading bot started"}
+        return {"ok": True, "message": "Splitstar console started"}
         
     except Exception as e:
-        logger.error(f"Failed to start bot: {e}")
+        logger.error("Failed to start console: %s", e)
         STATE['server_stats']['error_count'] += 1
-        raise HTTPException(status_code=500, detail="Failed to start bot")
+        raise HTTPException(status_code=500, detail="Failed to start console")
 
 @app.post("/control/stop")
 async def stop(current_user: dict = Depends(require_permission("control"))):
-    """Stop the trading bot."""
+    """Stop the Splitstar Operations Console orchestrator."""
     try:
         STATE["running"] = False
-        logger.info(f"Trading bot stopped by user: {current_user['username']}")
+        logger.info(
+            "Splitstar Operations Console stopped by user: %s",
+            current_user["username"],
+        )
         
         # Broadcast to all connected clients
         await manager.broadcast(json.dumps({
@@ -649,12 +656,12 @@ async def stop(current_user: dict = Depends(require_permission("control"))):
             "user": current_user['username']
         }))
         
-        return {"ok": True, "message": "Trading bot stopped"}
+        return {"ok": True, "message": "Splitstar console stopped"}
         
     except Exception as e:
-        logger.error(f"Failed to stop bot: {e}")
+        logger.error("Failed to stop console: %s", e)
         STATE['server_stats']['error_count'] += 1
-        raise HTTPException(status_code=500, detail="Failed to stop bot")
+        raise HTTPException(status_code=500, detail="Failed to stop console")
 
 @app.get("/positions")
 async def get_positions(current_user: dict = Depends(require_permission("read"))):
@@ -726,7 +733,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: Optional[str] = No
 @app.on_event("startup")
 async def startup_event():
     """Initialize background tasks on startup."""
-    logger.info("Trading bot server starting up...")
+    logger.info("Splitstar Operations Console server starting up...")
     
     async def update_server_stats():
         while True:
@@ -742,12 +749,12 @@ async def startup_event():
     
     # Start background task
     asyncio.create_task(update_server_stats())
-    logger.info("Trading bot server startup complete")
+    logger.info("Splitstar Operations Console server startup complete")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Clean up on shutdown."""
-    logger.info("Trading bot server shutting down...")
+    logger.info("Splitstar Operations Console server shutting down...")
     
     # Notify all connected clients
     shutdown_message = {
@@ -764,7 +771,7 @@ async def shutdown_event():
             pass
         manager.disconnect(connection)
     
-    logger.info("Trading bot server shutdown complete")
+    logger.info("Splitstar Operations Console server shutdown complete")
 
 if __name__ == "__main__":
     import uvicorn

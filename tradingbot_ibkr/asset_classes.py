@@ -1,5 +1,5 @@
 from __future__ import annotations
-"""Enumeration of supported asset classes for the trading bot."""
+"""Enumeration of supported asset classes for the Splitstar Operations Console."""
 from enum import Enum
 
 class AssetClass(Enum):

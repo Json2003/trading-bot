@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const TradingBotApp());
+  runApp(const SplitstarConsoleApp());
 }
 
-class TradingBotApp extends StatelessWidget {
-  const TradingBotApp({super.key});
+class SplitstarConsoleApp extends StatelessWidget {
+  const SplitstarConsoleApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
       home: Scaffold(
-        body: Center(child: Text('Trading Bot Dashboard')),
+        body: Center(child: Text('Splitstar Operations Console Dashboard')),
       ),
     );
   }

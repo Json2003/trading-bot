@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# bootstrap_vm.sh — conservative VM bootstrap for trading-bot ingestion pipeline
+# bootstrap_vm.sh — conservative VM bootstrap for Splitstar Operations Console ingestion pipeline
 # Usage:
 #   ./bootstrap_vm.sh --dry-run       # prints steps but doesn't run destructive installs
 #   sudo ./bootstrap_vm.sh --apply    # runs steps (requires sudo for apt installs)
@@ -56,10 +56,10 @@ done
 # Clone repo if not present
 if [ ! -d "$PWD/.git" ]; then
   if [ "$DRY_RUN" = true ]; then
-    echo "  [DRY] git clone $REPO_URL trading-bot && cd trading-bot"
+    echo "  [DRY] git clone $REPO_URL splitstar-operations-console && cd splitstar-operations-console"
   else
-    git clone "$REPO_URL" trading-bot
-    cd trading-bot
+    git clone "$REPO_URL" splitstar-operations-console
+    cd splitstar-operations-console
   fi
 else
   echo "  repo appears to be present in $PWD"
