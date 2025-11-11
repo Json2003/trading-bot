@@ -1,0 +1,2 @@
+# Optional ML/optimization extras
+optuna>=3.6.0,<4

@@ -1,14 +1,18 @@
 from __future__ import annotations
-"""Enumeration of supported asset classes for the Splitstar Operations Console."""
+
+"""Enumeration of supported asset classes for the trading bot."""
 from enum import Enum
+
 
 class AssetClass(Enum):
     """Supported asset classes for trading operations."""
+
     FOREX = "forex"
     OPTIONS = "options"
     FUTURES = "futures"
     CRYPTO = "crypto"
     STOCKS = "stocks"
+
 
 # Default volatility thresholds used by the trading engine for each asset class.
 VOLATILITY_THRESHOLDS = {

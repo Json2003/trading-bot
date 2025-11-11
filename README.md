@@ -1,11 +1,18 @@
 # Splitstar Operations Console
-Splitstar's operations console for orchestrating research, execution, and risk
-pipelines across the trading stack.
+Splitstar Operations Console (formerly the trading-bot project) is the
+operations and research surface for Splitstar's agent-based trading stack.
+It keeps the `tradingbot_ibkr` package for backwards-compatible scripts while
+rebranding the product experience, dashboards, and deployment targets under the
+Splitstar Operations umbrella.
+
+> 💡 **Repository rename:** clone the repo into `splitstar-operations-console`
+> (or update existing checkouts) to match the new product branding. Scripts
+> continue to recognise the legacy `trading-bot` directory for compatibility.
 
 ## Desktop installation
 
 Run one of the provided scripts to set up a virtual environment and install
-dependencies for the console backend services.
+dependencies.
 
 On Linux or macOS:
 
@@ -22,23 +29,55 @@ install.bat
 This creates a `venv` directory and installs packages from
 `tradingbot_ibkr/requirements.txt`.
 
-## Docker & MCP deployment
+### Manual virtual environment setup
 
-- Copy `env/docker.env.example` to `env/docker.env` and set MCP/API credentials.
-- Build the container and run via docker compose:
+If you prefer to manage the environment yourself, create and activate it with
+the standard `venv` module:
 
-  ```bash
-  docker compose -f docker/docker-compose.yml --project-directory . up --build
-  ```
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
-- MCP endpoints (`/mcp/health`, `/mcp/signals`, `/mcp/metrics`) are exposed automatically when `MCP_BASE_URL` is set.
-  See `docs/docker_mcp.md` for details.
+On Windows PowerShell, activate with:
+
+```powershell
+venv\Scripts\Activate.ps1
+```
+
+This mirrors the automated scripts while giving you full control over when the
+environment is created and refreshed.
+
+## Working inside GitHub Actions workspaces
+
+When running automation steps in GitHub Actions, the repository is checked out
+to the directory pointed at by the `$GITHUB_WORKSPACE` environment variable.
+Many reusable workflows begin by ensuring all subsequent commands operate from
+that directory:
+
+```bash
+pushd "$GITHUB_WORKSPACE" >/dev/null
+# ... git commands ...
+popd >/dev/null
+```
+
+Using `pushd`/`popd` keeps the automation logic self-contained while restoring
+the previous directory after any Git operations complete.
 
 ## Asset classes
 
-The console coordinates strategies that span forex, options, futures, crypto,
-and equities via a unified `AssetClass` enum. Strategy components can adjust
-risk settings based on the selected class.
+The console supports multiple asset classes including forex, options, futures,
+crypto, and stocks via a unified `AssetClass` enum. Trading scripts and the
+engine can adjust risk settings based on the selected class.
+
+## Portfolio performance guardrails
+
+Target operating metrics for the live portfolio—covering risk-adjusted returns,
+drawdown limits, turnover costs, hedging quality, and operational readiness—are
+documented in [`docs/performance_targets.md`](docs/performance_targets.md).
+Review the table before promoting new strategies or adjusting allocations so
+changes stay within the agreed guardrails.
 
 ## Binance to GCS ingestion
 
@@ -53,44 +92,198 @@ python tradingbot_ibkr/binance_to_gcs.py --bucket <bucket-name> \
 
 Replace the bucket name and time range as needed.
 
-## LangChain agent deployment
+## Local research data layout
 
-- Treat your LangSmith API token (for example `LANGSMITH_API_KEY=<your-token>`) as a
-  secret. Export it at runtime or load it from a secrets manager, and never check the
-  real value into source control.
-- Install the latest LangChain SDK packages:
+The repository expects large market data and derived features to live outside of
+version control. Organize any downloaded datasets under the `data/` directory
+using the following convention:
 
-  ```bash
-  pip install -U langchain langgraph langchainhub
-  ```
+```
+data/
+  raw/binance/
+    spot/BTCUSDT/2022/*.csv.gz
+    spot/ETHUSDT/2022/*.csv.gz
+  parquet/ohlcv_1m/symbol=BTCUSDT/date=2022-01-01/*.parquet
+  parquet/features_1m/symbol=BTCUSDT/date=2022-01-01/*.parquet
+```
 
-- When you want LangSmith dashboards, set tracing environment variables before
-  launching the app:
+- `data/raw/` holds the original exchange files (e.g., minute-level Binance
+  klines compressed as CSVs).
+- `data/parquet/ohlcv_1m/` stores cleaned one-minute OHLCV bars that are ready
+  for model training and backtesting.
+- `data/parquet/features_1m/` contains engineered features aligned with the
+  OHLCV data.
 
-  ```bash
-  export LANGCHAIN_TRACING_V2=true
-  export LANGCHAIN_ENDPOINT=https://api.langchain.plus
-  export LANGCHAIN_PROJECT=<project-name>
-  ```
+Model checkpoints or other bulky artifacts should be placed beneath the
+`artifacts/` directory, which is also ignored by Git:
 
-- Build agents with `langchain.agents` or LangGraph primitives. Inject the API
-  key through LangChain settings (`langchain.settings.set_headers`) or by
-  supplying `headers={"x-api-key": os.environ["LANGCHAIN_API_KEY"]}` when calling
-  hosted endpoints.
-- To hit LangChain's hosted Agents API, create a client:
+```
+artifacts/
+  models/
+```
 
-  ```python
-  from langchain.clients import AgentsClient
-  client = AgentsClient(base_url=<your-endpoint>, api_key=os.environ["LANGCHAIN_API_KEY"])
-  ```
+Only keep lightweight samples in the repository itself; all high-volume data
+remains in these local folders to keep clones fast and commits reviewable.
 
-  Each request must include the bearer token (Authorization header) and any
-  deployment-specific headers.
-- Forward run telemetry to LangSmith so you can inspect traces, tool usage, and
-  latency in production.
-- Harden operations by rotating the token regularly, limiting its scope, and
-  keeping detailed audit logs for every agent action—especially before executing
-  trades against live capital.
-- The FastAPI gateway now exposes `/agents/run` (requires authentication with
-  `write` permission) to forward payloads to a hosted LangChain agent using the
-  configured credentials.
+## Daily market data fetcher
+
+To generate a lightweight daily dataset for both equities and crypto assets,
+use the `scripts/fetch_daily_market_data.py` helper.  The script reads
+`configs/daily_data.yaml` to determine the timezone, asset universe, lookback
+window, and output location.  By default it downloads the assets listed in the
+config (AAPL, MSFT, NVDA, SPY, QQQ along with Bitcoin, Ethereum, Solana,
+Binance Coin, and Ripple) and writes timezone-aware parquet files beneath
+`data/daily/`.
+
+```
+python scripts/fetch_daily_market_data.py
+```
+
+Override the lookback window or destination directory at runtime if needed:
+
+```
+python scripts/fetch_daily_market_data.py --days 365 --out custom_dir/daily
+```
+
+The command prints a short manifest with the saved files for quick inspection
+and leaves the manifest in the chosen output directory.
+
+## Sample backtest workflow
+
+For a quick smoke-test of the modern execution engine without relying on live
+data downloads, the repository bundles deterministic OHLCV samples at
+`backtest/sample_data/sample_ohlcv.csv` (hourly bars) and
+`backtest/sample_data/sample_ohlcv_1m.csv` (one-minute bars).  Run a backtest of
+the default SMA-filtered strategy against the hourly dataset with:
+
+```
+python scripts/run_backtest.py \
+  --source csv --path backtest/sample_data/sample_ohlcv.csv \
+  --strategy backtest.strategies.sma_filtered:generate_signals \
+  --strategy_args fast=8,slow=34,trend_fast=55,trend_slow=144 \
+  --fees_bps 5 --slip_bps 2 --tp_bps 60 --sl_bps 40 \
+  --max_bars 18 --notional 1.0 --risk_per_trade 0.01 \
+  --out_prefix artifacts/sample_backtest
+```
+
+The command writes the trade blotter, equity curve, and metrics beneath
+`artifacts/`.  Swap the `--path` argument to `backtest/sample_data/sample_ohlcv_1m.csv`
+to exercise the exact same workflow on one-minute candles.  A copy of the
+latest run is kept under `backtest/sample_results/` for reference.
+
+### Optuna parameter search
+
+Use the bundled optimisation helper to explore parameter combinations with Optuna:
+
+```bash
+python scripts/optimize_strategy.py --data backtest/sample_data/sample_ohlcv.csv --trials 20
+```
+
+The command evaluates the SMA-based strategy while Optuna proposes combinations
+of the ``window``, ``feature_mix`` and ``thr`` knobs.  The script prints the best
+Sharpe (by default) along with a full metrics summary for the winning
+configuration.
+
+### Minimal CSV-only CLI
+
+If you prefer a lightweight wrapper that works with local CSV files only and
+skips the more advanced CCXT integration, use the helper script below:
+
+```bash
+python scripts/simple_backtest_cli.py \
+  --source csv --path backtest/sample_data/sample_ohlcv.csv \
+  --strategy_args fast=8 slow=34 trend_fast=55 trend_slow=144 \
+  --fees_bps 5 --slip_bps 2 --tp_bps 60 --sl_bps 40 \
+  --max_bars 18 --notional 1.0 --risk_per_trade 0.01 \
+  --out_prefix artifacts/sample_backtest_simple
+```
+
+The script writes the same trio of outputs—blotter, equity curve, and metrics—
+to the requested directory.
+
+## Quick SMA Crossover Demo
+
+If you want to experiment with the third-party ``backtesting`` package, run the
+standalone moving-average example that ships with the repository:
+
+```bash
+python scripts/backtesting_sma_cross_example.py
+```
+
+The script prints summary statistics to the console and, when a display backend
+is available, pops up an interactive equity-curve plot.
+
+
+## Trading Readiness Check
+
+Before using the trading bot, run the comprehensive readiness checker:
+
+```bash
+python check_trading_readiness.py --verbose
+```
+
+To let the checker automatically remedy common issues (install critical
+dependencies, create a `.env` file, and seed sample market data), add the
+`--fix-issues` flag:
+
+```bash
+python check_trading_readiness.py --fix-issues --verbose
+```
+
+This validates:
+- Environment setup and dependencies
+- Configuration and safety settings
+- Data availability and quality
+- Model validation results
+- Risk management settings
+- Trading safety mechanisms
+
+For quick setup assistance:
+
+```bash
+python quick_setup.py --install-deps
+```
+
+See [TRADING_READINESS.md](TRADING_READINESS.md) for detailed information.
+
+## Systematic Trading Principles
+
+For guidance on data hygiene, modeling discipline, validation practices, and production defenses, see the [Systematic Trading Model Principles](docs/systematic_trading_principles.md) guide. It also lists practical thresholds and quick recipes you can adopt immediately.
+
+## Security
+
+For production deployments, read the repository’s [SECURITY.md](SECURITY.md) for guidance on real JWT authentication (replacing the mock token), secret management, CORS/rate limits, filesystem permissions, and model promotion safeguards.
+
+## Upgrade Roadmap
+
+The prioritized engineering backlog for the next wave of improvements lives in
+[docs/upgrade_plan.md](docs/upgrade_plan.md). It captures the enhanced
+backtesting, risk-sizing, arbitrage, and reconciler initiatives alongside the
+latest repository health check results.
+
+## Docker
+
+You can run the FastAPI server in Docker using the files under `docker/`:
+
+1. Build and run with Compose (recommended):
+
+```bash
+docker compose -f docker/docker-compose.yml up --build
+```
+
+This maps `localhost:8000` to the container and mounts `data/` and `model_store/` for persistence.
+
+Environment configuration:
+
+- Copy `env/docker.env.example` to `env/docker.env` and adjust values, or export variables in your shell.
+- The compose file defaults to the example env file; a real `env/docker.env` will override values.
+
+1. Build the image manually:
+
+```bash
+docker build -f docker/Dockerfile -t splitstar/ops-console:dev .
+docker run --rm -p 8000:8000 splitstar/ops-console:dev
+```
+
+The image starts `uvicorn server:app` on port 8000. Update `SECRET_KEY` via env for production.
+

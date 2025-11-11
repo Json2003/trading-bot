@@ -16,7 +16,7 @@ pip-wheel-metadata/
 
 # Virtual environments
 .venv/
-env/
+/env/
 venv/
 
 # PyTest cache
@@ -28,6 +28,7 @@ venv/
 # Environment variables
 .env
 .env.*
+!.env.example
 
 # OS files
 .DS_Store
@@ -39,6 +40,7 @@ Thumbs.db
 
 # Node.js dependencies
 node_modules/
+**/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -50,6 +52,9 @@ tradingbot_ibkr/releases/
 
 # Local analysis outputs
 analysis/
+
+# Backtest run outputs
+artifacts/
 
 # Model store - local artifacts and DBs
 tradingbot_ibkr/model_store/*.db
@@ -69,18 +74,34 @@ report_*.json
 *.tmp
 *.checkpoint.json
 datafiles/
-data/
+!tradingbot_ibkr/datafiles/
+tradingbot_ibkr/datafiles/*
+!tradingbot_ibkr/datafiles/ETH_USDT_bars.csv
+data/*
+!data/.gitkeep
+!data/daily/
+!data/daily/.gitkeep
 model_store/
 *.bak
 *.backup
 
+# Desktop build artifacts
+dashboard/electron-app/dist/
+server.pid
+
 # Large data files (keep sample files)
 *.csv
+*.csv.gz
 *.parquet
 *.h5
 *.hdf5
+*.feather
 !**/sample_*.csv
+!tradingbot_ibkr/datafiles/ETH_USDT_bars.csv
 !**/requirements.txt
+
+# Reports
+reports/
 
 # API keys and secrets
 config.py
@@ -92,3 +113,11 @@ secrets.json
 *.db
 *.sqlite
 *.sqlite3
+
+# Model artifacts
+models/checkpoints/
+*.pt
+*.pth
+
+# Trading readiness reports
+trading_readiness_report_*.json

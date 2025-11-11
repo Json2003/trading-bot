@@ -1,11 +1,12 @@
 """Simple SQLite-backed job status store for pretrain jobs."""
+
 import sqlite3
 from pathlib import Path
 import json
 from datetime import datetime, timezone
 
 BASE = Path(__file__).resolve().parents[0]
-DB_PATH = BASE / 'model_store' / 'jobs.db'
+DB_PATH = BASE / "model_store" / "jobs.db"
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
@@ -18,7 +19,7 @@ def _get_conn():
 def init_db():
     conn = _get_conn()
     cur = conn.cursor()
-    cur.execute('''
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS jobs (
       id TEXT PRIMARY KEY,
       job_file TEXT,
@@ -29,7 +30,7 @@ def init_db():
       progress REAL,
       result_json TEXT
     )
-    ''')
+    """)
     conn.commit()
     conn.close()
 
@@ -38,23 +39,30 @@ def create_job(job_id: str, job_file: str):
     init_db()
     conn = _get_conn()
     cur = conn.cursor()
-    cur.execute('INSERT OR REPLACE INTO jobs (id, job_file, status, created_at) VALUES (?,?,?,?)',
-                (job_id, job_file, 'queued', datetime.now(timezone.utc).isoformat()))
+    cur.execute(
+        "INSERT OR REPLACE INTO jobs (id, job_file, status, created_at) VALUES (?,?,?,?)",
+        (job_id, job_file, "queued", datetime.now(timezone.utc).isoformat()),
+    )
     conn.commit()
     conn.close()
 
 
-def update_job_status(job_id: str, status: str, progress: float = None, result: dict = None):
+from typing import Optional, Any
+
+
+def update_job_status(job_id: str, status: str, progress: Optional[float] = None, result: Optional[dict] = None):
     conn = _get_conn()
     cur = conn.cursor()
     now = datetime.now(timezone.utc).isoformat()
-    if status == 'running':
-        cur.execute('UPDATE jobs SET status=?, started_at=? WHERE id=?', (status, now, job_id))
-    elif status in ('done', 'failed'):
-        cur.execute('UPDATE jobs SET status=?, finished_at=?, progress=?, result_json=? WHERE id=?',
-                    (status, now, progress, json.dumps(result) if result else None, job_id))
+    if status == "running":
+        cur.execute("UPDATE jobs SET status=?, started_at=? WHERE id=?", (status, now, job_id))
+    elif status in ("done", "failed"):
+        cur.execute(
+            "UPDATE jobs SET status=?, finished_at=?, progress=?, result_json=? WHERE id=?",
+            (status, now, progress, json.dumps(result) if result else None, job_id),
+        )
     else:
-        cur.execute('UPDATE jobs SET status=?, progress=? WHERE id=?', (status, progress, job_id))
+        cur.execute("UPDATE jobs SET status=?, progress=? WHERE id=?", (status, progress, job_id))
     conn.commit()
     conn.close()
 
@@ -62,7 +70,7 @@ def update_job_status(job_id: str, status: str, progress: float = None, result: 
 def get_job(job_id: str):
     conn = _get_conn()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM jobs WHERE id=?', (job_id,))
+    cur.execute("SELECT * FROM jobs WHERE id=?", (job_id,))
     row = cur.fetchone()
     conn.close()
     if not row:

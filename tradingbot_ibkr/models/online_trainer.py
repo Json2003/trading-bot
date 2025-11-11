@@ -1,19 +1,69 @@
-"""Online incremental trainer using River.
+"""Online incremental trainer using River with a pure-Python fallback."""
 
-This trainer accepts feature dicts per bar and incrementally updates a classifier/regressor.
-It exposes predict() and learn() methods and logs predictions to disk for evaluation.
-"""
-from __future__ import annotations
-
+from pathlib import Path
 import logging
 import pickle
-from pathlib import Path
+import math
 from typing import Dict
 
-from river import linear_model, preprocessing
+try:  # pragma: no cover - exercised in tests via fallback
+    from river import linear_model, preprocessing
 
-MODEL_DIR = Path(__file__).resolve().parents[1] / 'model_store'
+    _HAS_RIVER = True
+except Exception:  # pragma: no cover - offline environments
+    _HAS_RIVER = False
+
+
+class _FallbackLogReg:
+    """Very small logistic regression trained with gradient descent."""
+
+    def __init__(self, lr: float = 0.1):
+        self.lr = lr
+        self.bias = 0.0
+        self.weights: dict[str, float] = {}
+
+    def _sigmoid(self, z: float) -> float:
+        z = max(-60.0, min(60.0, z))
+        return 1.0 / (1.0 + math.exp(-z))
+
+    def predict_proba_one(self, x: dict) -> dict[int, float]:
+        z = self.bias
+        for key, value in x.items():
+            z += self.weights.get(key, 0.0) * float(value)
+        prob = self._sigmoid(z)
+        return {1: prob, 0: 1.0 - prob}
+
+    def learn_one(self, x: dict, y: int):
+        prob = self.predict_proba_one(x)[1]
+        error = float(y) - prob
+        for key, value in x.items():
+            self.weights[key] = self.weights.get(key, 0.0) + self.lr * error * float(value)
+        self.bias += self.lr * error
+        return self
+
+
+class _FallbackPipeline:
+    def __init__(self):
+        self.model = _FallbackLogReg()
+
+    def predict_proba_one(self, x: dict) -> dict[int, float]:
+        return self.model.predict_proba_one(x)
+
+    def learn_one(self, x: dict, y: int):
+        self.model.learn_one(x, y)
+        return self
+MODEL_DIR = Path(__file__).resolve().parents[1] / "model_store"
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _make_default_model():
+    """Construct the default online model, using River if available."""
+    if _HAS_RIVER:
+        # Import inside function to avoid unbound-name issues when River isn't installed
+        from river import linear_model as _lm, preprocessing as _pp
+
+        return _pp.StandardScaler() | _lm.LogisticRegression()
+    return _FallbackPipeline()
 
 
 class OnlineTrainer:
@@ -21,11 +71,8 @@ class OnlineTrainer:
 
     def __init__(self, min_samples_ready: int = 200) -> None:
         # simple logistic regression pipeline for a binary up/down label
-        self.model = preprocessing.StandardScaler() | linear_model.LogisticRegression()
-        self.path = MODEL_DIR / 'online_model.pkl'
-        self._samples_seen = 0
-        self._trained = False
-        self._min_samples_ready = max(0, int(min_samples_ready))
+        self.model = _make_default_model()
+        self.path = MODEL_DIR / "online_model.pkl"
 
     def predict_proba(self, x: Dict) -> float:
         """Return probability of the positive class."""
@@ -45,51 +92,24 @@ class OnlineTrainer:
                 return 0.5
             return value
         except Exception:
-            logging.exception('predict failed')
+            logging.exception("predict failed")
             return 0.0
 
-    def learn_one(self, x: Dict, y: int) -> None:
-        """Update the model incrementally and track readiness."""
-        try:
-            self.model.learn_one(x, y)
-            self._samples_seen += 1
-            if self._samples_seen >= self._min_samples_ready:
-                self._trained = True
-        except Exception:
-            logging.exception('learn_one failed')
+    def learn_one(self, x: dict, y: int):
+        self.model.learn_one(x, y)
 
-    def is_ready(self) -> bool:
-        """Return True once the trainer has sufficient data or a persisted model."""
-        return self._trained
-
-    def save(self) -> None:
-        """Persist the current model to disk."""
-        try:
-            payload = {
-                'model': self.model,
-                'samples_seen': self._samples_seen,
-                'trained': self._trained,
-                'min_samples_ready': self._min_samples_ready,
-            }
-            with open(self.path, 'wb') as f:
-                pickle.dump(payload, f)
-        except Exception:
-            logging.exception('saving online model failed')
+    def save(self):
+        with open(self.path, "wb") as f:
+            pickle.dump(self.model, f)
 
     def load(self) -> None:
         """Load a previously saved model if present."""
         if self.path.exists():
-            try:
-                with open(self.path, 'rb') as f:
-                    data = pickle.load(f)
-                if isinstance(data, dict) and 'model' in data:
-                    self.model = data['model']
-                    self._samples_seen = data.get('samples_seen', self._samples_seen)
-                    self._trained = data.get('trained', self._samples_seen >= self._min_samples_ready)
-                    self._min_samples_ready = data.get('min_samples_ready', self._min_samples_ready)
-                else:
-                    # Backwards compatibility with older payloads storing the raw model
-                    self.model = data
-                    self._trained = True
-            except Exception:
-                logging.exception('loading online model failed; keeping fresh model')
+            with open(self.path, "rb") as f:
+                obj = pickle.load(f)
+            # Validate loaded object has expected API; otherwise reset to a fresh model
+            if hasattr(obj, "predict_proba_one") and hasattr(obj, "learn_one"):
+                self.model = obj
+            else:
+                logging.warning("Ignoring incompatible persisted model; resetting to default")
+                self.model = _make_default_model()

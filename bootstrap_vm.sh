@@ -12,6 +12,7 @@ REPO_URL="$(git remote get-url origin 2>/dev/null || echo '<REPO_URL>')"
 OUT_ROOT="$HOME/raw_all"
 ENV_NAME="pipeline"
 CONDA_DIR="$HOME/miniconda"
+TARGET_DIR="${TARGET_DIR:-splitstar-operations-console}"
 
 function usage(){
   cat <<EOF
@@ -56,10 +57,10 @@ done
 # Clone repo if not present
 if [ ! -d "$PWD/.git" ]; then
   if [ "$DRY_RUN" = true ]; then
-    echo "  [DRY] git clone $REPO_URL splitstar-operations-console && cd splitstar-operations-console"
+    echo "  [DRY] git clone $REPO_URL $TARGET_DIR && cd $TARGET_DIR"
   else
-    git clone "$REPO_URL" splitstar-operations-console
-    cd splitstar-operations-console
+    git clone "$REPO_URL" "$TARGET_DIR"
+    cd "$TARGET_DIR"
   fi
 else
   echo "  repo appears to be present in $PWD"

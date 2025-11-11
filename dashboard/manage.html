@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Splitstar Operations Console — Manage</title>
+  <style>
+    :root { --bg: #0b0f19; --card: #111827; --muted: #6b7280; --text: #e5e7eb; --accent: #06b6d4; --good: #10b981; --bad: #ef4444; --border: #1f2937; }
+    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; color: var(--text); background: #0b0f19; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(11,15,25,0.9); backdrop-filter: blur(6px); }
+    .title { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; letter-spacing: .2px; }
+    .ws-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; background: #f59e0b; }
+    .ws-ok { background: var(--good); } .ws-bad { background: var(--bad); }
+    .container { padding: 20px; max-width: 1100px; margin: 0 auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .card h2 { font-size: 13px; margin: 0 0 10px; color: #cbd5e1; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+    .label { font-size: 12px; color: var(--muted); }
+    .value { font-weight: 600; font-size: 16px; }
+    .row { display: flex; align-items: center; gap: 10px; }
+    .stack { display: grid; gap: 10px; }
+    button { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: #0b1220; color: var(--text); cursor: pointer; }
+    input, select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: #0b1220; color: var(--text); }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #0b1220; border: 1px solid var(--border); color: #9ca3af; }
+    #runstate { font-weight: 600; }
+    #runstate.on { border-color: var(--good); color: var(--good); background: rgba(16,185,129,0.1); }
+    #runstate.auto { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.12); }
+    #runstate.off { border-color: var(--border); color: var(--muted); background: rgba(15,23,42,0.6); }
+    .app-shell { display: none; min-height: 100vh; }
+    body.authed .app-shell { display: block; }
+    #loginOverlay { position: fixed; inset: 0; background: rgba(11,15,25,0.92); display: flex; align-items: center; justify-content: center; padding: 32px 16px; z-index: 20; }
+    body.authed #loginOverlay { display: none; }
+    #loginPanel { background: #111827; border: 1px solid var(--border); border-radius: 14px; padding: 32px; width: min(360px, 90vw); box-shadow: 0 25px 60px rgba(0,0,0,0.45); display: grid; gap: 16px; }
+    #loginPanel h1 { margin: 0; font-size: 20px; font-weight: 600; }
+    #loginPanel p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    #loginPanel label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .02em; }
+    #loginPanel input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #0b1220; color: var(--text); margin-top: 4px; }
+    #loginPanel button { width: 100%; font-size: 15px; padding: 10px 14px; background: var(--accent); color: #032030; border: none; font-weight: 600; border-radius: 10px; cursor: pointer; }
+    .ok { color: var(--good); } .bad { color: var(--bad); } .muted { color: var(--muted); }
+    .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .table th, .table td { border-bottom: 1px solid var(--border); padding: 6px 8px; text-align: left; }
+    .table th { color: #9ca3af; font-weight: 600; }
+    .scroll { max-height: 280px; overflow: auto; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .headline { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+    .headline .src { color: #9ca3af; font-size: 12px; }
+    .headline .ts { color: #9ca3af; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div id="loginOverlay">
+    <form id="loginForm">
+      <div id="loginPanel">
+        <h1>Splitstar Operations Console</h1>
+        <p>Sign in to unlock live controls with your assigned credentials.</p>
+        <div>
+          <label for="user">Username</label>
+          <input id="user" placeholder="Enter username" autocomplete="username" />
+        </div>
+        <div>
+          <label for="pass">Password</label>
+          <input id="pass" type="password" placeholder="Enter password" autocomplete="current-password" />
+        </div>
+        <button type="button" onclick="login()">Sign In</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="app-shell">
+    <header>
+      <div class="title"><span id="wsdot" class="ws-dot"></span><span id="brand">Splitstar Operations Console</span><span id="runstate" class="chip off">Idle</span></div>
+      <div class="chips">
+        <span id="whoami" class="chip">Not authenticated</span>
+        <button id="btnLogin" onclick="showLogin()">Login</button>
+        <button onclick="logout()">Logout</button>
+      </div>
+    </header>
+    <div class="container">
+      <div class="grid">
+        <div class="card stack">
+          <h2>Settings</h2>
+          <div class="row"><input type="checkbox" id="paper" /> <label for="paper">Paper Trading</label></div>
+          <div class="row"><input type="checkbox" id="cont" /> <label for="cont">Continuous Backtest</label></div>
+          <div class="row"><label class="label" for="exchange" style="width: 160px;">Exchange</label><input id="exchange" placeholder="binance" /></div>
+        <div class="row">
+          <label class="label" for="strategy" style="width: 160px;">Strategy</label>
+          <select id="strategy"><option value="sma_cross">sma_cross</option><option value="enhanced">enhanced</option><option value="breakout">breakout</option></select>
+        </div>
+        <div class="row"><label class="label" for="interval" style="width: 160px;">Backtest Interval (s)</label><input id="interval" type="number" min="5" step="5" value="60" /></div>
+        <div class="row"><label class="label" for="risk" style="width: 160px;">Risk %</label><input id="risk" type="number" step="0.001" min="0" max="1" /></div>
+        <div class="row"><label class="label" for="sl" style="width: 160px;">Stop Loss %</label><input id="sl" type="number" step="0.001" min="0" max="1" /></div>
+        <div class="row"><label class="label" for="tp" style="width: 160px;">Take Profit %</label><input id="tp" type="number" step="0.001" min="0" max="1" /></div>
+        <div class="row" style="margin-top:8px;"><button onclick="saveSettings()">Save Settings</button></div>
+      </div>
+
+      <div class="card stack">
+        <h2>Controls</h2>
+        <div class="row">
+          <button id="btnStart" onclick="startBot()" disabled>Start Bot</button>
+          <button id="btnStop" onclick="stopBot()" disabled>Stop Bot</button>
+          <button onclick="loadInitialMetrics()">Refresh</button>
+        </div>
+        <div class="stack" style="margin-top:8px;">
+          <div class="label">Uptime</div>
+          <div class="value" id="uptime">-</div>
+          <div class="label">Active Connections</div>
+          <div class="value" id="conns">-</div>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <h2>Key Metrics</h2>
+        <div class="label">Equity</div>
+        <div class="value" id="equity">-</div>
+        <div class="label">Daily PnL</div>
+        <div class="value" id="pnl">-</div>
+        <div class="label">Sharpe</div>
+        <div class="value" id="sharpe">-</div>
+        <div class="label">Drawdown</div>
+        <div class="value" id="drawdown">-</div>
+        <div class="label" style="margin-top:8px;">Equity Curve</div>
+        <svg id="equitySpark" width="100%" height="60" viewBox="0 0 300 60"></svg>
+      </div>
+
+      <div class="card stack">
+        <h2>Account</h2>
+        <div class="label">Equity</div>
+        <div class="value" id="acct_equity">-</div>
+        <div class="label">Daily PnL</div>
+        <div class="value" id="acct_daily_pnl">-</div>
+        <div class="label">Total PnL</div>
+        <div class="value" id="acct_total_pnl">-</div>
+        <div class="label">Total Trades</div>
+        <div class="value" id="acct_total_trades">-</div>
+        <div class="label">Updated</div>
+        <div class="value muted" id="acct_updated">-</div>
+      </div>
+
+      <div class="card stack">
+        <h2>Markets</h2>
+        <div class="scroll">
+          <table class="table" id="tblMarkets">
+            <thead><tr><th>Symbol</th><th>Bid</th><th>Ask</th><th>Last</th><th>Change</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <h2>Live Price + Signals</h2>
+        <canvas id="ohlcvChart" height="140" style="width:100%; background:#0b1220; border:1px solid var(--border); border-radius:8px;"></canvas>
+      </div>
+
+      <div class="card stack">
+        <h2>News</h2>
+        <div class="scroll" id="newsList"></div>
+      </div>
+
+      <div class="card stack">
+        <h2>Current Trades</h2>
+        <div class="scroll">
+          <table class="table" id="tblCurrent">
+            <thead><tr><th>Symbol</th><th>Side</th><th>Qty</th><th>Entry</th><th>PnL</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <h2>Proposed Trades</h2>
+        <div class="scroll">
+          <table class="table" id="tblProposed">
+            <thead><tr><th>Symbol</th><th>Side</th><th>Confidence</th><th>Reason</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <h2>Activity</h2>
+        <div class="scroll" id="activity"></div>
+      </div>
+    </div>
+  </div>
+    <div id="status" style="position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; background: #0b1220; color: #cbd5e1; border: 1px solid #1f2937; padding: 8px 12px; border-radius: 10px; opacity: 0; transition: opacity .3s;"></div>
+  </div>
+
+  <script>
+  const API = `${location.protocol}//${location.host || (location.hostname + ':8000')}`;
+  let ws;
+  let token = localStorage.getItem('authToken') || '';
+  let currentUser = localStorage.getItem('authUser') || '';
+  let runMeta = { running: false, status: 'idle' };
+  const overlay = document.getElementById('loginOverlay');
+  const loginForm = document.getElementById('loginForm');
+  const btnLogin = document.getElementById('btnLogin');
+
+  function setAuth(tk, user) {
+    token = tk || '';
+    currentUser = user || '';
+    if (token) localStorage.setItem('authToken', token); else localStorage.removeItem('authToken');
+    if (user) localStorage.setItem('authUser', user); else localStorage.removeItem('authUser');
+    document.body.classList.toggle('authed', Boolean(token));
+    if (btnLogin) {
+      btnLogin.textContent = token ? 'Switch Account' : 'Login';
+    }
+    document.getElementById('whoami').textContent = token ? `Logged in as ${currentUser}` : 'Not authenticated';
+    updateRunState(runMeta.running, runMeta.status);
+    if (!token) {
+      setTimeout(() => {
+        const userInput = document.getElementById('user');
+        if (userInput) userInput.focus();
+      }, 120);
+    }
+  }
+
+  function authHeaders() {
+    return token ? { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+  }
+
+  function updateRunState(isRunning, status) {
+    const badge = document.getElementById('runstate');
+    const normalized = (status || '').toLowerCase();
+    let label = 'Idle';
+    let cls = 'chip ';
+    if (isRunning || normalized === 'running') {
+      label = 'Running';
+      cls += 'on';
+    } else if (normalized === 'auto') {
+      label = 'Auto';
+      cls += 'auto';
+    } else if (normalized === 'paused') {
+      label = 'Paused';
+      cls += 'off';
+    } else {
+      cls += 'off';
+    }
+    badge.textContent = label;
+    badge.className = cls.trim();
+    const startDisabled = !token || isRunning || normalized === 'auto';
+    const stopDisabled = !token || (!isRunning && normalized !== 'auto');
+    const btnStart = document.getElementById('btnStart');
+    const btnStop = document.getElementById('btnStop');
+    if (btnStart) btnStart.disabled = startDisabled;
+    if (btnStop) btnStop.disabled = stopDisabled;
+  }
+
+  function connectWS() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    const host = location.host || (location.hostname + ':8000');
+    ws = new WebSocket(`${proto}://${host}/ws`);
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.brand) document.getElementById('brand').textContent = msg.brand;
+        if (msg.metrics) renderMetrics(msg.metrics);
+        if (Array.isArray(msg.markets)) renderMarkets(msg.markets);
+        if (Array.isArray(msg.news)) renderNews(msg.news);
+        if (Array.isArray(msg.trades_current)) renderCurrent(msg.trades_current);
+        if (Array.isArray(msg.trades_proposed)) renderProposed(msg.trades_proposed);
+        if (Array.isArray(msg.activity)) renderActivity(msg.activity);
+        if (msg.server_stats) renderServerStats(msg.server_stats);
+        if (msg.account) renderAccount(msg.account);
+        if (Array.isArray(msg.equity_history)) renderEquitySpark(msg.equity_history);
+        if (msg.ohlcv && Array.isArray(msg.ohlcv.series)) renderOhlcv(msg.ohlcv);
+      } catch (e) {
+        console.error('WS parse error', e);
+      }
+    };
+    ws.onopen = () => {
+      const dot = document.getElementById('wsdot');
+      dot.classList.add('ws-ok');
+      dot.classList.remove('ws-bad');
+    };
+    ws.onclose = () => {
+      const dot = document.getElementById('wsdot');
+      dot.classList.remove('ws-ok');
+      dot.classList.add('ws-bad');
+      setTimeout(connectWS, 2000);
+    };
+  }
+
+  async function saveSettings() {
+    const payload = {
+      PAPER: document.getElementById('paper').checked,
+      CONTINUOUS_BACKTEST: document.getElementById('cont').checked,
+      STRATEGY: document.getElementById('strategy').value,
+      BACKTEST_INTERVAL: parseInt(document.getElementById('interval').value || '60'),
+      RISK_PCT: parseFloat(document.getElementById('risk').value || '0.01'),
+      STOP_LOSS_PCT: parseFloat(document.getElementById('sl').value || '0.02'),
+      TAKE_PROFIT_PCT: parseFloat(document.getElementById('tp').value || '0.04'),
+      EXCHANGE: document.getElementById('exchange').value || 'binance'
+    };
+    try {
+      const res = await fetch(API + '/settings', { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+      if (!res.ok) throw new Error('Settings update failed');
+      const js = await res.json();
+      console.log('Settings saved', js);
+      toast('Settings saved');
+    } catch (e) {
+      console.error(e);
+      toast('Save failed');
+    }
+  }
+
+  async function loadSettings() {
+    try {
+      const res = await fetch(API + '/settings');
+      const js = await res.json();
+      applySettings(js.settings || {});
+    } catch (e) {
+      console.error('Load settings failed', e);
+    }
+  }
+
+  function applySettings(s) {
+    document.getElementById('paper').checked = !!s.PAPER;
+    document.getElementById('cont').checked = !!s.CONTINUOUS_BACKTEST;
+    document.getElementById('strategy').value = s.STRATEGY || 'sma_cross';
+    document.getElementById('interval').value = s.BACKTEST_INTERVAL ?? 60;
+    document.getElementById('risk').value = s.RISK_PCT ?? 0.01;
+    document.getElementById('sl').value = s.STOP_LOSS_PCT ?? 0.02;
+    document.getElementById('tp').value = s.TAKE_PROFIT_PCT ?? 0.04;
+    document.getElementById('exchange').value = s.EXCHANGE || 'binance';
+  }
+
+  function renderMetrics(m) {
+    runMeta.running = !!m.running;
+    runMeta.status = m.status || (runMeta.running ? 'running' : 'idle');
+    document.getElementById('equity').textContent = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(m.equity || 0);
+    const pnlEl = document.getElementById('pnl');
+    pnlEl.textContent = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(m.daily_pnl || 0);
+    pnlEl.className = 'value ' + ((m.daily_pnl || 0) >= 0 ? 'ok' : 'bad');
+    document.getElementById('sharpe').textContent = ((m.sharpe || 0)).toFixed(2);
+    document.getElementById('drawdown').textContent = ((m.drawdown || 0) * 100).toFixed(2) + '%';
+    updateRunState(runMeta.running, runMeta.status);
+  }
+
+  function renderServerStats(s) {
+    document.getElementById('uptime').textContent = `${Math.floor((s.uptime_seconds || 0) / 3600)}h ${Math.floor(((s.uptime_seconds || 0) % 3600) / 60)}m ${Math.floor((s.uptime_seconds || 0) % 60)}s`;
+    document.getElementById('conns').textContent = s.active_connections ?? 0;
+  }
+
+  async function loadInitialMetrics() {
+    try {
+      const [mRes, aRes, hRes, mkRes, nwRes, tcRes, tpRes, acRes] = await Promise.all([
+        fetch(API + '/metrics'),
+        fetch(API + '/account'),
+        fetch(API + '/health'),
+        fetch(API + '/feed/markets'),
+        fetch(API + '/feed/news'),
+        fetch(API + '/trades/current'),
+        fetch(API + '/trades/proposed'),
+        fetch(API + '/activity/log')
+      ]);
+      const metrics = await mRes.json();
+      const account = await aRes.json();
+      const health = await hRes.json();
+      const markets = await mkRes.json();
+      const news = await nwRes.json();
+      const tradesCurrent = await tcRes.json();
+      const tradesProposed = await tpRes.json();
+      const activity = await acRes.json();
+      renderMetrics(metrics);
+      renderAccount(account);
+      renderServerStats({ uptime_seconds: health.uptime_seconds, active_connections: health.active_connections });
+      document.getElementById('brand').textContent = health.brand || 'Splitstar Operations Console';
+      renderMarkets(markets.markets || []);
+      renderNews(news.news || []);
+      renderCurrent(tradesCurrent.trades || []);
+      renderProposed(tradesProposed.trades || []);
+      renderActivity(activity.activity || []);
+      // OHLCV initial draw (optional)
+      try {
+        const oh = await (await fetch(API + '/feed/ohlcv?symbol=BTC/USDT')).json();
+        if (oh && Array.isArray(oh.ohlcv)) renderOhlcv({symbol: oh.symbol, series: oh.ohlcv});
+      } catch (e) {}
+    } catch (e) {
+      console.error('Initial load failed', e);
+    }
+  }
+
+  function renderEquitySpark(hist){ const svg=document.getElementById('equitySpark'); if(!svg) return; const w=300,h=60; svg.setAttribute('viewBox',`0 0 ${w} ${h}`); const vals=(hist||[]).map(p=>p.equity).filter(v=>typeof v==='number'); svg.innerHTML=''; if(vals.length<2) return; const min=Math.min(...vals), max=Math.max(...vals); const sx=(i)=> (i/(vals.length-1))*w; const sy=(v)=> h - ((v-min)/(max-min||1))*h; let d='M '+sx(0)+' '+sy(vals[0]); for(let i=1;i<vals.length;i++){ d+=' L '+sx(i)+' '+sy(vals[i]); } const path=document.createElementNS('http://www.w3.org/2000/svg','path'); path.setAttribute('d',d); path.setAttribute('stroke', 'var(--accent)'); path.setAttribute('stroke-width','2'); path.setAttribute('fill','none'); svg.appendChild(path); }
+
+  function renderOhlcv(ohl){ const canvas=document.getElementById('ohlcvChart'); if(!canvas) return; const ctx=canvas.getContext('2d'); const dpr=window.devicePixelRatio||1; const width=canvas.clientWidth; const height=canvas.height; canvas.width=width*dpr; canvas.height=height*dpr; ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr,dpr); const series=(ohl.series||[]).slice(-150); const closes=series.map(x=>x.c); if(closes.length<5){ ctx.clearRect(0,0,width,height); return; } const sma=(arr,n)=>arr.map((_,i)=> i+1<n?null: (arr.slice(i+1-n,i+1).reduce((a,b)=>a+b,0)/n)); const s12=sma(closes,12), s26=sma(closes,26); const finite=(a)=>a.filter(Number.isFinite); const min=Math.min(...finite(closes)), max=Math.max(...finite(closes)); const x=(i)=> (i/(closes.length-1))*width; const y=(v)=> height - ((v-min)/(max-min||1))*height; ctx.clearRect(0,0,width,height); // price
+    ctx.beginPath(); ctx.strokeStyle='#60a5fa'; ctx.lineWidth=1.5; ctx.moveTo(x(0), y(closes[0])); for(let i=1;i<closes.length;i++){ ctx.lineTo(x(i), y(closes[i])); } ctx.stroke(); // sma12
+    ctx.beginPath(); ctx.strokeStyle='#10b981'; let moved=false; for(let i=0;i<s12.length;i++){ if(!Number.isFinite(s12[i])) continue; if(!moved){ ctx.moveTo(x(i), y(s12[i])); moved=true;} else { ctx.lineTo(x(i), y(s12[i])); } } ctx.stroke(); // sma26
+    ctx.beginPath(); ctx.strokeStyle='#f59e0b'; moved=false; for(let i=0;i<s26.length;i++){ if(!Number.isFinite(s26[i])) continue; if(!moved){ ctx.moveTo(x(i), y(s26[i])); moved=true;} else { ctx.lineTo(x(i), y(s26[i])); } } ctx.stroke(); }
+
+  function renderMarkets(rows){ const tb = document.querySelector('#tblMarkets tbody'); tb.innerHTML = ''; (rows||[]).forEach(r=>{ const tr=document.createElement('tr'); const ch = (r.change_pct||0); tr.innerHTML = `<td class="mono">${r.symbol||''}</td><td class="mono">${(r.bid??'').toLocaleString()}</td><td class="mono">${(r.ask??'').toLocaleString()}</td><td class="mono">${(r.last??'').toLocaleString()}</td><td class="${ch>=0?'ok':'bad'}">${ch.toFixed(2)}%</td>`; tb.appendChild(tr); }); }
+  function renderNews(list){ const box = document.getElementById('newsList'); box.innerHTML = ''; (list||[]).slice(-50).reverse().forEach(n=>{ const div=document.createElement('div'); div.className='headline'; const dt=new Date(n.ts||Date.now()); div.innerHTML=`<div class="src">${n.source||''}</div><div>${n.headline||''}</div><div class="ts">${dt.toLocaleTimeString()}</div>`; box.appendChild(div); }); }
+  function renderCurrent(rows){ const tb = document.querySelector('#tblCurrent tbody'); tb.innerHTML = ''; (rows||[]).forEach(r=>{ const tr=document.createElement('tr'); const pnl = r.pnl||0; tr.innerHTML = `<td class="mono">${r.symbol||''}</td><td>${r.side||''}</td><td class="mono">${r.qty||''}</td><td class="mono">${r.entry||''}</td><td class="mono ${pnl>=0?'ok':'bad'}">${pnl.toFixed(2)}</td>`; tb.appendChild(tr); }); }
+  function renderProposed(rows){ const tb = document.querySelector('#tblProposed tbody'); tb.innerHTML = ''; (rows||[]).forEach(r=>{ const tr=document.createElement('tr'); const conf = r.confidence||0; tr.innerHTML = `<td class="mono">${r.symbol||''}</td><td>${r.side||''}</td><td class="mono">${(conf*100).toFixed(conf<1?0:2)}%</td><td>${r.reason||''}</td>`; tb.appendChild(tr); }); }
+  function renderActivity(list){ const box=document.getElementById('activity'); box.innerHTML=''; (list||[]).slice(-100).reverse().forEach(a=>{ const dt=new Date(a.ts||Date.now()); const div=document.createElement('div'); div.className='row'; div.style.borderBottom='1px solid var(--border)'; div.style.padding='6px 0'; div.innerHTML=`<span class="muted" style="width:120px;">${dt.toLocaleTimeString()}</span><span>${a.message||''}</span>`; box.appendChild(div); }); }
+
+  function renderAccount(a){
+    const fmtUsd = (v)=> new Intl.NumberFormat(undefined,{style:'currency',currency:'USD',maximumFractionDigits:2}).format(v||0);
+    const eq = document.getElementById('acct_equity');
+    const d = document.getElementById('acct_daily_pnl');
+    const t = document.getElementById('acct_total_pnl');
+    const n = document.getElementById('acct_total_trades');
+    const u = document.getElementById('acct_updated');
+    eq.textContent = fmtUsd(a.equity||0);
+    d.textContent = (a.daily_pnl||0).toLocaleString(undefined,{maximumFractionDigits:2});
+    d.className = 'value ' + ((a.daily_pnl||0)>=0?'ok':'bad');
+    t.textContent = (a.total_pnl||0).toLocaleString(undefined,{maximumFractionDigits:2});
+    t.className = 'value ' + ((a.total_pnl||0)>=0?'ok':'bad');
+    n.textContent = a.total_trades ?? 0;
+    try { const dt = a.timestamp ? new Date(a.timestamp) : new Date(); u.textContent = dt.toLocaleString(); } catch(e){ u.textContent = '-'; }
+  }
+
+  async function login(){
+    const u=document.getElementById('user').value.trim();
+    const p=document.getElementById('pass').value;
+    if(!u||!p){ toast('Enter username and password'); return; }
+    try {
+      const r = await fetch(API + '/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) });
+      if(!r.ok) throw new Error();
+      const js=await r.json();
+      setAuth(js.access_token, (js.user&&js.user.username)||u);
+      toast('Logged in');
+    } catch(e){
+      console.error(e);
+      toast('Login failed');
+    }
+  }
+
+  function logout(silent=false){
+    const wasAuthed = Boolean(token);
+    setAuth('', '');
+    if (wasAuthed && !silent) toast('Logged out');
+  }
+
+  function showLogin(){
+    logout(true);
+  }
+
+  async function startBot(){
+    try {
+      const r=await fetch(API + '/control/start',{method:'POST', headers:authHeaders()});
+      if(!r.ok) throw new Error();
+      const js=await r.json();
+      if(typeof js.running === 'boolean'){
+        runMeta.running = !!js.running;
+        runMeta.status = runMeta.running ? 'running' : runMeta.status;
+        updateRunState(runMeta.running, runMeta.status);
+      }
+      toast(js.message||'Started');
+    } catch(e){
+      console.error(e);
+      toast('Start failed');
+    }
+  }
+
+  async function stopBot(){
+    try {
+      const r=await fetch(API + '/control/stop',{method:'POST', headers:authHeaders()});
+      if(!r.ok) throw new Error();
+      const js=await r.json();
+      if(typeof js.running === 'boolean'){
+        runMeta.running = !!js.running;
+        runMeta.status = runMeta.running ? runMeta.status : 'idle';
+        updateRunState(runMeta.running, runMeta.status);
+      }
+      toast(js.message||'Stopped');
+    } catch(e){
+      console.error(e);
+      toast('Stop failed');
+    }
+  }
+
+  function toast(msg){
+    if (!msg) return;
+    const el=document.getElementById('status');
+    el.textContent=msg;
+    el.style.opacity=1;
+    setTimeout(()=>el.style.opacity=0,1600);
+  }
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      login();
+    });
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    connectWS();
+    loadSettings();
+    loadInitialMetrics();
+    setAuth(token,currentUser);
+  });
+  </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 ## Overview
 
 The Splitstar Operations Console provides comprehensive backtesting,
-optimization, and live trading orchestration with advanced features including:
+optimization, and live trading capabilities with advanced features including:
 
 - **Grid Search Optimization** with parallel processing and adaptive pruning
 - **Multiple ML Models** with hyperparameter optimization (Random Forest, Gradient Boosting, Neural Networks)

@@ -1,0 +1,20 @@
+timezone: "America/Los_Angeles"
+
+equities:
+  # Add/modify freely
+  - AAPL
+  - MSFT
+  - NVDA
+  - SPY
+  - QQQ
+
+crypto:
+  # Use CoinGecko ids (lowercase hyphenated)
+  - bitcoin
+  - ethereum
+  - solana
+  - binancecoin
+  - ripple
+
+lookback_days: 200         # how much history to fetch daily (safe window)
+out_dir: "data/daily"      # where parquet lands

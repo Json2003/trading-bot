@@ -11,8 +11,12 @@ import json
 import io
 import csv
 
+from typing import Any, Optional, cast
+# Optional pandas import: annotate as Any to simplify type checks
+pd: Any = None
 try:  # pragma: no cover - exercised via stub in tests
-    import pandas as pd  # type: ignore
+    import pandas as _pd  # type: ignore
+    pd = _pd
 except Exception:  # pragma: no cover - fallback if pandas missing
     pd = None
 
@@ -157,9 +161,17 @@ def get_or_update_model_version() -> str:
             data = {"last_version": 0, "last_hash": ""}
 
     if data.get('last_hash') == mh:
-        ver = data.get('last_version', 0)
+        raw = data.get('last_version', 0) or 0
+        try:
+            ver = int(cast(float, raw))
+        except Exception:
+            ver = 0
     else:
-        ver = int(data.get('last_version', 0)) + 1
+        raw = data.get('last_version', 0) or 0
+        try:
+            ver = int(cast(float, raw)) + 1
+        except Exception:
+            ver = 1
         data['last_version'] = ver
         data['last_hash'] = mh
         MODEL_VERSION_FILE.write_text(json.dumps(data))

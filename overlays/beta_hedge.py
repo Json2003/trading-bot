@@ -2,21 +2,23 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 
-import math
-
+import numpy as np
 import pandas as pd
 
 
-def _normalise_beta_target(target: float | Sequence[float]) -> tuple[float, float]:
-    if isinstance(target, Iterable) and not isinstance(target, (str, bytes)):
-        values = [float(x) for x in target]
-        if not values:
-            raise ValueError("target_beta sequence cannot be empty")
-        return min(values), max(values)
-    target_val = float(target)
-    return target_val, target_val
+def _resolve_target(beta: float, target: float | Sequence[float]) -> float:
+    """Return the desired beta target, supporting a range specification."""
+
+    if isinstance(target, Sequence) and not isinstance(target, (str, bytes)):
+        seq = [float(value) for value in target if value is not None]
+        if len(seq) == 2:
+            lower, upper = min(seq), max(seq)
+            if lower <= beta <= upper:
+                return beta
+            return upper if beta > upper else lower
+    return float(target)
 
 
 def size_btc_beta_hedge(
@@ -39,8 +41,9 @@ def size_btc_beta_hedge(
     prices : pd.Series
         Latest mark prices for the instruments. Used to compute notionals.
     target_beta : float or Sequence[float]
-        Desired portfolio beta after hedging. A sequence defines the acceptable
-        beta band ``(lower, upper)``.
+        Desired portfolio beta after hedging.  A two-value sequence is treated
+        as ``(min_beta, max_beta)`` and the hedge will only rebalance when the
+        current beta drifts outside this band.
     btc_price : float
         Mark price of the BTC perpetual contract used for hedging.
     contract_size : float, optional
@@ -54,85 +57,84 @@ def size_btc_beta_hedge(
         Number of BTC perpetual contracts to trade (negative implies shorting).
     """
 
-    btc_price = float(btc_price)
-    contract_size = float(contract_size)
-    if btc_price == 0 or contract_size == 0:
-        raise ValueError("btc_price and contract_size must be non-zero")
+    positions = positions.astype(float)
+    betas = betas.astype(float)
+    prices = prices.astype(float)
 
-    lower, upper = _normalise_beta_target(target_beta)
-    if rebalance_buffer < 0:
-        raise ValueError("rebalance_buffer must be non-negative")
-    if lower > upper:
-        lower, upper = upper, lower
+    if hasattr(pd, "concat") and hasattr(positions, "rename"):
+        df = pd.concat(
+            [
+                positions.rename("position"),
+                betas.rename("beta"),
+                prices.rename("price"),
+            ],
+            axis=1,
+            join="inner",
+        ).dropna()
 
-    def _to_mapping(series: pd.Series) -> dict:
-        mapping: dict = {}
-        index = list(getattr(series, "index", []))
-        if index:
-            for key in index:
-                try:
-                    mapping[key] = series[key]
-                except Exception:
-                    continue
-        if not mapping:
-            try:
-                mapping = dict(series)
-            except Exception:
-                mapping = {}
-        return mapping
+        if df.empty:
+            return 0.0
 
-    pos_map = _to_mapping(positions)
-    beta_map = _to_mapping(betas)
-    price_map = _to_mapping(prices)
+        df["notional"] = df["position"] * df["price"]
+        portfolio_value = df["notional"].sum()
+        if not np.isfinite(portfolio_value) or portfolio_value == 0.0:
+            return 0.0
 
-    aligned_symbols = [
-        symbol
-        for symbol in pos_map.keys()
-        if symbol in beta_map and symbol in price_map
-    ]
-
-    notionals: list[float] = []
-    beta_values: list[float] = []
-
-    for symbol in aligned_symbols:
-        try:
-            pos_val = float(pos_map[symbol])
-            beta_val = float(beta_map[symbol])
-            price_val = float(price_map[symbol])
-        except Exception:
-            continue
-        if not all(math.isfinite(value) for value in (pos_val, beta_val, price_val)):
-            continue
-        if price_val <= 0:
-            continue
-        notionals.append(pos_val * price_val)
-        beta_values.append(beta_val)
-
-    if not notionals:
-        return 0.0
-
-    portfolio_value = float(sum(notionals))
-    if abs(portfolio_value) <= 1e-12:
-        return 0.0
-
-    beta_contrib = float(sum(notional * beta for notional, beta in zip(notionals, beta_values)))
-    portfolio_beta = beta_contrib / portfolio_value
-
-    buffered_lower = lower - rebalance_buffer
-    buffered_upper = upper + rebalance_buffer
-    if buffered_lower <= portfolio_beta <= buffered_upper:
-        return 0.0
-
-    if portfolio_beta > upper:
-        target = upper
-    elif portfolio_beta < lower:
-        target = lower
+        beta_contrib = (df["notional"] * df["beta"]).sum()
+        portfolio_beta = beta_contrib / portfolio_value
     else:
-        midpoint = (lower + upper) / 2
-        target = upper if portfolio_beta >= midpoint else lower
+        portfolio_value = 0.0
+        beta_contrib = 0.0
+        pos_index = list(getattr(positions, "index", range(len(positions))))
+        pos_values = list(positions)
+        beta_index = list(getattr(betas, "index", range(len(betas))))
+        beta_values = list(betas)
+        price_index = list(getattr(prices, "index", range(len(prices))))
+        price_values = list(prices)
+
+        beta_map = {label: value for label, value in zip(beta_index, beta_values)}
+        price_map = {label: value for label, value in zip(price_index, price_values)}
+
+        for idx, label in enumerate(pos_index):
+            pos = pos_values[idx] if idx < len(pos_values) else None
+            beta_val = beta_map.get(label)
+            price_val = price_map.get(label)
+            if pos is None or beta_val is None or price_val is None:
+                continue
+            try:
+                notional = float(pos) * float(price_val)
+                beta_component = notional * float(beta_val)
+            except Exception:
+                continue
+            if notional != notional:
+                continue
+            portfolio_value += notional
+            beta_contrib += beta_component
+
+        if portfolio_value == 0.0:
+            return 0.0
+
+        portfolio_beta = beta_contrib / portfolio_value
+    # Determine target handling single value or a range
+    if isinstance(target_beta, Sequence) and not isinstance(target_beta, (str, bytes)):
+        vals = [float(v) for v in target_beta if v is not None]
+        if len(vals) >= 2:
+            lower, upper = (min(vals), max(vals))
+            buffered_lower = lower - float(rebalance_buffer)
+            buffered_upper = upper + float(rebalance_buffer)
+            if buffered_lower <= portfolio_beta <= buffered_upper:
+                return 0.0
+            target = upper if portfolio_beta > upper else lower
+        else:
+            target = float(vals[0]) if vals else 0.0
+    else:
+        target = float(target_beta)
 
     beta_gap = portfolio_beta - target
     hedge_notional = -beta_gap * portfolio_value
 
     contracts = hedge_notional / (btc_price * contract_size)
+    finite = np.isfinite(contracts)
+    if not finite:
+        return 0.0
     return float(contracts)

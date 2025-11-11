@@ -1,0 +1,68 @@
+name: daily-data-collection
+on:
+  schedule:
+    - cron: "15 2 * * *"   # 02:15 UTC daily
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f pyproject.toml ]; then
+            pip install .  # or .[dev] if needed
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+      - name: Run daily collector
+        env:
+          BINANCE_API_KEY: ${{ secrets.BINANCE_API_KEY }}
+          BINANCE_SECRET:  ${{ secrets.BINANCE_SECRET }}
+        run: |
+          set -euxo pipefail
+          python scripts/daily_collect.py  # your data script
+          echo "Collector finished."
+
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Git diagnostics (pre-commit)
+        run: |
+          git remote -v
+          git status
+          git branch -vv
+
+      - name: Commit & push data updates
+        run: |
+          set -euxo pipefail
+          git pull --rebase origin "$GITHUB_REF_NAME" || true
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(data): daily data collection $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          git push origin HEAD:"$GITHUB_REF_NAME" || (sleep 5 && git pull --rebase && git push origin HEAD:"$GITHUB_REF_NAME")
+
+      - name: Git diagnostics (post-push)
+        if: ${{ always() }}
+        run: |
+          git status

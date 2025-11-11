@@ -2,6 +2,7 @@
 
 Produces a JSON report per candidate in the repo root named `validation_<label>.json`.
 """
+
 import json
 from pathlib import Path
 import time
@@ -10,21 +11,21 @@ import math
 
 import pandas as pd
 
-from backtest_ccxt import aggressive_strategy_backtest
+from tradingbot_ibkr.backtest_ccxt import aggressive_strategy_backtest
 
 HERE = Path(__file__).resolve().parent
 
 
-def load_bars(symbol='BTC/USDT'):
-    path = HERE / 'datafiles' / f"{symbol.replace('/','_')}_bars.csv"
+def load_bars(symbol="BTC/USDT"):
+    path = HERE / "datafiles" / f"{symbol.replace('/', '_')}_bars.csv"
     if not path.exists():
         raise FileNotFoundError(path)
-    return pd.read_csv(path, parse_dates=['ts'], index_col='ts')
+    return pd.read_csv(path, parse_dates=["ts"], index_col="ts")
 
 
 def max_drawdown_from_equity(equity, starting_balance):
     # equity: list of {'time':..., 'balance':...}
-    balances = [e['balance'] for e in equity]
+    balances = [e["balance"] for e in equity]
     if not balances:
         return 0.0
     peak = balances[0]
@@ -39,11 +40,11 @@ def max_drawdown_from_equity(equity, starting_balance):
 
 
 def run_validation(candidate, df, starting_balance=10000.0, mc_runs=1000):
-    tp = candidate['tp']
-    sl = candidate['sl']
-    hold = candidate['hold']
-    risk = candidate['risk']
-    trail = candidate.get('trail')
+    tp = candidate["tp"]
+    sl = candidate["sl"]
+    hold = candidate["hold"]
+    risk = candidate["risk"]
+    trail = candidate.get("trail")
 
     stats = aggressive_strategy_backtest(
         df,
@@ -55,10 +56,9 @@ def run_validation(candidate, df, starting_balance=10000.0, mc_runs=1000):
         starting_balance=starting_balance,
         trend_filter=True,
         trailing_stop_pct=trail,
-        risk_per_trade=risk
     )
 
-    overall_dd = max_drawdown_from_equity(stats.get('equity_curve', []), starting_balance)
+    overall_dd = max_drawdown_from_equity(stats.get("equity_curve", []), starting_balance)
 
     # walk-forward: split df into 3 contiguous OOS chunks and compute OOS metrics
     n = len(df)
@@ -82,27 +82,25 @@ def run_validation(candidate, df, starting_balance=10000.0, mc_runs=1000):
                 starting_balance=starting_balance,
                 trend_filter=True,
                 trailing_stop_pct=trail,
-                risk_per_trade=risk
             )
-            wf.append({
-                'period': i + 1,
-                'trades': s.get('trades', 0),
-                'win_rate': s.get('win_rate_pct', 0.0),
-                'pnl': s.get('pnl', 0.0),
-                'max_drawdown_pct': max_drawdown_from_equity(s.get('equity_curve', []), starting_balance)
-            })
+            wf.append(
+                {
+                    "period": i + 1,
+                    "trades": s.get("trades", 0),
+                    "win_rate": s.get("win_rate_pct", 0.0),
+                    "pnl": s.get("pnl", 0.0),
+                    "max_drawdown_pct": max_drawdown_from_equity(
+                        s.get("equity_curve", []), starting_balance
+                    ),
+                }
+            )
 
     # Monte Carlo on trade-level PnL
-    trade_list = stats.get('trade_list', [])
-    trade_pnls = [t.get('pnl', 0.0) for t in trade_list]
-    mc = {
-        'runs': mc_runs,
-        'samples': 0,
-        'prob_dd_gt_30pct': None,
-        'worst_dd_pct': None
-    }
+    trade_list = stats.get("trade_list", [])
+    trade_pnls = [t.get("pnl", 0.0) for t in trade_list]
+    mc = {"runs": mc_runs, "samples": 0, "prob_dd_gt_30pct": None, "worst_dd_pct": None}
     if len(trade_pnls) < 5:
-        mc['note'] = 'too few trades for reliable MC'
+        mc["note"] = "too few trades for reliable MC"
     else:
         exceed = 0
         worst = 0.0
@@ -115,7 +113,7 @@ def run_validation(candidate, df, starting_balance=10000.0, mc_runs=1000):
                 bal += pnl
                 if bal > peak:
                     peak = bal
-                dd = (peak - bal) / peak if peak>0 else 0.0
+                dd = (peak - bal) / peak if peak > 0 else 0.0
                 if dd > max_dd:
                     max_dd = dd
             max_dd_pct = max_dd * 100.0
@@ -123,20 +121,20 @@ def run_validation(candidate, df, starting_balance=10000.0, mc_runs=1000):
                 exceed += 1
             if max_dd_pct > worst:
                 worst = max_dd_pct
-        mc['samples'] = mc_runs
-        mc['prob_dd_gt_30pct'] = exceed / mc_runs
-        mc['worst_dd_pct'] = worst
+        mc["samples"] = mc_runs
+        mc["prob_dd_gt_30pct"] = exceed / mc_runs
+        mc["worst_dd_pct"] = worst
 
     report = {
-        'candidate': candidate,
-        'summary': {
-            'trades': stats.get('trades', 0),
-            'win_rate': stats.get('win_rate_pct', 0.0),
-            'pnl': stats.get('pnl', 0.0),
-            'overall_max_drawdown_pct': overall_dd
+        "candidate": candidate,
+        "summary": {
+            "trades": stats.get("trades", 0),
+            "win_rate": stats.get("win_rate_pct", 0.0),
+            "pnl": stats.get("pnl", 0.0),
+            "overall_max_drawdown_pct": overall_dd,
         },
-        'walk_forward': wf,
-        'monte_carlo': mc
+        "walk_forward": wf,
+        "monte_carlo": mc,
     }
     return report
 
@@ -145,27 +143,27 @@ def main():
     df = load_bars()
     starting_balance = 10000.0
     candidates = [
-        {'label': 'A', 'tp': 0.01, 'sl': 0.005, 'hold': 1, 'risk': 0.02, 'trail': None},
-        {'label': 'B', 'tp': 0.01, 'sl': 0.01, 'hold': 1, 'risk': 0.02, 'trail': 0.01},
-        # Aggressive candidate for insight with constrained risk
-        {'label': 'MAX', 'tp': 0.08, 'sl': 0.08, 'hold': 1, 'risk': 0.02, 'trail': 0.08},
-        # High reward scenario capped at modest risk
-        {'label': 'HR', 'tp': 0.05, 'sl': 0.04, 'hold': 1, 'risk': 0.02, 'trail': 0.05}
+        {"label": "A", "tp": 0.01, "sl": 0.005, "hold": 1, "risk": 0.5, "trail": None},
+        {"label": "B", "tp": 0.01, "sl": 0.01, "hold": 1, "risk": 0.5, "trail": 0.01},
+        # Aggressive candidate for maximum gain and insight
+        {"label": "MAX", "tp": 0.15, "sl": 0.15, "hold": 1, "risk": 0.5, "trail": 0.10},
+        # High risk, high reward candidate
+        {"label": "HR", "tp": 0.12, "sl": 0.12, "hold": 1, "risk": 0.5, "trail": 0.08},
     ]
 
     out_reports = []
     for c in candidates:
-        print('Validating candidate', c['label'])
+        print("Validating candidate", c["label"])
         start = time.time()
         rep = run_validation(c, df, starting_balance=starting_balance, mc_runs=1000)
         duration = time.time() - start
         out_file = Path(HERE.parent) / f"validation_{c['label']}.json"
         out_file.write_text(json.dumps(rep, indent=2))
-        print(f'Wrote {out_file} (t={duration:.1f}s)')
+        print(f"Wrote {out_file} (t={duration:.1f}s)")
         out_reports.append(str(out_file))
 
-    print('Done. Reports:', out_reports)
+    print("Done. Reports:", out_reports)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

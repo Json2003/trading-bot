@@ -1,0 +1,126 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trading-bot-pro"
+version = "0.1.0"
+description = "Algo trading bot with backtesting, paper & live trading"
+requires-python = ">=3.10"
+readme = "README.md"
+authors = [{name="Json2003"}]
+
+dependencies = [
+  "ccxt>=4.3,<5",
+  "fastapi>=0.112,<1",
+  "numpy>=1.26,<3",
+  "pandas>=2,<3",
+  "pydantic>=2.7,<3",
+  "pydantic-settings>=2.2,<3",
+  "pyyaml>=6,<7",
+  "python-dotenv>=1.0,<2",
+  "requests>=2.31,<3",
+  "scipy>=1.11,<2",
+  "tenacity>=8.3,<9",
+  "typing-extensions>=4.9,<5",
+  "uvicorn>=0.30,<1",
+]
+
+[project.optional-dependencies]
+ci = [
+  "coverage[toml]>=7.6,<8",
+  "pytest>=8.2,<9",
+  "pytest-cov>=5,<6",
+]
+dev = [
+  "bandit>=1.7,<2",
+  "mypy>=1.10,<2",
+  "pip-audit>=2.7,<3",
+  "pytest>=8.2,<9",
+  "pytest-cov>=5,<6",
+  "ruff>=0.5,<1",
+  "types-PyYAML>=6.0.12.20240917",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src"]
+include = [
+  "src/**/*.py",
+]
+extend-exclude = [
+  "backtest",
+  "brokers",
+  "dashboard",
+  "models",
+  "scripts",
+  "tests",
+  "tradingbot_core",
+  "tradingbot_ibkr",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["tradingbot_core", "tradingbot_ibkr"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_ignores = true
+ignore_missing_imports = true
+# Don't type-check transitive imports; treat them as Any to focus on core files.
+follow_imports = "skip"
+# Avoid picking up local demo stubs or large auxiliary folders inadvertently
+exclude = [
+  "^backtest/",
+  "^brokers/",
+  "^dashboard/",
+  "^models/",
+  "^scripts/",
+  "^tests/",
+  "^tradingbot_core/",
+  "^numpy/",
+  "^pandas/",
+]
+# Limit type-checking scope to core modules to avoid noise from stubbed libs and demo scripts
+files = [
+  "server.py",
+  "server_live.py",
+  "server_basic.py",
+  "config/**/*.py",
+  "engine/**/*.py",
+  "src/**/*.py",
+  # Incremental expansion into tradingbot_ibkr core modules
+  "tradingbot_ibkr/execution/reconciler.py",
+  "tradingbot_ibkr/models/online_trainer.py",
+  "tradingbot_ibkr/trading_engine.py",
+  "tradingbot_ibkr/risk_management.py",
+  "tradingbot_ibkr/signal_prediction.py",
+  "tradingbot_ibkr/feature_extraction.py",
+]
+
+# Apply stricter checks selectively to high-value modules
+[[tool.mypy.overrides]]
+module = [
+  "tradingbot_ibkr.risk_management",
+  "tradingbot_ibkr.signal_prediction",
+  "tradingbot_ibkr.feature_extraction",
+]
+disallow_untyped_defs = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+  "server_live",
+]
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+addopts = "-q --maxfail=1 --disable-warnings"
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+include = ["tradingbot_core*", "tradingbot_ibkr*"]
