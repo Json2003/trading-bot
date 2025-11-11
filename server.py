@@ -1,5 +1,6 @@
 """
-Enhanced WebSocket server for trading bot with comprehensive features:
+Enhanced WebSocket server for the Splitstar Operations Console with
+comprehensive features:
 
 Features:
 - JWT-based authentication for sensitive endpoints
@@ -50,7 +51,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 RATE_LIMIT_PER_MINUTE = 60
 RATE_LIMIT_WINDOW = 60  # seconds
 
-app = FastAPI(title="Trading Bot Server", version="1.0.0")
+app = FastAPI(title="Splitstar Operations Console API", version="1.0.0")
 security = HTTPBearer(auto_error=False)
 
 # Add CORS middleware
@@ -585,7 +586,7 @@ async def startup_event():
 
     # Start background task
     asyncio.create_task(update_server_stats())
-    logger.info("Trading bot server startup complete")
+    logger.info("Splitstar Operations Console server startup complete")
 
 
 @app.on_event("shutdown")
