@@ -6,7 +6,8 @@ import hmac
 import os
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 
 from .operator_service import TradingOperatorService
 
@@ -27,6 +28,13 @@ def create_operator_app(
         raise RuntimeError("TRADING_OPERATOR_TOKEN is required")
 
     app = FastAPI(title="Trading Bot Operator API", version="0.1.0")
+
+    @app.exception_handler(RuntimeError)
+    async def operator_conflict(_: Request, exc: RuntimeError) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content={"detail": str(exc)},
+        )
 
     def authorize(
         authorization: Annotated[str | None, Header()] = None,
