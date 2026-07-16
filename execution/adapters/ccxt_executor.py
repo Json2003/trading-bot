@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import logging
-from typing import TYPE_CHECKING, Any, Mapping
 import uuid
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Mapping
 
 from engine.portfolio import OrderFill
 from strategies import StrategySignal
