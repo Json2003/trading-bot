@@ -40,7 +40,9 @@
     }
     h1 { margin: 0; font-size: 21px; letter-spacing: .02em; }
     h1 span { color: var(--accent); }
-    .subtitle { color: var(--muted); font-size: 13px; margin-top: 5px; }
+    h2 { margin: 0; font-size: 15px; letter-spacing: .04em; }
+    .subtitle, .hint { color: var(--muted); font-size: 12px; }
+    .subtitle { margin-top: 5px; font-size: 13px; }
     .connection {
       display: flex;
       align-items: center;
@@ -65,43 +67,44 @@
       font-size: 13px;
     }
     .notice.visible { display: block; }
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(130px, 1fr));
-      gap: 13px;
-    }
     .card {
       background: linear-gradient(180deg, rgba(19, 34, 56, .96), rgba(15, 27, 45, .96));
       border: 1px solid var(--border);
       border-radius: 16px;
       box-shadow: var(--shadow);
     }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(130px, 1fr));
+      gap: 13px;
+    }
     .metric { padding: 16px; min-height: 104px; }
     .metric-label { color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
     .metric-value { margin-top: 12px; font-size: 25px; font-weight: 700; }
-    .metric-value.small { font-size: 18px; text-transform: capitalize; }
-    .state-running { color: var(--good); }
-    .state-paused { color: var(--warn); }
-    .state-stopped { color: var(--muted); }
-    .state-killed { color: var(--danger); }
-    .controls { padding: 18px; }
+    .metric-value.small { font-size: 17px; text-transform: capitalize; }
+    .state-running, .positive { color: var(--good); }
+    .state-paused, .state-queued, .state-cancelling { color: var(--warn); }
+    .state-stopped, .state-completed, .state-cancelled { color: var(--muted); }
+    .state-killed, .state-failed, .state-interrupted, .negative { color: var(--danger); }
+    .controls, .lab-card { padding: 18px; }
     .section-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
-    h2 { margin: 0; font-size: 15px; letter-spacing: .04em; }
-    .hint { color: var(--muted); font-size: 12px; }
-    .button-row { display: flex; flex-wrap: wrap; gap: 10px; }
-    button {
-      appearance: none;
+    .button-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    button, select, input {
       border: 1px solid var(--border);
       background: #172840;
       color: var(--text);
       border-radius: 10px;
+      min-height: 40px;
+    }
+    button {
+      appearance: none;
       padding: 10px 14px;
       font-weight: 650;
       cursor: pointer;
       transition: transform .12s ease, border-color .12s ease, background .12s ease;
     }
     button:hover:not(:disabled) { transform: translateY(-1px); border-color: #3f5c7d; background: #1a304e; }
-    button:disabled { cursor: not-allowed; opacity: .42; }
+    button:disabled, input:disabled, select:disabled { cursor: not-allowed; opacity: .42; }
     button.primary { background: var(--accent); color: #07111e; border-color: transparent; }
     button.warning { color: #ffe7af; border-color: rgba(255, 204, 102, .42); background: rgba(255, 204, 102, .08); }
     button.danger { color: #ffd7dc; border-color: rgba(255, 107, 122, .45); background: rgba(255, 107, 122, .09); }
@@ -117,10 +120,41 @@
     .empty { padding: 28px 18px; color: var(--muted); text-align: center; font-size: 13px; }
     .status-line { display: flex; align-items: center; justify-content: space-between; gap: 18px; color: var(--muted); font-size: 12px; padding: 0 2px; }
     .busy { opacity: .72; pointer-events: none; }
-    @media (max-width: 980px) {
+    .lab-form {
+      display: grid;
+      grid-template-columns: minmax(230px, 2fr) repeat(4, minmax(110px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    label { display: grid; gap: 6px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+    select, input { width: 100%; padding: 8px 10px; font-size: 13px; text-transform: none; }
+    .lab-progress {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+    .lab-stat { padding: 12px; border: 1px solid var(--border); border-radius: 11px; background: rgba(8, 17, 31, .45); }
+    .lab-stat strong { display: block; margin-top: 7px; font-size: 17px; }
+    .research-note {
+      border-left: 3px solid var(--warn);
+      background: rgba(255, 204, 102, .06);
+      color: #f1dfb7;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 1050px) {
       .summary { grid-template-columns: repeat(2, 1fr); }
       .data-grid { grid-template-columns: 1fr; }
+      .lab-form { grid-template-columns: repeat(2, 1fr); }
       button.emergency { margin-left: 0; }
+    }
+    @media (max-width: 680px) {
+      header { align-items: flex-start; flex-direction: column; }
+      .lab-form, .lab-progress { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -128,7 +162,7 @@
   <header>
     <div>
       <h1><span>Splitstar</span> Trading Operator</h1>
-      <div class="subtitle">Paper-mode lifecycle control and broker-state monitoring</div>
+      <div class="subtitle">Paper trading, isolated strategy research and operational safety</div>
     </div>
     <div id="connection" class="connection"><span class="dot"></span><span id="connectionText">Operator API offline</span></div>
   </header>
@@ -146,7 +180,7 @@
 
     <section class="card controls">
       <div class="section-head">
-        <div><h2>Operator controls</h2><div class="hint">No arbitrary order entry or risk-limit editing is available in this console.</div></div>
+        <div><h2>Operator controls</h2><div class="hint">No arbitrary order entry or risk-limit editing is available.</div></div>
       </div>
       <div class="button-row">
         <button id="startButton" class="primary" data-action="startPaper">Start paper</button>
@@ -182,7 +216,50 @@
       </div>
     </section>
 
-    <div class="status-line"><span>Connection restricted to the local operator API.</span><span id="lastUpdated">Never refreshed</span></div>
+    <section class="card lab-card" aria-labelledby="researchHeading">
+      <div class="section-head">
+        <div><h2 id="researchHeading">Research Lab</h2><div class="hint">Isolated $2,000 virtual accounts compare strategy and execution candidates on held-out data.</div></div>
+        <span id="labState" class="hint">Not loaded</span>
+      </div>
+
+      <div class="research-note">
+        Research winners are candidates only. The lab cannot alter the active strategy, place broker orders, enable live mode or reset risk controls. Final holdout results require manual review and a separate paper-probation gate.
+      </div>
+
+      <div class="lab-form">
+        <label>Dataset<select id="labDataset"><option value="">Loading datasets…</option></select></label>
+        <label>Generations<input id="labGenerations" type="number" min="1" max="6" value="3"></label>
+        <label>Accounts / generation<input id="labAccounts" type="number" min="4" max="24" value="12"></label>
+        <label>Final holdout<input id="labHoldout" type="number" min="20" max="40" value="25"><span>%</span></label>
+        <label>Seed<input id="labSeed" type="number" min="0" max="2147483647" value="7"></label>
+      </div>
+
+      <div class="button-row">
+        <button id="labStartButton" class="primary">Run strategy tournament</button>
+        <button id="labCancelButton" class="danger" disabled>Cancel active run</button>
+        <button id="labRefreshButton">Refresh lab</button>
+      </div>
+
+      <div class="lab-progress">
+        <div class="lab-stat"><span class="metric-label">Job state</span><strong id="labJobState">idle</strong></div>
+        <div class="lab-stat"><span class="metric-label">Generation</span><strong id="labGeneration">0 / 0</strong></div>
+        <div class="lab-stat"><span class="metric-label">Candidates tested</span><strong id="labCandidates">0</strong></div>
+        <div class="lab-stat"><span class="metric-label">Leaderboard</span><strong id="labLeaderboardType">none</strong></div>
+      </div>
+
+      <div class="table-card">
+        <div class="section-head"><h2>Strategy leaderboard</h2><span id="labLeaderboardCount" class="hint">0 candidates</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Rank</th><th>Strategy</th><th>Execution</th><th>Ending equity</th><th>Return</th><th>Max DD</th><th>Sharpe</th><th>Trades</th><th>Execution cost</th><th>Score</th></tr></thead>
+            <tbody id="labLeaderboardBody"></tbody>
+          </table>
+          <div id="labLeaderboardEmpty" class="empty">No research results yet.</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="status-line"><span>All control and research traffic is restricted to the local operator API.</span><span id="lastUpdated">Never refreshed</span></div>
   </main>
 
   <script src="operator.js"></script>
