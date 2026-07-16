@@ -1,31 +1,19 @@
-name: Docker Image
+name: Legacy Docker Image (manual)
 
+# The supported rescue deployment is the local loopback operator API plus the
+# Electron desktop console. This workflow remains available only for deliberate
+# testing of the older server.py container and is not a production deployment.
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'docker/**'
-      - 'server.py'
-      - 'tradingbot_ibkr/**'
-      - 'requirements*.txt'
-      - 'pyproject.toml'
-      - '.github/workflows/docker-image.yml'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'docker/**'
-      - 'server.py'
-      - 'tradingbot_ibkr/**'
-      - 'requirements*.txt'
-      - 'pyproject.toml'
-      - '.github/workflows/docker-image.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,41 +25,28 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to GHCR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels)
+      - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: |
-            ghcr.io/${{ github.repository }}
+          images: ghcr.io/${{ github.repository }}
           tags: |
             type=sha
             type=ref,event=branch
-            type=semver,pattern={{version}}
 
-      - name: Build (no push for PRs)
-        if: github.event_name == 'pull_request'
+      - name: Build legacy image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/Dockerfile
-          push: false
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Build and push
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/Dockerfile
-          push: true
-          platforms: linux/amd64,linux/arm64
+          push: ${{ github.ref == 'refs/heads/main' }}
+          platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
