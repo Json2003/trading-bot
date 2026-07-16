@@ -1,0 +1,58 @@
+name: Desktop Operator
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dashboard/electron-app/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'dashboard/electron-app/**'
+      - '.github/workflows/frontend-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: dashboard/electron-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dashboard/electron-app/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+
+  package-windows:
+    needs: validate
+    runs-on: windows-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: dashboard/electron-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dashboard/electron-app/package-lock.json
+      - run: npm ci
+      - run: npm run dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trading-bot-operator-windows
+          path: dashboard/electron-app/dist/*.exe
+          if-no-files-found: error
+          retention-days: 14
