@@ -15,6 +15,7 @@ class OperatorStatus:
     mode: str
     state: str
     engine_configured: bool
+    engine_name: str | None
     kill_switch_latched: bool
     open_orders: int
     open_positions: int
@@ -37,6 +38,7 @@ class TradingOperatorService:
         broker: Any,
         orchestrator: Any | None = None,
         mode: str = "paper",
+        engine_name: str | None = None,
         cycle_interval_seconds: float = 1.0,
     ) -> None:
         if mode != "paper":
@@ -47,6 +49,9 @@ class TradingOperatorService:
         self._broker = broker
         self._orchestrator = orchestrator
         self._mode = mode
+        self._engine_name = engine_name or (
+            type(orchestrator).__name__ if orchestrator is not None else None
+        )
         self._cycle_interval_seconds = float(cycle_interval_seconds)
         self._state = "stopped"
         self._kill_switch_latched = False
@@ -163,6 +168,7 @@ class TradingOperatorService:
                 mode=self._mode,
                 state=self._state,
                 engine_configured=self.engine_configured,
+                engine_name=self._engine_name,
                 kill_switch_latched=self._kill_switch_latched,
                 open_orders=len(orders),
                 open_positions=len(positions),
