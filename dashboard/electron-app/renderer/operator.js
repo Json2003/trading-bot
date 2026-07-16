@@ -100,7 +100,9 @@ function renderStatus(status) {
   if (!latestStatus) {
     elements.mode.textContent = '—';
     elements.state.textContent = 'offline';
+    elements.state.className = 'metric-value small state-stopped';
     elements.killSwitch.textContent = 'unknown';
+    elements.killSwitch.className = 'metric-value small state-stopped';
     elements.openOrders.textContent = '0';
     elements.openPositions.textContent = '0';
     updateControls();
@@ -108,16 +110,20 @@ function renderStatus(status) {
   }
 
   const serviceState = String(latestStatus.state || 'unknown');
-  elements.mode.textContent = String(latestStatus.mode || '—');
+  elements.mode.textContent = `${String(latestStatus.mode || '—')} · ${latestStatus.engine_configured ? 'engine ready' : 'engine missing'}`;
   elements.state.textContent = serviceState;
-  elements.state.className = `metric-value small state-${serviceState}`;
+  elements.state.className = `metric-value small ${serviceState === 'faulted' ? 'state-killed' : `state-${serviceState}`}`;
   elements.killSwitch.textContent = latestStatus.kill_switch_latched ? 'latched' : 'clear';
   elements.killSwitch.className = `metric-value small ${latestStatus.kill_switch_latched ? 'state-killed' : 'state-running'}`;
   elements.openOrders.textContent = String(Number(latestStatus.open_orders || 0));
   elements.openPositions.textContent = String(Number(latestStatus.open_positions || 0));
 
   if (latestStatus.kill_switch_latched) {
-    showNotice('Kill switch is latched. New starts are blocked and manual recovery outside the operator console is required.');
+    showNotice(latestStatus.last_error || 'Kill switch is latched. New starts are blocked and manual recovery outside the operator console is required.');
+  } else if (!latestStatus.engine_configured) {
+    showNotice('Operator API is online, but no trading engine is configured. Start is disabled until the repaired paper engine is attached.');
+  } else if (latestStatus.last_error) {
+    showNotice(latestStatus.last_error);
   } else {
     showNotice('');
   }
@@ -126,11 +132,12 @@ function renderStatus(status) {
 
 function updateControls() {
   const online = Boolean(latestStatus);
+  const engineReady = Boolean(latestStatus && latestStatus.engine_configured);
   const killed = Boolean(latestStatus && latestStatus.kill_switch_latched);
   const state = latestStatus ? latestStatus.state : 'offline';
   const openOrders = Number(latestStatus && latestStatus.open_orders || 0);
 
-  elements.startButton.disabled = busy || !online || killed || state === 'running';
+  elements.startButton.disabled = busy || !online || !engineReady || killed || state === 'running';
   elements.pauseButton.disabled = busy || !online || killed || state !== 'running';
   elements.stopButton.disabled = busy || !online || state === 'stopped';
   elements.cancelButton.disabled = busy || !online || openOrders < 1;
@@ -152,6 +159,17 @@ async function callBridge(methodName) {
   return response.data || {};
 }
 
+function updateRefreshLabel(status) {
+  const timestamp = new Date().toLocaleTimeString();
+  if (!status) {
+    elements.lastUpdated.textContent = `Refresh failed ${timestamp}`;
+    return;
+  }
+  const cycles = Number(status.cycle_count || 0);
+  const lastCycle = status.last_cycle_at ? new Date(status.last_cycle_at).toLocaleTimeString() : 'none';
+  elements.lastUpdated.textContent = `Updated ${timestamp} · cycles ${cycles} · last cycle ${lastCycle}`;
+}
+
 async function refresh() {
   if (busy) return;
   try {
@@ -163,8 +181,8 @@ async function refresh() {
     renderStatus(statusPayload.status);
     renderOrders(ordersPayload.orders);
     renderPositions(positionsPayload.positions);
-    setConnected(true, 'Operator API connected');
-    elements.lastUpdated.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+    setConnected(true, latestStatus && latestStatus.engine_configured ? 'Operator API and engine ready' : 'Operator API connected');
+    updateRefreshLabel(latestStatus);
   } catch (error) {
     latestStatus = null;
     renderStatus(null);
@@ -172,7 +190,7 @@ async function refresh() {
     renderPositions([]);
     setConnected(false, 'Operator API offline');
     showNotice(error instanceof Error ? error.message : String(error));
-    elements.lastUpdated.textContent = `Refresh failed ${new Date().toLocaleTimeString()}`;
+    updateRefreshLabel(null);
   }
 }
 
