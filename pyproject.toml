@@ -54,6 +54,7 @@ include = [
   "tradingbot_ibkr/operator_api.py",
   "tradingbot_ibkr/operator_service.py",
   "tradingbot_ibkr/rescue_runtime.py",
+  "tradingbot_ibkr/strategy_candidates.py",
   "tradingbot_ibkr/execution/broker_base.py",
   "tradingbot_ibkr/execution/ccxt_broker.py",
   "tradingbot_ibkr/execution/paper_broker.py",
@@ -62,6 +63,7 @@ include = [
   "tests/test_operator_api.py",
   "tests/test_operator_service.py",
   "tests/test_rescue_runtime.py",
+  "tests/test_strategy_candidates.py",
 ]
 extend-exclude = [
   "backtest",
@@ -125,6 +127,7 @@ files = [
   "tradingbot_ibkr/operator_api.py",
   "tradingbot_ibkr/operator_service.py",
   "tradingbot_ibkr/rescue_runtime.py",
+  "tradingbot_ibkr/strategy_candidates.py",
 ]
 
 [[tool.mypy.overrides]]
