@@ -1,23 +1,26 @@
-"""Run the local paper-trading operator API.
+"""Run the local paper-trading operator and research API.
 
-The default runtime is a synthetic, credential-free smoke engine that exercises
-the strategy, execution, broker, position and operator paths end to end. It is
-not a live-market deployment and is not evidence of strategy profitability.
+The default trading runtime is a synthetic, credential-free smoke engine. The
+research lab uses local CSV datasets and writes job artifacts locally. Neither
+component enables live trading or demonstrates profitability.
 """
 
 from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 
 import uvicorn
 
 from tradingbot_ibkr.execution.paper_broker import PaperBroker
 from tradingbot_ibkr.operator_api import create_operator_app
 from tradingbot_ibkr.operator_service import TradingOperatorService
+from tradingbot_ibkr.paper_lab_automation import PaperLabAutomationService
 from tradingbot_ibkr.rescue_runtime import build_synthetic_paper_runtime
 
 LOGGER = logging.getLogger("tradingbot.operator")
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def build_service() -> TradingOperatorService:
@@ -51,8 +54,28 @@ def build_service() -> TradingOperatorService:
     )
 
 
+def build_research_service() -> PaperLabAutomationService:
+    dataset_root = Path(
+        os.getenv("TRADING_RESEARCH_DATASET_ROOT", str(ROOT / "backtest" / "sample_data"))
+    )
+    artifact_root = Path(
+        os.getenv("TRADING_RESEARCH_ARTIFACT_ROOT", str(ROOT / "var" / "paper_lab"))
+    )
+    return PaperLabAutomationService(
+        dataset_root=dataset_root,
+        artifact_root=artifact_root,
+        max_generations=int(os.getenv("TRADING_RESEARCH_MAX_GENERATIONS", "6")),
+        max_accounts_per_generation=int(
+            os.getenv("TRADING_RESEARCH_MAX_ACCOUNTS", "24")
+        ),
+    )
+
+
 def build_app():
-    return create_operator_app(build_service())
+    return create_operator_app(
+        build_service(),
+        research_service=build_research_service(),
+    )
 
 
 app = build_app()
