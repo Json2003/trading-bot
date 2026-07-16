@@ -5,9 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Iterable, Mapping, MutableMapping
 
-from tradingbot_core.strategy import OrderIntent
-
 from execution.adapters import CCXTBroker as AdapterBroker
+from tradingbot_core.strategy import OrderIntent
 
 from .broker_base import BrokerBase, Order, OrderStatus, Position
 
@@ -98,10 +97,7 @@ class CCXTBroker(BrokerBase):
                     ),
                     raw=raw_payload,
                 )
-
-        order_type = (
-            order.order_type or ("limit" if order.price is not None else "market")
-        ).lower()
+        order_type = (order.order_type or ("limit" if order.price is not None else "market")).lower()
         price = None if order_type == "market" else order.price
         params: dict[str, Any] = {}
         if isinstance(order.metadata, Mapping):
@@ -131,11 +127,7 @@ class CCXTBroker(BrokerBase):
         filled = raw_payload.get("filled", placed.filled_quantity)
         avg_price = raw_payload.get("average", placed.price)
         return OrderStatus(
-            client_id=(
-                str(raw_payload.get("clientOrderId", client_id))
-                if (client_id or raw_payload)
-                else None
-            ),
+            client_id=str(raw_payload.get("clientOrderId", client_id)) if (client_id or raw_payload) else None,
             exchange_id=str(raw_payload.get("id", placed.id)),
             status=str(raw_payload.get("status", placed.status)),
             filled_qty=float(filled or 0.0),
@@ -158,10 +150,7 @@ class CCXTBroker(BrokerBase):
             except Exception as exc:  # pragma: no cover - network interaction
                 self._log.warning("Failed to fetch open orders for %s via ccxt: %s", symbol, exc)
                 return ()
-            orders = [
-                self._adapter._ingest_order(raw)  # type: ignore[attr-defined]
-                for raw in payload
-            ]
+            orders = [self._adapter._ingest_order(raw) for raw in payload]  # type: ignore[attr-defined]
         else:
             orders = list(self.list_open_orders())
         self._update_local_cache(orders)
@@ -172,16 +161,9 @@ class CCXTBroker(BrokerBase):
         return {pos.symbol: pos.quantity for pos in positions}
 
     def cancel_order(self, order_id: str) -> bool:
-        """Cancel one order by local id, idempotency key, or broker client id."""
+        """Cancel one known order by local or broker identifier."""
 
-        requested = str(order_id)
-        if requested not in self._orders:
-            self._update_local_cache(self.list_open_orders())
-            for key, order in self._orders.items():
-                if requested in {str(order.id), str(order.client_order_id), str(order.idemp_key)}:
-                    requested = key
-                    break
-        return self.cancel(requested)
+        return self.cancel(order_id)
 
     def cancel(self, client_id: str) -> bool:
         order = self._orders.get(client_id)
@@ -206,12 +188,11 @@ class CCXTBroker(BrokerBase):
         return True
 
     def cancel_all_orders(self) -> list[str]:
-        """Cancel every order currently reported open by the exchange."""
+        """Cancel all known open orders and return the successfully cancelled keys."""
 
-        open_orders = tuple(self.list_open_orders())
-        open_keys = [key for order in open_orders if (key := self._order_key(order))]
         cancelled: list[str] = []
-        for key in open_keys:
+        self._update_local_cache(self.list_open_orders())
+        for key in list(self._orders):
             if self.cancel(key):
                 cancelled.append(key)
         return cancelled
