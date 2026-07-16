@@ -1,6 +1,6 @@
 {
-  "name": "splitstar-trading-operator",
-  "version": "0.2.0",
+  "name": "trading-bot-dashboard",
+  "version": "1.0.0",
   "main": "main.js",
   "description": "Local paper-trading operator console for the rescued trading bot",
   "author": {
