@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-function invoke(operation) {
-  return ipcRenderer.invoke('operator:invoke', operation);
+function invoke(operation, payload = null) {
+  return ipcRenderer.invoke('operator:invoke', operation, payload);
 }
 
 contextBridge.exposeInMainWorld('tradingOperator', Object.freeze({
@@ -12,5 +12,9 @@ contextBridge.exposeInMainWorld('tradingOperator', Object.freeze({
   pause: () => invoke('pause'),
   stop: () => invoke('stop'),
   cancelAll: () => invoke('cancelAll'),
-  emergencyStop: () => invoke('emergencyStop')
+  emergencyStop: () => invoke('emergencyStop'),
+  getResearchDatasets: () => invoke('researchDatasets'),
+  getResearchJobs: () => invoke('researchJobs'),
+  startResearch: (spec) => invoke('startResearch', spec),
+  cancelResearch: (jobId) => invoke('cancelResearch', { jobId })
 }));
