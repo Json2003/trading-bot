@@ -1,8 +1,8 @@
 {
-  "name": "splitstar-ops-console-dashboard",
-  "version": "1.0.0",
+  "name": "splitstar-trading-operator",
+  "version": "0.2.0",
   "main": "main.js",
-  "description": "Desktop dashboard for Trading Bot",
+  "description": "Local paper-trading operator console for the rescued trading bot",
   "author": {
     "name": "Splitstar Development",
     "email": "dev@splitstar.io"
@@ -11,8 +11,10 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder",
-    "dist": "electron-builder -p never"
+    "check": "node --check main.js && node --check preload.js && node --check renderer/operator.js",
+    "test": "node --test test/*.test.js",
+    "build": "npm run check && npm test && electron-builder",
+    "dist": "npm run check && npm test && electron-builder -p never"
   },
   "devDependencies": {
     "electron": "^38.0.0",
@@ -20,22 +22,32 @@
   },
   "build": {
     "publish": null,
-    "appId": "com.splitstar.tradingbot.dashboard",
-    "productName": "Trading Bot Dashboard",
+    "appId": "com.splitstar.tradingbot.operator",
+    "productName": "Trading Bot Operator",
+    "asar": true,
+    "npmRebuild": false,
     "files": [
-      "**/*",
-      "!dist/**",
-      "!node_modules/.cache/**"
+      "main.js",
+      "preload.js",
+      "renderer/operator.html",
+      "renderer/operator.js",
+      "package.json"
     ],
     "directories": {
       "output": "dist"
     },
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "linux": {
       "target": ["AppImage"],
       "category": "Finance"
     },
     "win": {
       "target": ["nsis"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false
     },
     "mac": {
       "target": ["dmg"],
