@@ -50,13 +50,18 @@ target-version = "py310"
 src = ["src"]
 include = [
   "src/**/*.py",
+  "execution/adapters/ccxt_executor.py",
   "tradingbot_ibkr/operator_api.py",
   "tradingbot_ibkr/operator_service.py",
+  "tradingbot_ibkr/rescue_runtime.py",
+  "tradingbot_ibkr/execution/broker_base.py",
   "tradingbot_ibkr/execution/ccxt_broker.py",
   "tradingbot_ibkr/execution/paper_broker.py",
   "scripts/run_operator_api.py",
+  "scripts/launch_operator_console.py",
   "tests/test_operator_api.py",
   "tests/test_operator_service.py",
+  "tests/test_rescue_runtime.py",
 ]
 extend-exclude = [
   "backtest",
@@ -74,7 +79,15 @@ select = ["E", "F", "I", "UP"]
 ignore = ["E501"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["tradingbot_core", "tradingbot_ibkr"]
+known-first-party = [
+  "backtest",
+  "config",
+  "engine",
+  "execution",
+  "strategies",
+  "tradingbot_core",
+  "tradingbot_ibkr",
+]
 
 [tool.mypy]
 python_version = "3.10"
@@ -99,6 +112,10 @@ files = [
   "config/**/*.py",
   "engine/**/*.py",
   "src/**/*.py",
+  "execution/adapters/ccxt_executor.py",
+  "tradingbot_ibkr/execution/broker_base.py",
+  "tradingbot_ibkr/execution/paper_broker.py",
+  "tradingbot_ibkr/execution/ccxt_broker.py",
   "tradingbot_ibkr/execution/reconciler.py",
   "tradingbot_ibkr/models/online_trainer.py",
   "tradingbot_ibkr/trading_engine.py",
@@ -107,6 +124,7 @@ files = [
   "tradingbot_ibkr/feature_extraction.py",
   "tradingbot_ibkr/operator_api.py",
   "tradingbot_ibkr/operator_service.py",
+  "tradingbot_ibkr/rescue_runtime.py",
 ]
 
 [[tool.mypy.overrides]]
@@ -129,4 +147,12 @@ addopts = "-q --maxfail=1 --disable-warnings"
 testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
-include = ["tradingbot_core*", "tradingbot_ibkr*"]
+include = [
+  "backtest*",
+  "config*",
+  "engine*",
+  "execution*",
+  "strategies*",
+  "tradingbot_core*",
+  "tradingbot_ibkr*",
+]
