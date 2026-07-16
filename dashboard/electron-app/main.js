@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 
 const DEFAULT_OPERATOR_URL = 'http://127.0.0.1:8765';
+const JOB_ID_PATTERN = /^[a-f0-9]{32}$/;
 
 const OPERATIONS = Object.freeze({
   status: { method: 'GET', path: '/operator/status' },
@@ -11,7 +12,14 @@ const OPERATIONS = Object.freeze({
   pause: { method: 'POST', path: '/operator/pause' },
   stop: { method: 'POST', path: '/operator/stop' },
   cancelAll: { method: 'POST', path: '/operator/cancel-all' },
-  emergencyStop: { method: 'POST', path: '/operator/emergency-stop' }
+  emergencyStop: { method: 'POST', path: '/operator/emergency-stop' },
+  researchDatasets: { method: 'GET', path: '/research/datasets' },
+  researchJobs: { method: 'GET', path: '/research/jobs' },
+  startResearch: { method: 'POST', path: '/research/jobs', body: validateResearchSpec },
+  cancelResearch: {
+    method: 'POST',
+    path: (payload) => `/research/jobs/${validateJobId(payload && payload.jobId)}/cancel`
+  }
 });
 
 function operatorBaseUrl() {
@@ -24,7 +32,49 @@ function operatorBaseUrl() {
   return url.toString().replace(/\/$/, '');
 }
 
-async function invokeOperator(operation) {
+function boundedInteger(value, name, minimum, maximum) {
+  const number = Number(value);
+  if (!Number.isInteger(number) || number < minimum || number > maximum) {
+    throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
+  }
+  return number;
+}
+
+function validateResearchSpec(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new Error('Research request is required');
+  }
+  const datasetId = String(payload.datasetId || '').trim();
+  if (!datasetId || datasetId.length > 240 || datasetId.includes('..') || datasetId.startsWith('/')) {
+    throw new Error('Select a valid local research dataset');
+  }
+  const holdout = Number(payload.finalHoldoutFraction);
+  if (!Number.isFinite(holdout) || holdout < 0.20 || holdout > 0.40) {
+    throw new Error('Final holdout must be between 20% and 40%');
+  }
+  return {
+    dataset_id: datasetId,
+    generations: boundedInteger(payload.generations, 'Generations', 1, 6),
+    accounts_per_generation: boundedInteger(
+      payload.accountsPerGeneration,
+      'Accounts per generation',
+      4,
+      24
+    ),
+    final_holdout_fraction: holdout,
+    seed: boundedInteger(payload.seed, 'Seed', 0, 2147483647)
+  };
+}
+
+function validateJobId(value) {
+  const jobId = String(value || '').trim();
+  if (!JOB_ID_PATTERN.test(jobId)) {
+    throw new Error('Invalid research job identifier');
+  }
+  return jobId;
+}
+
+async function invokeOperator(operation, payload = null) {
   const route = OPERATIONS[operation];
   if (!route) {
     throw new Error('Unsupported operator action');
@@ -35,12 +85,18 @@ async function invokeOperator(operation) {
     throw new Error('TRADING_OPERATOR_TOKEN is not configured');
   }
 
-  const response = await fetch(`${operatorBaseUrl()}${route.path}`, {
+  const routePath = typeof route.path === 'function' ? route.path(payload) : route.path;
+  const requestBody = route.body ? route.body(payload) : null;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/json'
+  };
+  if (requestBody) headers['Content-Type'] = 'application/json';
+
+  const response = await fetch(`${operatorBaseUrl()}${routePath}`, {
     method: route.method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/json'
-    },
+    headers,
+    body: requestBody ? JSON.stringify(requestBody) : undefined,
     cache: 'no-store'
   });
 
@@ -61,9 +117,9 @@ async function invokeOperator(operation) {
 }
 
 function registerOperatorBridge() {
-  ipcMain.handle('operator:invoke', async (_event, operation) => {
+  ipcMain.handle('operator:invoke', async (_event, operation, payload) => {
     try {
-      return { ok: true, data: await invokeOperator(operation) };
+      return { ok: true, data: await invokeOperator(operation, payload) };
     } catch (error) {
       return {
         ok: false,
@@ -76,10 +132,10 @@ function registerOperatorBridge() {
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1120,
-    height: 780,
-    minWidth: 860,
-    minHeight: 620,
+    width: 1240,
+    height: 880,
+    minWidth: 920,
+    minHeight: 680,
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
