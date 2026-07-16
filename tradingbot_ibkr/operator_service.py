@@ -105,10 +105,9 @@ class TradingOperatorService:
             self._stop_event.set()
             thread = self._thread
 
+        self._wait_for_cycle_thread(thread)
         if cancel_open_orders:
             self.cancel_all_orders()
-        if thread is not None and thread.is_alive() and thread is not current_thread():
-            thread.join(timeout=max(2.0, self._cycle_interval_seconds * 2))
         return self.status()
 
     def close(self) -> None:
@@ -138,6 +137,9 @@ class TradingOperatorService:
             self._state = "stopped"
             self._last_error = "manual emergency stop"
             self._stop_event.set()
+            thread = self._thread
+
+        self._wait_for_cycle_thread(thread)
         self.cancel_all_orders()
         return self.status()
 
@@ -229,6 +231,14 @@ class TradingOperatorService:
             with self._lock:
                 self._cycle_count += 1
                 self._last_cycle_at = datetime.now(timezone.utc).isoformat()
+
+    def _wait_for_cycle_thread(self, thread: Thread | None) -> None:
+        if thread is not None and thread.is_alive() and thread is not current_thread():
+            thread.join(timeout=max(2.0, self._cycle_interval_seconds * 2))
+            if thread.is_alive():
+                raise RuntimeError("trading engine did not stop within the safety timeout")
+        with self._cycle_lock:
+            pass
 
     def _fault(self, message: str) -> None:
         with self._lock:
