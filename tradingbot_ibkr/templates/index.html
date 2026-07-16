@@ -1,82 +1,145 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>TradingBot Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css">
-  </head>
-  <body>
-    <h1>TradingBot Dashboard</h1>
-    <section>
-      <h2>Models</h2>
-  <div>Current model version: <span id="model_version">loading...</span></div>
-      {% if models %}
-      <ul>
-        {% for name, mtime in models.items() %}
-        <li>{{name}} (mtime: {{mtime}})</li>
-        {% endfor %}
-      </ul>
-      {% else %}
-        <div>No models found</div>
-      {% endif %}
-  <button id="train">Run Demo Training</button>
-  <button id="pretrain">Run Pretrain</button>
-      <div>
-        <label>Job ID: <input id="job_id"/></label>
-        <button id="submit_job">Submit Pretrain Job</button>
-        <div id="job_status">No job</div>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roman Bot Command Center</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">R</span><div><strong>ROMAN BOT</strong><small>ADMIN COMMAND CENTER</small></div></div>
+    <div class="status-strip">
+      <span class="status"><i class="dot amber"></i> TWS DISCONNECTED</span>
+      <span class="status"><i class="dot green"></i> LOCAL ENGINE ONLINE</span>
+      <span class="status">MODE: <b class="paper">PAPER</b></span>
+      <span class="status">MODEL: <b id="model_version">loading…</b></span>
+      <span class="clock" id="clock">--:--:--</span>
+    </div>
+    <button class="kill" id="killSwitch">EMERGENCY STOP</button>
+  </header>
+
+  <nav class="toolbar">
+    <button class="active">Command Center</button><button>Scanner</button><button>Strategies</button><button>Risk</button><button>Research Lab</button><button>Logs</button>
+    <span class="toolbar-spacer"></span>
+    <button id="train">Run Demo Training</button><button id="pretrain">Run Pretrain</button>
+  </nav>
+
+  <main class="workspace">
+    <section class="panel watchlist">
+      <div class="panel-title"><span>MARKET WATCH</span><small>DISPLAY PREVIEW</small></div>
+      <table><thead><tr><th>Symbol</th><th>Last</th><th>Chg%</th><th>Signal</th></tr></thead>
+      <tbody id="watchRows">
+        <tr class="selected"><td>AAPL</td><td>231.42</td><td class="up">+0.84%</td><td><span class="tag long">LONG</span></td></tr>
+        <tr><td>NVDA</td><td>173.18</td><td class="up">+1.21%</td><td><span class="tag watch">WATCH</span></td></tr>
+        <tr><td>TSLA</td><td>322.06</td><td class="down">-0.63%</td><td><span class="tag short">SHORT</span></td></tr>
+        <tr><td>AMD</td><td>156.77</td><td class="up">+0.38%</td><td><span class="tag watch">WATCH</span></td></tr>
+        <tr><td>SPY</td><td>624.09</td><td class="down">-0.12%</td><td><span class="tag flat">FLAT</span></td></tr>
+        <tr><td>BTC</td><td>118,420</td><td class="up">+0.57%</td><td><span class="tag long">LONG</span></td></tr>
+      </tbody></table>
+      <div class="mini-section"><div class="panel-title"><span>STRATEGY QUEUE</span></div>
+        <div class="strategy"><b>Momentum Alpha</b><span class="up">READY</span><small>Confidence 68%</small></div>
+        <div class="strategy"><b>Breakout Scout</b><span class="amber-text">OBSERVE</span><small>Confidence 54%</small></div>
+        <div class="strategy"><b>Mean Reversion</b><span>MUTED</span><small>Regime blocked</small></div>
       </div>
     </section>
 
-    <script>
-    document.getElementById('train').addEventListener('click', async ()=>{
-      const res = await fetch('/api/train', {method:'POST'});
-      const j = await res.json();
-      alert(JSON.stringify(j));
-    });
+    <section class="panel chart-panel">
+      <div class="panel-title chart-head"><span>AAPL · 5 MINUTE</span><div class="quote"><b>231.42</b><span class="up">+1.93 (+0.84%)</span></div></div>
+      <div class="chart-tools"><button>1m</button><button class="active">5m</button><button>15m</button><button>1h</button><button>1D</button><span></span><label><input type="checkbox" checked> VWAP</label><label><input type="checkbox" checked> EMA</label></div>
+      <div class="chart-wrap">
+        <svg viewBox="0 0 900 390" preserveAspectRatio="none" aria-label="market chart preview">
+          <defs><linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#27c281" stop-opacity=".22"/><stop offset="1" stop-color="#27c281" stop-opacity="0"/></linearGradient></defs>
+          <g class="grid"><path d="M0 65H900M0 130H900M0 195H900M0 260H900M0 325H900"/><path d="M100 0V390M200 0V390M300 0V390M400 0V390M500 0V390M600 0V390M700 0V390M800 0V390"/></g>
+          <path class="area" d="M0 300 L45 278 L90 286 L135 238 L180 252 L225 225 L270 238 L315 184 L360 198 L405 150 L450 170 L495 130 L540 148 L585 102 L630 118 L675 74 L720 92 L765 58 L810 80 L855 42 L900 54 L900 390 L0 390Z"/>
+          <path class="price-line" d="M0 300 L45 278 L90 286 L135 238 L180 252 L225 225 L270 238 L315 184 L360 198 L405 150 L450 170 L495 130 L540 148 L585 102 L630 118 L675 74 L720 92 L765 58 L810 80 L855 42 L900 54"/>
+          <path class="vwap" d="M0 286 C180 272 250 238 360 212 S570 146 900 88"/>
+          <line class="last-line" x1="0" y1="54" x2="900" y2="54"/><text x="840" y="46" class="chart-label">231.42</text>
+        </svg>
+        <div class="preview-badge">SIMULATED DISPLAY · BROKER FEED NOT CONNECTED</div>
+      </div>
+      <div class="chart-footer"><span>VOL 1.84M</span><span>VWAP 229.87</span><span>EMA20 230.14</span><span>ATR 1.62</span><span>REGIME: TREND</span></div>
+    </section>
 
-    document.getElementById('pretrain').addEventListener('click', async ()=>{
-      const res = await fetch('/api/pretrain', {method:'POST'});
-      const j = await res.json();
-      alert(JSON.stringify(j));
-    });
+    <section class="panel order-ticket">
+      <div class="panel-title"><span>ORDER ENTRY</span><small>LOCKED UNTIL TWS CONNECTS</small></div>
+      <div class="order-symbol"><input value="AAPL" aria-label="symbol"><span>NASDAQ</span></div>
+      <div class="side-toggle"><button class="buy active">BUY</button><button class="sell">SELL</button></div>
+      <label>Order type<select><option>LIMIT</option><option>MARKET</option><option>STOP</option></select></label>
+      <div class="two-col"><label>Quantity<input type="number" value="10"></label><label>Limit price<input type="number" value="231.20" step="0.01"></label></div>
+      <div class="two-col"><label>Stop loss<input type="number" value="228.50" step="0.01"></label><label>Take profit<input type="number" value="236.00" step="0.01"></label></div>
+      <label>Strategy<select><option>Momentum Alpha</option><option>Manual</option></select></label>
+      <div class="risk-preview"><span>Estimated value <b>$2,312.00</b></span><span>Risk at stop <b>$27.00</b></span><span>Account risk <b>1.35%</b></span></div>
+      <button class="transmit" disabled>TRANSMIT ORDER</button>
+      <div class="panel-title sub"><span>LEVEL II PREVIEW</span></div>
+      <div class="book"><div><b>Bid Size</b><b>Bid</b><b>Ask</b><b>Ask Size</b></div><div><span>900</span><span class="up">231.39</span><span class="down">231.43</span><span>700</span></div><div><span>1,200</span><span class="up">231.37</span><span class="down">231.45</span><span>1,050</span></div><div><span>650</span><span class="up">231.35</span><span class="down">231.48</span><span>800</span></div></div>
+    </section>
 
-  document.getElementById('submit_job').addEventListener('click', async ()=>{
-      const jid = document.getElementById('job_id').value || '';
-      const body = { files: [], epochs: 1 };
-      const res = await fetch('/api/pretrain', {method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)});
-      const j = await res.json();
-      if(j.job_id){
-    document.getElementById('job_status').textContent = `Queued ${j.job_id}`;
-    startEventStream(j.job_id);
-      }
-    });
+    <section class="panel account-panel">
+      <div class="panel-title"><span>ACCOUNT & RISK</span><small>NO BROKER SESSION</small></div>
+      <div class="metrics-grid">
+        <div><small>Net Liquidation</small><b>—</b></div><div><small>Buying Power</small><b>—</b></div><div><small>Daily P&amp;L</small><b>—</b></div><div><small>Open Risk</small><b>—</b></div>
+        <div><small>Max Drawdown</small><b>0.00%</b></div><div><small>Trades Today</small><b>0</b></div><div><small>Risk State</small><b class="up">ARMED</b></div><div><small>Kill Switch</small><b class="up">CLEAR</b></div>
+      </div>
+    </section>
 
-    function startEventStream(jid){
-      const el = document.getElementById('job_status');
-      const src = new EventSource(`/api/job_stream?job_id=${jid}`);
-      src.onmessage = function(e){
-        try{
-          const data = JSON.parse(e.data);
-          el.textContent = JSON.stringify(data);
-          if(data && data.status && (data.status === 'done' || data.status === 'failed')){
-            src.close();
-            setTimeout(loadModelVersion, 1000);
-          }
-        }catch(err){ console.error(err); }
-      };
-      src.onerror = function(e){ console.error('EventSource error', e); src.close(); };
-    }
+    <section class="panel activity-panel">
+      <div class="tabs"><button class="active" data-tab="positions">Positions</button><button data-tab="orders">Open Orders</button><button data-tab="fills">Executions</button><button data-tab="decisions">Strategy Decisions</button><button data-tab="admin">Administration</button></div>
+      <div class="tab-content" id="positions"><div class="empty-state">No live positions. Connect Trader Workstation or IB Gateway to populate this table.</div></div>
+      <div class="tab-content hidden" id="orders"><div class="empty-state">No open orders.</div></div>
+      <div class="tab-content hidden" id="fills"><div class="empty-state">No executions received.</div></div>
+      <div class="tab-content hidden" id="decisions">
+        <table><thead><tr><th>Time</th><th>Strategy</th><th>Symbol</th><th>Decision</th><th>Confidence</th><th>Reason</th></tr></thead><tbody>
+          <tr><td>Preview</td><td>Momentum Alpha</td><td>AAPL</td><td class="up">LONG</td><td>68%</td><td>Trend + volume confirmation</td></tr>
+          <tr><td>Preview</td><td>Breakout Scout</td><td>NVDA</td><td class="amber-text">WAIT</td><td>54%</td><td>Spread exceeds threshold</td></tr>
+        </tbody></table>
+      </div>
+      <div class="tab-content hidden admin-grid" id="admin">
+        <div class="admin-card"><h3>Model Control</h3><p>Current version: <b id="model_version_admin">loading…</b></p><div class="model-list">{% if models %}{% for name, mtime in models.items() %}<div>{{name}} <small>{{mtime}}</small></div>{% endfor %}{% else %}<p>No models found</p>{% endif %}</div></div>
+        <div class="admin-card"><h3>Pretrain Job</h3><label>Job ID<input id="job_id" placeholder="Auto-generated on submit"></label><button id="submit_job">Submit Pretrain Job</button><pre id="job_status">No job running</pre></div>
+        <div class="admin-card"><h3>Deployment Readiness</h3><ul><li class="ok">Local dashboard online</li><li class="warn">TWS connection required</li><li class="warn">Market data feed required</li><li class="ok">Emergency controls visible</li></ul></div>
+      </div>
+    </section>
+  </main>
 
-    async function loadModelVersion(){
-      try{
-        const r = await fetch('/api/model_version');
-        const j = await r.json();
-        document.getElementById('model_version').textContent = j.model_version ? `${j.model_version} (${j.last_hash?.slice(0,8)})` : 'none';
-      }catch(e){ document.getElementById('model_version').textContent = 'error'; }
-    }
-    loadModelVersion();
-    </script>
-  </body>
+<script>
+  const $ = (id) => document.getElementById(id);
+  setInterval(() => { $('clock').textContent = new Date().toLocaleTimeString(); }, 1000);
+
+  document.querySelectorAll('.tabs button').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+    btn.classList.add('active'); $(btn.dataset.tab).classList.remove('hidden');
+  }));
+
+  document.querySelectorAll('#watchRows tr').forEach(row => row.addEventListener('click', () => {
+    document.querySelectorAll('#watchRows tr').forEach(r => r.classList.remove('selected')); row.classList.add('selected');
+  }));
+
+  $('killSwitch').addEventListener('click', () => {
+    $('killSwitch').classList.toggle('engaged');
+    $('killSwitch').textContent = $('killSwitch').classList.contains('engaged') ? 'STOP ENGAGED' : 'EMERGENCY STOP';
+  });
+
+  $('train').addEventListener('click', async () => {
+    const res = await fetch('/api/train', {method:'POST'}); const data = await res.json();
+    alert(data.status === 'started' ? 'Demo training started.' : JSON.stringify(data));
+  });
+  $('pretrain').addEventListener('click', () => { document.querySelector('[data-tab="admin"]').click(); });
+  $('submit_job').addEventListener('click', async () => {
+    const res = await fetch('/api/pretrain', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({files:[], epochs:1})});
+    const data = await res.json(); if (data.job_id) { $('job_id').value = data.job_id; $('job_status').textContent = `Queued ${data.job_id}`; startEventStream(data.job_id); }
+  });
+  function startEventStream(jid) {
+    const src = new EventSource(`/api/job_stream?job_id=${encodeURIComponent(jid)}`);
+    src.onmessage = e => { try { const data = JSON.parse(e.data); $('job_status').textContent = JSON.stringify(data, null, 2); if (data?.status === 'done' || data?.status === 'failed') { src.close(); loadModelVersion(); } } catch (_) {} };
+    src.onerror = () => src.close();
+  }
+  async function loadModelVersion() {
+    try { const r = await fetch('/api/model_version'); const j = await r.json(); const v = j.model_version ? `${j.model_version} (${(j.last_hash || '').slice(0,8)})` : 'none'; $('model_version').textContent = v; $('model_version_admin').textContent = v; }
+    catch (_) { $('model_version').textContent = 'error'; $('model_version_admin').textContent = 'error'; }
+  }
+  loadModelVersion();
+</script>
+</body>
 </html>
