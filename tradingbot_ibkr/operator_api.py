@@ -64,7 +64,8 @@ def create_operator_app(
 
     @app.post("/operator/start-paper")
     def start_paper(_: Auth) -> dict[str, object]:
-        return {"status": service.snapshot()["status"] if service.start() else {}}
+        service.start()
+        return {"status": service.snapshot()["status"]}
 
     @app.post("/operator/pause")
     def pause(_: Auth) -> dict[str, object]:
