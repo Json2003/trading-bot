@@ -8,10 +8,10 @@ small-cap stock strategy.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-import logging
 
 from backtest.synthetic import build_synthetic_feed
 from config.portfolio_loader import load_portfolio_config, load_strategy_params
