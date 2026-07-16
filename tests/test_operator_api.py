@@ -40,7 +40,8 @@ def test_operator_can_start_and_emergency_stop_paper_service() -> None:
     assert started.json()["status"]["state"] == "running"
     assert stopped.status_code == 200
     assert stopped.json()["status"]["kill_switch_latched"] is True
-    assert restarted.status_code == 500
+    assert restarted.status_code == 409
+    assert "manual recovery" in restarted.json()["detail"]
 
 
 def test_api_has_no_arbitrary_order_endpoint() -> None:
