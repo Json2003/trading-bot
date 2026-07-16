@@ -17,17 +17,31 @@ def create_operator_app(
     *,
     operator_token: str | None = None,
 ) -> FastAPI:
-    """Create a narrow operator API.
+    """Create the narrow, paper-only local operator API.
 
-    The API deliberately excludes arbitrary order submission, live-mode
-    activation, position flattening and kill-switch reset endpoints.
+    Arbitrary order submission, live activation, risk editing, position
+    flattening and kill-switch reset are intentionally absent.
     """
 
     expected_token = operator_token or os.getenv("TRADING_OPERATOR_TOKEN")
     if not expected_token:
         raise RuntimeError("TRADING_OPERATOR_TOKEN is required")
 
-    app = FastAPI(title="Trading Bot Operator API", version="0.1.0")
+    app = FastAPI(
+        title="Trading Bot Operator API",
+        version="0.2.0",
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+    )
+
+    @app.middleware("http")
+    async def no_store(request: Request, call_next):
+        response = await call_next(request)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        return response
 
     @app.exception_handler(RuntimeError)
     async def operator_conflict(_: Request, exc: RuntimeError) -> JSONResponse:
@@ -55,8 +69,15 @@ def create_operator_app(
     Auth = Annotated[None, Depends(authorize)]
 
     @app.get("/health")
-    def health() -> dict[str, str]:
-        return {"status": "ok"}
+    def health() -> dict[str, object]:
+        service_status = service.status()
+        return {
+            "status": "ok",
+            "mode": service_status.mode,
+            "state": service_status.state,
+            "engine_configured": service_status.engine_configured,
+            "kill_switch_latched": service_status.kill_switch_latched,
+        }
 
     @app.get("/operator/status")
     def operator_status(_: Auth) -> dict[str, object]:
@@ -94,6 +115,10 @@ def create_operator_app(
     def emergency_stop(_: Auth) -> dict[str, object]:
         service.latch_kill_switch()
         return {"status": service.snapshot()["status"]}
+
+    @app.on_event("shutdown")
+    def shutdown() -> None:
+        service.close()
 
     return app
 
