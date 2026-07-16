@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Iterable, Mapping, Protocol
+from typing import TYPE_CHECKING, Iterable, Mapping, Protocol
+
+if TYPE_CHECKING:
+    from tradingbot_core.strategy import OrderIntent
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,11 +36,11 @@ class Order:
     @classmethod
     def from_intent(
         cls,
-        intent: "OrderIntent",
+        intent: OrderIntent,
         *,
         order_id: str | None = None,
         symbol: str | None = None,
-    ) -> "Order":
+    ) -> Order:
         """Create an order from a strategy-layer ``OrderIntent``."""
 
         try:
