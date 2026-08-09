@@ -60,7 +60,7 @@ def test_generate_threshold_signals_validates_columns():
 
 
 def test_generate_threshold_signals_rejects_zero_spot_price():
-    timestamps = pd.date_range("2024-01-01", periods=1, freq="1H")
+    timestamps = pd.date_range("2024-01-01", periods=1, freq="1h")
     spot = pd.DataFrame({"timestamp": timestamps, "Close": [0.0]})
     futures = pd.DataFrame({"timestamp": timestamps, "Close": [100.0]})
     with pytest.raises(ValueError):
@@ -68,7 +68,7 @@ def test_generate_threshold_signals_rejects_zero_spot_price():
 
 
 def test_generate_threshold_signals_rejects_duplicate_timestamps():
-    timestamps = pd.date_range("2024-01-01", periods=2, freq="1H")
+    timestamps = pd.date_range("2024-01-01", periods=2, freq="1h")
     spot = pd.DataFrame({"timestamp": [timestamps[0], timestamps[0]], "Close": [100.0, 101.0]})
     futures = pd.DataFrame({"timestamp": timestamps, "Close": [101.0, 102.0]})
 
@@ -77,7 +77,7 @@ def test_generate_threshold_signals_rejects_duplicate_timestamps():
 
 
 def test_generate_threshold_signals_handles_unsorted_inputs():
-    timestamps = pd.date_range("2024-01-01", periods=3, freq="1H")
+    timestamps = pd.date_range("2024-01-01", periods=3, freq="1h")
     spot = pd.DataFrame({
         "timestamp": [timestamps[1], timestamps[0], timestamps[2]],
         "Close": [101.0, 100.0, 102.0],
