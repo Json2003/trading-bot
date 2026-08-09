@@ -40,7 +40,7 @@ def test_check_live_basis_requires_non_negative_threshold():
 
 
 def test_generate_threshold_signals_outputs_basis_and_signal():
-    timestamps = pd.date_range("2024-01-01", periods=3, freq="1H")
+    timestamps = pd.date_range("2024-01-01", periods=3, freq="1h")
     spot = pd.DataFrame({"timestamp": timestamps, "Close": [100.0, 101.0, 102.0]})
     futures = pd.DataFrame({"timestamp": timestamps, "Close": [101.0, 100.0, 102.5]})
 
