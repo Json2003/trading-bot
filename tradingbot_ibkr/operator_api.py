@@ -8,7 +8,6 @@ import os
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Annotated
 
 from .operator_service import TradingOperatorService
 from .strategy_candidates import StrategyCandidateRegistry
@@ -87,8 +86,6 @@ def create_operator_app(
         if not hmac.compare_digest(supplied, expected_token):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="invalid operator token")
 
-    Auth = Annotated[None, Depends(authorize)]
-
     def require_research() -> PaperLabAutomationService:
         if research_service is None:
             raise RuntimeError("paper research lab is not configured")
@@ -107,56 +104,56 @@ def create_operator_app(
         }
 
     @app.get("/operator/status")
-    def operator_status(_: Auth) -> dict[str, object]:
+    def operator_status(_: None = Depends(authorize)) -> dict[str, object]:
         return service.snapshot()
 
     @app.get("/operator/orders")
-    def orders(_: Auth) -> dict[str, object]:
+    def orders(_: None = Depends(authorize)) -> dict[str, object]:
         return {"orders": service.snapshot()["orders"]}
 
     @app.get("/operator/positions")
-    def positions(_: Auth) -> dict[str, object]:
+    def positions(_: None = Depends(authorize)) -> dict[str, object]:
         return {"positions": service.snapshot()["positions"]}
 
     @app.post("/operator/start-paper")
-    def start_paper(_: Auth) -> dict[str, object]:
+    def start_paper(_: None = Depends(authorize)) -> dict[str, object]:
         service.start()
         return {"status": service.snapshot()["status"]}
 
     @app.post("/operator/pause")
-    def pause(_: Auth) -> dict[str, object]:
+    def pause(_: None = Depends(authorize)) -> dict[str, object]:
         service.pause()
         return {"status": service.snapshot()["status"]}
 
     @app.post("/operator/stop")
-    def stop(_: Auth) -> dict[str, object]:
+    def stop(_: None = Depends(authorize)) -> dict[str, object]:
         service.stop(cancel_open_orders=True)
         return {"status": service.snapshot()["status"]}
 
     @app.post("/operator/cancel-all")
-    def cancel_all(_: Auth) -> dict[str, object]:
+    def cancel_all(_: None = Depends(authorize)) -> dict[str, object]:
         cancelled = service.cancel_all_orders()
         return {"cancelled": len(cancelled), "status": service.snapshot()["status"]}
 
     @app.post("/operator/emergency-stop")
-    def emergency_stop(_: Auth) -> dict[str, object]:
+    def emergency_stop(_: None = Depends(authorize)) -> dict[str, object]:
         service.latch_kill_switch()
         return {"status": service.snapshot()["status"]}
 
     @app.get("/research/datasets")
-    def research_datasets(_: Auth) -> dict[str, object]:
+    def research_datasets(_: None = Depends(authorize)) -> dict[str, object]:
         return {"datasets": require_research().datasets()}
 
     @app.get("/research/jobs")
-    def research_jobs(_: Auth) -> dict[str, object]:
+    def research_jobs(_: None = Depends(authorize)) -> dict[str, object]:
         return {"jobs": require_research().jobs()}
 
     @app.get("/research/jobs/{job_id}")
-    def research_job(job_id: str, _: Auth) -> dict[str, object]:
+    def research_job(job_id: str, _: None = Depends(authorize)) -> dict[str, object]:
         return {"job": require_research().job(job_id)}
 
     @app.post("/research/jobs", status_code=status.HTTP_202_ACCEPTED)
-    def start_research(request: LabRunRequest, _: Auth) -> dict[str, object]:
+    def start_research(request: LabRunRequest, _: None = Depends(authorize)) -> dict[str, object]:
         job = require_research().start(
             LabRunSpec(
                 dataset_id=request.dataset_id,
@@ -169,14 +166,14 @@ def create_operator_app(
         return {"job": job}
 
     @app.post("/research/jobs/{job_id}/stage/{account_id}")
-    def stage_research_candidate(job_id: str, account_id: str, _: Auth) -> dict[str, object]:
+    def stage_research_candidate(job_id: str, account_id: str, _: None = Depends(authorize)) -> dict[str, object]:
         if candidate_registry is None:
             raise RuntimeError("candidate registry is not configured")
         candidate = require_research().stage_finalist(job_id, account_id, candidate_registry)
         return {"candidate": candidate}
 
     @app.post("/research/jobs/{job_id}/cancel")
-    def cancel_research(job_id: str, _: Auth) -> dict[str, object]:
+    def cancel_research(job_id: str, _: None = Depends(authorize)) -> dict[str, object]:
         return {"job": require_research().cancel(job_id)}
 
     @app.on_event("shutdown")
