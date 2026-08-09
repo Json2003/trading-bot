@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from engine.portfolio import OrderFill
 from strategies import StrategySignal
