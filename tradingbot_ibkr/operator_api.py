@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hmac
 import os
-from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.responses import JSONResponse
@@ -78,7 +77,7 @@ def create_operator_app(
             content={"detail": str(exc)},
         )
 
-    def authorize(authorization: Annotated[str | None, Header()] = None) -> None:
+    def authorize(authorization: str | None = Header(default=None, alias="Authorization")) -> None:
         prefix = "Bearer "
         if not authorization or not authorization.startswith(prefix):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing operator token")
@@ -86,7 +85,7 @@ def create_operator_app(
         if not hmac.compare_digest(supplied, expected_token):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="invalid operator token")
 
-    Auth = Annotated[None, Depends(authorize)]
+    Auth = Depends(authorize)
 
     def require_research() -> PaperLabAutomationService:
         if research_service is None:
