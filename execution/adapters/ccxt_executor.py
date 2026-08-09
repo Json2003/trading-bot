@@ -11,8 +11,6 @@ from engine.portfolio import OrderFill
 from strategies import StrategySignal
 from tradingbot_ibkr.execution.broker_base import BrokerBase, Order, OrderStatus
 
-if TYPE_CHECKING:  # pragma: no cover - typing only
-    
 logger = logging.getLogger(__name__)
 
 
