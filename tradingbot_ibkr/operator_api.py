@@ -77,8 +77,9 @@ def create_operator_app(
             content={"detail": str(exc)},
         )
 
-    def authorize(authorization: str | None = Header(default=None, alias="Authorization")) -> None:
+    def authorize(request: Request) -> None:
         prefix = "Bearer "
+        authorization = request.headers.get("Authorization")
         if not authorization or not authorization.startswith(prefix):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing operator token")
         supplied = authorization[len(prefix) :]
