@@ -8,6 +8,7 @@ import os
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
+from typing import Annotated
 
 from .operator_service import TradingOperatorService
 from .strategy_candidates import StrategyCandidateRegistry
@@ -86,7 +87,7 @@ def create_operator_app(
         if not hmac.compare_digest(supplied, expected_token):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="invalid operator token")
 
-    Auth = Depends(authorize)
+    Auth = Annotated[None, Depends(authorize)]
 
     def require_research() -> PaperLabAutomationService:
         if research_service is None:
