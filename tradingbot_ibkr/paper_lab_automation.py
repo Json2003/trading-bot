@@ -15,7 +15,7 @@ import math
 from pathlib import Path
 import random
 from threading import Event, RLock, Thread
-from typing import Any
+from typing import Any, cast
 import uuid
 
 import pandas as pd
@@ -258,9 +258,9 @@ class PaperLabAutomationService:
                 raise ValueError("learning jobs require at least 160 OHLCV rows")
             spec = job.spec
             final_rows = max(40, int(len(frame) * spec.final_holdout_fraction))
-            development = frame.iloc[:-final_rows].reset_index(drop=True)
+            development = cast(pd.DataFrame, frame.iloc[:-final_rows].reset_index(drop=True))
             warmup_rows = min(max(60, final_rows), len(development))
-            final_data = pd.concat(
+            final_data: pd.DataFrame = pd.concat(
                 [development.iloc[-warmup_rows:], frame.iloc[-final_rows:]],
                 ignore_index=True,
             )
