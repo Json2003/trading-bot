@@ -4,7 +4,7 @@ from engine.overlays import OverlayEngine
 
 
 def test_overlay_engine_scales_signals() -> None:
-    index = pd.date_range("2024-01-01", periods=5, freq="H")
+    index = pd.date_range("2024-01-01", periods=5, freq="h")
     prices = pd.DataFrame(
         {
             "binance:BTC/USDT": [50000, 50500, 51000, 51500, 52000],
