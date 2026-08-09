@@ -18,7 +18,7 @@ from backtest.engine import ExecConfig, run_backtest
 
 def make_df():
     # synthetic rising market with small pullbacks
-    ts = pd.date_range("2024-01-01", periods=60, freq="H", tz="UTC")
+    ts = pd.date_range("2024-01-01", periods=60, freq="h", tz="UTC")
     close = pd.Series([100 + i * 0.5 + (3 if i % 10 == 0 else 0) for i in range(60)], index=ts)
     high = close + 1
     low = close - 1
