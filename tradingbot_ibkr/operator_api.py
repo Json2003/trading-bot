@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from .operator_service import TradingOperatorService
+from .strategy_candidates import StrategyCandidateRegistry
 from .paper_lab_automation import LabRunSpec, PaperLabAutomationService
 
 
@@ -31,6 +32,7 @@ def create_operator_app(
     *,
     operator_token: str | None = None,
     research_service: PaperLabAutomationService | None = None,
+    candidate_registry: StrategyCandidateRegistry | None = None,
 ) -> FastAPI:
     """Create the local paper-only operator and research API.
 
@@ -164,6 +166,13 @@ def create_operator_app(
             )
         )
         return {"job": job}
+
+    @app.post("/research/jobs/{job_id}/stage/{account_id}")
+    def stage_research_candidate(job_id: str, account_id: str, _: Auth) -> dict[str, object]:
+        if candidate_registry is None:
+            raise RuntimeError("candidate registry is not configured")
+        candidate = require_research().stage_finalist(job_id, account_id, candidate_registry)
+        return {"candidate": candidate}
 
     @app.post("/research/jobs/{job_id}/cancel")
     def cancel_research(job_id: str, _: Auth) -> dict[str, object]:
