@@ -5,15 +5,14 @@ from __future__ import annotations
 import logging
 import uuid
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Mapping
+from typing import TYPE_CHECKING, Any
 
 from engine.portfolio import OrderFill
 from strategies import StrategySignal
 from tradingbot_ibkr.execution.broker_base import BrokerBase, Order, OrderStatus
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
-    from engine.orchestrator import OrderExecutor
-
+    
 logger = logging.getLogger(__name__)
 
 
