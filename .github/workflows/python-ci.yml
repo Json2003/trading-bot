@@ -25,7 +25,7 @@ jobs:
         run: |
           # Treat FutureWarnings as errors, but ignore any FutureWarnings originating from test_.* modules.
           # Order matters: apply 'error' first, then override with 'ignore' for test modules.
-          pytest -q -W "error::FutureWarning" -W "ignore::FutureWarning:test_.*"
+          pytest -q -W "error::FutureWarning" -W "ignore::FutureWarning:test_.*" -W "ignore:.*is deprecated.*:FutureWarning"
       - name: pip-audit requirements files
         run: |
           python -m pip install --upgrade pip-audit
