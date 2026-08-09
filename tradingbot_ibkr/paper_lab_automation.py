@@ -20,6 +20,7 @@ import uuid
 
 import pandas as pd
 
+from .strategy_candidates import CandidateEvidence, StrategyCandidateRegistry
 from .paper_lab import (
     EXECUTION_POLICIES,
     STRATEGY_FAMILIES,
@@ -143,6 +144,48 @@ class PaperLabAutomationService:
         thread.start()
         return job.as_dict()
 
+    def stage_finalist(
+        self,
+        job_id: str,
+        account_id: str,
+        registry: StrategyCandidateRegistry,
+    ) -> dict[str, Any]:
+        """Stage a completed held-out finalist for explicit later review."""
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if job is None:
+                raise KeyError(job_id)
+            if job.state != "completed":
+                raise ValueError("only completed research jobs can stage finalists")
+            finalist = next(
+                (item for item in job.final_leaderboard if item.get("account_id") == account_id),
+                None,
+            )
+            if finalist is None:
+                raise KeyError(account_id)
+            params = finalist.get("params")
+            risk = finalist.get("risk")
+            if not isinstance(params, dict) or not isinstance(risk, dict):
+                raise ValueError("finalist package is missing parameters or risk configuration")
+            evidence = CandidateEvidence(
+                source_job_id=job.job_id,
+                source_account_id=str(finalist["account_id"]),
+                dataset_id=job.spec.dataset_id,
+                total_return=float(finalist["total_return"]),
+                max_drawdown=float(finalist["max_drawdown"]),
+                sharpe=float(finalist["sharpe"]),
+                profit_factor=float(finalist["profit_factor"]),
+                trade_count=int(finalist["trade_count"]),
+                score=float(finalist["score"]),
+            )
+            return registry.register(
+                strategy=str(finalist["strategy"]),
+                execution_policy=str(finalist["execution_policy"]),
+                params={str(key): float(value) for key, value in params.items()},
+                risk={str(key): float(value) for key, value in risk.items()},
+                research=evidence,
+            )
+
     def cancel(self, job_id: str) -> dict[str, Any]:
         with self._lock:
             job = self._jobs.get(job_id)
@@ -264,8 +307,10 @@ class PaperLabAutomationService:
             ).run(final_data)
             with self._lock:
                 job = self._jobs[job_id]
+                profile_map = {profile.account_id: profile for profile in finalists}
                 job.final_leaderboard = [
-                    _report_summary(item) for item in final_report.leaderboard
+                    _report_summary(item, profile_map.get(item.account_id))
+                    for item in final_report.leaderboard
                 ]
                 job.state = "completed"
                 job.finished_at = _utc_now()
@@ -425,7 +470,7 @@ def _build_finalists(
     return finalists
 
 
-def _report_summary(report: Any) -> dict[str, Any]:
+def _report_summary(report: Any, profile: StrategyProfile | None = None) -> dict[str, Any]:
     return _json_safe(
         {
             "account_id": report.account_id,
@@ -441,6 +486,15 @@ def _report_summary(report: Any) -> dict[str, Any]:
             "trade_count": report.trade_count,
             "average_execution_cost": report.average_execution_cost,
             "score": report.score,
+            "params": dict(profile.params) if profile is not None else None,
+            "risk": {
+                "risk_per_trade": profile.risk_per_trade,
+                "max_position_fraction": profile.max_position_fraction,
+                "max_daily_loss_fraction": profile.max_daily_loss_fraction,
+                "stop_atr": profile.stop_atr,
+                "reward_to_risk": profile.reward_to_risk,
+                "max_hold_bars": profile.max_hold_bars,
+            } if profile is not None else None,
         }
     )
 
