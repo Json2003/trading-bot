@@ -12,7 +12,7 @@ from overlays.beta_hedge import size_btc_beta_hedge
 
 
 def test_compute_rolling_beta_matches_market() -> None:
-    index = pd.date_range("2024-01-01", periods=6, freq="H")
+    index = pd.date_range("2024-01-01", periods=6, freq="h")
     asset = pd.Series([0.01, 0.02, 0.015, 0.0175, 0.0225, 0.03], index=index)
     market = asset.copy()
 
@@ -27,7 +27,7 @@ def test_compute_rolling_beta_matches_market() -> None:
 
 
 def test_compute_comp_m_factor_returns_zscores() -> None:
-    index = pd.date_range("2024-01-01", periods=6, freq="H")
+    index = pd.date_range("2024-01-01", periods=6, freq="h")
     prices = pd.DataFrame(
         {
             "A": [10, 10.2, 10.5, 10.7, 11.0, 11.4],
