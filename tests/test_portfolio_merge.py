@@ -16,7 +16,7 @@ from backtest.metrics import summarize
 
 def test_portfolio_merge():
     # pretend two equities offset each other
-    ts = pd.date_range("2024-01-01", periods=5, freq="H", tz="UTC")
+    ts = pd.date_range("2024-01-01", periods=5, freq="h", tz="UTC")
     eq1 = pd.DataFrame({"timestamp": ts, "equity": [1, 1.01, 1.00, 1.02, 1.03]})
     eq2 = pd.DataFrame({"timestamp": ts, "equity": [1, 0.99, 1.01, 1.00, 1.02]})
     # simple portfolio avg
