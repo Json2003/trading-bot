@@ -46,7 +46,7 @@ def test_compute_comp_m_factor_returns_zscores() -> None:
         row_vals = []
         for col in columns:
             series = zscores[col]
-            value = series[pos]
+            value = series.iloc[pos]
             if value is None or (isinstance(value, float) and math.isnan(value)):
                 continue
             row_vals.append(value)
