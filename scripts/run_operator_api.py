@@ -18,6 +18,7 @@ from tradingbot_ibkr.operator_api import create_operator_app
 from tradingbot_ibkr.operator_service import TradingOperatorService
 from tradingbot_ibkr.paper_lab_automation import PaperLabAutomationService
 from tradingbot_ibkr.rescue_runtime import build_synthetic_paper_runtime
+from tradingbot_ibkr.strategy_candidates import StrategyCandidateRegistry
 
 LOGGER = logging.getLogger("tradingbot.operator")
 ROOT = Path(__file__).resolve().parents[1]
@@ -72,9 +73,13 @@ def build_research_service() -> PaperLabAutomationService:
 
 
 def build_app():
+    artifact_root = Path(
+        os.getenv("TRADING_RESEARCH_ARTIFACT_ROOT", str(ROOT / "var" / "paper_lab"))
+    )
     return create_operator_app(
         build_service(),
         research_service=build_research_service(),
+        candidate_registry=StrategyCandidateRegistry(artifact_root / "candidates.json"),
     )
 
 
