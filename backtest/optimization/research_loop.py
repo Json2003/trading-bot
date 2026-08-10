@@ -251,15 +251,18 @@ def _grid_signals_factory(levels: int, range_pct: float):
         prices = frame["close"].astype(float)
         if len(prices) == 0:
             return pd.DataFrame({"signals": np.zeros(0, dtype=int)})
-        mid = float(prices.mean())
-        lower = mid * (1.0 - span)
-        upper = mid * (1.0 + span)
-        grid_levels = np.linspace(lower, upper, level_count)
         signals: list[int] = []
-        for price in prices:
+        # Recompute the grid midpoint from prior observations only.  Using the
+        # full test-window mean would leak future prices into historical
+        # signals and materially overstate grid performance.
+        prior_mid = prices.expanding(min_periods=1).mean().shift(1).fillna(prices.iloc[0])
+        for price, mid in zip(prices, prior_mid):
             if not math.isfinite(price):
                 signals.append(0)
                 continue
+            lower = float(mid) * (1.0 - span)
+            upper = float(mid) * (1.0 + span)
+            grid_levels = np.linspace(lower, upper, level_count)
             below = int(np.sum(price > grid_levels))
             above = int(np.sum(price < grid_levels))
             diff = above - below
@@ -646,6 +649,9 @@ class NightlyResearchLoop:
     # ------------------------------------------------------------------ public
     def run(self, *, max_windows: int | None = None) -> list[RegistryEntry]:
         results: list[RegistryEntry] = []
+        # Materialize an empty registry even when every trial is pruned so
+        # callers have an explicit audit artifact for the run.
+        self._registry.save()
         current_best = self._registry.best_score
         if math.isnan(current_best):
             current_best = float("-inf")
@@ -669,6 +675,23 @@ class NightlyResearchLoop:
                 continue
 
             if not study.best_trials:
+                # Keep a durable audit record when every trial is rejected;
+                # silently leaving no registry artifact makes automated runs
+                # indistinguishable from a crash.
+                rejected = RegistryEntry(
+                    timestamp=datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                    window=window.name,
+                    params={},
+                    score=-1_000_000_000.0,
+                    oos_sharpe=0.0,
+                    train_max_drawdown=0.0,
+                    oos_max_drawdown=0.0,
+                    turnover=0.0,
+                    diagnostics={"status": "no_candidate_passed_gates"},
+                    flag_for_paper_trial=False,
+                )
+                self._registry.add(rejected)
+                results.append(rejected)
                 continue
             best = study.best_trial
             score = float(best.value)
@@ -704,4 +727,3 @@ __all__ = [
     "RegistryEntry",
     "create_non_overlapping_windows",
 ]
-
