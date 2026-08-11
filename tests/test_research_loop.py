@@ -62,7 +62,7 @@ from backtest.optimization.research_loop import (
 
 
 def _make_dataframe(rows: int = 240) -> pd.DataFrame:
-    idx = pd.date_range("2022-01-01", periods=rows, freq="H")
+    idx = pd.date_range("2022-01-01", periods=rows, freq="h")
     base = np.linspace(100.0, 120.0, rows)
     df = pd.DataFrame(
         {
