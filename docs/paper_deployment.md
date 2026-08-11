@@ -30,19 +30,19 @@ $env:TRADING_OPERATOR_TOKEN = python -c "import secrets; print(secrets.token_url
 python scripts/validate_paper_deployment.py --require-token
 ~~~
 
-## Start the paper API
+## Launch the complete paper deployment
 
-In the same environment:
+The managed launcher performs the preflight, generates a token in memory when one is not supplied, starts the API on loopback, verifies paper health, launches Electron, and terminates the API when Electron exits.
 
 ~~~powershell
-python scripts/run_operator_api.py
+python scripts/launch_operator_console.py
 ~~~
 
-The API must listen only on 127.0.0.1:8765. A missing token, non-loopback host, or live runtime must fail closed.
+Use --skip-install only after the Electron dependencies are already installed. Use --runtime none for a paper API without the synthetic engine.
 
-## Build and start the Electron operator
+The API must listen only on 127.0.0.1:8765. A missing token, non-loopback host, live runtime, or unsafe health response fails closed.
 
-In a second PowerShell window:
+## Build the Windows paper installer
 
 ~~~powershell
 cd dashboard/electron-app
@@ -50,8 +50,8 @@ npm ci
 npm run check
 npm test
 npm run dist
-npm start
 ~~~
+
 
 The Windows installer is a paper-testing artifact. It is not a signed production release and must not be distributed as a live-trading application.
 
