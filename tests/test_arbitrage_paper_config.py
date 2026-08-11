@@ -14,7 +14,7 @@ def test_conservative_arbitrage_profile_is_paper_only() -> None:
 
 
 def test_profile_rejects_insufficient_gross_edge() -> None:
-    assert validate(
+    errors = validate(
         {
             "mode": "paper",
             "execution": "synthetic",
@@ -31,3 +31,4 @@ def test_profile_rejects_insufficient_gross_edge() -> None:
             "risk": {"max_consecutive_losses": 3},
         }
     )
+    assert "minimum gross edge does not cover modeled costs and net edge" in errors
