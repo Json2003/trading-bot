@@ -17,7 +17,15 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: pip install .[dev]
       - run: ruff check .
-      # Validate the supported rescue path; legacy research/ML integrations have optional dependencies and separate typing debt.\n      - run: >-\n          mypy --ignore-missing-imports --follow-imports=skip\n          execution/adapters/ccxt_executor.py\n          tradingbot_ibkr/operator_api.py\n          tradingbot_ibkr/operator_service.py\n          tradingbot_ibkr/paper_lab_automation.py\n          tradingbot_ibkr/rescue_runtime.py\n          tradingbot_ibkr/strategy_candidates.py
+      # Validate the supported rescue path; legacy research/ML integrations have optional dependencies and separate typing debt.
+      - run: >-
+          mypy --ignore-missing-imports --follow-imports=skip
+          execution/adapters/ccxt_executor.py
+          tradingbot_ibkr/operator_api.py
+          tradingbot_ibkr/operator_service.py
+          tradingbot_ibkr/paper_lab_automation.py
+          tradingbot_ibkr/rescue_runtime.py
+          tradingbot_ibkr/strategy_candidates.py
       - run: bandit -r . -x tests || true
       - run: pip-audit || true
       - run: pytest --cov --cov-report=term-missing
