@@ -12,7 +12,9 @@ import sys
 import time
 from pathlib import Path
 from urllib.error import URLError
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
+
+from validate_paper_deployment import validate
 
 ROOT = Path(__file__).resolve().parents[1]
 ELECTRON_DIR = ROOT / "dashboard" / "electron-app"
@@ -52,6 +54,17 @@ def wait_for_health(url: str, process: subprocess.Popen[bytes], timeout: float =
     raise RuntimeError(f"operator API did not become healthy: {last_error}")
 
 
+def verify_paper_health(url: str, token: str) -> None:
+    request = Request(
+        f"{url}/health",
+        headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+    )
+    with urlopen(request, timeout=3.0) as response:  # noqa: S310 - fixed loopback URL
+        payload = response.read().decode("utf-8")
+    if '"mode": "paper"' not in payload or '"kill_switch_latched": false' not in payload:
+        raise RuntimeError("operator API health check did not confirm a safe paper state")
+
+
 def terminate(process: subprocess.Popen[bytes] | None) -> None:
     if process is None or process.poll() is not None:
         return
@@ -81,17 +94,30 @@ def main() -> int:
         {
             "TRADING_OPERATOR_TOKEN": token,
             "TRADING_OPERATOR_URL": base_url,
+            "TRADING_OPERATOR_MODE": "paper",
             "TRADING_OPERATOR_HOST": "127.0.0.1",
             "TRADING_OPERATOR_PORT": str(args.port),
             "TRADING_OPERATOR_RUNTIME": args.runtime,
             "TRADING_OPERATOR_CYCLE_SECONDS": str(args.cycle_seconds),
         }
     )
+    os.environ.update(
+        {
+            "TRADING_OPERATOR_TOKEN": token,
+            "TRADING_OPERATOR_MODE": "paper",
+            "TRADING_OPERATOR_HOST": "127.0.0.1",
+            "TRADING_OPERATOR_RUNTIME": args.runtime,
+        }
+    )
+    errors = validate(ROOT / "configs" / "paper-deployment.yaml", None, True)
+    if errors:
+        raise RuntimeError("paper deployment preflight failed: " + "; ".join(errors))
 
     api_process: subprocess.Popen[bytes] | None = None
     try:
         api_process = subprocess.Popen([sys.executable, str(API_SCRIPT)], cwd=ROOT, env=child_env)
         wait_for_health(f"{base_url}/health", api_process)
+        verify_paper_health(base_url, token)
         desktop = subprocess.run([npm, "start"], cwd=ELECTRON_DIR, env=child_env, check=False)
         return int(desktop.returncode)
     finally:
