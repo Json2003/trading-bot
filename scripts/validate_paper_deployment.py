@@ -34,11 +34,11 @@ def validate(config_path: Path, env_file: Path | None, require_token: bool) -> l
     for key in ("TRADING_OPERATOR_MODE", "TRADING_OPERATOR_RUNTIME", "TRADING_OPERATOR_HOST", "TRADING_OPERATOR_TOKEN"):
         values.setdefault(key, os.getenv(key, ""))
 
-    if values.get("TRADING_OPERATOR_MODE", "paper").lower() != "paper":
+    if (values.get("TRADING_OPERATOR_MODE") or "paper").lower() != "paper":
         errors.append("TRADING_OPERATOR_MODE must be paper")
-    if values.get("TRADING_OPERATOR_RUNTIME", "synthetic-smoke").lower() not in {"synthetic-smoke", "synthetic", "none", "disabled"}:
+    if (values.get("TRADING_OPERATOR_RUNTIME") or "synthetic-smoke").lower() not in {"synthetic-smoke", "synthetic", "none", "disabled"}:
         errors.append("TRADING_OPERATOR_RUNTIME must be synthetic-smoke, synthetic, none, or disabled")
-    if values.get("TRADING_OPERATOR_HOST", "127.0.0.1") not in LOOPBACK_HOSTS:
+    if (values.get("TRADING_OPERATOR_HOST") or "127.0.0.1") not in LOOPBACK_HOSTS:
         errors.append("TRADING_OPERATOR_HOST must remain loopback-only")
 
     token = values.get("TRADING_OPERATOR_TOKEN", "")
