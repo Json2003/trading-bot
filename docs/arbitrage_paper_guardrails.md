@@ -12,7 +12,7 @@ The bot must reject an opportunity unless:
 - trade and inventory notional limits pass;
 - the consecutive-loss and daily-loss limits pass.
 
-The default profile models 10 bps per trading fee, 8 bps spread, and 8 bps slippage. Its 50-bps gross threshold leaves a 6-bps modeled margin above the 15-bps minimum net edge. These are deliberately conservative placeholders, not a claim about any user's actual exchange tier.
+The default profile models 10 bps per trading fee, 8 bps spread, and 8 bps slippage. Its 60-bps gross threshold leaves 24 bps after modeled costs, including a 9-bps buffer above the 15-bps minimum net edge. These are deliberately conservative placeholders, not a claim about any user's actual exchange tier.
 
 Validate it with:
 
