@@ -17,7 +17,7 @@ costs_bps:
   spread: 8.0
   slippage: 8.0
 gates:
-  minimum_gross_edge_bps: 51.0
+  minimum_gross_edge_bps: 60.0
   minimum_net_edge_bps: 15.0
   max_quote_age_seconds: 3.0
   require_both_legs: true
