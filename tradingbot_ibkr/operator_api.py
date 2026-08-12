@@ -26,6 +26,16 @@ class LabRunRequest(BaseModel):
     seed: int = Field(default=7, ge=0, le=2_147_483_647)
 
 
+class RecoveryCheckRequest(BaseModel):
+    """Observed metrics used by the guarded paper recovery policy."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    current_drawdown_fraction: float = Field(ge=0.0, le=1.0)
+    realized_volatility_fraction: float = Field(ge=0.0, le=1.0)
+    engine_healthy: bool = True
+
+
 def create_operator_app(
     service: TradingOperatorService,
     *,
@@ -36,7 +46,9 @@ def create_operator_app(
     """Create the local paper-only operator and research API.
 
     Arbitrary order submission, live activation, risk editing, position
-    flattening, automatic strategy promotion and kill-switch reset are absent.
+    flattening, automatic strategy promotion and forced kill-switch reset are
+    absent. Recovery checks can only earn a bounded paper re-arm from trusted
+    observed metrics; manual stops and engine faults remain latched.
     """
 
     expected_token = operator_token or os.getenv("TRADING_OPERATOR_TOKEN")
@@ -140,6 +152,18 @@ def create_operator_app(
         service.latch_kill_switch()
         return {"status": service.snapshot()["status"]}
 
+    @app.post("/operator/recovery-check")
+    def recovery_check(
+        request: RecoveryCheckRequest,
+        _: None = Depends(authorize),
+    ) -> dict[str, object]:
+        service.evaluate_recovery(
+            current_drawdown_fraction=request.current_drawdown_fraction,
+            realized_volatility_fraction=request.realized_volatility_fraction,
+            engine_healthy=request.engine_healthy,
+        )
+        return {"status": service.snapshot()["status"]}
+
     @app.get("/research/datasets")
     def research_datasets(_: None = Depends(authorize)) -> dict[str, object]:
         return {"datasets": require_research().datasets()}
@@ -185,4 +209,4 @@ def create_operator_app(
     return app
 
 
-__all__ = ["LabRunRequest", "create_operator_app"]
+__all__ = ["LabRunRequest", "RecoveryCheckRequest", "create_operator_app"]

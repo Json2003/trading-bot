@@ -51,6 +51,10 @@ def validate(config_path: Path, env_file: Path | None, require_token: bool) -> l
         "live_trading: false": "live_trading must be false",
         "allow_live_orders: false": "allow_live_orders must be false",
         "host: 127.0.0.1": "operator host must be loopback",
+        "kill_switch_drawdown_fraction: 0.02": "paper drawdown kill switch must be 2%",
+        "auto_rearm: true": "paper recovery auto-rearm must be enabled",
+        "require_flat: true": "paper recovery must require a flat broker",
+        "full_reset_requires_human_approval: true": "full recovery reset must require human approval",
     }
     for marker, message in required.items():
         if marker not in text:

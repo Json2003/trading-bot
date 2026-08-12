@@ -11,6 +11,13 @@ The deployment must remain:
 - bound to 127.0.0.1, localhost, or ::1
 - credential-free
 - protected by a locally generated operator token
+- guarded by a 2% drawdown kill switch
+
+Drawdown recovery is bounded to one automatic paper re-arm. It requires a
+flat broker, a healthy engine, volatility below the recovery ceiling, and 12
+consecutive stable observations. Manual emergency stops and engine faults
+remain latched. A full reset requires 72 stable observations plus explicit
+human approval and is not exposed as a forced-reset API operation.
 
 Do not use configs/live.yaml or legacy server entry points for this deployment.
 

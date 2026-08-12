@@ -531,6 +531,11 @@ def run_backtest(
     # Force-close at end if still in position
     if position != 0:
         maybe_exit(len(close) - 1, float(close[-1]), reason="eod")
+        # The bar was recorded before the forced close. Reflect the realised
+        # PnL in the final equity observation so horizon reports include an
+        # open position's end-of-window exit.
+        if equity_curve:
+            equity_curve[-1]["equity"] = float(equity)
 
     eq = pd.DataFrame(equity_curve)
     eq["equity_prev"] = eq["equity"].shift(1).fillna(eq["equity"].iloc[0])

@@ -17,5 +17,14 @@ research:
 risk:
   max_position_notional: 1000.0
   max_daily_loss_fraction: 0.01
-  kill_switch_drawdown_fraction: 0.03
+  kill_switch_drawdown_fraction: 0.02
   max_open_orders: 20
+recovery:
+  auto_rearm: true
+  require_flat: true
+  rearm_drawdown_fraction: 0.005
+  max_recovery_volatility_fraction: 0.04
+  stable_cycles: 12
+  full_reset_stable_cycles: 72
+  max_rearm_attempts: 1
+  full_reset_requires_human_approval: true
