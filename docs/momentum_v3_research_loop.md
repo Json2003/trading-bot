@@ -64,6 +64,32 @@ so changing it causes a fresh research iteration rather than reusing prior
 evidence. No network sentiment feed is fetched by the runner; any context file
 must be supplied as a timestamped research input.
 
+## Matrix diagnostic on repository sample data
+
+The repository includes a 240-row synthetic OHLCV fixture for smoke testing the
+matrix only. It is not market evidence and must not be reported as strategy
+performance. Run it with a window size that produces three non-overlapping
+windows:
+
+    mkdir -p artifacts
+    python scripts/run_research_matrix.py \
+      backtest/sample_data/sample_ohlcv.csv \
+      --window-size 80 \
+      --test-fraction 0.30 \
+      --spread-bps 12 \
+      --slippage-bps 8 \
+      --commission-bps 0 \
+      --expected-move-bps 40 \
+      | tee artifacts/research-matrix-sample.json
+
+The matrix applies execution costs and reports net return, cost drag, drawdown,
+Sharpe, profit factor, and trade count. A family is not research-gate eligible
+because its best test slice is profitable: it needs at least three windows,
+at least five trades per window, positive median net return and Sharpe, a finite
+median profit factor of at least 1.05, at least two-thirds profitable windows,
+and no test drawdown above 20%. A failed gate is expected on a small synthetic
+fixture.
+
 ## Run once
 
 From the repository root, with normalized BTC and ETH files present:
