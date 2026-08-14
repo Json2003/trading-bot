@@ -22,8 +22,10 @@ from pathlib import Path
 from typing import Mapping, Sequence
 
 try:  # Works both as ``python scripts/...`` and when imported by pytest.
+    from scripts.momentum_context import ContextEvent, build_context_features, load_context_events
     from scripts.run_momentum_volatility_research import Bar, features, load_bars
 except ModuleNotFoundError:  # pragma: no cover - direct script fallback
+    from momentum_context import ContextEvent, build_context_features, load_context_events
     from run_momentum_volatility_research import Bar, features, load_bars
 
 
@@ -79,6 +81,14 @@ class V3Config:
     recovery_size_bars: int = 24
     recovery_abort_drawdown: float = 0.01
     lifetime_drawdown_limit: float = 0.06
+    # Optional causal context gates. Neutral context is permitted when no
+    # timestamped context CSV is supplied; supplied events are never forward-filled.
+    context_lookback_hours: int = 24
+    min_context_volume_ratio: float = 0.65
+    negative_sentiment_block: float = -0.40
+    risk_event_blocks: bool = True
+    expected_move_atr_multiple: float = 1.00
+    min_expected_edge_bps: float = 5.0
 
     def as_dict(self) -> dict[str, object]:
         return {
@@ -135,6 +145,7 @@ def _prior_highs(bars: Sequence[Bar], lookback: int) -> list[float]:
 def build_pair_features(
     pair: Sequence[PairBar],
     config: V3Config,
+    context_events: Sequence[ContextEvent] | None = None,
 ) -> dict[str, dict[str, list[float]]]:
     """Build causal features for both assets over the common time axis."""
 
@@ -150,6 +161,13 @@ def build_pair_features(
             higher_timeframe_fast_window=config.higher_timeframe_fast_window,
             higher_timeframe_slow_window=config.higher_timeframe_slow_window,
         )
+        context = build_context_features(
+            bars,
+            context_events,
+            volume_window=config.volume_lookback,
+            lookback_hours=config.context_lookback_hours,
+        )
+        base.update(context)
         closes = [bar.close for bar in bars]
         score = [math.nan] * len(bars)
         for index in range(config.leader_lookback, len(bars)):
@@ -228,11 +246,24 @@ def _setup(
     f: Mapping[str, list[float]],
     index: int,
     config: V3Config,
+    *,
+    fees_bps: float = 0.0,
+    slippage_bps: float = 0.0,
 ) -> tuple[bool, float, str]:
     """Evaluate one asset without using the next bar."""
 
     if index < max(2, config.breakout_lookback + 1) or index + 1 >= len(bars):
         return False, 0.0, "warmup"
+    context_sentiment = f.get("context_sentiment", [0.0] * len(bars))[index]
+    context_impact = f.get("context_impact", [0.0] * len(bars))[index]
+    context_risk = f.get("context_risk_event", [0.0] * len(bars))[index]
+    volume_ratio = f.get("volume_ratio", [math.nan] * len(bars))[index]
+    if config.risk_event_blocks and context_risk >= 1.0:
+        return False, 0.0, "risk_event"
+    if _valid(context_sentiment) and context_sentiment < config.negative_sentiment_block:
+        return False, 0.0, "sentiment"
+    if not _valid(volume_ratio) or volume_ratio < config.min_context_volume_ratio:
+        return False, 0.0, "liquidity"
     state, size_multiplier, _ = _volatility_state(f, index, config)
     if state not in {"normal", "reduced"}:
         return False, 0.0, state
@@ -243,6 +274,14 @@ def _setup(
         return False, 0.0, "breakout"
     first, second = bars[index - 1], bars[index]
     atr = f["atr"][index]
+    expected_edge_bps = (
+        atr / second.close * 10_000.0 * config.expected_move_atr_multiple
+        if _valid(atr) and second.close > 0
+        else math.nan
+    )
+    round_trip_cost_bps = 2.0 * (float(fees_bps) + float(slippage_bps))
+    if not _valid(expected_edge_bps) or expected_edge_bps < round_trip_cost_bps + config.min_expected_edge_bps:
+        return False, 0.0, "edge"
     bullish = first.close > first.open and second.close > second.open
     body = second.close - second.open
     body_ok = _valid(atr) and body >= config.entry_min_body_atr * atr
@@ -261,6 +300,10 @@ def _setup(
     )
     if not bullish or not body_ok or not volume_ok or not higher_timeframe_ok:
         return False, 0.0, "confirmation"
+    # A mildly adverse but non-blocking context signal reduces exposure. A
+    # high-impact event or strongly negative sentiment was already blocked.
+    if context_impact > 0 and context_sentiment < 0.15:
+        size_multiplier *= 0.75
     return True, size_multiplier, state
 
 
@@ -377,6 +420,7 @@ def run_pair(
     trend_exits = 0
     size_reductions = 0
     extreme_blocked_entries = 0
+    context_blocked_entries = 0
     leader_counts = {"BTC": 0, "ETH": 0}
     leader_scores_seen = 0
     entry_reasons: dict[str, int] = {}
@@ -517,7 +561,12 @@ def run_pair(
         # the pending entry/exit is therefore filled no earlier than index+1.
         setups: dict[str, tuple[bool, float, str]] = {
             symbol: _setup(
-                bars_by_symbol[symbol], feature_map[symbol], index, config
+                bars_by_symbol[symbol],
+                feature_map[symbol],
+                index,
+                config,
+                fees_bps=fees_bps,
+                slippage_bps=slippage_bps,
             )
             for symbol in ("BTC", "ETH")
         }
@@ -528,6 +577,8 @@ def run_pair(
         for symbol, (_, _, reason) in setups.items():
             if reason == "extreme":
                 extreme_blocked_entries += 1
+            if reason in {"risk_event", "sentiment", "liquidity", "edge"}:
+                context_blocked_entries += 1
 
         healthy = any(
             _trend_ok(bars_by_symbol[symbol], feature_map[symbol], index, config)
@@ -634,6 +685,12 @@ def run_pair(
         "profit_lock_exits": profit_lock_exits,
         "size_reductions": size_reductions,
         "extreme_blocked_entries": extreme_blocked_entries,
+        "context_blocked_entries": context_blocked_entries,
+        "context_mode": "timestamped_events" if any(
+            any(value > 0 for value in feature_map[symbol].get("context_event_count", []))
+            for symbol in ("BTC", "ETH")
+        ) else "neutral_without_events",
+        "max_concurrent_positions": 1,
         "leader_counts": leader_counts,
         "leader_scores_seen": leader_scores_seen,
         "entry_reasons": entry_reasons,
@@ -808,10 +865,12 @@ def research(
     stress_slippage_bps: float = 10.0,
     horizon_initial_balance: float = 5_000.0,
     horizon_order_notional: float | None = None,
+    context_path: Path | None = None,
 ) -> dict[str, object]:
     btc = load_bars(btc_path)
     eth = load_bars(eth_path)
     pair = align_pair(btc, eth)
+    context_events = load_context_events(context_path) if context_path else []
     if horizon_order_notional is None:
         horizon_order_notional = order_notional
     cost_values = (
@@ -859,8 +918,14 @@ def research(
         ),
     }
     report: dict[str, object] = {
-        "model": "adaptive_momentum_volatility_v3",
+        "model": "adaptive_momentum_volatility_v3_context_gated",
         "research_only": True,
+        "context": {
+            "path": str(context_path) if context_path else None,
+            "events": len(context_events),
+            "neutral_when_missing": True,
+            "as_of_only": True,
+        },
         "paper_promotion_required": True,
         "data": {
             "btc_path": str(btc_path),
@@ -882,7 +947,7 @@ def research(
     confirmation_start, confirmation_end = _confirmation_holdout(len(pair))
     candidates_report: dict[str, object] = {}
     for name, config in candidates.items():
-        feature_map = build_pair_features(pair, config)
+        feature_map = build_pair_features(pair, config, context_events)
         full = run_pair(
             pair,
             initial_balance=initial_balance,
@@ -1030,6 +1095,7 @@ def main() -> None:
     parser.add_argument("--stress-slippage-bps", type=float, default=10.0)
     parser.add_argument("--horizon-initial-balance", type=float, default=5_000.0)
     parser.add_argument("--horizon-order-notional", type=float)
+    parser.add_argument("--context-csv", type=Path, help="optional timestamp,sentiment,impact CSV")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     report = research(
@@ -1043,6 +1109,7 @@ def main() -> None:
         stress_slippage_bps=args.stress_slippage_bps,
         horizon_initial_balance=args.horizon_initial_balance,
         horizon_order_notional=args.horizon_order_notional,
+        context_path=args.context_csv,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
