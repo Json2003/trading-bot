@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import pytest
@@ -13,7 +13,7 @@ from scripts.momentum_context import (
 
 
 def _ts(hour: int) -> datetime:
-    return datetime(2026, 1, 1, hour, tzinfo=timezone.utc)
+    return datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(hours=hour)
 
 
 def test_context_is_strictly_as_of_and_does_not_use_future_events() -> None:
