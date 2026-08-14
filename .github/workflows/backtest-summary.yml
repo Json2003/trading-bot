@@ -65,7 +65,7 @@ jobs:
 from pathlib import Path
 
 Path("summary-latest.md").write_text(
-    """# Backtest Summary\n\n"
+    "# Backtest Summary\n\n"
     "_No backtest JSONs found in the repository (looking for `backtest*.json` or `report_*.json`)._\n"
     "Push backtest artifacts or ensure a backtest script writes results to the repo root.\n"
 )

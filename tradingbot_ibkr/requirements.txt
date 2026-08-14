@@ -4,8 +4,6 @@ ib_insync==0.9.86
 python-dotenv==1.0.1
 pandas==2.2.2
 numpy==1.26.4
-pyarrow==16.1.0
-duckdb==1.0.0
 polars==0.20.31
 lightgbm==4.3.0
 Flask==2.2.5
@@ -20,7 +18,6 @@ tqdm==4.67.1
 python-binance==1.0.16
 google-cloud-storage==2.11.0
 requests==2.32.4
-pyarrow==14.0.1
 python-dateutil>=2.8.2
 beautifulsoup4==4.12.2
 pytest==8.3.2

@@ -36,7 +36,6 @@ def run_pyinstaller(spec_path: Path, build_dir: Path, dist_dir: Path, clean: boo
         "-m",
         "PyInstaller",
         "--noconfirm",
-        f"--specpath={spec_path.parent}",
         f"--workpath={build_dir}",
         f"--distpath={dist_dir}",
     ]
