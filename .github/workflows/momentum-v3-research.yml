@@ -1,0 +1,61 @@
+name: Momentum v3 Research Loop
+
+on:
+  # Run after each completed calendar month so the historical dataset changes
+  # between scheduled runs. It remains research-only and has no write token.
+  schedule:
+    - cron: "30 7 2 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: momentum-v3-research-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download completed Binance Vision history
+        run: |
+          set -euo pipefail
+          # --until is exclusive; the first day of the current month includes
+          # every completed month while avoiding an incomplete current month.
+          UNTIL="$(python - <<'PY'
+          from datetime import datetime, timezone
+          print(datetime.now(timezone.utc).strftime("%Y-%m"))
+          PY
+          )"
+          python scripts/fetch_binance_vision_klines.py \
+            --symbols BTCUSDT ETHUSDT \
+            --since 2023-01 \
+            --until "$UNTIL"
+
+      - name: Run strict paper-only research controller
+        run: |
+          set -euo pipefail
+          python scripts/run_v3_research_controller.py \
+            --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv \
+            --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv \
+            --min-aligned-bars 26280 \
+            --output-dir artifacts/momentum-v3/research-controller
+
+      - name: Upload research state and reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: momentum-v3-research-${{ github.run_number }}
+          path: artifacts/momentum-v3/research-controller
+          if-no-files-found: error
+          retention-days: 90
