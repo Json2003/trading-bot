@@ -544,8 +544,11 @@ def _build_finalists(
 
 
 def _finite_metric(payload: Mapping[str, Any], key: str) -> float:
+    raw_value = payload.get(key)
+    if raw_value is None:
+        raise ValueError(f"locked finalist metric {key} is not finite")
     try:
-        value = float(payload.get(key))
+        value = float(cast(Any, raw_value))
     except (TypeError, ValueError):
         raise ValueError(f"locked finalist metric {key} is not finite") from None
     if not math.isfinite(value):
