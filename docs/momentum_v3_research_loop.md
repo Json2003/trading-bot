@@ -34,6 +34,36 @@ active profile, stages a finalist, enables leverage, places paper or live
 orders, changes risk limits, or merges a pull request. Any promotion remains a
 separate manual action after review and paper probation.
 
+## Context, liquidity, and execution gates
+
+The runner accepts an optional operator-supplied context CSV with the columns
+`timestamp,sentiment,impact`. Sentiment must be between -1 and 1; impact must
+be non-negative. Events are aligned strictly as-of each bar: future events are
+never visible, and events older than the configured lookback expire. If no
+context CSV is supplied, sentiment is neutral and event blocking is inactive;
+the causal liquidity and execution-cost gates still apply.
+
+Entries also require volume relative to the prior-bar median, an ATR-based
+expected move that covers the configured round-trip fees and slippage plus a
+minimum edge buffer, and the existing higher-timeframe/regime/leader
+conditions. Strongly adverse context reduces size; high-impact or sufficiently
+negative context blocks entries. The runner keeps one position at a time, so
+the portfolio exposure/correlation control remains explicit. These are
+research filters only and do not change live or paper risk limits.
+
+For a context-enabled run:
+
+    python scripts/run_v3_research_controller.py \
+      --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv \
+      --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv \
+      --context-csv data/research/context.csv \
+      --output-dir artifacts/momentum-v3/research-controller
+
+The controller fingerprints the context file as part of the experiment input,
+so changing it causes a fresh research iteration rather than reusing prior
+evidence. No network sentiment feed is fetched by the runner; any context file
+must be supplied as a timestamped research input.
+
 ## Run once
 
 From the repository root, with normalized BTC and ETH files present:
