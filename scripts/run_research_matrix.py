@@ -105,7 +105,6 @@ def run_matrix(
     windows = create_non_overlapping_windows(
         frame,
         window_size=window_size,
-        window_size=window_size,
         test_fraction=test_fraction,
     )
     loop = NightlyResearchLoop(windows, Path("/tmp/research-matrix-registry.json"), trials_range=(1, 1))
