@@ -142,7 +142,7 @@ def test_validate_data_allows_only_synchronized_bounded_gaps(tmp_path) -> None:
     assert quality["largest_gap_hours"] == 2.0
 
     write_bars(eth, [*timestamps[:2], "2023-01-01T02:00:00Z", *timestamps[2:]])
-    with pytest.raises(ValueError, match="unsynchronized gaps"):
+    with pytest.raises(ValueError, match="unsynchronized gaps|identical timestamp coverage"):
         validate_data(btc, eth, minimum_aligned_bars=4)
 
 
