@@ -152,6 +152,7 @@ def _source_fingerprint() -> dict[str, str]:
         Path(__file__),
         Path(__file__).with_name("run_momentum_volatility_v3.py"),
         Path(__file__).with_name("run_momentum_volatility_research.py"),
+        Path(__file__).with_name("momentum_context.py"),
         Path(__file__).with_name("fetch_binance_vision_klines.py"),
         Path(__file__).parents[1] / ".github" / "workflows" / "momentum-v3-research.yml",
     ]
@@ -580,6 +581,7 @@ def _run_iteration(
     stress_fees_bps: float,
     stress_slippage_bps: float,
     horizon_initial_balance: float,
+    context_path: Path | None,
     minimum_full_entries: int,
     minimum_fold_entries: int,
     minimum_confirmation_entries: int,
@@ -613,6 +615,7 @@ def _run_iteration(
             stress_slippage_bps=stress_slippage_bps,
             horizon_initial_balance=horizon_initial_balance,
             horizon_order_notional=order_notional,
+            context_path=context_path,
         )
         report["controller"] = {
             "schema_version": SCHEMA_VERSION,
@@ -677,6 +680,7 @@ def run_controller(
     stress_fees_bps: float = 20.0,
     stress_slippage_bps: float = 10.0,
     horizon_initial_balance: float = 5_000.0,
+    context_path: Path | None = None,
     minimum_full_entries: int = DEFAULT_MIN_FULL_ENTRIES,
     minimum_fold_entries: int = DEFAULT_MIN_FOLD_ENTRIES,
     minimum_confirmation_entries: int = DEFAULT_MIN_CONFIRMATION_ENTRIES,
@@ -724,10 +728,13 @@ def run_controller(
 
     btc_path = btc_path.resolve()
     eth_path = eth_path.resolve()
+    context_path = context_path.resolve() if context_path else None
     output_dir = output_dir.resolve()
     state_path = (state_path or output_dir / "state.json").resolve()
     if not btc_path.is_file() or not eth_path.is_file():
         raise FileNotFoundError(f"both BTC and ETH CSVs are required: {btc_path}, {eth_path}")
+    if context_path is not None and not context_path.is_file():
+        raise FileNotFoundError(f"context CSV does not exist: {context_path}")
 
     research_config = {
         "schema_version": SCHEMA_VERSION,
@@ -739,6 +746,7 @@ def run_controller(
         "stress_fees_bps": stress_fees_bps,
         "stress_slippage_bps": stress_slippage_bps,
         "horizon_initial_balance": horizon_initial_balance,
+        "context_path": str(context_path) if context_path else None,
         "minimum_full_entries": minimum_full_entries,
         "minimum_fold_entries": minimum_fold_entries,
         "minimum_confirmation_entries": minimum_confirmation_entries,
@@ -750,7 +758,8 @@ def run_controller(
     source_fingerprint = _source_fingerprint()
     iterations_this_call = 0
     while True:
-        data_fingerprint = _data_fingerprint((btc_path, eth_path))
+        data_paths = (btc_path, eth_path) + ((context_path,) if context_path else ())
+        data_fingerprint = _data_fingerprint(data_paths)
         signature = _signature(data_fingerprint, source_fingerprint, research_config)
         if not force and state.get("last_signature") == signature:
             state.update({
@@ -782,6 +791,7 @@ def run_controller(
             stress_fees_bps=stress_fees_bps,
             stress_slippage_bps=stress_slippage_bps,
             horizon_initial_balance=horizon_initial_balance,
+            context_path=context_path,
             minimum_full_entries=minimum_full_entries,
             minimum_fold_entries=minimum_fold_entries,
             minimum_confirmation_entries=minimum_confirmation_entries,
@@ -865,6 +875,7 @@ def main() -> int:
     parser.add_argument("--stress-fees-bps", type=float, default=20.0)
     parser.add_argument("--stress-slippage-bps", type=float, default=10.0)
     parser.add_argument("--horizon-initial-balance", type=float, default=5_000.0)
+    parser.add_argument("--context-csv", type=Path, help="optional timestamp,sentiment,impact CSV")
     parser.add_argument("--min-full-entries", type=int, default=DEFAULT_MIN_FULL_ENTRIES)
     parser.add_argument("--min-fold-entries", type=int, default=DEFAULT_MIN_FOLD_ENTRIES)
     parser.add_argument("--min-confirmation-entries", type=int, default=DEFAULT_MIN_CONFIRMATION_ENTRIES)
@@ -910,6 +921,7 @@ def main() -> int:
         stress_fees_bps=args.stress_fees_bps,
         stress_slippage_bps=args.stress_slippage_bps,
         horizon_initial_balance=args.horizon_initial_balance,
+        context_path=args.context_csv,
         minimum_full_entries=args.min_full_entries,
         minimum_fold_entries=args.min_fold_entries,
         minimum_confirmation_entries=args.min_confirmation_entries,
