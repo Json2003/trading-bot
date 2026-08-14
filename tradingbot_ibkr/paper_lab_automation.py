@@ -16,7 +16,7 @@ import math
 from pathlib import Path
 import random
 from threading import Event, RLock, Thread
-from typing import Any, cast
+from typing import Any, Mapping, cast
 import uuid
 
 import pandas as pd
@@ -248,8 +248,11 @@ class PaperLabAutomationService:
             raise ValueError(f"generations must be between 1 and {self._max_generations}")
         if not 4 <= accounts <= self._max_accounts:
             raise ValueError(f"accounts_per_generation must be between 4 and {self._max_accounts}")
-        if not 0.20 <= holdout <= 0.40:
-            raise ValueError("final_holdout_fraction must be between 20% and 40%")
+        if not 0.20 <= holdout <= 0.30:
+            raise ValueError(
+                "final_holdout_fraction must be between 20% and 30% per holdout; "
+                "the job reserves separate selection and confirmation segments"
+            )
         return LabRunSpec(
             dataset_id=dataset_id,
             generations=generations,
