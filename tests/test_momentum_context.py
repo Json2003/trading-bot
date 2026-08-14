@@ -50,3 +50,8 @@ def test_volume_ratio_uses_prior_bars_only() -> None:
 def test_invalid_event_sentiment_is_rejected() -> None:
     with pytest.raises(ValueError):
         ContextEvent(timestamp=_ts(0), sentiment=1.1, impact=0.2)
+
+
+def test_non_finite_context_values_are_rejected() -> None:
+    with pytest.raises(ValueError):
+        ContextEvent(timestamp=_ts(0), sentiment=0.0, impact=float("nan"))
