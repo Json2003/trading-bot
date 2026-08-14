@@ -146,7 +146,7 @@ jobs:
           path: summary-latest.md
 
       - name: Commit and push results
-        if: github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: |
           set -euo pipefail
           git config user.name "market-bot"

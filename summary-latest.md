@@ -47,42 +47,6 @@
   Win-rate: 0.00% | ProfitFactor: ∞
   Trades: 0
 
-- backtest_csv_tmp0l5xbz6t_csv_sma_cross_20251021T051845Z.json
-  PnL: 0.00%  | Annualized: 0.00%
-  MaxDD: 0.00% | Sharpe: 0.00 | Sortino: 0.00
-  Win-rate: 0.00% | ProfitFactor: ∞
-  Trades: 0
-
-- backtest_csv_tmphmsr2kct_csv_sma_cross_20251004T172433Z.json
-  PnL: -19.83%  | Annualized: -92.05%
-  MaxDD: 19.83% | Sharpe: -6689.35 | Sortino: -6689.35
-  Win-rate: 0.00% | ProfitFactor: 0.00
-  Trades: 23
-
-- backtest_csv_tmplrjhde1q_csv_sma_cross_20251004T172353Z.json
-  PnL: -18.21%  | Annualized: -92.05%
-  MaxDD: 18.21% | Sharpe: -4713.15 | Sortino: -4713.15
-  Win-rate: 0.00% | ProfitFactor: 0.00
-  Trades: 20
-
-- backtest_csv_tmpvizwya8b_csv_sma_cross_20251015T224604Z.json
-  PnL: -19.83%  | Annualized: -92.05%
-  MaxDD: 19.83% | Sharpe: -6689.35 | Sortino: -6689.35
-  Win-rate: 0.00% | ProfitFactor: 0.00
-  Trades: 23
-
-- backtest_csv_tmpvqkx890o_csv_sma_cross_20251004T172040Z.json
-  PnL: -19.83%  | Annualized: -92.05%
-  MaxDD: 19.83% | Sharpe: -6223.40 | Sortino: -6223.40
-  Win-rate: 0.00% | ProfitFactor: 0.00
-  Trades: 22
-
-- backtest_csv_tmpyb4oynlm_csv_sma_cross_20251021T052200Z.json
-  PnL: 0.00%  | Annualized: 0.00%
-  MaxDD: 0.00% | Sharpe: 0.00 | Sortino: 0.00
-  Win-rate: 0.00% | ProfitFactor: ∞
-  Trades: 0
-
 - backtest_csv_yourfile_for_aggr_csv_20250910T034754Z.json
   PnL: 0.00%  | Annualized: 0.00%
   MaxDD: 0.00% | Sharpe: 0.00 | Sortino: 0.00
