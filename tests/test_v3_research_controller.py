@@ -133,7 +133,7 @@ def test_validate_data_allows_only_synchronized_bounded_gaps(tmp_path) -> None:
         for index, timestamp in enumerate(values):
             price = 100.0 + index
             rows.append(f"{timestamp},{price},{price + 1},{price - 1},{price},1000")
-        path.write_text("\\n".join(rows) + "\\n", encoding="utf-8")
+        path.write_text("\n".join(rows) + "\n", encoding="utf-8")
 
     write_bars(btc, timestamps)
     write_bars(eth, timestamps)
@@ -161,7 +161,7 @@ def test_validate_data_rejects_mismatched_timestamp_coverage(tmp_path) -> None:
         for index, timestamp in enumerate(values):
             price = 100.0 + index
             rows.append(f"{timestamp},{price},{price + 1},{price - 1},{price},1000")
-        path.write_text("\\n".join(rows) + "\\n", encoding="utf-8")
+        path.write_text("\n".join(rows) + "\n", encoding="utf-8")
 
     write_bars(btc, timestamps)
     write_bars(eth, [*timestamps, "2023-01-01T05:00:00Z"])
