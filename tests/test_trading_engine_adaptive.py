@@ -5,7 +5,7 @@ from tradingbot_ibkr.trading_engine import TradeOutcome, TradingEngine
 
 
 def _build_sample_data(rows: int = 60) -> pd.DataFrame:
-    index = pd.date_range("2024-01-01", periods=rows, freq="T")
+    index = pd.date_range("2024-01-01", periods=rows, freq="min")
     close = pd.Series(range(rows), dtype=float) + 100.0
     high = close + 0.5
     low = close - 0.5

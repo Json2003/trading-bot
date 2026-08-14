@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterable, Mapping, MutableMapping
 import logging
-
-from tradingbot_core.strategy import OrderIntent
+from typing import Any, Iterable, Mapping, MutableMapping
 
 from execution.adapters import CCXTBroker as AdapterBroker
+from tradingbot_core.strategy import OrderIntent
 
 from .broker_base import BrokerBase, Order, OrderStatus, Position
 
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class CCXTBroker(BrokerBase):
-    """Translate :mod:`ccxt` order/position data to :mod:`tradingbot_ibkr` objects."""
+    """Translate :mod:`ccxt` order and position data to shared execution objects."""
 
     def __init__(
         self,
@@ -28,15 +27,13 @@ class CCXTBroker(BrokerBase):
         account_type: str = "spot",
         log: logging.Logger | None = None,
     ) -> None:
-        """Create a broker instance backed by a ccxt exchange client."""
-
         self._log = log or logger
         if client is None:
             if exchange_id is None:
                 raise ValueError("exchange_id or client must be provided")
-            try:  # pragma: no cover - import guarded to ease testing without ccxt
+            try:  # pragma: no cover - optional dependency
                 import ccxt  # type: ignore
-            except ImportError as exc:  # pragma: no cover - requires optional dependency
+            except ImportError as exc:  # pragma: no cover
                 raise RuntimeError("ccxt is required to instantiate CCXTBroker") from exc
 
             exchange_cls = getattr(ccxt, exchange_id)
@@ -53,8 +50,6 @@ class CCXTBroker(BrokerBase):
         self._adapter = AdapterBroker(client=client, account_type=account_type, log=self._log)
         self._orders: MutableMapping[str, Order] = {}
 
-    # ------------------------------------------------------------------
-    # Helpers
     def _order_key(self, order: Order) -> str | None:
         for attr in ("client_order_id", "idemp_key", "id"):
             value = getattr(order, attr, None)
@@ -74,17 +69,16 @@ class CCXTBroker(BrokerBase):
             if key:
                 self._orders[key] = order
 
-    # ------------------------------------------------------------------
-    # Public API
     def intent_to_order(self, intent: OrderIntent) -> Order:
-        """Convert a strategy :class:`OrderIntent` into a broker :class:`Order`."""
-
         symbol = intent.symbol.split(":", 1)[-1]
         return Order.from_intent(intent, symbol=symbol)
 
-    def place(self, order: Order) -> OrderStatus:
-        """Submit ``order`` to the underlying exchange and return its status."""
+    def submit_order(self, order: Order) -> OrderStatus:
+        """Canonical broker entry point consumed by the reconciler."""
 
+        return self.place(order)
+
+    def place(self, order: Order) -> OrderStatus:
         client_id = self._order_key(order)
         if client_id and client_id in self._orders:
             cached = self._orders[client_id]
@@ -103,10 +97,8 @@ class CCXTBroker(BrokerBase):
                     ),
                     raw=raw_payload,
                 )
-
         order_type = (order.order_type or ("limit" if order.price is not None else "market")).lower()
         price = None if order_type == "market" else order.price
-
         params: dict[str, Any] = {}
         if isinstance(order.metadata, Mapping):
             extra_params = order.metadata.get("params")
@@ -124,7 +116,6 @@ class CCXTBroker(BrokerBase):
             client_id=client_id,
             params=params,
         )
-
         key = self._order_key(placed)
         if key:
             self._orders[key] = placed
@@ -133,25 +124,17 @@ class CCXTBroker(BrokerBase):
         raw_payload = metadata.get("raw", {}) if isinstance(metadata, Mapping) else {}
         if not isinstance(raw_payload, Mapping):
             raw_payload = {}
-
-        status = str(raw_payload.get("status", placed.status))
-        filled = raw_payload.get("filled")
-        if filled is None:
-            filled = placed.filled_quantity
-        avg_price = raw_payload.get("average")
-        if avg_price is None:
-            avg_price = placed.price
-
+        filled = raw_payload.get("filled", placed.filled_quantity)
+        avg_price = raw_payload.get("average", placed.price)
         return OrderStatus(
             client_id=str(raw_payload.get("clientOrderId", client_id)) if (client_id or raw_payload) else None,
             exchange_id=str(raw_payload.get("id", placed.id)),
-            status=status,
+            status=str(raw_payload.get("status", placed.status)),
             filled_qty=float(filled or 0.0),
             avg_price=float(avg_price) if avg_price is not None else None,
             raw=raw_payload,
         )
 
-    # -- BrokerBase interface -----------------------------------------------
     def list_open_orders(self) -> Iterable[Order]:
         orders = tuple(self._adapter.list_open_orders())
         self._update_local_cache(orders)
@@ -160,7 +143,6 @@ class CCXTBroker(BrokerBase):
     def list_positions(self) -> Iterable[Position]:
         return tuple(self._adapter.list_positions())
 
-    # -- Convenience helpers matching the higher level broker API -----------
     def fetch_open_orders(self, symbol: str | None = None) -> Iterable[Order]:
         if symbol:
             try:
@@ -168,9 +150,7 @@ class CCXTBroker(BrokerBase):
             except Exception as exc:  # pragma: no cover - network interaction
                 self._log.warning("Failed to fetch open orders for %s via ccxt: %s", symbol, exc)
                 return ()
-            orders = []
-            for raw in payload:
-                orders.append(self._adapter._ingest_order(raw))  # type: ignore[attr-defined]
+            orders = [self._adapter._ingest_order(raw) for raw in payload]  # type: ignore[attr-defined]
         else:
             orders = list(self.list_open_orders())
         self._update_local_cache(orders)
@@ -180,30 +160,42 @@ class CCXTBroker(BrokerBase):
         positions = self._adapter.list_positions()
         return {pos.symbol: pos.quantity for pos in positions}
 
+    def cancel_order(self, order_id: str) -> bool:
+        """Cancel one known order by local or broker identifier."""
+
+        return self.cancel(order_id)
+
     def cancel(self, client_id: str) -> bool:
         order = self._orders.get(client_id)
         if not order:
             return False
-
         metadata = order.metadata if isinstance(order.metadata, Mapping) else {}
         raw_payload = metadata.get("raw", {}) if isinstance(metadata, Mapping) else {}
-        exchange_id = None
-        if isinstance(raw_payload, Mapping):
-            exchange_id = raw_payload.get("id") or raw_payload.get("orderId")
-        if exchange_id is None:
-            exchange_id = order.id
-
+        exchange_id = (
+            raw_payload.get("id") or raw_payload.get("orderId")
+            if isinstance(raw_payload, Mapping)
+            else None
+        )
+        exchange_id = exchange_id or order.id
         try:
-            if hasattr(self.client, "cancel_order"):
-                self.client.cancel_order(exchange_id, order.symbol)
-            else:  # pragma: no cover - depends on exchange support
+            if not hasattr(self.client, "cancel_order"):
                 return False
-        except Exception as exc:  # pragma: no cover - depends on network access
+            self.client.cancel_order(exchange_id, order.symbol)
+        except Exception as exc:  # pragma: no cover - network interaction
             self._log.warning("Failed to cancel order %s via ccxt: %s", client_id, exc)
             return False
-
         self._orders.pop(client_id, None)
         return True
+
+    def cancel_all_orders(self) -> list[str]:
+        """Cancel all known open orders and return the successfully cancelled keys."""
+
+        cancelled: list[str] = []
+        self._update_local_cache(self.list_open_orders())
+        for key in list(self._orders):
+            if self.cancel(key):
+                cancelled.append(key)
+        return cancelled
 
 
 __all__ = ["CCXTBroker"]

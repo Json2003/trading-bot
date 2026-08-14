@@ -1,0 +1,29 @@
+# Conservative paper-only arbitrage profile.
+# This file intentionally contains no exchange credentials and cannot authorize live orders.
+mode: paper
+execution: synthetic
+symbol: BTC/USDT
+venues:
+  buy: binance
+  sell: coinbase
+capital:
+  max_trade_notional_usd: 25
+  max_total_inventory_usd: 50
+  reserve_cash_fraction: 0.50
+costs_bps:
+  # Replace with account-specific values only after measuring actual fills.
+  buy_fee: 10.0
+  sell_fee: 10.0
+  spread: 8.0
+  slippage: 8.0
+gates:
+  minimum_gross_edge_bps: 60.0
+  minimum_net_edge_bps: 15.0
+  max_quote_age_seconds: 3.0
+  require_both_legs: true
+  reject_partial_fills: true
+  reject_transfer_required: true
+risk:
+  max_consecutive_losses: 3
+  daily_loss_limit_usd: 2.50
+  kill_switch_drawdown_fraction: 0.02

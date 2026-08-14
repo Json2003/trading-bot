@@ -1,0 +1,77 @@
+# Safe Paper Deployment
+
+This procedure deploys the local Electron operator with the synthetic paper runtime. It does not connect to an exchange, use API keys, or place live orders.
+
+## Safety boundary
+
+The deployment must remain:
+
+- TRADING_OPERATOR_MODE=paper
+- TRADING_OPERATOR_RUNTIME=synthetic-smoke or none
+- bound to 127.0.0.1, localhost, or ::1
+- credential-free
+- protected by a locally generated operator token
+- guarded by a 2% drawdown kill switch
+
+Drawdown recovery is bounded to one automatic paper re-arm. It requires a
+flat broker, a healthy engine, volatility below the recovery ceiling, and 12
+consecutive stable observations. Manual emergency stops and engine faults
+remain latched. A full reset requires 72 stable observations plus explicit
+human approval and is not exposed as a forced-reset API operation.
+
+Do not use configs/live.yaml or legacy server entry points for this deployment.
+
+## Windows PowerShell setup
+
+From the repository root:
+
+~~~powershell
+py -3.11 -m venv .venv
+.venv\\Scripts\\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+$env:TRADING_OPERATOR_MODE = "paper"
+$env:TRADING_OPERATOR_RUNTIME = "synthetic-smoke"
+$env:TRADING_OPERATOR_HOST = "127.0.0.1"
+$env:TRADING_OPERATOR_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(32))"
+python scripts/validate_paper_deployment.py --require-token
+~~~
+
+## Launch the complete paper deployment
+
+The managed launcher performs the preflight, generates a token in memory when one is not supplied, starts the API on loopback, verifies paper health, launches Electron, and terminates the API when Electron exits.
+
+~~~powershell
+python scripts/launch_operator_console.py
+~~~
+
+Use --skip-install only after the Electron dependencies are already installed. Use --runtime none for a paper API without the synthetic engine.
+
+The API must listen only on 127.0.0.1:8765. A missing token, non-loopback host, live runtime, or unsafe health response fails closed.
+
+## Build the Windows paper installer
+
+~~~powershell
+cd dashboard/electron-app
+npm ci
+npm run check
+npm test
+npm run dist
+~~~
+
+
+The Windows installer is a paper-testing artifact. It is not a signed production release and must not be distributed as a live-trading application.
+
+## Manual acceptance checks
+
+1. The API health endpoint reports mode: paper and kill_switch_latched: false.
+2. The operator UI reports synthetic-smoke or no engine.
+3. No exchange credentials are present in the process environment.
+4. start-paper creates only paper-broker activity.
+5. Emergency stop latches and remains latched after restart.
+6. Research runs use only local CSV files and write only beneath var/paper_lab.
+7. Closing the API cancels remaining paper orders and exits cleanly.
+
+## Stop conditions
+
+Stop immediately if the API binds to a non-loopback address, any exchange credential is requested, the UI reports live mode, or any order leaves the in-memory paper broker.

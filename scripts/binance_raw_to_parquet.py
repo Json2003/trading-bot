@@ -52,6 +52,22 @@ logging.basicConfig(
 )
 
 
+def _epoch_unit(values) -> str:
+    """Infer Binance seconds/milliseconds/microseconds timestamps."""
+
+    numeric = pd.to_numeric(values, errors="coerce").dropna()
+    if numeric.empty:
+        raise ValueError("timestamp column is empty")
+    sample = abs(float(numeric.iloc[0]))
+    if sample >= 1e15:
+        return "us"
+    if sample >= 1e12:
+        return "ms"
+    if sample >= 1e9:
+        return "s"
+    raise ValueError(f"unsupported timestamp magnitude: {sample}")
+
+
 def read_csv_gz(path: str):
     """Read a gzip CSV from Binance Vision (kline) to a normalized DataFrame.
 
@@ -78,7 +94,7 @@ def read_csv_gz(path: str):
             ],
         )
     df = df[["open_time", "open", "high", "low", "close", "volume"]].copy()
-    df["ts"] = pd.to_datetime(df["open_time"], unit="ms", utc=True)
+    df["ts"] = pd.to_datetime(df["open_time"], unit=_epoch_unit(df["open_time"]), utc=True)
     df = df.drop(columns=["open_time"]) 
     df = df.astype({
         "open": "float64",
@@ -132,9 +148,8 @@ def read_trade_csv(path: str, limit_rows: int | None = None):
         raise ValueError(f"Could not auto-detect ts/price/qty columns in {path}")
 
     df = df[[ts_col, price_col, qty_col]].rename(columns={ts_col: 'ts', price_col: 'price', qty_col: 'qty'})
-    # normalize timestamp: if looks like milliseconds (large numbers) use unit='ms'
-    sample_ts = df['ts'].dropna().iloc[0]
-    unit = 'ms' if int(sample_ts) > 1e10 else 's'
+    # Binance spot archives switched to microsecond timestamps for newer data.
+    unit = _epoch_unit(df['ts'])
     df['ts'] = pd.to_datetime(df['ts'], unit=unit, utc=True)
     df['price'] = pd.to_numeric(df['price'], errors='coerce')
     df['qty'] = pd.to_numeric(df['qty'], errors='coerce')

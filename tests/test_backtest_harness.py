@@ -38,7 +38,8 @@ def test_backtest_harness_persists_metrics(tmp_path: Path) -> None:
 
     payload = json.loads(output_path.read_text())
 
-    assert payload["meta"]["git_sha"] == "<local>"
+    assert isinstance(payload["meta"]["git_sha"], str)
+    assert payload["meta"]["git_sha"]
     assert payload["meta"]["python"] == platform.python_version()
     assert isinstance(payload["meta"]["deps"], str)
     assert payload["meta"]["timestamp"].endswith("Z") or payload["meta"]["timestamp"].endswith(

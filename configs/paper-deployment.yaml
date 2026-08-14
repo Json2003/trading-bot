@@ -1,0 +1,30 @@
+# Safe local paper-deployment profile for the Electron operator.
+# This file contains no exchange credentials and must never be changed to enable
+# live orders without a separate reviewed production design.
+profile: paper
+live_trading: false
+allow_live_orders: false
+operator:
+  host: 127.0.0.1
+  port: 8765
+  runtime: synthetic-smoke
+  cycle_interval_seconds: 1.0
+research:
+  dataset_root: backtest/sample_data
+  artifact_root: var/paper_lab
+  max_generations: 6
+  max_accounts_per_generation: 24
+risk:
+  max_position_notional: 1000.0
+  max_daily_loss_fraction: 0.01
+  kill_switch_drawdown_fraction: 0.02
+  max_open_orders: 20
+recovery:
+  auto_rearm: true
+  require_flat: true
+  rearm_drawdown_fraction: 0.005
+  max_recovery_volatility_fraction: 0.04
+  stable_cycles: 12
+  full_reset_stable_cycles: 72
+  max_rearm_attempts: 1
+  full_reset_requires_human_approval: true

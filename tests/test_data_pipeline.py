@@ -14,7 +14,7 @@ from data_pipeline import (
 def test_drop_anomalies():
     df = pd.DataFrame(
         {
-            "timestamp": pd.date_range("2024", periods=3, freq="T"),
+            "timestamp": pd.date_range("2024", periods=3, freq="min"),
             "open": [1, 1, 1],
             "high": [2, 0, 2],
             "low": [0, 1, 1],

@@ -10,7 +10,7 @@ from overlays.beta_hedge import size_btc_beta_hedge
 
 
 def test_compute_rolling_beta_tracks_market_relationship() -> None:
-    idx = pd.date_range("2023-01-01", periods=6, freq="T")
+    idx = pd.date_range("2023-01-01", periods=6, freq="min")
     market = pd.Series([0.01, 0.02, -0.01, 0.03, 0.01, 0.0], index=idx)
     asset = market * 2
 

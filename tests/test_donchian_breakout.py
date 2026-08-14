@@ -15,7 +15,7 @@ from backtest.strategies.donchian_confirmed import generate_signals
 
 
 def test_breakout_logic():
-    ts = pd.date_range("2024-01-01", periods=30, freq="H", tz="UTC")
+    ts = pd.date_range("2024-01-01", periods=30, freq="h", tz="UTC")
     close = pd.Series([100] * 10 + [110] * 10 + [120] * 10, index=ts)
     df = pd.DataFrame(
         {

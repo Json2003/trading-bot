@@ -1,0 +1,30 @@
+name: Paper Deployment Preflight
+
+on:
+  pull_request:
+    paths:
+      - 'configs/paper-deployment.yaml'
+      - 'configs/paper-deployment.env.example'
+      - 'scripts/validate_paper_deployment.py'
+      - 'scripts/launch_operator_console.py'
+      - 'tests/test_paper_deployment.py'
+      - 'docs/paper_deployment.md'
+      - '.github/workflows/paper-preflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-paper-profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate credential-free paper profile
+        run: python scripts/validate_paper_deployment.py --config configs/paper-deployment.yaml --env-file configs/paper-deployment.env.example
+      - name: Compile paper deployment tooling
+        run: python -m py_compile scripts/validate_paper_deployment.py scripts/launch_operator_console.py
