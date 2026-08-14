@@ -1,9 +1,10 @@
 """Bounded automation around the isolated paper strategy tournament.
 
 The service explores only allowlisted strategy families and execution policies.
-It uses a development segment for candidate selection and one untouched final
-holdout for the reported leaderboard. No result can modify active trading
-configuration or risk limits.
+It uses development data for search, a separate selection holdout to choose one
+locked finalist, and a later confirmation holdout for the reported result. The
+confirmation result is not used to search across finalists. No result can
+modify active trading configuration or risk limits.
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ import math
 from pathlib import Path
 import random
 from threading import Event, RLock, Thread
-from typing import Any, cast
+from typing import Any, Mapping, cast
 import uuid
 
 import pandas as pd
@@ -55,7 +56,9 @@ class LabJob:
     total_generations: int = 0
     candidates_evaluated: int = 0
     development_leaderboard: list[dict[str, Any]] = field(default_factory=list)
+    selection_leaderboard: list[dict[str, Any]] = field(default_factory=list)
     final_leaderboard: list[dict[str, Any]] = field(default_factory=list)
+    locked_account_id: str | None = None
     error: str | None = None
     cancellation_requested: bool = False
 
@@ -163,20 +166,40 @@ class PaperLabAutomationService:
             )
             if finalist is None:
                 raise KeyError(account_id)
+            if job.locked_account_id != account_id:
+                raise ValueError(
+                    "only the preselected finalist may be staged; the confirmation "
+                    "holdout is locked and cannot be searched"
+                )
             params = finalist.get("params")
             risk = finalist.get("risk")
             if not isinstance(params, dict) or not isinstance(risk, dict):
                 raise ValueError("finalist package is missing parameters or risk configuration")
+            total_return = _finite_metric(finalist, "total_return")
+            max_drawdown = _finite_metric(finalist, "max_drawdown")
+            sharpe = _finite_metric(finalist, "sharpe")
+            profit_factor = _finite_metric(finalist, "profit_factor")
+            score = _finite_metric(finalist, "score")
+            trade_count = int(finalist.get("trade_count", 0))
+            if trade_count < 1:
+                raise ValueError("locked finalist has no finite trade sample")
             evidence = CandidateEvidence(
                 source_job_id=job.job_id,
                 source_account_id=str(finalist["account_id"]),
                 dataset_id=job.spec.dataset_id,
-                total_return=float(finalist["total_return"]),
-                max_drawdown=float(finalist["max_drawdown"]),
-                sharpe=float(finalist["sharpe"]),
-                profit_factor=float(finalist["profit_factor"]),
-                trade_count=int(finalist["trade_count"]),
-                score=float(finalist["score"]),
+                total_return=total_return,
+                max_drawdown=max_drawdown,
+                sharpe=sharpe,
+                profit_factor=profit_factor,
+                trade_count=trade_count,
+                score=score,
+                execution_cost_bps=28.0,
+                costs_included=True,
+                holdout_passed=True,
+                holdout_trade_count=trade_count,
+                holdout_total_return=total_return,
+                holdout_max_drawdown=max_drawdown,
+                holdout_profit_factor=profit_factor,
             )
             return registry.register(
                 strategy=str(finalist["strategy"]),
@@ -225,8 +248,11 @@ class PaperLabAutomationService:
             raise ValueError(f"generations must be between 1 and {self._max_generations}")
         if not 4 <= accounts <= self._max_accounts:
             raise ValueError(f"accounts_per_generation must be between 4 and {self._max_accounts}")
-        if not 0.20 <= holdout <= 0.40:
-            raise ValueError("final_holdout_fraction must be between 20% and 40%")
+        if not 0.20 <= holdout <= 0.30:
+            raise ValueError(
+                "final_holdout_fraction must be between 20% and 30% per holdout; "
+                "the job reserves separate selection and confirmation segments"
+            )
         return LabRunSpec(
             dataset_id=dataset_id,
             generations=generations,
@@ -254,17 +280,39 @@ class PaperLabAutomationService:
 
         try:
             frame = pd.read_csv(dataset_path)
-            if len(frame) < 160:
-                raise ValueError("learning jobs require at least 160 OHLCV rows")
             spec = job.spec
             final_rows = max(40, int(len(frame) * spec.final_holdout_fraction))
-            development = cast(pd.DataFrame, frame.iloc[:-final_rows].reset_index(drop=True))
+            minimum_rows = max(160, 2 * final_rows + 80)
+            if len(frame) < minimum_rows:
+                raise ValueError(
+                    "learning jobs require enough rows for development, selection, "
+                    f"and confirmation holdouts (at least {minimum_rows})"
+                )
+            development_rows = len(frame) - 2 * final_rows
+            development = cast(
+                pd.DataFrame,
+                frame.iloc[:development_rows].reset_index(drop=True),
+            )
+            selection_frame = frame.iloc[
+                development_rows : development_rows + final_rows
+            ].reset_index(drop=True)
+            confirmation_start = development_rows + final_rows
+            confirmation_frame = frame.iloc[confirmation_start:].reset_index(drop=True)
             warmup_rows = min(max(60, final_rows), len(development))
-            final_data: pd.DataFrame = pd.concat(
-                [development.iloc[-warmup_rows:], frame.iloc[-final_rows:]],
+            selection_data: pd.DataFrame = pd.concat(
+                [development.iloc[-warmup_rows:], selection_frame],
                 ignore_index=True,
             )
-            final_fraction = final_rows / len(final_data)
+            selection_fraction = final_rows / len(selection_data)
+            confirmation_warmup_start = max(0, confirmation_start - warmup_rows)
+            confirmation_data: pd.DataFrame = pd.concat(
+                [
+                    frame.iloc[confirmation_warmup_start:confirmation_start],
+                    confirmation_frame,
+                ],
+                ignore_index=True,
+            )
+            confirmation_fraction = final_rows / len(confirmation_data)
             rng = random.Random(spec.seed)
             assumptions = ExecutionAssumptions()
             elites: list[StrategyProfile] = []
@@ -300,17 +348,40 @@ class PaperLabAutomationService:
                 return
 
             finalists = _build_finalists(rng, elites, spec.accounts_per_generation)
-            final_report = PaperStrategyTournament(
+            profile_map = {profile.account_id: profile for profile in finalists}
+            selection_report = PaperStrategyTournament(
                 finalists,
                 assumptions=assumptions,
-                holdout_fraction=final_fraction,
-            ).run(final_data)
+                holdout_fraction=selection_fraction,
+            ).run(selection_data)
+            selection_summary = [
+                _report_summary(
+                    item,
+                    profile_map.get(item.account_id),
+                    evaluation_role="selection_holdout",
+                )
+                for item in selection_report.leaderboard
+            ]
+            if not selection_report.leaderboard:
+                raise ValueError("selection holdout produced no finalist report")
+            selected_account_id = selection_report.leaderboard[0].account_id
+            selected_profile = profile_map[selected_account_id]
+            confirmation_report = PaperStrategyTournament(
+                [selected_profile],
+                assumptions=assumptions,
+                holdout_fraction=confirmation_fraction,
+            ).run(confirmation_data)
             with self._lock:
                 job = self._jobs[job_id]
-                profile_map = {profile.account_id: profile for profile in finalists}
+                job.selection_leaderboard = selection_summary
+                job.locked_account_id = selected_account_id
                 job.final_leaderboard = [
-                    _report_summary(item, profile_map.get(item.account_id))
-                    for item in final_report.leaderboard
+                    _report_summary(
+                        item,
+                        selected_profile,
+                        evaluation_role="locked_confirmation_holdout",
+                    )
+                    for item in confirmation_report.leaderboard
                 ]
                 job.state = "completed"
                 job.finished_at = _utc_now()
@@ -352,7 +423,9 @@ class PaperLabAutomationService:
                     total_generations=int(payload.get("total_generations", spec.generations)),
                     candidates_evaluated=int(payload.get("candidates_evaluated", 0)),
                     development_leaderboard=list(payload.get("development_leaderboard", [])),
+                    selection_leaderboard=list(payload.get("selection_leaderboard", [])),
                     final_leaderboard=list(payload.get("final_leaderboard", [])),
+                    locked_account_id=payload.get("locked_account_id"),
                     error=payload.get("error"),
                     cancellation_requested=bool(payload.get("cancellation_requested", False)),
                 )
@@ -391,7 +464,7 @@ def _random_profile(rng: random.Random, generation: int, index: int) -> Strategy
     params["limit_atr"] = rng.uniform(0.10, 0.50)
     params["breakout_atr"] = rng.uniform(0.02, 0.25)
     return StrategyProfile(
-        account_id=f"g{generation:02d}-a{index:02d}-{uuid.uuid4().hex[:6]}",
+        account_id=f"g{generation:02d}-a{index:02d}",
         strategy=strategy,
         execution_policy=execution,
         params=params,
@@ -419,7 +492,7 @@ def _mutate_profile(
         execution = rng.choice(sorted(EXECUTION_POLICIES))
     return replace(
         parent,
-        account_id=f"g{generation:02d}-m{index:02d}-{uuid.uuid4().hex[:6]}",
+        account_id=f"g{generation:02d}-m{index:02d}",
         execution_policy=execution,
         params=params,
         risk_per_trade=min(max(parent.risk_per_trade * rng.uniform(0.80, 1.20), 0.005), 0.02),
@@ -446,7 +519,7 @@ def _build_generation(
         elite_limit = min(len(elites), max(2, count // 4))
         for index, elite in enumerate(elites[:elite_limit]):
             profiles.append(
-                replace(elite, account_id=f"g{generation:02d}-elite{index:02d}-{uuid.uuid4().hex[:6]}")
+                replace(elite, account_id=f"g{generation:02d}-elite{index:02d}")
             )
         while len(profiles) < count * 3 // 4:
             parent = rng.choice(elites)
@@ -462,7 +535,7 @@ def _build_finalists(
     target_count: int,
 ) -> list[StrategyProfile]:
     finalists = [
-        replace(profile, account_id=f"final-{index:02d}-{uuid.uuid4().hex[:6]}")
+        replace(profile, account_id=f"final-{index:02d}")
         for index, profile in enumerate(elites)
     ]
     while len(finalists) < max(4, min(target_count, 12)):
@@ -470,33 +543,52 @@ def _build_finalists(
     return finalists
 
 
-def _report_summary(report: Any, profile: StrategyProfile | None = None) -> dict[str, Any]:
-    return _json_safe(
-        {
-            "account_id": report.account_id,
-            "strategy": report.strategy,
-            "execution_policy": report.execution_policy,
-            "ending_equity": report.ending_equity,
-            "total_return": report.total_return,
-            "max_drawdown": report.max_drawdown,
-            "sharpe": report.sharpe,
-            "profit_factor": report.profit_factor,
-            "win_rate": report.win_rate,
-            "expectancy": report.expectancy,
-            "trade_count": report.trade_count,
-            "average_execution_cost": report.average_execution_cost,
-            "score": report.score,
-            "params": dict(profile.params) if profile is not None else None,
-            "risk": {
-                "risk_per_trade": profile.risk_per_trade,
-                "max_position_fraction": profile.max_position_fraction,
-                "max_daily_loss_fraction": profile.max_daily_loss_fraction,
-                "stop_atr": profile.stop_atr,
-                "reward_to_risk": profile.reward_to_risk,
-                "max_hold_bars": profile.max_hold_bars,
-            } if profile is not None else None,
-        }
-    )
+def _finite_metric(payload: Mapping[str, Any], key: str) -> float:
+    raw_value = payload.get(key)
+    if raw_value is None:
+        raise ValueError(f"locked finalist metric {key} is not finite")
+    try:
+        value = float(cast(Any, raw_value))
+    except (TypeError, ValueError):
+        raise ValueError(f"locked finalist metric {key} is not finite") from None
+    if not math.isfinite(value):
+        raise ValueError(f"locked finalist metric {key} is not finite")
+    return value
+
+
+def _report_summary(
+    report: Any,
+    profile: StrategyProfile | None = None,
+    *,
+    evaluation_role: str | None = None,
+) -> dict[str, Any]:
+    payload = {
+        "account_id": report.account_id,
+        "strategy": report.strategy,
+        "execution_policy": report.execution_policy,
+        "ending_equity": report.ending_equity,
+        "total_return": report.total_return,
+        "max_drawdown": report.max_drawdown,
+        "sharpe": report.sharpe,
+        "profit_factor": report.profit_factor,
+        "win_rate": report.win_rate,
+        "expectancy": report.expectancy,
+        "trade_count": report.trade_count,
+        "average_execution_cost": report.average_execution_cost,
+        "score": report.score,
+        "params": dict(profile.params) if profile is not None else None,
+        "risk": {
+            "risk_per_trade": profile.risk_per_trade,
+            "max_position_fraction": profile.max_position_fraction,
+            "max_daily_loss_fraction": profile.max_daily_loss_fraction,
+            "stop_atr": profile.stop_atr,
+            "reward_to_risk": profile.reward_to_risk,
+            "max_hold_bars": profile.max_hold_bars,
+        } if profile is not None else None,
+    }
+    if evaluation_role is not None:
+        payload["evaluation_role"] = evaluation_role
+    return _json_safe(payload)
 
 
 def _json_safe(value: Any) -> Any:

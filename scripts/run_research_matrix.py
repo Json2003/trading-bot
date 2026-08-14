@@ -12,6 +12,7 @@ import argparse
 import json
 import math
 from pathlib import Path
+import statistics
 from typing import Any
 
 import pandas as pd
@@ -19,6 +20,12 @@ import pandas as pd
 from backtest.optimization.execution_model import ExecutionCostModel
 from backtest.strategies.regime_momentum import generate_signals as regime_momentum_signals
 from tradingbot_ibkr.research_context import NewsEvent, gate_signal_series
+MIN_TEST_TRADES_PER_WINDOW = 5
+MIN_MATRIX_WINDOWS = 3
+MIN_POSITIVE_WINDOW_FRACTION = 2.0 / 3.0
+MAX_FAMILY_DRAWDOWN = 0.20
+
+
 from backtest.optimization.research_loop import (
     NightlyResearchLoop,
     _simulate_arbitrage,
@@ -35,19 +42,33 @@ def _evaluation(
     trades: int,
     costs: ExecutionCostModel,
 ) -> dict[str, Any]:
-    gross_return = float(summary.get("total_return", 0.0))
+    gross_return = float(summary.get("total_return", math.nan))
+    sharpe = float(summary.get("sharpe", math.nan))
+    drawdown = abs(float(summary.get("max_drawdown", math.nan)))
+    raw_profit_factor = float(summary.get("profit_factor", math.nan))
+    profit_factor = raw_profit_factor if math.isfinite(raw_profit_factor) else None
+    finite_metrics = all(
+        math.isfinite(value)
+        for value in (gross_return, sharpe, drawdown)
+    )
+    net_return = (
+        costs.net_return(gross_return, trades)
+        if finite_metrics
+        else math.nan
+    )
     return {
         "strategy": name,
         "gross_return": gross_return,
-        "net_return": costs.net_return(gross_return, trades),
-        "test_sharpe": float(summary.get("sharpe", 0.0)),
-        "test_drawdown": float(summary.get("max_drawdown", 0.0)),
-        "profit_factor": (
-            None
-            if math.isinf(float(summary.get("profit_factor", 0.0)))
-            else float(summary.get("profit_factor", 0.0))
-        ),
+        "net_return": net_return,
+        "cost_drag": gross_return - net_return if finite_metrics else math.nan,
+        "execution_cost_bps": costs.round_trip_fraction * 10_000.0,
+        "test_sharpe": sharpe,
+        "test_drawdown": drawdown,
+        # An infinite PF is retained as null: a no-loss sample is not treated
+        # as robust evidence by the family gate.
+        "profit_factor": profit_factor,
         "trades": int(trades),
+        "finite_metrics": finite_metrics and math.isfinite(net_return),
     }
 
 
@@ -59,13 +80,35 @@ def run_matrix(
     costs: ExecutionCostModel | None = None,
     news_events: list[NewsEvent] | None = None,
     expected_move_bps: float = 40.0,
+    minimum_test_trades: int = MIN_TEST_TRADES_PER_WINDOW,
+    minimum_windows: int = MIN_MATRIX_WINDOWS,
 ) -> dict[str, Any]:
+    if window_size < 2:
+        raise ValueError("window_size must be at least two rows")
+    if not 0.0 < test_fraction < 1.0:
+        raise ValueError("test_fraction must be between zero and one")
+    if minimum_test_trades < 1 or minimum_windows < 1:
+        raise ValueError("matrix research minimums must be positive")
+    if not math.isfinite(expected_move_bps) or expected_move_bps < 0:
+        raise ValueError("expected_move_bps must be finite and non-negative")
+    required_columns = {"timestamp", "close"}
+    missing = required_columns - set(data.columns)
+    if missing:
+        raise ValueError(f"dataset missing columns: {sorted(missing)}")
+    frame = data.copy()
+    frame["timestamp"] = pd.to_datetime(frame["timestamp"], utc=True, errors="coerce")
+    frame["close"] = pd.to_numeric(frame["close"], errors="coerce")
+    if frame["timestamp"].isna().any() or not frame["close"].map(math.isfinite).all() or (frame["close"] <= 0).any():
+        raise ValueError("dataset contains invalid timestamps or close prices")
+    frame = frame.sort_values("timestamp").drop_duplicates("timestamp").reset_index(drop=True)
     costs = costs or ExecutionCostModel()
     windows = create_non_overlapping_windows(
-        data.sort_values("timestamp").reset_index(drop=True),
+        frame,
         window_size=window_size,
         test_fraction=test_fraction,
     )
+    if not windows:
+        raise ValueError("dataset/window settings produced no evaluable test windows")
     loop = NightlyResearchLoop(windows, Path("/tmp/research-matrix-registry.json"), trials_range=(1, 1))
     results: list[dict[str, Any]] = []
     def news_wrap(builder):
@@ -130,12 +173,80 @@ def run_matrix(
     families: dict[str, dict[str, Any]] = {}
     for family in sorted({item["strategy"] for item in results}):
         entries = [item for item in results if item["strategy"] == family]
+        family_windows = sorted({item["window"] for item in entries})
+        eligible = [
+            item
+            for item in entries
+            if item["finite_metrics"] and item["trades"] >= minimum_test_trades
+        ]
+        net_returns = [float(item["net_return"]) for item in eligible]
+        sharpes = [float(item["test_sharpe"]) for item in eligible]
+        profit_factors = [
+            float(item["profit_factor"])
+            for item in eligible
+            if item["profit_factor"] is not None
+            and math.isfinite(float(item["profit_factor"]))
+        ]
+        positive_tests = sum(value > 0 for value in net_returns)
+        gate_reasons: list[str] = []
+        if len(family_windows) < minimum_windows:
+            gate_reasons.append(
+                f"only {len(family_windows)} test windows; {minimum_windows} required"
+            )
+        if len(eligible) != len(entries):
+            gate_reasons.append(
+                f"{len(entries) - len(eligible)} window results fail finite/sample gates"
+            )
+        if not net_returns or statistics.median(net_returns) <= 0:
+            gate_reasons.append("median net return is not positive")
+        if (
+            not net_returns
+            or positive_tests / len(net_returns) < MIN_POSITIVE_WINDOW_FRACTION
+        ):
+            gate_reasons.append("fewer than two thirds of eligible windows are profitable")
+        if not sharpes or statistics.median(sharpes) <= 0:
+            gate_reasons.append("median test Sharpe is not positive")
+        if not profit_factors or statistics.median(profit_factors) < 1.05:
+            gate_reasons.append("median finite profit factor is below 1.05")
+        if eligible and max(float(item["test_drawdown"]) for item in eligible) > MAX_FAMILY_DRAWDOWN:
+            gate_reasons.append(f"test drawdown exceeds {MAX_FAMILY_DRAWDOWN:.0%}")
         families[family] = {
-            "windows": len({item["window"] for item in entries}),
-            "positive_tests": sum(item["net_return"] > 0 for item in entries),
+            "windows": len(family_windows),
+            "positive_tests": positive_tests,
             "total_tests": len(entries),
-            "best_net_return": max(item["net_return"] for item in entries),
-            "best": max(entries, key=lambda item: (item["net_return"], item["test_sharpe"])),
+            "best_net_return": max(
+                (float(item["net_return"]) for item in entries if item["finite_metrics"]),
+                default=None,
+            ),
+            # This is intentionally descriptive only. It is never used by the
+            # family gate because selecting the best test slice is test leakage.
+            "best_test_result_descriptive_only": max(
+                entries,
+                key=lambda item: (
+                    float(item["net_return"])
+                    if item["finite_metrics"]
+                    else -math.inf,
+                    float(item["test_sharpe"])
+                    if math.isfinite(float(item["test_sharpe"]))
+                    else -math.inf,
+                ),
+            ),
+            "median_net_return": statistics.median(net_returns) if net_returns else None,
+            "median_test_sharpe": statistics.median(sharpes) if sharpes else None,
+            "median_test_drawdown": statistics.median(
+                [float(item["test_drawdown"]) for item in eligible]
+            ) if eligible else None,
+            "median_profit_factor": statistics.median(profit_factors) if profit_factors else None,
+            "eligible_windows": len(eligible),
+            "research_gate": {
+                "pass": not gate_reasons,
+                "failure_reasons": gate_reasons,
+                "minimum_test_trades_per_window": minimum_test_trades,
+                "minimum_windows": minimum_windows,
+                "minimum_positive_window_fraction": MIN_POSITIVE_WINDOW_FRACTION,
+                "maximum_test_drawdown": MAX_FAMILY_DRAWDOWN,
+                "best_test_result_is_not_evidence": True,
+            },
         }
     return {
         "cost_model": {
@@ -147,6 +258,12 @@ def run_matrix(
         "families": families,
         "results": results,
         "news_mode": "enabled" if news_events else "price_only",
+        "research_gates": {
+            "best_test_slice_is_descriptive_only": True,
+            "minimum_test_trades_per_window": minimum_test_trades,
+            "minimum_windows": minimum_windows,
+            "execution_costs_applied": True,
+        },
     }
 
 

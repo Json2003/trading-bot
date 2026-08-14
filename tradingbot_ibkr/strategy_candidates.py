@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -40,6 +41,13 @@ class CandidateEvidence:
     profit_factor: float
     trade_count: int
     score: float
+    execution_cost_bps: float = 0.0
+    costs_included: bool = False
+    holdout_passed: bool = False
+    holdout_trade_count: int = 0
+    holdout_total_return: float = 0.0
+    holdout_max_drawdown: float = 1.0
+    holdout_profit_factor: float = 0.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,6 +110,7 @@ class StrategyCandidateRegistry:
 
         normalized_params = {str(key): float(value) for key, value in params.items()}
         normalized_risk = {str(key): float(value) for key, value in risk.items()}
+        self._validate_evidence(research)
         payload = {
             "strategy": strategy_name,
             "execution_policy": policy_name,
@@ -189,21 +198,90 @@ class StrategyCandidateRegistry:
             config["export_fingerprint"] = _fingerprint(config)
             return config
 
+    @staticmethod
+    def _validate_evidence(research: CandidateEvidence) -> None:
+        numeric_values = (
+            research.total_return,
+            research.max_drawdown,
+            research.sharpe,
+            research.profit_factor,
+            research.score,
+            research.execution_cost_bps,
+            research.holdout_total_return,
+            research.holdout_max_drawdown,
+            research.holdout_profit_factor,
+        )
+        if not all(math.isfinite(float(value)) for value in numeric_values):
+            raise ValueError("candidate evidence metrics must be finite")
+        if research.max_drawdown < 0 or research.holdout_max_drawdown < 0:
+            raise ValueError("candidate drawdowns cannot be negative")
+        if research.execution_cost_bps < 0:
+            raise ValueError("candidate execution cost cannot be negative")
+        if research.trade_count < 0 or research.holdout_trade_count < 0:
+            raise ValueError("candidate trade counts cannot be negative")
+
     def _evaluate(self, candidate: StrategyCandidate) -> dict[str, bool]:
         research = candidate.research
         paper = candidate.paper_probation
+        research_metrics_finite = all(
+            math.isfinite(float(value))
+            for value in (
+                research.total_return,
+                research.max_drawdown,
+                research.sharpe,
+                research.profit_factor,
+                research.execution_cost_bps,
+            )
+        )
+        holdout_metrics_finite = all(
+            math.isfinite(float(value))
+            for value in (
+                research.holdout_total_return,
+                research.holdout_max_drawdown,
+                research.holdout_profit_factor,
+            )
+        )
+        paper_metrics_finite = bool(
+            paper
+            and all(
+                math.isfinite(float(value))
+                for value in (
+                    paper.total_return,
+                    paper.max_drawdown,
+                    paper.profit_factor,
+                )
+            )
+        )
         return {
+            "research_metrics_finite": research_metrics_finite,
+            "research_costs_included": bool(
+                research.costs_included and research.execution_cost_bps >= 0
+            ),
             "research_positive_return": research.total_return > 0,
             "research_sharpe": research.sharpe >= 1.0,
-            "research_profit_factor": research.profit_factor >= 1.20,
+            "research_profit_factor": (
+                research_metrics_finite
+                and math.isfinite(research.profit_factor)
+                and research.profit_factor >= 1.20
+            ),
             "research_trade_sample": research.trade_count >= 30,
-            "research_drawdown": research.max_drawdown <= 0.15,
+            "research_drawdown": 0 <= research.max_drawdown <= 0.15,
+            "locked_confirmation_holdout": bool(
+                research.holdout_passed
+                and holdout_metrics_finite
+                and research.holdout_trade_count >= 30
+                and research.holdout_total_return > 0
+                and 0 <= research.holdout_max_drawdown <= 0.15
+                and research.holdout_profit_factor >= 1.20
+            ),
             "paper_probation_present": paper is not None,
             "paper_days": bool(paper and paper.trading_days >= 20),
             "paper_trade_sample": bool(paper and paper.trade_count >= 50),
             "paper_positive_return": bool(paper and paper.total_return > 0),
-            "paper_profit_factor": bool(paper and paper.profit_factor >= 1.15),
-            "paper_drawdown": bool(paper and paper.max_drawdown <= 0.10),
+            "paper_profit_factor": bool(
+                paper_metrics_finite and paper and paper.profit_factor >= 1.15
+            ),
+            "paper_drawdown": bool(paper and 0 <= paper.max_drawdown <= 0.10),
             "broker_reconciliation": bool(paper and paper.reconciliation_passed),
             "restart_recovery": bool(paper and paper.restart_recovery_passed),
             "duplicate_order_protection": bool(paper and paper.duplicate_order_test_passed),

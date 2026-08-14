@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
+import math
 from typing import Any, Iterable, Mapping
 
 
@@ -29,10 +30,16 @@ class NewsEvent:
     source: str = "unknown"
 
     def __post_init__(self) -> None:
-        if not -1.0 <= self.sentiment <= 1.0:
-            raise ValueError("sentiment must be between -1 and 1")
-        if self.impact < 0:
-            raise ValueError("impact cannot be negative")
+        timestamp = _utc(self.timestamp)
+        sentiment = float(self.sentiment)
+        impact = float(self.impact)
+        object.__setattr__(self, "timestamp", timestamp)
+        object.__setattr__(self, "sentiment", sentiment)
+        object.__setattr__(self, "impact", impact)
+        if not math.isfinite(sentiment) or not -1.0 <= sentiment <= 1.0:
+            raise ValueError("sentiment must be finite and between -1 and 1")
+        if not math.isfinite(impact) or impact < 0:
+            raise ValueError("impact must be finite and non-negative")
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,7 +61,11 @@ def align_news_features(
 ) -> list[NewsFeatures]:
     """Build strictly as-of news features for each market-bar timestamp."""
 
-    ordered_events = sorted(events, key=lambda event: _utc(event.timestamp))
+    if lookback.total_seconds() <= 0:
+        raise ValueError("lookback must be positive")
+    if not math.isfinite(risk_impact_threshold) or risk_impact_threshold < 0:
+        raise ValueError("risk_impact_threshold must be finite and non-negative")
+    ordered_events = sorted(list(events), key=lambda event: _utc(event.timestamp))
     output: list[NewsFeatures] = []
     for raw_timestamp in bar_timestamps:
         timestamp = _utc(raw_timestamp)
@@ -102,6 +113,8 @@ class TradingMemory:
         self._cooldown_losses = cooldown_losses
 
     def record(self, outcome: TradeOutcome) -> None:
+        if not math.isfinite(float(outcome.pnl)):
+            raise ValueError("trade outcome pnl must be finite")
         self._records.append(outcome)
 
     def snapshot(self, *, strategy: str | None = None) -> dict[str, Any]:
@@ -173,6 +186,14 @@ def evaluate_trade_gate(
     signal = 1 if raw_signal > 0 else -1 if raw_signal < 0 else 0
     if signal == 0:
         return GateDecision(False, "no_signal", 0)
+    numeric_inputs = (expected_move_bps, expected_cost_bps, minimum_edge_bps)
+    if (
+        not all(math.isfinite(float(value)) for value in numeric_inputs)
+        or expected_move_bps < 0
+        or expected_cost_bps < 0
+        or minimum_edge_bps < 0
+    ):
+        return GateDecision(False, "invalid_cost_inputs", 0)
     if expected_move_bps - expected_cost_bps < minimum_edge_bps:
         return GateDecision(False, "edge_does_not_cover_costs", 0)
     if memory is not None and memory.snapshot().get("cooldown"):
@@ -195,10 +216,15 @@ def gate_signal_series(
 ) -> tuple[list[int], dict[str, int]]:
     """Apply the news gate to a signal series and return block diagnostics."""
 
-    features = align_news_features(timestamps, events)
+    signal_values = list(signals)
+    timestamp_values = list(timestamps)
+    event_values = list(events)
+    if len(signal_values) != len(timestamp_values):
+        raise ValueError("signals and timestamps must have equal length")
+    features = align_news_features(timestamp_values, event_values)
     gated: list[int] = []
     blocked: dict[str, int] = {}
-    for raw_signal, news in zip(signals, features):
+    for raw_signal, news in zip(signal_values, features):
         decision = evaluate_trade_gate(
             int(raw_signal),
             expected_move_bps=expected_move_bps,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass(frozen=True, slots=True)
@@ -14,8 +15,9 @@ class ExecutionCostModel:
     commission_bps: float = 0.0
 
     def __post_init__(self) -> None:
-        if min(self.spread_bps, self.slippage_bps, self.commission_bps) < 0:
-            raise ValueError("execution costs cannot be negative")
+        values = (self.spread_bps, self.slippage_bps, self.commission_bps)
+        if not all(math.isfinite(float(value)) and value >= 0 for value in values):
+            raise ValueError("execution costs must be finite and non-negative")
 
     @property
     def per_fill_fraction(self) -> float:

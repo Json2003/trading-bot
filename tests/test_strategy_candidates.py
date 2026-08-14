@@ -22,6 +22,13 @@ def _research() -> CandidateEvidence:
         profit_factor=1.45,
         trade_count=42,
         score=0.22,
+        execution_cost_bps=28.0,
+        costs_included=True,
+        holdout_passed=True,
+        holdout_trade_count=42,
+        holdout_total_return=0.11,
+        holdout_max_drawdown=0.09,
+        holdout_profit_factor=1.30,
     )
 
 

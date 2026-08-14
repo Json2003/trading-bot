@@ -16,3 +16,8 @@ def test_cost_model_rejects_negative_inputs() -> None:
         ExecutionCostModel(slippage_bps=-1)
     with pytest.raises(ValueError):
         ExecutionCostModel().net_return(0.1, -1)
+
+
+def test_cost_model_rejects_non_finite_inputs() -> None:
+    with pytest.raises(ValueError):
+        ExecutionCostModel(slippage_bps=float("nan"))

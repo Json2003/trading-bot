@@ -32,8 +32,9 @@ class ExecutionAssumptions:
     commission_per_order: float = 0.0
 
     def __post_init__(self) -> None:
-        if min(self.spread_bps, self.slippage_bps, self.commission_per_order) < 0:
-            raise ValueError("execution costs cannot be negative")
+        values = (self.spread_bps, self.slippage_bps, self.commission_per_order)
+        if not all(math.isfinite(float(value)) and value >= 0 for value in values):
+            raise ValueError("execution costs must be finite and non-negative")
 
 
 @dataclass(frozen=True, slots=True)
@@ -288,7 +289,12 @@ class PaperStrategyTournament:
                                 cash -= total_cost
                                 quantity = requested
                                 entry_price = entry_fill
-                                entry_cost = unit_cost * requested
+                                # unit_cost excludes the fixed per-order fee;
+                                # record that fee exactly once for this entry.
+                                entry_cost = (
+                                    unit_cost * requested
+                                    + self._assumptions.commission_per_order
+                                )
                                 entry_index = index
                                 entry_time = timestamp.isoformat()
                                 stop_price = max(entry_fill - stop_distance, 0.01)
@@ -407,24 +413,31 @@ def _entry_fill(
 ) -> tuple[float, float] | None:
     row = frame.iloc[index]
     previous = frame.iloc[index - 1]
+
+    def market_entry(raw_price: float) -> tuple[float, float]:
+        fill, total_cost = _market_fill(raw_price, "buy", 1.0, assumptions)
+        # The caller multiplies the unit cost by quantity and separately
+        # records the fixed commission once per order.
+        return fill, max(total_cost - assumptions.commission_per_order, 0.0)
+
     if profile.execution_policy == "next_open_market":
-        return _market_fill(float(row["open"]), "buy", 1.0, assumptions)
+        return market_entry(float(row["open"]))
 
     if profile.execution_policy == "pullback_limit":
         discount = max(float(profile.params.get("limit_atr", 0.25)), 0.0)
         limit_price = float(previous["close"]) - atr_value * discount
         if float(row["low"]) > limit_price:
             return None
-        half_spread = assumptions.spread_bps / 20_000.0
-        fill = limit_price * (1.0 + half_spread)
-        return fill, max(fill - limit_price, 0.0)
+        # A touched limit is still exposed to adverse spread/slippage in this
+        # conservative paper model.
+        return market_entry(limit_price)
 
     buffer_atr = max(float(profile.params.get("breakout_atr", 0.10)), 0.0)
     trigger = float(previous["high"]) + atr_value * buffer_atr
     if float(row["high"]) < trigger:
         return None
     raw_fill = max(float(row["open"]), trigger)
-    return _market_fill(raw_fill, "buy", 1.0, assumptions)
+    return market_entry(raw_fill)
 
 
 def _market_fill(
@@ -433,8 +446,21 @@ def _market_fill(
     quantity: float,
     assumptions: ExecutionAssumptions,
 ) -> tuple[float, float]:
+    if (
+        not math.isfinite(float(raw_price))
+        or raw_price <= 0
+        or not math.isfinite(float(quantity))
+        or quantity < 0
+    ):
+        raise ValueError("market fills require finite positive prices and quantity")
+    if side not in {"buy", "sell"}:
+        raise ValueError(f"unsupported fill side: {side}")
     total_bps = assumptions.spread_bps / 2.0 + assumptions.slippage_bps
-    multiplier = 1.0 + total_bps / 10_000.0 if side == "buy" else 1.0 - total_bps / 10_000.0
+    multiplier = (
+        1.0 + total_bps / 10_000.0
+        if side == "buy"
+        else 1.0 - total_bps / 10_000.0
+    )
     fill = max(raw_price * multiplier, 0.01)
     execution_cost = abs(fill - raw_price) * quantity + assumptions.commission_per_order
     return fill, execution_cost
