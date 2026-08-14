@@ -25,10 +25,16 @@ class ContextEvent:
     source: str = "unknown"
 
     def __post_init__(self) -> None:
-        if not -1.0 <= self.sentiment <= 1.0:
-            raise ValueError("sentiment must be between -1 and 1")
-        if self.impact < 0:
-            raise ValueError("impact cannot be negative")
+        timestamp = _utc(self.timestamp)
+        sentiment = float(self.sentiment)
+        impact = float(self.impact)
+        object.__setattr__(self, "timestamp", timestamp)
+        object.__setattr__(self, "sentiment", sentiment)
+        object.__setattr__(self, "impact", impact)
+        if not math.isfinite(sentiment) or not -1.0 <= sentiment <= 1.0:
+            raise ValueError("sentiment must be finite and between -1 and 1")
+        if not math.isfinite(impact) or impact < 0:
+            raise ValueError("impact must be finite and non-negative")
 
 
 def _utc(value: Any) -> datetime:
@@ -91,7 +97,11 @@ def align_context(
 ) -> dict[str, list[float]]:
     """Align events strictly as-of each bar timestamp."""
 
-    ordered = sorted(events, key=lambda event: event.timestamp)
+    if lookback.total_seconds() <= 0:
+        raise ValueError("lookback must be positive")
+    if not math.isfinite(risk_impact_threshold) or risk_impact_threshold < 0:
+        raise ValueError("risk_impact_threshold must be finite and non-negative")
+    ordered = sorted(list(events), key=lambda event: event.timestamp)
     output = {
         "context_sentiment": [],
         "context_impact": [],
@@ -129,6 +139,8 @@ def build_context_features(
 ) -> dict[str, list[float]]:
     """Build causal context and liquidity proxies for OHLCV bars."""
 
+    if volume_window <= 0 or lookback_hours <= 0:
+        raise ValueError("volume_window and lookback_hours must be positive")
     timestamps = [bar.timestamp for bar in bars]
     volumes = [float(bar.volume) for bar in bars]
     context = align_context(
