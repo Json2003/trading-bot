@@ -12,6 +12,7 @@ on:
       - "backtest/**"
       - "pyproject.toml"
       - "requirements*.txt"
+      - ".github/workflows/backtest-summary.yml"
 
 permissions:
   contents: write
