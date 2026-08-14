@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+import pytest
+
 from tradingbot_ibkr.research_context import (
     NewsEvent,
     TradeOutcome,
@@ -41,3 +43,18 @@ def test_trade_gate_rejects_insufficient_edge_and_high_impact_news() -> None:
     assert low_edge.reason == "edge_does_not_cover_costs"
     high_edge = evaluate_trade_gate(1, expected_move_bps=50, expected_cost_bps=10, news=news, memory=None)
     assert high_edge.reason == "high_impact_news_requires_confirmation"
+
+
+def test_context_rejects_non_finite_values_and_mismatched_series() -> None:
+    with pytest.raises(ValueError):
+        NewsEvent(datetime(2025, 1, 1, tzinfo=timezone.utc), 0.0, float("nan"))
+    with pytest.raises(ValueError):
+        from tradingbot_ibkr.research_context import gate_signal_series
+
+        gate_signal_series(
+            [1, 0],
+            [datetime(2025, 1, 1, tzinfo=timezone.utc)],
+            [],
+            expected_move_bps=40,
+            expected_cost_bps=10,
+        )
