@@ -314,6 +314,11 @@ def run_pair(
 
     if initial_balance <= 0 or order_notional <= 0:
         raise ValueError("initial_balance and order_notional must be positive")
+    if not all(
+        math.isfinite(value) and value >= 0
+        for value in (fees_bps, slippage_bps)
+    ):
+        raise ValueError("fees_bps and slippage_bps must be finite and non-negative")
     if not pair:
         raise ValueError("pair data must not be empty")
     if not 0 < config.reduced_size_multiplier <= 1:
@@ -644,45 +649,148 @@ def run_pair(
     }
 
 
+CONFIRMATION_HOLDOUT_BARS = 365 * 24
+MIN_CONFIRMATION_ENTRIES = 5
+MIN_FULL_ENTRIES = 8
+
+
 def _folds(length: int) -> list[tuple[int, int]]:
-    first = int(length * 0.50)
-    second = int(length * 0.625)
-    third = int(length * 0.75)
-    return [(first, second), (second, third), (third, length)]
+    holdout_start = length - CONFIRMATION_HOLDOUT_BARS
+    if holdout_start <= 0:
+        raise ValueError("data must include a positive one-year confirmation holdout")
+    first = int(holdout_start * 0.50)
+    second = int(holdout_start * 0.625)
+    third = int(holdout_start * 0.75)
+    return [(first, second), (second, third), (third, holdout_start)]
+
+
+def _confirmation_holdout(length: int) -> tuple[int, int]:
+    start = length - CONFIRMATION_HOLDOUT_BARS
+    if start <= 0:
+        raise ValueError("data must include a positive one-year confirmation holdout")
+    return start, length
+
+
+def _result_number(result: Mapping[str, object], key: str) -> float:
+    try:
+        value = float(result.get(key, math.nan))
+    except (TypeError, ValueError):
+        return math.nan
+    return value
+
+
+def _result_integer(result: Mapping[str, object], key: str) -> int:
+    try:
+        value = int(result.get(key, -1))
+    except (TypeError, ValueError):
+        return -1
+    return value
 
 
 def _median_return(results: Sequence[Mapping[str, object]]) -> float:
-    return statistics.median(float(result["return_pct"]) for result in results)
+    values = [_result_number(result, "return_pct") for result in results]
+    if not values or not all(_valid(value) for value in values):
+        return math.nan
+    return statistics.median(values)
 
 
 def _promotion_gate(
     full: Mapping[str, object],
+    stress_full: Mapping[str, object],
     walk_forward: Sequence[Mapping[str, object]],
     stress_walk_forward: Sequence[Mapping[str, object]],
+    confirmation_base: Mapping[str, object],
+    confirmation_stress: Mapping[str, object],
 ) -> dict[str, object]:
     base_median = _median_return(walk_forward)
     stress_median = _median_return(stress_walk_forward)
     reasons: list[str] = []
-    if base_median <= 0:
-        reasons.append("base walk-forward median return is not positive")
-    if stress_median <= 0:
-        reasons.append("higher-cost walk-forward median return is not positive")
-    if bool(full["permanent_halt"]):
-        reasons.append("full sample hit the permanent cumulative drawdown limit")
-    if int(full["kill_events"]) > 1 or any(int(item["kill_events"]) > 1 for item in stress_walk_forward):
-        reasons.append("repeated 2% kill-switch events occurred")
-    if int(full["entries"]) < 4:
-        reasons.append("fewer than four full-sample entries")
+    if not _valid(base_median) or base_median <= 0:
+        reasons.append("base walk-forward median return is not positive and finite")
+    if not _valid(stress_median) or stress_median <= 0:
+        reasons.append("higher-cost walk-forward median return is not positive and finite")
+
+    required_results = (
+        ("full sample", full),
+        ("stress full sample", stress_full),
+        ("confirmation holdout base", confirmation_base),
+        ("confirmation holdout stress", confirmation_stress),
+    )
+    for label, result in required_results:
+        if not isinstance(result, Mapping):
+            reasons.append(f"missing {label} result")
+            continue
+        return_pct = _result_number(result, "return_pct")
+        if not _valid(return_pct):
+            reasons.append(f"{label} return is not finite")
+        elif return_pct <= 0:
+            reasons.append(f"{label} return is not positive")
+        minimum_entries = (
+            MIN_FULL_ENTRIES
+            if label in {"full sample", "stress full sample"}
+            else MIN_CONFIRMATION_ENTRIES
+        )
+        if _result_integer(result, "entries") < minimum_entries:
+            reasons.append(f"{label} has fewer than {minimum_entries} entries")
+        permanent_halt = result.get("permanent_halt")
+        if not isinstance(permanent_halt, bool):
+            reasons.append(f"{label} permanent_halt flag is invalid")
+        elif permanent_halt:
+            reasons.append(f"{label} hit a permanent halt")
+        kill_events = _result_integer(result, "kill_events")
+        if kill_events < 0:
+            reasons.append(f"{label} kill_events field is invalid")
+        elif kill_events > 1:
+            reasons.append(f"{label} has repeated kill-switch events")
+
+    for label, folds in (
+        ("base walk-forward", walk_forward),
+        ("stress walk-forward", stress_walk_forward),
+    ):
+        if len(folds) != 3:
+            reasons.append(f"{label} must contain exactly three folds")
+            continue
+        for index, fold in enumerate(folds, start=1):
+            if not isinstance(fold, Mapping):
+                reasons.append(f"{label} fold {index} is invalid")
+                continue
+            if not _valid(_result_number(fold, "return_pct")):
+                reasons.append(f"{label} fold {index} return is not finite")
+            if _result_integer(fold, "entries") < MIN_CONFIRMATION_ENTRIES:
+                reasons.append(
+                    f"{label} fold {index} has fewer than {MIN_CONFIRMATION_ENTRIES} entries"
+                )
+            permanent_halt = fold.get("permanent_halt")
+            if not isinstance(permanent_halt, bool):
+                reasons.append(f"{label} fold {index} permanent_halt flag is invalid")
+            elif permanent_halt:
+                reasons.append(f"{label} fold {index} hit a permanent halt")
+            kill_events = _result_integer(fold, "kill_events")
+            if kill_events < 0:
+                reasons.append(f"{label} fold {index} kill_events field is invalid")
+            elif kill_events > 1:
+                reasons.append(f"{label} fold {index} has repeated kill-switch events")
+
     return {
         "pass": not reasons,
         "base_walk_forward_median_return_pct": base_median,
         "stress_walk_forward_median_return_pct": stress_median,
+        "confirmation_holdout_base_return_pct": _result_number(
+            confirmation_base, "return_pct"
+        ),
+        "confirmation_holdout_stress_return_pct": _result_number(
+            confirmation_stress, "return_pct"
+        ),
         "requirements": {
             "positive_base_median_walk_forward": True,
             "positive_stress_median_walk_forward": True,
+            "positive_full_sample_base_and_stress": True,
+            "positive_confirmation_holdout_base_and_stress": True,
+            "minimum_full_sample_entries": MIN_FULL_ENTRIES,
+            "minimum_entries_per_walk_forward_fold": MIN_CONFIRMATION_ENTRIES,
+            "minimum_confirmation_holdout_entries": MIN_CONFIRMATION_ENTRIES,
             "no_permanent_halt": True,
             "no_repeated_kill_switch": True,
-            "minimum_full_sample_entries": 4,
         },
         "failure_reasons": reasons,
     }
@@ -706,6 +814,22 @@ def research(
     pair = align_pair(btc, eth)
     if horizon_order_notional is None:
         horizon_order_notional = order_notional
+    cost_values = (
+        fees_bps,
+        slippage_bps,
+        stress_fees_bps,
+        stress_slippage_bps,
+    )
+    if not all(math.isfinite(value) and value >= 0 for value in cost_values):
+        raise ValueError("all cost assumptions must be finite and non-negative")
+    if (
+        stress_fees_bps < fees_bps
+        or stress_slippage_bps < slippage_bps
+        or (stress_fees_bps == fees_bps and stress_slippage_bps == slippage_bps)
+    ):
+        raise ValueError(
+            "stress costs must be no lower in either component and higher in at least one"
+        )
 
     candidates: dict[str, V3Config] = {
         "balanced": V3Config(
@@ -755,6 +879,7 @@ def research(
         "candidate_definitions": {name: config.as_dict() for name, config in candidates.items()},
     }
     folds = _folds(len(pair))
+    confirmation_start, confirmation_end = _confirmation_holdout(len(pair))
     candidates_report: dict[str, object] = {}
     for name, config in candidates.items():
         feature_map = build_pair_features(pair, config)
@@ -764,6 +889,15 @@ def research(
             order_notional=order_notional,
             fees_bps=fees_bps,
             slippage_bps=slippage_bps,
+            config=config,
+            feature_map=feature_map,
+        )
+        stress_full = run_pair(
+            pair,
+            initial_balance=initial_balance,
+            order_notional=order_notional,
+            fees_bps=stress_fees_bps,
+            slippage_bps=stress_slippage_bps,
             config=config,
             feature_map=feature_map,
         )
@@ -795,6 +929,28 @@ def research(
             )
             for start, end in folds
         ]
+        confirmation_base = run_pair(
+            pair,
+            initial_balance=initial_balance,
+            order_notional=horizon_order_notional,
+            fees_bps=fees_bps,
+            slippage_bps=slippage_bps,
+            config=config,
+            start_index=confirmation_start,
+            end_index=confirmation_end,
+            feature_map=feature_map,
+        )
+        confirmation_stress = run_pair(
+            pair,
+            initial_balance=initial_balance,
+            order_notional=horizon_order_notional,
+            fees_bps=stress_fees_bps,
+            slippage_bps=stress_slippage_bps,
+            config=config,
+            start_index=confirmation_start,
+            end_index=confirmation_end,
+            feature_map=feature_map,
+        )
         horizon_sizes = {
             "1d": 24,
             "1w": 24 * 7,
@@ -816,16 +972,40 @@ def research(
             )
         candidates_report[name] = {
             "full_sample": full,
+            "full_sample_stress": stress_full,
             "walk_forward": wf,
             "stress_walk_forward": stress_wf,
+            "confirmation_holdout": {
+                "base": confirmation_base,
+                "stress": confirmation_stress,
+                "start_index": confirmation_start,
+                "end_index": confirmation_end,
+                "bars": confirmation_end - confirmation_start,
+            },
             "walk_forward_medians": {
                 "base_return_pct": _median_return(wf),
                 "stress_return_pct": _median_return(stress_wf),
             },
             "horizons": horizons,
-            "promotion_gate": _promotion_gate(full, wf, stress_wf),
+            "promotion_gate": _promotion_gate(
+                full,
+                stress_full,
+                wf,
+                stress_wf,
+                confirmation_base,
+                confirmation_stress,
+            ),
         }
-    report["walk_forward_folds"] = [{"start_index": start, "end_index": end} for start, end in folds]
+    report["walk_forward_folds"] = [
+        {"start_index": start, "end_index": end}
+        for start, end in folds
+    ]
+    report["confirmation_holdout"] = {
+        "start_index": confirmation_start,
+        "end_index": confirmation_end,
+        "bars": confirmation_end - confirmation_start,
+        "one_year": True,
+    }
     report["candidates"] = candidates_report
     report["paper_promotion"] = {
         "passed_candidates": [
@@ -865,8 +1045,8 @@ def main() -> None:
         horizon_order_notional=args.horizon_order_notional,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(report, indent=2), encoding="utf-8")
-    print(json.dumps(report, indent=2))
+    args.output.write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
+    print(json.dumps(report, indent=2, allow_nan=False))
 
 
 if __name__ == "__main__":

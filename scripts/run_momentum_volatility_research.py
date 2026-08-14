@@ -46,14 +46,38 @@ def load_bars(path: Path) -> list[Bar]:
                 ts = datetime.fromtimestamp(value / 1000, tz=timezone.utc)
             if ts.tzinfo is None:
                 ts = ts.replace(tzinfo=timezone.utc)
-            bars.append(Bar(ts, float(row["open"]), float(row["high"]), float(row["low"]), float(row["close"]), float(row.get("volume", 0))))
+            values = {
+                "open": float(row["open"]),
+                "high": float(row["high"]),
+                "low": float(row["low"]),
+                "close": float(row["close"]),
+                "volume": float(row.get("volume", 0)),
+            }
+            if not all(math.isfinite(value) for value in values.values()):
+                raise ValueError("historical CSV contains non-finite numeric values")
+            bars.append(
+                Bar(
+                    ts,
+                    values["open"],
+                    values["high"],
+                    values["low"],
+                    values["close"],
+                    values["volume"],
+                )
+            )
     bars.sort(key=lambda item: item.timestamp)
     if not bars:
         raise ValueError("historical CSV is empty")
     if any(a.timestamp == b.timestamp for a, b in zip(bars, bars[1:])):
         raise ValueError("historical CSV contains duplicate timestamps")
-    if any(min(b.open, b.high, b.low, b.close) <= 0 or b.high < b.low for b in bars):
-        raise ValueError("historical CSV contains invalid OHLC values")
+    for bar in bars:
+        if (
+            min(bar.open, bar.high, bar.low, bar.close) <= 0
+            or bar.high < max(bar.open, bar.close)
+            or bar.low > min(bar.open, bar.close)
+            or bar.volume < 0
+        ):
+            raise ValueError("historical CSV contains invalid OHLC or volume values")
     return bars
 
 
@@ -95,11 +119,18 @@ def _higher_timeframe_flags(
     slow_value: float | None = None
     previous_slow: float | None = None
     current_flag = 0.0
+    previous_timestamp = None
     for index, bar in enumerate(bars):
         bucket = int(bar.timestamp.timestamp()) // (group_size * 3600)
-        if bucket != current_bucket:
+        gap = (
+            previous_timestamp is not None
+            and (bar.timestamp - previous_timestamp).total_seconds() != 3600
+        )
+        if gap or bucket != current_bucket:
             current_bucket = bucket
             current_count = 0
+            if gap:
+                current_flag = 0.0
         current_count += 1
         if current_count == group_size:
             completed_closes.append(bar.close)
@@ -128,6 +159,7 @@ def _higher_timeframe_flags(
                     and slow_value > previous_slow
                 )
         flags[index] = current_flag
+        previous_timestamp = bar.timestamp
     return flags
 
 
@@ -581,8 +613,8 @@ def main() -> None:
         bearish_exit_requires_breakdown=v2,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(report, indent=2), encoding="utf-8")
-    print(json.dumps(report, indent=2))
+    args.output.write_text(json.dumps(report, indent=2, allow_nan=False), encoding="utf-8")
+    print(json.dumps(report, indent=2, allow_nan=False))
 
 
 if __name__ == "__main__":

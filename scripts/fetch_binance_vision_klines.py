@@ -21,6 +21,7 @@ import csv
 import hashlib
 import io
 import json
+import math
 import re
 import urllib.error
 import urllib.request
@@ -111,8 +112,18 @@ def _validate_rows(rows: list[dict[str, str]]) -> dict[str, object]:
         raise ValueError(f"normalized data contains {duplicate_count} duplicate timestamps")
     invalid = []
     for row in rows:
-        high, low, close = float(row["high"]), float(row["low"]), float(row["close"])
-        if min(high, low, close) <= 0 or high < low:
+        open_price = float(row["open"])
+        high = float(row["high"])
+        low = float(row["low"])
+        close = float(row["close"])
+        volume = float(row["volume"])
+        if (
+            not all(math.isfinite(value) for value in (open_price, high, low, close, volume))
+            or min(open_price, high, low, close) <= 0
+            or high < max(open_price, close)
+            or low > min(open_price, close)
+            or volume < 0
+        ):
             invalid.append(row["timestamp"])
     if invalid:
         raise ValueError(f"invalid OHLC values at {invalid[:3]}")
@@ -150,7 +161,13 @@ def fetch_symbol(symbol: str, since: str, until: str, raw_dir: Path, out_dir: Pa
             digest = _checksum(zip_bytes, checksum_text)
             month_rows = _read_archive(zip_bytes)
             for row in month_rows:
-                rows_by_timestamp[row["timestamp"]] = row
+                timestamp = row["timestamp"]
+                existing = rows_by_timestamp.get(timestamp)
+                if existing is not None and existing != row:
+                    raise ValueError(
+                        f"conflicting duplicate kline at {symbol} {timestamp}"
+                    )
+                rows_by_timestamp[timestamp] = row
             archives.append({"file": zip_path.name, "url": url, "sha256": digest, "rows": len(month_rows)})
         except urllib.error.HTTPError as exc:
             raise RuntimeError(f"archive unavailable for {symbol} {year:04d}-{month:02d}: HTTP {exc.code}; use a completed month") from exc

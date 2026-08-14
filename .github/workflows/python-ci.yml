@@ -26,6 +26,14 @@ jobs:
           tradingbot_ibkr/paper_lab_automation.py
           tradingbot_ibkr/rescue_runtime.py
           tradingbot_ibkr/strategy_candidates.py
+      - name: Research controller regression tests
+        run: |
+          python -m py_compile \
+            scripts/fetch_binance_vision_klines.py \
+            scripts/run_momentum_volatility_research.py \
+            scripts/run_momentum_volatility_v3.py \
+            scripts/run_v3_research_controller.py
+          pytest -q tests/test_v3_research_controller.py
       - run: bandit -r . -x tests || true
       - run: pip-audit || true
       - run: pytest --cov --cov-report=term-missing
