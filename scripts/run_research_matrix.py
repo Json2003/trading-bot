@@ -107,6 +107,8 @@ def run_matrix(
         window_size=window_size,
         test_fraction=test_fraction,
     )
+    if not windows:
+        raise ValueError("dataset/window settings produced no evaluable test windows")
     loop = NightlyResearchLoop(windows, Path("/tmp/research-matrix-registry.json"), trials_range=(1, 1))
     results: list[dict[str, Any]] = []
     def news_wrap(builder):
