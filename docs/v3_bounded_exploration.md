@@ -26,8 +26,9 @@ halt or repeated kill-switch event.
 The latest complete one-year period is deliberately excluded from every screen
 calculation and report. A development-screen pass is only a manually reviewed
 shortlist for a later frozen confirmation run; it is never a promotion result.
-The main controller's dual-size, stress, holdout, data-vintage, and manual
-promotion rules remain unchanged.
+The controller does not count rolling historical data vintages as independent
+confirmation or set `strategy_ready`; confirmation must be manually frozen and
+use new, non-overlapping future data.
 
 ## Manual run
 
