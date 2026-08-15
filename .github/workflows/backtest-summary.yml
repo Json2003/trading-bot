@@ -12,6 +12,7 @@ on:
       - "backtest/**"
       - "pyproject.toml"
       - "requirements*.txt"
+      - ".github/workflows/backtest-summary.yml"
 
 permissions:
   contents: write
@@ -62,79 +63,79 @@ jobs:
 
           if [ ${#files[@]} -eq 0 ]; then
             python - <<'PY'
-from pathlib import Path
+          from pathlib import Path
 
-Path("summary-latest.md").write_text(
-    """# Backtest Summary\n\n"
-    "_No backtest JSONs found in the repository (looking for `backtest*.json` or `report_*.json`)._\n"
-    "Push backtest artifacts or ensure a backtest script writes results to the repo root.\n"
-)
-PY
+          Path("summary-latest.md").write_text(
+              """# Backtest Summary\n\n"
+              "_No backtest JSONs found in the repository (looking for `backtest*.json` or `report_*.json`)._\n"
+              "Push backtest artifacts or ensure a backtest script writes results to the repo root.\n"
+          )
+          PY
           else
             # If your repo has scripts/summarize_backtests.py, use it; otherwise inline quick roll-up.
             if [ -f scripts/summarize_backtests.py ]; then
               python scripts/summarize_backtests.py | tee summary-latest.md
             else
               python - <<'PY' | tee summary-latest.md
-import glob
-import json
-import statistics as st
+          import glob
+          import json
+          import statistics as st
 
 
-def pct(value: float) -> str:
-    return f"{100 * value:.2f}%"
+          def pct(value: float) -> str:
+              return f"{100 * value:.2f}%"
 
 
-def eq_to_rets(equity):
-    return [
-        (equity[i] / equity[i - 1] - 1)
-        for i in range(1, len(equity))
-        if equity[i - 1] > 0
-    ]
+          def eq_to_rets(equity):
+              return [
+                  (equity[i] / equity[i - 1] - 1)
+                  for i in range(1, len(equity))
+                  if equity[i - 1] > 0
+              ]
 
 
-def mdd(equity):
-    peak = 0.0
-    max_dd = 0.0
-    for value in equity:
-        peak = max(peak, value)
-        if peak > 0:
-            max_dd = max(max_dd, 1 - value / peak)
-    return max_dd
+          def mdd(equity):
+              peak = 0.0
+              max_dd = 0.0
+              for value in equity:
+                  peak = max(peak, value)
+                  if peak > 0:
+                      max_dd = max(max_dd, 1 - value / peak)
+              return max_dd
 
 
-print("# Backtest Summary\n")
-for fp in sorted(glob.glob("backtest*.json") + glob.glob("report_*.json")):
-    try:
-        with open(fp) as f:
-            data = json.load(f)
-        results = data.get("results", data)
-        eq = (
-            results.get("equity_curve")
-            or results.get("equity")
-            or data.get("equity_series")
-            or []
-        )
-        if len(eq) < 2:
-            print(f"- {fp}: _no equity curve_\n")
-            continue
-        returns = eq_to_rets(eq)
-        total = eq[-1] / eq[0] - 1
-        ann = ((1 + (st.mean(returns) if returns else 0)) ** 252) - 1
-        drawdown = mdd(eq)
-        sharpe = (
-            (st.mean(returns) if returns else 0)
-            / (st.pstdev(returns) or 1e-12)
-            if returns
-            else 0.0
-        )
-        print(
-            f"## {fp}\nPnL: {pct(total)} | Annualized: {pct(ann)} | "
-            f"MaxDD: {pct(drawdown)} | Sharpe: {sharpe:.2f}\n"
-        )
-    except Exception as exc:
-        print(f"- {fp}: _error parsing: {exc}_\n")
-PY
+          print("# Backtest Summary\n")
+          for fp in sorted(glob.glob("backtest*.json") + glob.glob("report_*.json")):
+              try:
+                  with open(fp) as f:
+                      data = json.load(f)
+                  results = data.get("results", data)
+                  eq = (
+                      results.get("equity_curve")
+                      or results.get("equity")
+                      or data.get("equity_series")
+                      or []
+                  )
+                  if len(eq) < 2:
+                      print(f"- {fp}: _no equity curve_\n")
+                      continue
+                  returns = eq_to_rets(eq)
+                  total = eq[-1] / eq[0] - 1
+                  ann = ((1 + (st.mean(returns) if returns else 0)) ** 252) - 1
+                  drawdown = mdd(eq)
+                  sharpe = (
+                      (st.mean(returns) if returns else 0)
+                      / (st.pstdev(returns) or 1e-12)
+                      if returns
+                      else 0.0
+                  )
+                  print(
+                      f"## {fp}\nPnL: {pct(total)} | Annualized: {pct(ann)} | "
+                      f"MaxDD: {pct(drawdown)} | Sharpe: {sharpe:.2f}\n"
+                  )
+              except Exception as exc:
+                  print(f"- {fp}: _error parsing: {exc}_\n")
+          PY
             fi
           fi
 
@@ -145,7 +146,7 @@ PY
           path: summary-latest.md
 
       - name: Commit and push results
-        if: github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: |
           set -euo pipefail
           git config user.name "market-bot"

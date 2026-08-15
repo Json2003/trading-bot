@@ -94,12 +94,15 @@ def test_controller_requires_confirmation_holdout() -> None:
     assert "missing confirmation holdout" in result["failure_reasons"]
 
 
-def test_controller_requires_same_candidate_at_both_sizes() -> None:
+def test_controller_shortlists_same_candidate_at_both_sizes_without_promotion() -> None:
     candidate = _candidate()
     reports = {"4000": _report(candidate), "6000": _report(candidate)}
     result = evaluate_readiness(reports)
-    assert result["strategy_ready"] is True
+    assert result["historical_gate_pass"] is True
+    assert result["strategy_ready"] is False
     assert result["ready_candidates"] == ["balanced"]
+    assert result["shortlist_for_manual_freeze_only"] == ["balanced"]
+    assert result["rules"]["manual_frozen_non_overlapping_confirmation_required"] is True
 
 
 def test_readiness_rejects_missing_required_size() -> None:
@@ -203,6 +206,19 @@ def test_old_or_incomplete_state_cannot_report_ready(tmp_path) -> None:
     state = _read_state(path)
     assert state["schema_version"] == SCHEMA_VERSION
     assert state["strategy_ready"] is False
+
+
+def test_current_schema_state_cannot_restore_automatic_readiness(tmp_path) -> None:
+    path = tmp_path / "state.json"
+    path.write_text(
+        '{"schema_version": ' + str(SCHEMA_VERSION) + ', "strategy_ready": true, '
+        '"iterations_completed": 1, "history": []}',
+        encoding="utf-8",
+    )
+    state = _read_state(path)
+    assert state["strategy_ready"] is False
+    assert state["automatic_promotion"] is False
+    assert state["manual_frozen_confirmation_required"] is True
     path.write_text(
         '{"schema_version": 2, "strategy_ready": true, "iterations_completed": 1, '
         '"consecutive_ready_passes": 3, "history": []}',

@@ -1,16 +1,29 @@
 name: Run Backtest
+
 on: [push]
+
+permissions:
+  contents: read
+
 jobs:
   backtest:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v3
-      - run: ./install.sh
-      - run: source venv/bin/activate && python check_trading_readiness.py --fix-issues --verbose
-      - run: source venv/bin/activate && python scripts/run_backtest.py \
-          --source csv --path backtest/sample_data/sample_ohlcv.csv \
-          --strategy backtest.strategies.sma_filtered:generate_signals \
-          --strategy_args fast=8 slow=34 trend_fast=55 trend_slow=144 \
-          --fees_bps 5 --slip_bps 2 --tp_bps 60 --sl_bps 40 \
-          --max_bars 200 --notional 1.0 --risk_per_trade 0.01 \
-          --out_prefix artifacts/sample_backtest
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install sample-backtest dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy>=1.26,<3" "pandas>=2.0,<3"
+      - name: Run sample backtest
+        run: |
+          python scripts/run_backtest.py \
+            --source csv --path backtest/sample_data/sample_ohlcv.csv \
+            --strategy backtest.strategies.sma_filtered:generate_signals \
+            --strategy_args fast=8 slow=34 trend_fast=55 trend_slow=144 \
+            --fees_bps 5 --slip_bps 2 --tp_bps 60 --sl_bps 40 \
+            --max_bars 200 --notional 1.0 --risk_per_trade 0.01 \
+            --out_prefix artifacts/sample_backtest

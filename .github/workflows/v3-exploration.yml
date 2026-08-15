@@ -1,0 +1,60 @@
+name: V3 Bounded Development Screen
+
+on:
+  # Manual only: this is a finite, pre-registered research screen rather than
+  # an unattended search process.
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: v3-bounded-development-screen-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  exploration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download completed Binance Vision history
+        run: |
+          set -euo pipefail
+          # --until is exclusive and avoids treating the current partial month
+          # as historical evidence.
+          UNTIL="$(python - <<'PY'
+          from datetime import datetime, timezone
+          print(datetime.now(timezone.utc).strftime("%Y-%m"))
+          PY
+          )"
+          python scripts/fetch_binance_vision_klines.py \
+            --symbols BTCUSDT ETHUSDT \
+            --since 2023-01 \
+            --until "$UNTIL"
+
+      - name: Run bounded development screen
+        run: |
+          set -euo pipefail
+          python scripts/run_v3_exploration.py \
+            --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv \
+            --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv \
+            --max-data-age-days 45 \
+            --output artifacts/momentum-v3/exploration/screen.json
+
+      - name: Upload development-screen artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-bounded-development-screen-${{ github.run_number }}
+          path: artifacts/momentum-v3/exploration
+          if-no-files-found: error
+          retention-days: 90
