@@ -6,10 +6,10 @@ service. It uses only closed candles for signals, fills at the next open,
 one long position at a time, no leverage, and explicit base/stress costs.
 """
 from __future__ import annotations
-import argparse, json, math, statistics
+import argparse, json, math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Mapping
+from typing import Mapping
 
 try:
     from scripts.run_momentum_volatility_research import Bar, load_bars
@@ -169,7 +169,8 @@ def run_strategy(pair: list[PairBar], name: str, costs: Costs, initial_balance: 
             returns.append(b / a - 1)
             peaks = max(peaks, b)
             dd = max(dd, (peaks - b) / peaks)
-    avg, sd = mean(returns), stdev(returns, len(returns))
+    avg = mean(returns)
+    sd = math.sqrt(sum((x - avg) ** 2 for x in returns) / max(1, len(returns) - 1)) if returns else math.nan
     gains = sum(x for x in trade_pnl if x > 0)
     losses = abs(sum(x for x in trade_pnl if x < 0))
     return {
@@ -202,7 +203,8 @@ def run_suite(btc_path: Path, eth_path: Path, output: Path) -> dict[str, object]
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--btc-path", type=Path, required=True); p.add_argument("--eth-path", type=Path, required=True); p.add_argument("--output", type=Path, required=True)
-    r = run_suite(p.parse_args().btc_path, p.parse_args().eth_path, p.parse_args().output)
+    args = p.parse_args()
+    r = run_suite(args.btc_path, args.eth_path, args.output)
     print(json.dumps({"strategies": list(r["strategies"]), "window": r["window"]}, indent=2))
     return 0
 if __name__ == "__main__":
