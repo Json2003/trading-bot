@@ -46,12 +46,19 @@ def _run(pair, config, model: ExecutionModel, *, initial_balance: float, order_n
     )
     turnover = float(result.get("trades", 0)) * order_notional
     estimated_cost = turnover * model.round_trip_bps / 10_000.0
+    pnl_quote = float(result.get("pnl", 0.0))
+    btc_end_quote = float(pair[-1].btc.close)
+    pnl_sats_marked_at_end = pnl_quote / btc_end_quote * SATOSHIS_PER_BTC
     return {
         "engine_result": result,
         "execution_model": model.as_dict(),
         "estimated_turnover_quote": turnover,
         "estimated_execution_cost_quote": estimated_cost,
+        "pnl_quote": pnl_quote,
+        "pnl_sats_marked_at_window_end": pnl_sats_marked_at_end,
+        "btc_mark_price_quote_at_window_end": btc_end_quote,
         "cost_note": "Estimated from completed entry/exit count; exact fills require fill-ledger integration.",
+        "sats_note": "Quote P&L converted at the window-end BTC/quote close; this is a mark-to-BTC value, not a native BTC cash ledger.",
     }
 
 def run_backtest(btc_path: Path, eth_path: Path, output: Path, *, initial_balance: float, order_notional: float):
@@ -67,7 +74,7 @@ def run_backtest(btc_path: Path, eth_path: Path, output: Path, *, initial_balanc
             "stress": _run(pair, config, STRESS_EXECUTION, initial_balance=initial_balance, order_notional=order_notional),
         }
     report = {
-        "schema_version": 1,
+        "schema_version": 2,
         "research_only": True,
         "paper_orders_placed": False,
         "live_orders_placed": False,
@@ -80,9 +87,9 @@ def run_backtest(btc_path: Path, eth_path: Path, output: Path, *, initial_balanc
         },
         "denomination": {
             "btc_satoshis_per_btc": SATOSHIS_PER_BTC,
-            "btc_pnl_sats_available_when_starting_balance_is_btc": True,
+            "btc_pnl_sats_marked_at_window_end": True,
             "quote_currency_results_preserved": True,
-            "eth_sats_conversion": "requires timestamped BTC/ETH conversion; not inferred here",
+            "eth_sats_conversion": "ETH results are quote P&L; cross-asset BTC conversion requires timestamped ETH/BTC marks.",
         },
         "execution_models": {"base": BASE_EXECUTION.as_dict(), "stress": STRESS_EXECUTION.as_dict()},
         "candidates": reports,
