@@ -2,6 +2,9 @@ name: Three-Year Satoshi Backtest
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - agent/execution-model-and-sats-backtest
 
 permissions:
   contents: read
