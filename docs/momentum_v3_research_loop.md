@@ -122,7 +122,23 @@ would create selection bias rather than new evidence.
 The monthly GitHub Actions workflow downloads completed Binance Vision months,
 restores the most recent successful research artifact when available, and
 uploads the new state and reports. Its token has only `actions: read` and
-`contents: read` permissions. Restore is optional; stale or incompatible state
-is never used as evidence, and no restored artifact can claim readiness.
+`contents: read` permissions. Restore is optional; stale or incompatible
+state is never used as evidence, and no restored artifact can claim readiness.
 
 Do not use this loop as permission to promote a model or start live trading.
+
+## Three-year satoshi backtest
+
+The manual workflow `Three-Year Satoshi Backtest` runs the fixed v3 candidate
+set on the most recent three years of completed aligned BTC/ETH hourly candles.
+It uses the explicit base and stress execution budgets in
+`scripts/execution_model.py` and writes an artifact under
+`artifacts/momentum-v3/three-year-sats`.
+
+The artifact records fee, spread, slippage, impact, latency, fill fraction,
+funding, and outage assumptions. BTC can be denominated in satoshis
+(`1 BTC = 100,000,000 sats`) when the starting balance is supplied in BTC;
+quote-currency results remain available. The current wrapper estimates
+execution cost from completed entry/exit counts. It is not an exact exchange
+fill ledger and must not be treated as execution-realistic until that ledger is
+integrated and independently tested.
