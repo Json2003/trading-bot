@@ -1,0 +1,50 @@
+name: Three-Year Satoshi Backtest
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: three-year-satoshi-backtest-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Download completed Binance Vision history
+        run: |
+          set -euo pipefail
+          UNTIL="$(python - <<'PY'
+          from datetime import datetime, timezone
+          print(datetime.now(timezone.utc).strftime("%Y-%m"))
+          PY
+          )"
+          python scripts/fetch_binance_vision_klines.py \
+            --symbols BTCUSDT ETHUSDT \
+            --since 2023-01 \
+            --until "$UNTIL"
+      - name: Run three-year satoshi backtest
+        run: |
+          set -euo pipefail
+          python scripts/run_three_year_sats_backtest.py \
+            --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv \
+            --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv \
+            --output artifacts/momentum-v3/three-year-sats/backtest.json
+      - name: Upload backtest artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: three-year-satoshi-backtest-${{ github.run_number }}
+          path: artifacts/momentum-v3/three-year-sats
+          if-no-files-found: error
+          retention-days: 90
