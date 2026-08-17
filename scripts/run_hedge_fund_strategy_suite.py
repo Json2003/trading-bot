@@ -132,6 +132,8 @@ def run_strategy(pair: list[PairBar], name: str, costs: Costs, initial_balance: 
     f = {s: asset_features(v) for s, v in bars.items()}
     cash, qty, symbol = initial_balance, 0.0, None
     pending: tuple[str | None, float] = (None, 0.0)
+    none_streak = 0
+    hold_confirm_bars = 6
     equity = []
     trade_pnl = []
     execution_cost = 0.0
@@ -155,7 +157,17 @@ def run_strategy(pair: list[PairBar], name: str, costs: Costs, initial_balance: 
             symbol, entries = s, entries + 1
         mark = cash + (qty * bars[symbol][i].close if symbol is not None else 0.0)
         equity.append(mark)
-        pending = signal(name, i, f)
+        next_symbol, next_size = signal(name, i, f)
+        if next_symbol is None:
+            if symbol is not None and none_streak < hold_confirm_bars:
+                none_streak += 1
+                pending = (symbol, pending[1] if pending[0] == symbol else 1.0)
+            else:
+                none_streak += 1
+                pending = (None, 0.0)
+        else:
+            none_streak = 0
+            pending = (next_symbol, next_size)
     if symbol is not None:
         price = bars[symbol][-1].close
         cash += qty * price * (1 - costs.slip_bps / 10000) * (1 - costs.fee_bps / 10000)
