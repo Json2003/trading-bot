@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 """Fail-closed milestone evaluator and capital-growth planner."""
 from __future__ import annotations
-
-import argparse
-import json
-import math
+import argparse, json, math
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +18,8 @@ def load_policy(path: Path = DEFAULT_CONFIG) -> dict[str, Any]:
         raise ValueError("live trading must be disabled")
     if policy.get("leverage_enabled") is not False:
         raise ValueError("global leverage must be disabled")
+    if float(policy.get("max_leverage_multiple", 0)) > 2.0:
+        raise ValueError("leverage cap cannot exceed 2x")
     milestones = policy.get("growth_milestones_usd", [])
     if milestones != sorted(set(milestones)) or not milestones:
         raise ValueError("growth milestones must be unique and ascending")
@@ -41,7 +40,6 @@ def growth_plan(equity: float, policy: dict[str, Any], *, monthly_contribution: 
     next_target = next((value for value in milestones if equity < value), None)
     gap = round(max(next_target - equity, 0.0), 2) if next_target else 0.0
     months = math.ceil(gap / monthly_contribution) if next_target and monthly_contribution else None
-
     reconciliation = None
     if starting_equity is not None:
         reconciled = starting_equity + net_contributions + verified_net_pnl
@@ -52,7 +50,6 @@ def growth_plan(equity: float, policy: dict[str, Any], *, monthly_contribution: 
             "reconciled_equity_usd": round(reconciled, 2),
             "unreconciled_delta_usd": round(equity - reconciled, 2),
         }
-
     return {
         "settled_equity_usd": round(equity, 2),
         "milestones_usd": milestones,
@@ -75,8 +72,7 @@ def evaluate(equity: float, policy: dict[str, Any], **planner_kwargs: Any) -> di
     buffer = float(policy["activation_buffer_usd"])
     milestone_reached = equity >= milestones[0]
     buffer_reached = equity >= milestones[0] + buffer
-
-    sleeves: dict[str, Any] = {}
+    sleeves = {}
     for name, config in sorted(policy["sleeves"].items(), key=lambda item: item[1]["priority"]):
         sleeves[name] = {
             "status": "paper_validation_eligible" if milestone_reached else "locked_below_milestone",
@@ -86,7 +82,6 @@ def evaluate(equity: float, policy: dict[str, Any], **planner_kwargs: Any) -> di
             "requires_human_approval": True,
             "requirements": list(config["requirements"]),
         }
-
     return {
         "mode": policy["mode"],
         "equity_usd": round(equity, 2),
@@ -99,6 +94,8 @@ def evaluate(equity: float, policy: dict[str, Any], **planner_kwargs: Any) -> di
         "research_only": True,
         "live_trading_authorized": False,
         "leverage_authorized": False,
+        "max_leverage_multiple": float(policy["max_leverage_multiple"]),
+        "leverage_policy": policy["leverage_policy"],
         "capital_growth_plan": growth_plan(equity, policy, **planner_kwargs),
         "portfolio_limits": {
             "max_drawdown_pct": policy["max_portfolio_drawdown_pct"],
@@ -119,14 +116,11 @@ def main() -> int:
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-
-    result = evaluate(
-        args.equity, load_policy(args.config),
-        monthly_contribution=args.monthly_contribution,
-        starting_equity=args.starting_equity,
-        net_contributions=args.net_contributions,
-        verified_net_pnl=args.verified_net_pnl,
-    )
+    result = evaluate(args.equity, load_policy(args.config),
+                      monthly_contribution=args.monthly_contribution,
+                      starting_equity=args.starting_equity,
+                      net_contributions=args.net_contributions,
+                      verified_net_pnl=args.verified_net_pnl)
     rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.write_text(rendered, encoding="utf-8")
