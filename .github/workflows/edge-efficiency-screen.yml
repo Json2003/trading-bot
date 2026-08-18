@@ -30,6 +30,9 @@ jobs:
       - name: Run edge-efficiency screen
         run: |
           python scripts/run_edge_efficiency_screen.py             --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv             --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv             --output artifacts/edge-efficiency/edge_screen.json
+      - name: Run mathematical pattern scan
+        run: |
+          python scripts/run_pattern_trend_scan.py             --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv             --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv             --output artifacts/edge-efficiency/pattern_scan.json
       - name: Upload edge report
         if: always()
         uses: actions/upload-artifact@v4
