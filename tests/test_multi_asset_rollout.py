@@ -16,6 +16,14 @@ class MultiAssetRolloutTests(unittest.TestCase):
         self.assertEqual(self.policy["risk_profile"], "moderate_aggressive")
         self.assertEqual(self.policy["risk_sizing_mode"], "adaptive_with_hard_caps")
 
+    def test_leverage_is_capped_and_not_authorized(self):
+        result = evaluate(25000, self.policy)
+        self.assertEqual(result["max_leverage_multiple"], 2.0)
+        self.assertTrue(result["leverage_policy"]["activation_requires_positive_window"])
+        self.assertTrue(result["leverage_policy"]["entry"]["late_entry_confirmation"])
+        self.assertTrue(result["leverage_policy"]["exit"]["early_exit_on_signal_decay"])
+        self.assertFalse(result["leverage_authorized"])
+
     def test_below_first_milestone_locks_all_sleeves(self):
         result = evaluate(24999.99, self.policy)
         self.assertFalse(result["milestone_reached"])
@@ -57,7 +65,6 @@ class MultiAssetRolloutTests(unittest.TestCase):
             with NamedTemporaryFile(mode="w+", encoding="utf-8") as handle:
                 json.dump(broken, handle)
                 handle.flush()
-                from pathlib import Path
                 load_policy_from_path(handle.name)
 
 
