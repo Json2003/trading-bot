@@ -81,7 +81,7 @@ def choose_signal(name: str, i: int, btc: dict[str, list[float]],
         breakout = finite(data["prior_high48"][i]) and data["close"][i] > data["prior_high48"][i]
         if trend and expansion and (name == "trend_volatility" or breakout):
             eligible.append((data["mom24"][i], symbol))
-    return max(eligible)[1], 1 if eligible else (None, 0)
+    if not eligible:\n        return None, 0\n    return max(eligible)[1], 1
 
 
 def evaluate(btc_path: Path, eth_path: Path) -> dict[str, Any]:
