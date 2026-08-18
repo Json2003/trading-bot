@@ -1,10 +1,34 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "mode": "paper_research_only",
   "live_trading_enabled": false,
   "leverage_enabled": false,
   "risk_profile": "moderate_aggressive",
   "risk_sizing_mode": "adaptive_with_hard_caps",
+  "max_leverage_multiple": 2.0,
+  "leverage_policy": {
+    "status": "paper_model_only",
+    "activation_requires_positive_window": true,
+    "positive_window": {
+      "minimum_observations": 20,
+      "minimum_net_return_after_costs_pct": 0.0,
+      "minimum_median_walk_forward_return_pct": 0.0,
+      "maximum_drawdown_pct": 1.0,
+      "requires_fresh_unseen_data": true
+    },
+    "entry": {
+      "signal_persistence_bars": 2,
+      "max_signal_age_bars": 1,
+      "late_entry_confirmation": true
+    },
+    "exit": {
+      "early_exit_on_signal_decay": true,
+      "early_exit_before_session_close": true,
+      "profit_lock_trigger_pct": 0.5,
+      "never_widen_stop": true
+    },
+    "requires_human_approval": true
+  },
   "growth_milestones_usd": [25000, 50000, 100000, 250000, 500000, 1000000],
   "target_monthly_growth_usd": 1000,
   "target_months": 24,
