@@ -80,6 +80,21 @@ def choose(name, i, b, e):
     return s, direction
 
 
+def classify(observations, valid_blocks, median_gross, stress_multiple):
+    positive_blocks = sum(x > 0 for x in valid_blocks)
+    if observations < BLOCKS * MIN_PER_BLOCK or len(valid_blocks) != BLOCKS:
+        return "insufficient_sample"
+    if median_gross <= 0:
+        return "negative_gross_edge"
+    if positive_blocks < 4:
+        return "unstable_regime"
+    if stress_multiple < 1:
+        return "cost_sensitive"
+    if stress_multiple < 4:
+        return "promising_needs_adjustment"
+    return "robust_candidate"
+
+
 def scan(btc_path: Path, eth_path: Path):
     pair = align_pair(load_bars(btc_path), load_bars(eth_path))
     pair = pair[-3 * 365 * 24:]
@@ -112,6 +127,7 @@ def scan(btc_path: Path, eth_path: Path):
                 "base_cost_multiple": med / BASE_COST if math.isfinite(med) else None,
                 "stress_cost_multiple": med / STRESS_COST if math.isfinite(med) else None,
                 "positive_blocks": sum(x > 0 for x in valid),
+                "classification": classify(len(rows), valid, med, med / STRESS_COST if math.isfinite(med) else math.nan),
                 "passes_4x_stress_gate": bool(len(rows) >= BLOCKS * MIN_PER_BLOCK and len(valid) == BLOCKS and all(x > 0 for x in valid) and med / STRESS_COST >= 4),
             }
     passing = [f"{n}:{h}" for n, hs in results.items() for h, v in hs.items() if v["passes_4x_stress_gate"]]
@@ -120,6 +136,8 @@ def scan(btc_path: Path, eth_path: Path):
             "costs": {"base_round_trip": BASE_COST, "stress_round_trip": STRESS_COST},
             "multiple_testing_note": "Pattern universe fixed before evaluation; candidates require all six positive blocks and 4x stress cost multiple.",
             "patterns": results, "passing_patterns": passing,
+            "classification_counts": {label: sum(1 for hs in results.values() for v in hs.values() if v["classification"] == label)
+                                      for label in ("robust_candidate", "promising_needs_adjustment", "cost_sensitive", "unstable_regime", "negative_gross_edge", "insufficient_sample")},
             "status": "candidate_found" if passing else "no_candidate_passed"}
 
 
