@@ -24,6 +24,8 @@ def load_policy(path: Path = DEFAULT_CONFIG) -> dict[str, Any]:
     milestones = policy.get("growth_milestones_usd", [])
     if milestones != sorted(set(milestones)) or not milestones:
         raise ValueError("growth milestones must be unique and ascending")
+    if policy.get("target_monthly_growth_usd", 0) <= 0:
+        raise ValueError("monthly growth target must be positive")
     return policy
 
 
@@ -32,6 +34,7 @@ def growth_plan(equity: float, policy: dict[str, Any], *, monthly_contribution: 
                 verified_net_pnl: float = 0.0) -> dict[str, Any]:
     if equity < 0 or monthly_contribution < 0:
         raise ValueError("equity and contributions cannot be negative")
+    target = float(policy["target_monthly_growth_usd"])
     milestones = [float(value) for value in policy["growth_milestones_usd"]]
     reached = [value for value in milestones if equity >= value]
     current = reached[-1] if reached else 0.0
@@ -57,7 +60,9 @@ def growth_plan(equity: float, policy: dict[str, Any], *, monthly_contribution: 
         "current_milestone_usd": current,
         "next_milestone_usd": next_target,
         "gap_to_next_milestone_usd": gap,
-        "monthly_contribution_usd": round(monthly_contribution, 2),
+        "target_monthly_growth_usd": target,
+        "planned_monthly_contribution_usd": round(monthly_contribution, 2),
+        "verified_net_pnl_required_usd": round(max(target - monthly_contribution, 0.0), 2),
         "contribution_only_months_to_next": months,
         "return_assumptions_used": False,
         "reconciliation": reconciliation,
