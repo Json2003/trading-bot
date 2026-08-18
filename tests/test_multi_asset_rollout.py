@@ -8,11 +8,13 @@ class MultiAssetRolloutTests(unittest.TestCase):
     def setUpClass(cls):
         cls.policy = load_policy()
 
-    def test_milestone_ladder_and_growth_target(self):
+    def test_milestone_ladder_growth_target_and_risk_profile(self):
         self.assertEqual(self.policy["growth_milestones_usd"],
                          [25000, 50000, 100000, 250000, 500000, 1000000])
         self.assertEqual(self.policy["target_monthly_growth_usd"], 1000)
         self.assertEqual(self.policy["target_months"], 24)
+        self.assertEqual(self.policy["risk_profile"], "moderate_aggressive")
+        self.assertEqual(self.policy["risk_sizing_mode"], "adaptive_with_hard_caps")
 
     def test_below_first_milestone_locks_all_sleeves(self):
         result = evaluate(24999.99, self.policy)
@@ -55,9 +57,14 @@ class MultiAssetRolloutTests(unittest.TestCase):
             with NamedTemporaryFile(mode="w+", encoding="utf-8") as handle:
                 json.dump(broken, handle)
                 handle.flush()
-                from scripts.evaluate_multi_asset_rollout import load_policy
                 from pathlib import Path
-                load_policy(Path(handle.name))
+                load_policy_from_path(handle.name)
+
+
+def load_policy_from_path(path):
+    from scripts.evaluate_multi_asset_rollout import load_policy
+    from pathlib import Path
+    return load_policy(Path(path))
 
 
 if __name__ == "__main__":
