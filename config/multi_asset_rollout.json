@@ -1,0 +1,59 @@
+{
+  "schema_version": 5,
+  "mode": "paper_research_only",
+  "live_trading_enabled": false,
+  "leverage_enabled": false,
+  "risk_profile": "moderate_aggressive",
+  "risk_sizing_mode": "adaptive_with_hard_caps",
+  "max_leverage_multiple": 2.0,
+  "leverage_policy": {
+    "status": "paper_model_only",
+    "activation_requires_positive_window": true,
+    "positive_window": {
+      "minimum_observations": 20,
+      "minimum_net_return_after_costs_pct": 0.0,
+      "minimum_median_walk_forward_return_pct": 0.0,
+      "maximum_drawdown_pct": 1.0,
+      "requires_fresh_unseen_data": true
+    },
+    "entry": {
+      "signal_persistence_bars": 2,
+      "max_signal_age_bars": 1,
+      "late_entry_confirmation": true
+    },
+    "exit": {
+      "early_exit_on_signal_decay": true,
+      "early_exit_before_session_close": true,
+      "profit_lock_trigger_pct": 0.5,
+      "never_widen_stop": true
+    },
+    "requires_human_approval": true
+  },
+  "growth_milestones_usd": [25000, 50000, 100000, 250000, 500000, 1000000],
+  "target_monthly_growth_usd": 1000,
+  "target_months": 24,
+  "growth_target_policy": "contributions_and_verified_net_pnl_only",
+  "activation_buffer_usd": 5000,
+  "milestone_uses_settled_equity": true,
+  "max_portfolio_drawdown_pct": 2.0,
+  "max_open_risk_pct": 1.0,
+  "max_sleeve_risk_pct": 0.5,
+  "promotion_requires_human_approval": true,
+  "minimum_paper_trades": 30,
+  "minimum_paper_weeks": 6,
+  "sleeves": {
+    "stocks_etf": {"status": "research_only", "priority": 1, "max_capital_pct": 15.0, "allowed_order_types": ["market", "limit"], "requirements": ["settled_equity_milestone", "paper_validation", "cost_reconciliation"]},
+    "options_defined_risk": {"status": "research_only", "priority": 2, "max_capital_pct": 5.0, "allowed_order_types": ["limit"], "naked_short_options": false, "requirements": ["paper_validation", "greeks_and_iv_model", "max_loss_known", "cost_reconciliation"]},
+    "futures_micro": {"status": "research_only", "priority": 3, "max_capital_pct": 5.0, "allowed_order_types": ["limit"], "contract_size": "micro_only", "requirements": ["paper_validation", "margin_model", "liquidation_model", "cost_reconciliation"]},
+    "forex": {"status": "research_only", "priority": 4, "max_capital_pct": 5.0, "allowed_order_types": ["limit"], "leverage_allowed": false, "requirements": ["paper_validation", "spread_model", "rollover_model", "cost_reconciliation"]}
+  },
+  "promotion_gates": {
+    "positive_net_return_after_costs": true,
+    "positive_median_walk_forward_return": true,
+    "stress_drawdown_within_limit": true,
+    "minimum_trade_count": 30,
+    "no_data_leakage": true,
+    "exact_fill_ledger": true,
+    "human_approval": true
+  }
+}
