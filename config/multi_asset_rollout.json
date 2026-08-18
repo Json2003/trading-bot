@@ -1,9 +1,9 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "mode": "paper_research_only",
   "live_trading_enabled": false,
   "leverage_enabled": false,
-  "account_growth_milestone_usd": 25000,
+  "growth_milestones_usd": [25000, 50000, 100000, 250000, 500000, 1000000],
   "activation_buffer_usd": 5000,
   "milestone_uses_settled_equity": true,
   "max_portfolio_drawdown_pct": 2.0,
