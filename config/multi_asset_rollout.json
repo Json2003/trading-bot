@@ -1,8 +1,10 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "mode": "paper_research_only",
   "live_trading_enabled": false,
   "leverage_enabled": false,
+  "risk_profile": "moderate_aggressive",
+  "risk_sizing_mode": "adaptive_with_hard_caps",
   "growth_milestones_usd": [25000, 50000, 100000, 250000, 500000, 1000000],
   "target_monthly_growth_usd": 1000,
   "target_months": 24,
@@ -16,37 +18,10 @@
   "minimum_paper_trades": 30,
   "minimum_paper_weeks": 6,
   "sleeves": {
-    "stocks_etf": {
-      "status": "research_only",
-      "priority": 1,
-      "max_capital_pct": 15.0,
-      "allowed_order_types": ["market", "limit"],
-      "requirements": ["settled_equity_milestone", "paper_validation", "cost_reconciliation"]
-    },
-    "options_defined_risk": {
-      "status": "research_only",
-      "priority": 2,
-      "max_capital_pct": 5.0,
-      "allowed_order_types": ["limit"],
-      "naked_short_options": false,
-      "requirements": ["paper_validation", "greeks_and_iv_model", "max_loss_known", "cost_reconciliation"]
-    },
-    "futures_micro": {
-      "status": "research_only",
-      "priority": 3,
-      "max_capital_pct": 5.0,
-      "allowed_order_types": ["limit"],
-      "contract_size": "micro_only",
-      "requirements": ["paper_validation", "margin_model", "liquidation_model", "cost_reconciliation"]
-    },
-    "forex": {
-      "status": "research_only",
-      "priority": 4,
-      "max_capital_pct": 5.0,
-      "allowed_order_types": ["limit"],
-      "leverage_allowed": false,
-      "requirements": ["paper_validation", "spread_model", "rollover_model", "cost_reconciliation"]
-    }
+    "stocks_etf": {"status": "research_only", "priority": 1, "max_capital_pct": 15.0, "allowed_order_types": ["market", "limit"], "requirements": ["settled_equity_milestone", "paper_validation", "cost_reconciliation"]},
+    "options_defined_risk": {"status": "research_only", "priority": 2, "max_capital_pct": 5.0, "allowed_order_types": ["limit"], "naked_short_options": false, "requirements": ["paper_validation", "greeks_and_iv_model", "max_loss_known", "cost_reconciliation"]},
+    "futures_micro": {"status": "research_only", "priority": 3, "max_capital_pct": 5.0, "allowed_order_types": ["limit"], "contract_size": "micro_only", "requirements": ["paper_validation", "margin_model", "liquidation_model", "cost_reconciliation"]},
+    "forex": {"status": "research_only", "priority": 4, "max_capital_pct": 5.0, "allowed_order_types": ["limit"], "leverage_allowed": false, "requirements": ["paper_validation", "spread_model", "rollover_model", "cost_reconciliation"]}
   },
   "promotion_gates": {
     "positive_net_return_after_costs": true,
