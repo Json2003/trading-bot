@@ -1,9 +1,12 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "mode": "paper_research_only",
   "live_trading_enabled": false,
   "leverage_enabled": false,
   "growth_milestones_usd": [25000, 50000, 100000, 250000, 500000, 1000000],
+  "target_monthly_growth_usd": 1000,
+  "target_months": 24,
+  "growth_target_policy": "contributions_and_verified_net_pnl_only",
   "activation_buffer_usd": 5000,
   "milestone_uses_settled_equity": true,
   "max_portfolio_drawdown_pct": 2.0,
