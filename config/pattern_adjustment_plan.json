@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "research_only": true,
+  "adjustment_order": [
+    "execution_cost_filter",
+    "holding_horizon",
+    "entry_confirmation",
+    "regime_filter",
+    "exit_logic",
+    "asset_selection",
+    "position_sizing"
+  ],
+  "pattern_classes": [
+    "trend_structure",
+    "breakout",
+    "vol_expansion",
+    "vol_contraction_break",
+    "relative_strength",
+    "momentum_decay",
+    "mean_reversion",
+    "exhaustion"
+  ],
+  "adjustment_rules": {
+    "execution_cost_filter": "Require expected gross movement >= 4x stress round-trip cost before entry.",
+    "holding_horizon": "Evaluate 6, 24, 48, and 96 completed-hour labels without overlapping samples.",
+    "entry_confirmation": "Require signal persistence and enter only on the next completed candle.",
+    "regime_filter": "Segment trend, range, expansion, contraction, and crisis regimes.",
+    "exit_logic": "Compare time stop, signal decay, ATR stop, trailing stop, and profit-lock variants.",
+    "asset_selection": "Select the strongest liquid leader only when relative strength is significant.",
+    "position_sizing": "Volatility-scale within the existing hard portfolio risk caps."
+  },
+  "validation": {
+    "walk_forward_blocks": 6,
+    "minimum_observations_per_block": 20,
+    "positive_blocks_required_for_promising": 4,
+    "stress_cost_multiple_for_robust_candidate": 4,
+    "multiple_testing_correction": "pre_registered_universe_and_holdout_confirmation",
+    "forward_holdout_is_frozen": true,
+    "leverage_enabled": false,
+    "orders_placed": false
+  }
+}
