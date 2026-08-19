@@ -1,0 +1,46 @@
+{
+  "schema_version": 2,
+  "research_only": true,
+  "execution_realism": "gross_movement_diagnostic",
+  "adjustment_order": [
+    "execution_cost_filter",
+    "holding_horizon",
+    "entry_confirmation",
+    "regime_filter",
+    "exit_logic",
+    "asset_selection",
+    "position_sizing"
+  ],
+  "pattern_classes": [
+    "trend_structure",
+    "breakout",
+    "vol_expansion",
+    "vol_contraction_break",
+    "relative_strength",
+    "momentum_decay",
+    "mean_reversion",
+    "exhaustion"
+  ],
+  "adjustment_rules": {
+    "execution_cost_filter": "Use the shared execution model stress round-trip reference; this screen is gross movement only.",
+    "holding_horizon": "Evaluate registered completed-hour labels without overlapping samples.",
+    "entry_confirmation": "Require a chronological discovery pass and untouched holdout pass before a candidate is robust.",
+    "regime_filter": "Segment trend, range, expansion, contraction, and crisis regimes.",
+    "exit_logic": "Compare time stop, signal decay, ATR stop, trailing stop, and profit-lock variants.",
+    "asset_selection": "Select the strongest liquid leader only when relative strength is significant.",
+    "position_sizing": "Volatility-scale within the existing hard portfolio risk caps."
+  },
+  "validation": {
+    "walk_forward_blocks": 6,
+    "minimum_observations_per_block": 20,
+    "minimum_holdout_hours": 11520,
+    "positive_blocks_required_for_promising": 6,
+    "stress_cost_multiple_for_robust_candidate": 4,
+    "multiple_testing_correction": "chronological_holdout_confirmation_for_every_registered_pattern_horizon",
+    "forward_holdout_is_frozen": true,
+    "robust_requires_discovery_and_holdout": true,
+    "fill_based_net_validation_required": true,
+    "leverage_enabled": false,
+    "orders_placed": false
+  }
+}
