@@ -1,0 +1,41 @@
+name: Leader Volatility Expansion Hypothesis
+
+on:
+  push:
+    branches:
+      - research/leader-vol-expansion-hypothesis
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: leader-vol-expansion-hypothesis
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Download completed Binance Vision candles
+        run: |
+          set -euo pipefail
+          UNTIL="$(date -u +%Y-%m)"
+          python scripts/fetch_binance_vision_klines.py             --symbols BTCUSDT ETHUSDT             --since 2023-01             --until "$UNTIL"
+      - name: Run hypothesis test
+        run: |
+          set -euo pipefail
+          python scripts/run_leader_vol_expansion_hypothesis.py             --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv             --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv             --output artifacts/leader-vol-expansion/hypothesis.json
+      - name: Upload hypothesis artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: leader-vol-expansion-hypothesis-${{ github.run_number }}
+          path: artifacts/leader-vol-expansion
+          if-no-files-found: error
+          retention-days: 90
