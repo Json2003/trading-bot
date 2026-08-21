@@ -1,3 +1,4 @@
+# Paper-only hypothesis trigger; no orders, leverage, or risk-setting changes.
 name: Leader Volatility Expansion Hypothesis
 
 on:
