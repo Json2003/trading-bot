@@ -97,23 +97,64 @@ def features(bars: list) -> dict[str, list[float]]:
     }
 
 
-def is_signal(i: int, data: dict[str, list[float]]) -> bool:
+def empty_diagnostics() -> dict[str, int]:
+    return {
+        "observations": 0,
+        "finite_features": 0,
+        "nonfinite_features": 0,
+        "zero_or_invalid_volatility": 0,
+        "shock_pass": 0,
+        "volume_pass": 0,
+        "range_percentile_pass": 0,
+        "trend_pass": 0,
+        "signals": 0,
+    }
+
+
+def is_signal(
+    i: int,
+    data: dict[str, list[float]],
+    diagnostics: dict[str, int],
+) -> bool:
     if i < max(EMA_PERIOD, RETURN_LOOKBACK, VOLUME_LOOKBACK):
         return False
+    diagnostics["observations"] += 1
     prior = [x for x in data["returns"][max(0, i - RETURN_LOOKBACK):i] if finite(x)]
     if len(prior) < 120:
+        diagnostics["nonfinite_features"] += 1
         return False
-    z = (data["returns"][i] - mean(prior)) / math.sqrt(
-        mean([(x - mean(prior)) ** 2 for x in prior])
-    )
+    prior_mean = mean(prior)
+    variance = mean([(x - prior_mean) ** 2 for x in prior])
+    if not finite(variance) or variance <= 0:
+        diagnostics["zero_or_invalid_volatility"] += 1
+        return False
+    z = (data["returns"][i] - prior_mean) / math.sqrt(variance)
     prior_volume = data["volume"][i - VOLUME_LOOKBACK:i]
-    return (
-        finite(data["returns"][i], data["ema"][i], data["candle_close_quantile"][i])
-        and z <= SHOCK_Z
-        and data["volume"][i] >= VOLUME_MULTIPLE * median(prior_volume)
-        and data["candle_close_quantile"][i] <= CANDLE_CLOSE_QUANTILE
-        and data["close"][i] > data["ema"][i]
+    features_are_finite = finite(
+        data["returns"][i],
+        data["ema"][i],
+        data["candle_close_quantile"][i],
+        data["volume"][i],
+        *prior_volume,
     )
+    if not features_are_finite:
+        diagnostics["nonfinite_features"] += 1
+        return False
+    diagnostics["finite_features"] += 1
+    if z > SHOCK_Z:
+        return False
+    diagnostics["shock_pass"] += 1
+    if data["volume"][i] < VOLUME_MULTIPLE * median(prior_volume):
+        return False
+    diagnostics["volume_pass"] += 1
+    if data["candle_close_quantile"][i] > CANDLE_CLOSE_QUANTILE:
+        return False
+    diagnostics["range_percentile_pass"] += 1
+    if data["close"][i] <= data["ema"][i]:
+        return False
+    diagnostics["trend_pass"] += 1
+    diagnostics["signals"] += 1
+    return True
 
 
 def trade(pair: list, data: dict[str, list[float]], symbol: str, i: int) -> dict | None:
@@ -150,19 +191,26 @@ def trade(pair: list, data: dict[str, list[float]], symbol: str, i: int) -> dict
 def evaluate_segment(
     pair: list, features_by_symbol: dict[str, dict[str, list[float]]],
     start: int, end: int,
-) -> list[dict]:
+) -> tuple[list[dict], dict[str, dict[str, int]]]:
     rows = []
+    diagnostics = {
+        symbol: empty_diagnostics() for symbol in ("BTC", "ETH")
+    }
     last_signal = {"BTC": -10**9, "ETH": -10**9}
     for i in range(max(start, RETURN_LOOKBACK), end - HORIZON_HOURS):
         for symbol in ("BTC", "ETH"):
             if i - last_signal[symbol] < COOLDOWN_HOURS:
                 continue
-            if is_signal(i, features_by_symbol[symbol]):
+            if is_signal(
+                i,
+                features_by_symbol[symbol],
+                diagnostics[symbol],
+            ):
                 row = trade(pair, features_by_symbol[symbol], symbol, i)
                 if row is not None:
                     rows.append(row)
                     last_signal[symbol] = i
-    return rows
+    return rows, diagnostics
 
 
 def summarize(rows: list[dict], start: int, end: int) -> dict:
@@ -219,8 +267,12 @@ def main() -> int:
     discovery_end = next(
         i for i, item in enumerate(pair) if item.btc.timestamp >= DISCOVERY_END
     )
-    discovery_rows = evaluate_segment(pair, features_by_symbol, 0, discovery_end)
-    holdout_rows = evaluate_segment(pair, features_by_symbol, discovery_end, len(pair))
+    discovery_rows, discovery_diagnostics = evaluate_segment(
+        pair, features_by_symbol, 0, discovery_end
+    )
+    holdout_rows, holdout_diagnostics = evaluate_segment(
+        pair, features_by_symbol, discovery_end, len(pair)
+    )
     report = {
         "schema_version": 1,
         "research_only": True,
@@ -251,6 +303,11 @@ def main() -> int:
         },
         "discovery": summarize(discovery_rows, 0, discovery_end),
         "holdout": summarize(holdout_rows, discovery_end, len(pair)),
+        "diagnostics": {
+            "discovery": discovery_diagnostics,
+            "holdout": holdout_diagnostics,
+            "note": "Counters are observational only; frozen signal predicates are unchanged.",
+        },
     }
     discovery = report["discovery"]
     holdout = report["holdout"]
