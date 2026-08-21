@@ -5,6 +5,15 @@ on:
   push:
     branches:
       - research/leader-vol-expansion-hypothesis
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/leader-vol-expansion-hypothesis.yml"
+      - "scripts/run_leader_vol_expansion_hypothesis.py"
+      - "scripts/fetch_binance_vision_klines.py"
+      - "scripts/run_momentum_volatility_research.py"
+      - "scripts/run_momentum_volatility_v3.py"
   workflow_dispatch:
 
 permissions:
@@ -27,11 +36,11 @@ jobs:
         run: |
           set -euo pipefail
           UNTIL="$(date -u +%Y-%m)"
-          python scripts/fetch_binance_vision_klines.py             --symbols BTCUSDT ETHUSDT             --since 2023-01             --until "$UNTIL"
+          python scripts/fetch_binance_vision_klines.py --symbols BTCUSDT ETHUSDT --since 2023-01 --until "$UNTIL"
       - name: Run hypothesis test
         run: |
           set -euo pipefail
-          python scripts/run_leader_vol_expansion_hypothesis.py             --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv             --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv             --output artifacts/leader-vol-expansion/hypothesis.json
+          python scripts/run_leader_vol_expansion_hypothesis.py --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv --output artifacts/leader-vol-expansion/hypothesis.json
       - name: Upload hypothesis artifact
         if: always()
         uses: actions/upload-artifact@v4
