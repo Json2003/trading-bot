@@ -256,6 +256,7 @@ def evaluate_split(
                 symbol=asset,
             )
         )
+    rows.sort(key=lambda row: (_utc(row["signal_timestamp"]), row["symbol"]))
     start_epoch = int(start.timestamp() // 3600)
     end_epoch = int(end.timestamp() // 3600)
     width = (end_epoch - start_epoch) / BLOCKS
