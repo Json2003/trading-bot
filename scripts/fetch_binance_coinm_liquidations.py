@@ -3,7 +3,7 @@
 
 The source is Binance Vision's daily COIN-M liquidationSnapshot archive. The
 archive coverage is intentionally bounded by the frozen experiment window;
-missing daily archives are errors, never zero-liquidation observations.
+missing daily archives are recorded and excluded, never treated as zero flow.
 """
 
 from __future__ import annotations
@@ -107,6 +107,7 @@ def fetch_symbol(
     output_dir.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, object]] = []
     archives: list[dict[str, object]] = []
+    missing_dates: list[str] = []
     for day in day_iter(since, until):
         date = day.strftime("%Y-%m-%d")
         stem = f"{symbol}-liquidationSnapshot-{date}"
@@ -119,8 +120,11 @@ def fetch_symbol(
             zip_bytes = _download(url)
             checksum_text = _download(checksum_url).decode("utf-8")
         except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                missing_dates.append(date)
+                continue
             raise RuntimeError(
-                f"required liquidation archive unavailable for {symbol} {date}: HTTP {exc.code}"
+                f"liquidation archive request failed for {symbol} {date}: HTTP {exc.code}"
             ) from exc
         digest = _checksum(zip_bytes, checksum_text)
         day_rows = _read_archive(zip_bytes, CONTRACT_SIZE_USD[symbol])
@@ -140,6 +144,8 @@ def fetch_symbol(
         "since": since,
         "until_exclusive": until,
         "archive_count": len(archives),
+        "missing_dates": missing_dates,
+        "missing_day_count": len(missing_dates),
         "row_count": len(rows),
         "archives": archives,
     }
