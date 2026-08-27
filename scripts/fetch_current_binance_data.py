@@ -10,6 +10,7 @@ import argparse
 import csv
 import io
 import json
+import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
@@ -17,7 +18,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 VISION = "https://data.binance.vision"
-FAPI = "https://fapi.binance.com"
+FAPI = "https://www.binance.com"
 FIELDS = ["timestamp", "open", "high", "low", "close", "volume"]
 
 
