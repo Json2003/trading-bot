@@ -7,7 +7,12 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from scripts import run_funding_positioning_reversal as impl
+try:
+    from scripts import run_funding_positioning_reversal as impl
+except ModuleNotFoundError:
+    # GitHub Actions invokes this file as a script, so the repository root is
+    # not necessarily importable as the "scripts" package.
+    import run_funding_positioning_reversal as impl
 
 
 def main() -> None:
