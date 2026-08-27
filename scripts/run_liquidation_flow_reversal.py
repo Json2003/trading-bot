@@ -12,7 +12,7 @@ import csv
 import json
 import math
 import statistics
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -82,7 +82,14 @@ def _signal(
     flow: dict[datetime, dict[str, float]],
     timestamps: list[datetime],
     index: int,
+    missing_dates: set[date] | None = None,
 ) -> int:
+    missing_dates = missing_dates or set()
+    prior_timestamps = timestamps[max(0, index - BASELINE_HOURS):index]
+    if timestamps[index].date() in missing_dates or any(
+        timestamp.date() in missing_dates for timestamp in prior_timestamps
+    ):
+        return 0
     current = flow.get(
         timestamps[index],
         {"buy_usd": 0.0, "sell_usd": 0.0, "total_usd": 0.0},
@@ -153,6 +160,7 @@ def evaluate_asset(
     start: int,
     end: int,
     symbol: str,
+    missing_dates: set[date],
 ) -> list[dict[str, Any]]:
     timestamps = [bar.timestamp for bar in bars]
     last_signal = -10**9
@@ -163,7 +171,7 @@ def evaluate_asset(
         end - 1 - STRESS_EXECUTION.latency_bars - HOLD_HOURS,
     )
     for index in range(start, max(start, signal_stop)):
-        side = _signal(flow, timestamps, index)
+        side = _signal(flow, timestamps, index, missing_dates)
         if not side or index - last_signal < COOLDOWN_HOURS:
             continue
         result = trade(bars, index, side, symbol)
@@ -238,6 +246,7 @@ def _load_bars(path: Path) -> list[Bar]:
 def evaluate_split(
     bars_by_asset: dict[str, list[Bar]],
     flows_by_asset: dict[str, dict[datetime, dict[str, float]]],
+    missing_dates_by_asset: dict[str, set[date]],
     start: datetime,
     end: datetime,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
@@ -254,6 +263,7 @@ def evaluate_split(
                 start=start_index,
                 end=end_index,
                 symbol=asset,
+                missing_dates=missing_dates_by_asset[asset],
             )
         )
     rows.sort(key=lambda row: (_utc(row["signal_timestamp"]), row["symbol"]))
@@ -266,13 +276,20 @@ def evaluate_split(
     return rows, _summary_by_block(rows)
 
 
-def _load_liquidation_files(liquidations_dir: Path) -> dict[str, dict[datetime, dict[str, float]]]:
-    return {
-        asset: aggregate_hourly(
-            load_liquidations(liquidations_dir / LIQUIDATION_FILES[asset])
-        )
-        for asset in ASSETS
-    }
+def _load_liquidation_files(
+    liquidations_dir: Path,
+) -> tuple[dict[str, dict[datetime, dict[str, float]]], dict[str, set[date]]]:
+    flows: dict[str, dict[datetime, dict[str, float]]] = {}
+    missing_dates: dict[str, set[date]] = {}
+    for asset in ASSETS:
+        path = liquidations_dir / LIQUIDATION_FILES[asset]
+        flows[asset] = aggregate_hourly(load_liquidations(path))
+        manifest_path = path.with_suffix(".manifest.json")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        missing_dates[asset] = {
+            date.fromisoformat(value) for value in manifest.get("missing_dates", [])
+        }
+    return flows, missing_dates
 
 
 def main() -> int:
@@ -287,16 +304,18 @@ def main() -> int:
         "BTC": _load_bars(args.btc_path),
         "ETH": _load_bars(args.eth_path),
     }
-    flows_by_asset = _load_liquidation_files(args.liquidations_dir)
+    flows_by_asset, missing_dates_by_asset = _load_liquidation_files(args.liquidations_dir)
     discovery_rows, discovery = evaluate_split(
         bars_by_asset,
         flows_by_asset,
+        missing_dates_by_asset,
         START,
         DISCOVERY_END,
     )
     holdout_rows, holdout = evaluate_split(
         bars_by_asset,
         flows_by_asset,
+        missing_dates_by_asset,
         DISCOVERY_END,
         END,
     )
@@ -343,6 +362,10 @@ def main() -> int:
             "market": "COIN-M perpetual liquidationSnapshot archives",
             "coverage_constraint": "2023-06-25 through 2024-10-14 inclusive",
             "contract_sizes_usd": {"BTCUSD_PERP": 100.0, "ETHUSD_PERP": 10.0},
+            "missing_archive_days_excluded": {
+                asset: sorted(value.isoformat() for value in dates)
+                for asset, dates in missing_dates_by_asset.items()
+            },
         },
         "discovery": discovery,
         "holdout": holdout,
