@@ -67,8 +67,9 @@ def load_liquidations(path: Path) -> list[dict[str, Any]]:
 def aggregate_hourly(rows: list[dict[str, Any]]) -> dict[datetime, dict[str, float]]:
     result: dict[datetime, dict[str, float]] = {}
     for row in rows:
+        timestamp = row["timestamp"].replace(minute=0, second=0, microsecond=0)
         bucket = result.setdefault(
-            row["timestamp"],
+            timestamp,
             {"buy_usd": 0.0, "sell_usd": 0.0},
         )
         bucket["buy_usd" if row["side"] == "BUY" else "sell_usd"] += row["liquidation_usd"]
