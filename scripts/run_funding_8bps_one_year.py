@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 try:
@@ -40,7 +40,7 @@ def main() -> int:
     ]
     if not pair:
         raise ValueError("one-year window contains no completed aligned candles")
-    if pair[-1].btc.timestamp < ONE_YEAR_END - impl.timedelta(hours=1):
+    if pair[-1].btc.timestamp < ONE_YEAR_END - timedelta(hours=1):
         raise ValueError("one-year window is missing its final completed candle")
 
     funding = {
