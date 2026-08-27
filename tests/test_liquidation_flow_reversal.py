@@ -42,6 +42,7 @@ class LiquidationFlowReversalTests(unittest.TestCase):
         flow[signal_timestamp] = {"buy_usd": 0.0, "sell_usd": 40.0, "total_usd": 40.0}
         self.assertEqual(_signal(flow, timestamps, BASELINE_HOURS), 1)
         self.assertEqual(_signal(flow, timestamps, BASELINE_HOURS + 1), 0)
+        self.assertEqual(_signal(flow, timestamps, BASELINE_HOURS, {signal_timestamp.date()}), 0)
         self.assertEqual(EXTREME_MULTIPLIER, 3.0)
         self.assertEqual(DOMINANCE_THRESHOLD, 0.60)
 
