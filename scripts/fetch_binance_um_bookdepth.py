@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import io
 import json
@@ -92,6 +93,25 @@ def _read_archive(zip_bytes: bytes) -> list[dict[str, object]]:
     ]
 
 
+def _fetch_day(symbol: str, day: datetime) -> tuple[str, dict[str, object] | None, list[dict[str, object]]]:
+    date = day.strftime("%Y-%m-%d")
+    stem = f"{symbol}-bookDepth-{date}"
+    url = f"{BASE_URL}/data/futures/um/daily/bookDepth/{symbol}/{stem}.zip"
+    checksum_url = f"{url}.CHECKSUM"
+    try:
+        zip_bytes = _download(url)
+        checksum_text = _download(checksum_url).decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return date, None, []
+        raise RuntimeError(
+            f"book-depth archive request failed for {symbol} {date}: HTTP {exc.code}"
+        ) from exc
+    digest = _checksum(zip_bytes, checksum_text)
+    day_rows = _read_archive(zip_bytes)
+    return date, {"url": url, "sha256": digest, "snapshots": len(day_rows)}, day_rows
+
+
 def fetch_symbol(symbol: str, since: str, until: str, raw_dir: Path, out_dir: Path) -> dict[str, object]:
     rows_by_hour: dict[datetime, list[dict[str, object]]] = defaultdict(list)
     archives: list[dict[str, object]] = []
@@ -99,69 +119,20 @@ def fetch_symbol(symbol: str, since: str, until: str, raw_dir: Path, out_dir: Pa
     raw_symbol_dir = raw_dir / symbol
     raw_symbol_dir.mkdir(parents=True, exist_ok=True)
 
-    for day in day_iter(since, until):
-        date = day.strftime("%Y-%m-%d")
-        stem = f"{symbol}-bookDepth-{date}"
-        url = f"{BASE_URL}/data/futures/um/daily/bookDepth/{symbol}/{stem}.zip"
-        checksum_url = f"{url}.CHECKSUM"
-        try:
-            zip_bytes = _download(url)
-            checksum_text = _download(checksum_url).decode("utf-8")
-        except urllib.error.HTTPError as exc:
-            if exc.code == 404:
-                missing_dates.append(date)
-                continue
-            raise RuntimeError(
-                f"book-depth archive request failed for {symbol} {date}: HTTP {exc.code}"
-            ) from exc
-
-        digest = _checksum(zip_bytes, checksum_text)
-        day_rows = _read_archive(zip_bytes)
+    # Bounded parallelism avoids a multi-hour sequential scan while preserving
+    # deterministic day ordering in the normalized output and manifest.
+    days = day_iter(since, until)
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        results = list(executor.map(lambda day: _fetch_day(symbol, day), days))
+    for date, archive_info, day_rows in results:
+        if archive_info is None:
+            missing_dates.append(date)
+            continue
+        archives.append(archive_info)
         for row in day_rows:
             timestamp = row["timestamp"]
             hour = timestamp.replace(minute=0, second=0, microsecond=0)
             rows_by_hour[hour].append(row)
-        archives.append({"url": url, "sha256": digest, "snapshots": len(day_rows)})
-
-    rows: list[dict[str, object]] = []
-    for hour in sorted(rows_by_hour):
-        group = rows_by_hour[hour]
-        rows.append(
-            {
-                "timestamp": hour.isoformat().replace("+00:00", "Z"),
-                "imbalance": sum(float(row["imbalance"]) for row in group) / len(group),
-                "snapshot_count": len(group),
-                "bid_notional": sum(float(row["bid_notional"]) for row in group) / len(group),
-                "ask_notional": sum(float(row["ask_notional"]) for row in group) / len(group),
-            }
-        )
-
-    out_dir.mkdir(parents=True, exist_ok=True)
-    output_path = out_dir / f"{symbol}_bookdepth_1h.csv"
-    with output_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=FIELDNAMES)
-        writer.writeheader()
-        writer.writerows(rows)
-
-    manifest = {
-        "source": BASE_URL,
-        "market": "USD-M futures daily bookDepth archives",
-        "symbol": symbol,
-        "since": since,
-        "until_exclusive": until,
-        "band_percentage": 1,
-        "aggregation": "mean of complete +/-1 percent snapshots within each UTC hour",
-        "archive_count": len(archives),
-        "missing_dates": missing_dates,
-        "missing_day_count": len(missing_dates),
-        "hour_count": len(rows),
-        "snapshot_count": sum(int(row["snapshot_count"]) for row in rows),
-        "archives": archives,
-    }
-    (out_dir / f"{symbol}_bookdepth_1h.manifest.json").write_text(
-        json.dumps(manifest, indent=2), encoding="utf-8"
-    )
-    return {key: value for key, value in manifest.items() if key != "archives"}
 
 
 def main() -> None:
