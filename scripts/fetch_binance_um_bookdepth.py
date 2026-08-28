@@ -134,6 +134,46 @@ def fetch_symbol(symbol: str, since: str, until: str, raw_dir: Path, out_dir: Pa
             hour = timestamp.replace(minute=0, second=0, microsecond=0)
             rows_by_hour[hour].append(row)
 
+    rows: list[dict[str, object]] = []
+    for hour in sorted(rows_by_hour):
+        group = rows_by_hour[hour]
+        rows.append(
+            {
+                "timestamp": hour.isoformat().replace("+00:00", "Z"),
+                "imbalance": sum(float(row["imbalance"]) for row in group) / len(group),
+                "snapshot_count": len(group),
+                "bid_notional": sum(float(row["bid_notional"]) for row in group) / len(group),
+                "ask_notional": sum(float(row["ask_notional"]) for row in group) / len(group),
+            }
+        )
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    output_path = out_dir / f"{symbol}_bookdepth_1h.csv"
+    with output_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(rows)
+
+    manifest = {
+        "source": BASE_URL,
+        "market": "USD-M futures daily bookDepth archives",
+        "symbol": symbol,
+        "since": since,
+        "until_exclusive": until,
+        "band_percentage": 1,
+        "aggregation": "mean of complete +/-1 percent snapshots within each UTC hour",
+        "archive_count": len(archives),
+        "missing_dates": missing_dates,
+        "missing_day_count": len(missing_dates),
+        "hour_count": len(rows),
+        "snapshot_count": sum(int(row["snapshot_count"]) for row in rows),
+        "archives": archives,
+    }
+    (out_dir / f"{symbol}_bookdepth_1h.manifest.json").write_text(
+        json.dumps(manifest, indent=2), encoding="utf-8"
+    )
+    return {key: value for key, value in manifest.items() if key != "archives"}
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
