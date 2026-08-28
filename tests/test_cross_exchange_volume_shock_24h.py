@@ -14,10 +14,10 @@ def test_24_hour_trade_uses_frozen_horizon():
     start = datetime(2024, 1, 1, tzinfo=timezone.utc)
     bars = [
         Bar(start + timedelta(hours=hour), 100.0, 100.0)
-        for hour in range(26)
+        for hour in range(28)
     ]
-    bars[25].close = 110.0
+    bars[26].close = 110.0
     result = _trade(bars, 0, 1, "BTC")
     assert HOLD_HOURS == 24
     assert result is not None
-    assert result["exit_timestamp"].endswith("01:00:00+00:00")
+    assert result["exit_timestamp"].endswith("02:00:00+00:00")
