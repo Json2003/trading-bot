@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from scripts.execution_model import STRESS_EXECUTION
     from scripts.run_cross_exchange_lead_lag import (
         ASSETS,
         BLOCKS,
@@ -30,6 +31,7 @@ try:
         _utc,
     )
 except ModuleNotFoundError:
+    from execution_model import STRESS_EXECUTION
     from run_cross_exchange_lead_lag import (
         ASSETS,
         BLOCKS,
@@ -215,9 +217,7 @@ def main() -> int:
             "direction": "positive Coinbase shock -> long Binance; negative -> short",
             "notional": NOTIONAL,
         },
-        "execution_model": __import__(
-            "scripts.execution_model", fromlist=["STRESS_EXECUTION"]
-        ).STRESS_EXECUTION.as_dict(),
+        "execution_model": STRESS_EXECUTION.as_dict(),
         "window": {
             "start": START.isoformat(),
             "discovery_end_exclusive": DISCOVERY_END.isoformat(),
