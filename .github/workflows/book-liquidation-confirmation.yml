@@ -46,7 +46,7 @@ jobs:
           python scripts/fetch_binance_vision_klines.py \
             --symbols BTCUSDT ETHUSDT \
             --since 2025-08 \
-            --until 2026-08
+            --until 2024-11
       - name: Download completed COIN-M liquidation snapshots
         run: |
           set -euo pipefail
