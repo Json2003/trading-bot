@@ -60,8 +60,8 @@ jobs:
           set -euo pipefail
           python scripts/fetch_binance_um_bookdepth.py \
             --symbols BTCUSDT ETHUSDT \
-            --since 2025-08-01 \
-            --until 2026-08-01
+            --since 2023-06-25 \
+            --until 2024-10-15
       - name: Run frozen candidates
         run: |
           set -euo pipefail
