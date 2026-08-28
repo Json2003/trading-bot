@@ -45,15 +45,15 @@ jobs:
           set -euo pipefail
           python scripts/fetch_binance_vision_klines.py \
             --symbols BTCUSDT ETHUSDT \
-            --since 2025-08 \
+            --since 2023-06 \
             --until 2024-11
       - name: Download completed COIN-M liquidation snapshots
         run: |
           set -euo pipefail
           python scripts/fetch_binance_coinm_liquidations.py \
             --symbols BTCUSD_PERP ETHUSD_PERP \
-            --since 2025-08-01 \
-            --until 2026-08-01 \
+            --since 2023-06-25 \
+            --until 2024-10-15 \
             --output-dir data/historical/binance/liquidations
       - name: Download completed USD-M book depth
         run: |
