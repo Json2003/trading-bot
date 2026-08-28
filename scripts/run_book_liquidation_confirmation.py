@@ -371,7 +371,7 @@ def main() -> int:
             "liquidation_archives": "COIN-M daily liquidationSnapshot",
             "bookdepth_missing_archive_days": book_missing,
             "liquidation_missing_archive_days": {
-                asset: sorted(value) for asset, value in liquidation_missing.items()
+                asset: sorted(item.isoformat() for item in value) for asset, value in liquidation_missing.items()
             },
         },
         "candidates": results,
