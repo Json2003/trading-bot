@@ -1,0 +1,81 @@
+# Frozen order-book plus liquidation confirmation; research-only.
+name: Order-book + Liquidation Confirmation
+
+on:
+  push:
+    branches:
+      - research/book-liquidation-confirmation
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/book-liquidation-confirmation.yml"
+      - "scripts/fetch_binance_um_bookdepth.py"
+      - "scripts/fetch_binance_coinm_liquidations.py"
+      - "scripts/run_book_liquidation_confirmation.py"
+      - "scripts/run_liquidation_flow_reversal.py"
+      - "scripts/execution_model.py"
+      - "scripts/run_momentum_volatility_research.py"
+      - "scripts/fetch_binance_vision_klines.py"
+      - "tests/test_book_liquidation_confirmation.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: book-liquidation-confirmation
+  cancel-in-progress: true
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install research dependencies
+        run: python -m pip install --upgrade pip pytest
+      - name: Run regression tests
+        run: python -m pytest -q tests/test_book_liquidation_confirmation.py tests/test_liquidation_flow_reversal.py
+      - name: Download completed spot candles
+        run: |
+          set -euo pipefail
+          python scripts/fetch_binance_vision_klines.py \
+            --symbols BTCUSDT ETHUSDT \
+            --since 2023-06 \
+            --until 2024-11
+      - name: Download completed COIN-M liquidation snapshots
+        run: |
+          set -euo pipefail
+          python scripts/fetch_binance_coinm_liquidations.py \
+            --symbols BTCUSD_PERP ETHUSD_PERP \
+            --since 2023-06-25 \
+            --until 2024-10-15 \
+            --output-dir data/historical/binance/liquidations
+      - name: Download completed USD-M book depth
+        run: |
+          set -euo pipefail
+          python scripts/fetch_binance_um_bookdepth.py \
+            --symbols BTCUSDT ETHUSDT \
+            --since 2023-06-25 \
+            --until 2024-10-15
+      - name: Run frozen candidates
+        run: |
+          set -euo pipefail
+          python scripts/run_book_liquidation_confirmation.py \
+            --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv \
+            --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv \
+            --liquidations-dir data/historical/binance/liquidations \
+            --bookdepth-dir data/historical/binance/bookdepth \
+            --output artifacts/book-liquidation-confirmation/report.json
+      - name: Upload result artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: book-liquidation-confirmation
+          path: artifacts/book-liquidation-confirmation
+          if-no-files-found: error
+          retention-days: 90
