@@ -55,9 +55,9 @@ except ModuleNotFoundError:
     )
     from run_momentum_volatility_research import Bar, load_bars
 
-START = datetime(2025, 8, 1, tzinfo=timezone.utc)
-DISCOVERY_END = datetime(2026, 2, 1, tzinfo=timezone.utc)
-END = datetime(2026, 8, 1, tzinfo=timezone.utc)
+START = datetime(2023, 6, 25, tzinfo=timezone.utc)
+DISCOVERY_END = datetime(2024, 2, 25, tzinfo=timezone.utc)
+END = datetime(2024, 10, 15, tzinfo=timezone.utc)
 BOOK_IMBALANCE_THRESHOLD = 0.20
 BOOK_PERSISTENCE_HOURS = 3
 BLOCKS = 6
@@ -364,6 +364,8 @@ def main() -> int:
             "holdout_selection_used": False,
             "overlapping_trade_windows_excluded_by_cooldown": True,
             "newest_unseen_data_used": False,
+            "window_is_independent_replication": False,
+            "window_note": "Historical overlap with the prior liquidation experiment; the combined rule is new, but this is not an independent time-period replication of liquidation flow.",
         },
         "source": {
             "provider": "Binance Vision",
