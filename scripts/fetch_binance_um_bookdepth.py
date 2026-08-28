@@ -72,7 +72,7 @@ def _read_archive(zip_bytes: bytes) -> list[dict[str, object]]:
                     f"book-depth CSV missing columns: {sorted(required - set(reader.fieldnames or []))}"
                 )
             for row in reader:
-                percentage = int(row["percentage"])
+                percentage = int(float(row["percentage"]))
                 if percentage not in {-1, 1}:
                     continue
                 notional = float(row["notional"])
