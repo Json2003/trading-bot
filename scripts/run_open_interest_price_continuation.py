@@ -202,7 +202,7 @@ def _evaluate(
         last_signal_index = index
     rows.sort(key=lambda row: row["signal_timestamp"])
     start_epoch = int(start.timestamp() // 3600)
-    width = (end.timestamp() - start.timestamp()).total_seconds() / 3600 / BLOCKS
+    width = (end - start).total_seconds() / 3600 / BLOCKS
     for row in rows:
         signal_epoch = _utc(row["signal_timestamp"]).timestamp() // 3600
         row["block_index"] = min(BLOCKS - 1, int((signal_epoch - start_epoch) / width))
