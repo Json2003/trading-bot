@@ -1,0 +1,61 @@
+# Frozen open-interest contraction plus taker-flow experiment; research-only.
+name: Open Interest Taker Flow Continuation
+
+on:
+  push:
+    branches:
+      - research/open-interest-taker-flow
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/open-interest-taker-flow.yml"
+      - "scripts/fetch_binance_open_interest.py"
+      - "scripts/run_open_interest_price_continuation.py"
+      - "scripts/run_open_interest_taker_flow.py"
+      - "scripts/run_momentum_volatility_research.py"
+      - "scripts/execution_model.py"
+      - "scripts/fetch_binance_vision_klines.py"
+      - "tests/test_open_interest_taker_flow.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: open-interest-taker-flow
+  cancel-in-progress: true
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install research dependencies
+        run: python -m pip install --upgrade pip pytest
+      - name: Run regression tests
+        run: python -m pytest -q tests/test_open_interest_taker_flow.py
+      - name: Download completed Binance execution candles
+        run: |
+          set -euo pipefail
+          python scripts/fetch_binance_vision_klines.py             --symbols BTCUSDT ETHUSDT             --since 2023-09             --until 2024-11
+      - name: Download completed Binance USD-M metrics
+        run: |
+          set -euo pipefail
+          python scripts/fetch_binance_open_interest.py             --symbols BTCUSDT ETHUSDT             --since 2023-09-14             --until 2024-10-15             --output-dir data/historical/binance/open_interest
+      - name: Run frozen derivatives-flow candidate
+        run: |
+          set -euo pipefail
+          python scripts/run_open_interest_taker_flow.py             --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv             --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv             --metrics-dir data/historical/binance/open_interest             --output artifacts/open-interest-taker-flow/report.json
+      - name: Upload result artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-interest-taker-flow
+          path: artifacts/open-interest-taker-flow
+          if-no-files-found: error
+          retention-days: 90

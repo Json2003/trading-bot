@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download completed Binance USD-M open-interest metrics for research."""
+"""Download completed Binance USD-M open-interest and taker-flow metrics."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 BASE_URL = "https://data.binance.vision"
-FIELDS = ("timestamp", "sum_open_interest", "sum_open_interest_value")
+FIELDS = ("timestamp", "sum_open_interest", "sum_open_interest_value", "sum_taker_long_short_vol_ratio")
 
 
 def _days(since: str, until: str) -> list[datetime]:
@@ -28,7 +28,7 @@ def _days(since: str, until: str) -> list[datetime]:
 
 
 def _read(url: str) -> bytes:
-    request = urllib.request.Request(url, headers={"User-Agent": "trading-bot-open-interest-research/1.0"})
+    request = urllib.request.Request(url, headers={"User-Agent": "trading-bot-derivatives-flow-research/1.0"})
     with urllib.request.urlopen(request, timeout=90) as response:
         return response.read()
 
@@ -40,9 +40,12 @@ def _parse_day(payload: bytes, symbol: str) -> tuple[list[dict[str, str]], int]:
             raise ValueError(f"expected one metrics CSV for {symbol}, found {names}")
         with archive.open(names[0], "r") as raw:
             reader = csv.DictReader(io.TextIOWrapper(raw, encoding="utf-8", newline=""))
-            required = {"create_time", "symbol", "sum_open_interest", "sum_open_interest_value"}
+            required = {
+                "create_time", "symbol", "sum_open_interest",
+                "sum_open_interest_value", "sum_taker_long_short_vol_ratio",
+            }
             if not required.issubset(reader.fieldnames or set()):
-                raise ValueError(f"metrics CSV missing columns for {symbol}")
+                raise ValueError(f"metrics CSV missing required fields for {symbol}")
             latest_by_hour: dict[str, dict[str, str]] = {}
             invalid_rows = 0
             for row in reader:
@@ -53,11 +56,10 @@ def _parse_day(payload: bytes, symbol: str) -> tuple[list[dict[str, str]], int]:
                 ).replace(tzinfo=timezone.utc)
                 oi = float(row["sum_open_interest"])
                 oi_value = float(row["sum_open_interest_value"])
+                taker_ratio = float(row["sum_taker_long_short_vol_ratio"])
                 if (
-                    not math.isfinite(oi)
-                    or not math.isfinite(oi_value)
-                    or oi <= 0
-                    or oi_value <= 0
+                    not all(math.isfinite(value) for value in (oi, oi_value, taker_ratio))
+                    or oi <= 0 or oi_value <= 0 or taker_ratio <= 0
                 ):
                     invalid_rows += 1
                     continue
@@ -66,6 +68,7 @@ def _parse_day(payload: bytes, symbol: str) -> tuple[list[dict[str, str]], int]:
                     "timestamp": hour.isoformat().replace("+00:00", "Z"),
                     "sum_open_interest": str(oi),
                     "sum_open_interest_value": str(oi_value),
+                    "sum_taker_long_short_vol_ratio": str(taker_ratio),
                 }
             return [latest_by_hour[key] for key in sorted(latest_by_hour)], invalid_rows
 
@@ -99,7 +102,10 @@ def fetch_symbol(symbol: str, since: str, until: str, output_dir: Path) -> dict[
             if previous is not None and previous != row:
                 raise ValueError(f"conflicting duplicate at {symbol} {row['timestamp']}")
             by_timestamp[row["timestamp"]] = row
-        archives.append({"date": date, "url": url, "sha256": actual, "rows": len(day_rows), "invalid_rows_excluded": invalid_rows})
+        archives.append({
+            "date": date, "url": url, "sha256": actual,
+            "rows": len(day_rows), "invalid_rows_excluded": invalid_rows,
+        })
     rows = [by_timestamp[key] for key in sorted(by_timestamp)]
     path = output_dir / f"{symbol}_1h.csv"
     with path.open("w", newline="", encoding="utf-8") as handle:
@@ -111,8 +117,7 @@ def fetch_symbol(symbol: str, since: str, until: str, output_dir: Path) -> dict[
         "market": "USD-M futures metrics",
         "symbol": symbol,
         "period": "5m archives downsampled to latest completed observation per hour",
-        "since": since,
-        "until_exclusive": until,
+        "since": since, "until_exclusive": until,
         "archive_count": len(archives),
         "missing_dates": missing_dates,
         "missing_day_count": len(missing_dates),
@@ -135,8 +140,10 @@ def main() -> int:
     parser.add_argument("--until", required=True)
     parser.add_argument("--output-dir", type=Path, default=Path("data/historical/binance/open_interest"))
     args = parser.parse_args()
-    result = {symbol: fetch_symbol(symbol, args.since, args.until, args.output_dir) for symbol in args.symbols}
-    print(json.dumps(result, indent=2))
+    print(json.dumps({
+        symbol: fetch_symbol(symbol, args.since, args.until, args.output_dir)
+        for symbol in args.symbols
+    }, indent=2))
     return 0
 
 
