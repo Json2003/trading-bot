@@ -8,6 +8,7 @@ import csv
 import hashlib
 import io
 import json
+import math
 import urllib.error
 import urllib.request
 import zipfile
@@ -32,7 +33,7 @@ def _read(url: str) -> bytes:
         return response.read()
 
 
-def _parse_day(payload: bytes, symbol: str) -> list[dict[str, str]]:
+def _parse_day(payload: bytes, symbol: str) -> tuple[list[dict[str, str]], int]:
     with zipfile.ZipFile(io.BytesIO(payload)) as archive:
         names = [name for name in archive.namelist() if name.lower().endswith(".csv")]
         if len(names) != 1:
@@ -43,23 +44,30 @@ def _parse_day(payload: bytes, symbol: str) -> list[dict[str, str]]:
             if not required.issubset(reader.fieldnames or set()):
                 raise ValueError(f"metrics CSV missing columns for {symbol}")
             latest_by_hour: dict[str, dict[str, str]] = {}
+            invalid_rows = 0
             for row in reader:
                 if row["symbol"].upper() != symbol:
                     continue
                 timestamp = datetime.strptime(
                     row["create_time"], "%Y-%m-%d %H:%M:%S"
                 ).replace(tzinfo=timezone.utc)
-                hour = timestamp.replace(minute=0, second=0, microsecond=0)
                 oi = float(row["sum_open_interest"])
                 oi_value = float(row["sum_open_interest_value"])
-                if oi <= 0 or oi_value <= 0:
-                    raise ValueError(f"invalid open-interest values for {symbol}")
+                if (
+                    not math.isfinite(oi)
+                    or not math.isfinite(oi_value)
+                    or oi <= 0
+                    or oi_value <= 0
+                ):
+                    invalid_rows += 1
+                    continue
+                hour = timestamp.replace(minute=0, second=0, microsecond=0)
                 latest_by_hour[hour.isoformat()] = {
                     "timestamp": hour.isoformat().replace("+00:00", "Z"),
                     "sum_open_interest": str(oi),
                     "sum_open_interest_value": str(oi_value),
                 }
-            return [latest_by_hour[key] for key in sorted(latest_by_hour)]
+            return [latest_by_hour[key] for key in sorted(latest_by_hour)], invalid_rows
 
 
 def fetch_symbol(symbol: str, since: str, until: str, output_dir: Path) -> dict[str, object]:
@@ -67,6 +75,7 @@ def fetch_symbol(symbol: str, since: str, until: str, output_dir: Path) -> dict[
     by_timestamp: dict[str, dict[str, str]] = {}
     archives = []
     missing_dates = []
+    invalid_row_count = 0
     for day in _days(since, until):
         date = day.strftime("%Y-%m-%d")
         filename = f"{symbol}-metrics-{date}.zip"
@@ -83,13 +92,14 @@ def fetch_symbol(symbol: str, since: str, until: str, output_dir: Path) -> dict[
         actual = hashlib.sha256(payload).hexdigest()
         if actual != expected:
             raise ValueError(f"checksum mismatch for {filename}")
-        day_rows = _parse_day(payload, symbol)
+        day_rows, invalid_rows = _parse_day(payload, symbol)
+        invalid_row_count += invalid_rows
         for row in day_rows:
             previous = by_timestamp.get(row["timestamp"])
             if previous is not None and previous != row:
                 raise ValueError(f"conflicting duplicate at {symbol} {row['timestamp']}")
             by_timestamp[row["timestamp"]] = row
-        archives.append({"date": date, "url": url, "sha256": actual, "rows": len(day_rows)})
+        archives.append({"date": date, "url": url, "sha256": actual, "rows": len(day_rows), "invalid_rows_excluded": invalid_rows})
     rows = [by_timestamp[key] for key in sorted(by_timestamp)]
     path = output_dir / f"{symbol}_1h.csv"
     with path.open("w", newline="", encoding="utf-8") as handle:
@@ -106,6 +116,7 @@ def fetch_symbol(symbol: str, since: str, until: str, output_dir: Path) -> dict[
         "archive_count": len(archives),
         "missing_dates": missing_dates,
         "missing_day_count": len(missing_dates),
+        "invalid_row_count_excluded": invalid_row_count,
         "row_count": len(rows),
         "first_timestamp": rows[0]["timestamp"] if rows else None,
         "last_timestamp": rows[-1]["timestamp"] if rows else None,
