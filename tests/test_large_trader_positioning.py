@@ -75,8 +75,18 @@ def test_signal_rejects_disagreeing_cohort():
 
 def test_summary_reports_costs_and_drawdown():
     rows = [
-        {"net_pnl": 50.0, "net_return": 50.0 / 3000.0, "execution_cost": 10.0},
-        {"net_pnl": -20.0, "net_return": -20.0 / 3000.0, "execution_cost": 10.0},
+        {
+            "signal_timestamp": "2026-01-01T00:00:00+00:00",
+            "net_pnl": 50.0,
+            "net_return": 50.0 / 3000.0,
+            "execution_cost": 10.0,
+        },
+        {
+            "signal_timestamp": "2026-01-02T00:00:00+00:00",
+            "net_pnl": -20.0,
+            "net_return": -20.0 / 3000.0,
+            "execution_cost": 10.0,
+        },
     ]
     result = _summary(
         rows,
