@@ -11,12 +11,20 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from scripts.execution_model import STRESS_EXECUTION
-from scripts.run_open_interest_price_continuation import (
-    ASSETS, BLOCKS, COOLDOWN_HOURS, DISCOVERY_END, END, HOLD_HOURS,
-    MIN_TRADES_PER_BLOCK, NOTIONAL, START, _gate, _summary, _trade,
-    _load_bars,
-)
+try:
+    from scripts.execution_model import STRESS_EXECUTION
+    from scripts.run_open_interest_price_continuation import (
+        ASSETS, BLOCKS, COOLDOWN_HOURS, DISCOVERY_END, END, HOLD_HOURS,
+        MIN_TRADES_PER_BLOCK, NOTIONAL, START, _gate, _summary, _trade,
+        _load_bars,
+    )
+except ModuleNotFoundError:
+    from execution_model import STRESS_EXECUTION
+    from run_open_interest_price_continuation import (
+        ASSETS, BLOCKS, COOLDOWN_HOURS, DISCOVERY_END, END, HOLD_HOURS,
+        MIN_TRADES_PER_BLOCK, NOTIONAL, START, _gate, _summary, _trade,
+        _load_bars,
+    )
 
 OI_CONTRACTION_THRESHOLD = 0.01
 PRICE_MOVE_THRESHOLD = 0.005
