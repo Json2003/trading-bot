@@ -56,6 +56,15 @@ def _checksum(payload: bytes, checksum_text: str) -> str:
     return actual
 
 
+def _binance_date(raw_timestamp: str) -> date:
+    timestamp = int(float(raw_timestamp))
+    # Binance archives use milliseconds historically and may use microseconds
+    # for newer files. Normalize both to milliseconds before conversion.
+    if timestamp >= 10**14:
+        timestamp //= 1000
+    return datetime.fromtimestamp(timestamp / 1000, tz=timezone.utc).date()
+
+
 def _parse_binance_archive(payload: bytes, symbol: str, start: date, end: date) -> list[dict[str, str]]:
     with zipfile.ZipFile(io.BytesIO(payload)) as archive:
         names = [name for name in archive.namelist() if name.lower().endswith(".csv")]
@@ -69,8 +78,7 @@ def _parse_binance_archive(payload: bytes, symbol: str, start: date, end: date) 
                     continue
                 if len(values) < 6:
                     raise ValueError(f"short Binance kline row for {symbol}")
-                timestamp_ms = int(float(values[0]))
-                current_date = datetime.fromtimestamp(timestamp_ms / 1000, tz=timezone.utc).date()
+                current_date = _binance_date(values[0])
                 if not start <= current_date < end:
                     continue
                 prices = [float(value) for value in values[1:5]]

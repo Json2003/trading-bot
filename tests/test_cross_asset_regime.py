@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 
+from scripts.fetch_cross_asset_regime_data import _binance_date
 from scripts.run_cross_asset_regime import regime_at
 
 
@@ -46,3 +47,8 @@ def test_mixed_markers_are_flat_and_missing_data_is_unknown():
     assert regime_at(macro, emas, current) == (0, 3, 2)
     del macro["UUP"][current]
     assert regime_at(macro, emas, current) is None
+
+
+def test_binance_millisecond_and_microsecond_timestamps_normalize():
+    assert _binance_date("1609459200000") == date(2021, 1, 1)
+    assert _binance_date("1609459200000000") == date(2021, 1, 1)
