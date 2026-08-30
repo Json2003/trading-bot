@@ -211,7 +211,7 @@ def run_asset(asset: str, prices: dict[date, float], start: date, discovery_end:
         signal = common.get(signal_day)
         if signal is None:
             continue
-        direction = int(signal)
+        direction = int(signal[0])
         gross = direction * (prices[exit_day] / prices[entry_day] - 1.0)
         net = gross - cost / NOTIONAL
         trades.append({
