@@ -2,6 +2,9 @@
 name: Large Trader Volume Confirmation
 
 on:
+  push:
+    branches:
+      - research/large-trader-volume-confirmation
   pull_request:
     branches:
       - main
