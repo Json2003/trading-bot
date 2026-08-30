@@ -108,7 +108,7 @@ def evaluate(asset: str, rows: list[dict[str, object]], discovery_start: str, di
         median_volume = statistics.median(prior_volumes)
         range_pct = (float(signal["high"]) - float(signal["low"])) / float(signal["open"])
         volume_ratio = float(signal["volume"]) / median_volume if median_volume > 0 else 0.0
-        direction = 1 if float(signal["close"]) > float(signal["open"]) else -1 if float(signal["close"]) < float(signal["open"]) else 0
+        direction = -1 if float(signal["close"]) > float(signal["open"]) else 1 if float(signal["close"]) < float(signal["open"]) else 0
         if direction == 0 or volume_ratio < VOLUME_MULTIPLE or range_pct < RANGE_THRESHOLD:
             continue
         entry = rows[i + LATENCY_BARS]
