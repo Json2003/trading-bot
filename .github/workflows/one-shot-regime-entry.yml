@@ -46,7 +46,7 @@ jobs:
           PYTHONPATH: .
         run: |
           set -euo pipefail
-          python scripts/run_one_shot_regime_entry.py             --data-dir data/historical/cross_asset             --output artifacts/one-shot-regime-entry/report.json
+          python -m scripts.run_one_shot_regime_entry             --data-dir data/historical/cross_asset             --output artifacts/one-shot-regime-entry/report.json
       - name: Upload result artifact
         if: always()
         uses: actions/upload-artifact@v4
