@@ -42,6 +42,8 @@ jobs:
           set -euo pipefail
           python scripts/fetch_cross_asset_regime_data.py             --since 2021-01             --until 2026-08             --output-dir data/historical/cross_asset
       - name: Run one-shot regime-entry candidate
+        env:
+          PYTHONPATH: .
         run: |
           set -euo pipefail
           python scripts/run_one_shot_regime_entry.py             --data-dir data/historical/cross_asset             --output artifacts/one-shot-regime-entry/report.json
