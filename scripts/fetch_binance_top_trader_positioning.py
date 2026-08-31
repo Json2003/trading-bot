@@ -74,7 +74,6 @@ def _request(
     )
     if api_key:
         request.add_header("X-MBX-APIKEY", api_key)
-    )
     with urllib.request.urlopen(request, timeout=60) as response:
         payload = json.loads(response.read().decode("utf-8"))
     if isinstance(payload, dict):
