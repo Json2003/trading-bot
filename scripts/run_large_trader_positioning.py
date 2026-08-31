@@ -74,6 +74,34 @@ def load_positioning(path: Path) -> dict[datetime, dict[str, float]]:
     return result
 
 
+
+def _coverage(
+    positioning: dict[datetime, dict[str, float]],
+    start: datetime,
+    end: datetime,
+) -> dict[str, Any]:
+    """Require one aligned top-trader observation for every evaluation hour."""
+    expected_hours = max(0, int((end - start).total_seconds() // 3600))
+    missing = []
+    cursor = start
+    for _ in range(expected_hours):
+        if cursor not in positioning:
+            missing.append(cursor.isoformat())
+        cursor += timedelta(hours=1)
+    timestamps = sorted(positioning)
+    return {
+        "required_start": start.isoformat(),
+        "required_end_exclusive": end.isoformat(),
+        "expected_hour_count": expected_hours,
+        "observed_row_count": len(positioning),
+        "missing_hour_count": len(missing),
+        "missing_hours_sample": missing[:10],
+        "first_timestamp": timestamps[0].isoformat() if timestamps else None,
+        "last_timestamp": timestamps[-1].isoformat() if timestamps else None,
+        "complete": bool(timestamps) and not missing,
+    }
+
+
 def _signal(
     bars: list[Bar],
     positioning: dict[datetime, dict[str, float]],
@@ -281,6 +309,7 @@ def _skip_report(
     end: datetime,
     reason: str,
     manifests: dict[str, Any],
+    status: str = "skipped_missing_top_trader_history",
 ) -> None:
     null_summary = {
         "trade_count": 0,
@@ -295,11 +324,12 @@ def _skip_report(
         "positive_block_count": 0,
         "passes_sample_gate": False,
         "passes_positive_block_gate": False,
+        "median_block_return_to_stress_cost": None,
     }
     report = _report_base(start, development_end, end, manifests)
     report.update(
         {
-            "status": "skipped_missing_top_trader_history",
+            "status": status,
             "skip_reason": reason,
             "candidates": {
                 "BTC": {
@@ -368,6 +398,10 @@ def _report_base(
             "retuned_after_holdout": False,
             "one_year_history_available": False,
             "newest_unseen_data_used": True,
+            "source_coverage_required": "one aligned completed top-trader observation for every evaluation hour",
+            "evaluation_days": int((end - start).total_seconds() // 86400),
+            "development_days": int((development_end - start).total_seconds() // 86400),
+            "holdout_days": int((end - development_end).total_seconds() // 86400),
         },
         "source": {
             "provider": "Binance",
@@ -416,6 +450,29 @@ def main() -> int:
         )
         for asset, symbol in {"BTC": "BTCUSDT", "ETH": "ETHUSDT"}.items()
     }
+    coverage = {}
+    for asset in ("BTC", "ETH"):
+        coverage[asset] = _coverage(positioning[asset], start, end)
+        manifests[asset]["evaluation_coverage"] = coverage[asset]
+    incomplete = [
+        f"{asset}: top-trader archive does not cover every evaluation hour "
+        f"({coverage[asset]['missing_hour_count']} missing)"
+        for asset in ("BTC", "ETH")
+        if not coverage[asset]["complete"]
+    ]
+    if incomplete:
+        reason = "; ".join(incomplete)
+        _skip_report(
+            args.output,
+            start,
+            development_end,
+            end,
+            reason,
+            manifests,
+            status="skipped_incomplete_top_trader_archive",
+        )
+        print(json.dumps({"status": "skipped", "reason": reason}, indent=2))
+        return 0
     bars_by_asset = {
         asset: load_bars(path)
         for asset, path in {"BTC": args.btc_path, "ETH": args.eth_path}.items()
