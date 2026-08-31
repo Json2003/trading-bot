@@ -9,6 +9,7 @@ import hashlib
 import io
 import json
 import math
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -32,8 +33,22 @@ def _read(url: str) -> bytes:
     request = urllib.request.Request(
         url, headers={"User-Agent": "trading-bot-recent-candles/1.0"}
     )
-    with urllib.request.urlopen(request, timeout=90) as response:
-        return response.read()
+    last_error: Exception | None = None
+    for attempt in range(5):
+        try:
+            with urllib.request.urlopen(request, timeout=90) as response:
+                return response.read()
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                raise
+            last_error = exc
+            if exc.code not in {408, 425, 429, 500, 502, 503, 504}:
+                raise
+        except (urllib.error.URLError, TimeoutError, ConnectionResetError) as exc:
+            last_error = exc
+        if attempt < 4:
+            time.sleep(2**attempt)
+    raise RuntimeError(f"failed to download {url}: {last_error}")
 
 
 def _timestamp(raw: str) -> datetime:
