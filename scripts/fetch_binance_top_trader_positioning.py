@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Download the current Binance top-trader positioning history.
+"""Download and optionally archive Binance top-trader positioning history.
 
-Binance exposes this series only as a rolling recent window. The public market-data collector
+Binance exposes this series only as a rolling recent window. The collector
 never treats a missing key, unavailable endpoint, or missing observation as a
-zero signal; it writes an explicit blocked manifest so the research runner can
-record a skip instead of manufacturing evidence.
+zero signal; it records an explicit blocked/stale manifest instead.
 """
 
 from __future__ import annotations
@@ -44,8 +43,7 @@ class DataUnavailable(RuntimeError):
 
 
 def _day_start(raw: str) -> datetime:
-    value = datetime.strptime(raw, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-    return value
+    return datetime.strptime(raw, "%Y-%m-%d").replace(tzinfo=timezone.utc)
 
 
 def _request(
@@ -70,10 +68,9 @@ def _request(
         headers={
             "Accept": "application/json",
             "User-Agent": "trading-bot-large-trader-research/1.0",
+            "X-MBX-APIKEY": api_key,
         },
     )
-    if api_key:
-        request.add_header("X-MBX-APIKEY", api_key)
     with urllib.request.urlopen(request, timeout=60) as response:
         payload = json.loads(response.read().decode("utf-8"))
     if isinstance(payload, dict):
@@ -105,7 +102,12 @@ def _fetch_endpoint(
                 )
                 used_base = base_url
                 break
-            except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, DataUnavailable) as exc:
+            except (
+                urllib.error.HTTPError,
+                urllib.error.URLError,
+                TimeoutError,
+                DataUnavailable,
+            ) as exc:
                 last_error = exc
         if batch is None or used_base is None:
             raise DataUnavailable(
@@ -130,16 +132,81 @@ def _fetch_endpoint(
             raise DataUnavailable(f"pagination did not advance for {endpoint}")
         cursor_end = next_cursor
 
-    return records, used_base
+    return records, used_base or BASE_URLS[0]
 
 
-def _number(row: dict[str, Any], *names: str) -> float:
-    for name in names:
-        if name in row:
-            value = float(row[name])
-            if math.isfinite(value):
-                return value
-    raise ValueError(f"missing numeric field: {names}")
+def _read_rows(path: Path) -> dict[str, dict[str, str]]:
+    if not path.exists():
+        return {}
+    rows: dict[str, dict[str, str]] = {}
+    with path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            timestamp = row.get("timestamp")
+            if not timestamp:
+                continue
+            if all(row.get(field) not in (None, "") for field in FIELDS):
+                rows[timestamp] = {field: row[field] for field in FIELDS}
+    return rows
+
+
+def _write_rows(path: Path, rows: dict[str, dict[str, str]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=FIELDS)
+        writer.writeheader()
+        writer.writerows(rows[key] for key in sorted(rows))
+
+
+def _archive_manifest(
+    archive_dir: Path,
+    symbol: str,
+    rows: dict[str, dict[str, str]],
+    reason: str | None,
+    requested_start: datetime,
+    requested_end: datetime,
+) -> dict[str, Any]:
+    archive_path = archive_dir / f"{symbol}_1h.csv"
+    manifest = {
+        "source": "Binance USD-M futures market-data API",
+        "symbol": symbol,
+        "period": "1h",
+        "archive_path": str(archive_path),
+        "requested_start": requested_start.isoformat(),
+        "requested_end_exclusive": requested_end.isoformat(),
+        "api_key_required": True,
+        "rolling_history_limit_days": 30,
+        "archive_is_built_from_rolling_snapshots": True,
+        "available": bool(rows),
+        "status": "available" if rows else "blocked",
+        "reason": reason if not rows else None,
+        "row_count": len(rows),
+        "first_timestamp": next(iter(rows)) if rows else None,
+        "last_timestamp": next(reversed(rows)) if rows else None,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    (archive_dir / f"{symbol}_1h.manifest.json").write_text(
+        json.dumps(manifest, indent=2), encoding="utf-8"
+    )
+    return manifest
+
+
+def _record_archive(
+    archive_dir: Path,
+    symbol: str,
+    rows: list[dict[str, str]],
+    reason: str | None,
+    requested_start: datetime,
+    requested_end: datetime,
+) -> dict[str, Any]:
+    archive_path = archive_dir / f"{symbol}_1h.csv"
+    existing = _read_rows(archive_path)
+    for row in rows:
+        existing[row["timestamp"]] = row
+    _write_rows(archive_path, existing)
+    return _archive_manifest(
+        archive_dir, symbol, existing, reason, requested_start, requested_end
+    )
 
 
 def fetch_symbol(
@@ -148,19 +215,18 @@ def fetch_symbol(
     until: datetime,
     output_dir: Path,
     api_key: str,
+    archive_dir: Path | None,
 ) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"{symbol}_1h.csv"
     manifest_path = output_dir / f"{symbol}_1h.manifest.json"
-    empty_rows: list[dict[str, str]] = []
-
     base_manifest: dict[str, Any] = {
         "source": "Binance USD-M futures market-data API",
         "symbol": symbol,
         "period": "1h",
         "requested_start": since.isoformat(),
         "requested_end_exclusive": until.isoformat(),
-        "api_key_required": False,
+        "api_key_required": True,
         "rolling_history_limit_days": 30,
         "available": False,
         "status": "blocked",
@@ -169,8 +235,21 @@ def fetch_symbol(
         "last_timestamp": None,
     }
 
-    with output_path.open("w", newline="", encoding="utf-8") as handle:
-        csv.DictWriter(handle, fieldnames=FIELDS).writeheader()
+    if not api_key:
+        base_manifest["reason"] = "BINANCE_API_KEY is not configured"
+        _write_rows(output_path, {})
+        manifest_path.write_text(json.dumps(base_manifest, indent=2), encoding="utf-8")
+        if archive_dir:
+            existing = _read_rows(archive_dir / f"{symbol}_1h.csv")
+            _archive_manifest(
+                archive_dir,
+                symbol,
+                existing,
+                "BINANCE_API_KEY is not configured",
+                since,
+                until,
+            )
+        return base_manifest
 
     start_ms = int(since.timestamp() * 1000)
     end_ms = int(until.timestamp() * 1000)
@@ -181,9 +260,18 @@ def fetch_symbol(
         position, position_base = _fetch_endpoint(
             symbol, ENDPOINTS["position"], start_ms, end_ms, api_key
         )
-    except (DataUnavailable, ValueError, urllib.error.HTTPError, urllib.error.URLError) as exc:
+    except (
+        DataUnavailable,
+        ValueError,
+        urllib.error.HTTPError,
+        urllib.error.URLError,
+    ) as exc:
         base_manifest["reason"] = str(exc)
+        _write_rows(output_path, {})
         manifest_path.write_text(json.dumps(base_manifest, indent=2), encoding="utf-8")
+        if archive_dir:
+            existing = _read_rows(archive_dir / f"{symbol}_1h.csv")
+            _archive_manifest(archive_dir, symbol, existing, str(exc), since, until)
         return base_manifest
 
     rows: list[dict[str, str]] = []
@@ -235,11 +323,7 @@ def fetch_symbol(
         except (KeyError, TypeError, ValueError):
             continue
 
-    with output_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=FIELDS)
-        writer.writeheader()
-        writer.writerows(rows)
-
+    _write_rows(output_path, {row["timestamp"]: row for row in rows})
     base_manifest.update(
         {
             "available": bool(rows),
@@ -256,7 +340,26 @@ def fetch_symbol(
         }
     )
     manifest_path.write_text(json.dumps(base_manifest, indent=2), encoding="utf-8")
+    if archive_dir:
+        _record_archive(
+            archive_dir,
+            symbol,
+            rows,
+            base_manifest.get("reason"),
+            since,
+            until,
+        )
+        base_manifest["archive_path"] = str(archive_dir / f"{symbol}_1h.csv")
     return base_manifest
+
+
+def _number(row: dict[str, Any], *names: str) -> float:
+    for name in names:
+        if name in row:
+            value = float(row[name])
+            if math.isfinite(value):
+                return value
+    raise ValueError(f"missing numeric field: {names}")
 
 
 def main() -> int:
@@ -268,6 +371,12 @@ def main() -> int:
         "--output-dir",
         type=Path,
         default=Path("data/historical/binance/top_trader"),
+    )
+    parser.add_argument(
+        "--archive-dir",
+        type=Path,
+        default=None,
+        help="merge the rolling API response into a durable archive directory",
     )
     args = parser.parse_args()
 
@@ -282,6 +391,7 @@ def main() -> int:
             until,
             args.output_dir,
             os.environ.get("BINANCE_API_KEY", "").strip(),
+            args.archive_dir,
         )
         for symbol in args.symbols
     }
