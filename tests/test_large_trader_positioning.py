@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from scripts.run_large_trader_positioning import _signal, _summary
+from scripts.run_large_trader_positioning import _coverage, _signal, _summary
 from scripts.run_momentum_volatility_research import Bar
 
 UTC = timezone.utc
@@ -98,3 +98,24 @@ def test_summary_reports_costs_and_drawdown():
     assert result["execution_cost"] == 20.0
     assert result["profit_factor"] == 2.5
     assert result["max_drawdown_pct_of_notional"] > 0
+
+
+def test_coverage_rejects_missing_evaluation_hour():
+    start = datetime(2026, 1, 1, tzinfo=UTC)
+    positioning = {start: {}}
+    result = _coverage(positioning, start, start + timedelta(hours=2))
+    assert result["expected_hour_count"] == 2
+    assert result["observed_row_count"] == 1
+    assert result["missing_hour_count"] == 1
+    assert result["complete"] is False
+
+
+def test_coverage_accepts_complete_evaluation_hours():
+    start = datetime(2026, 1, 1, tzinfo=UTC)
+    positioning = {
+        start: {},
+        start + timedelta(hours=1): {},
+    }
+    result = _coverage(positioning, start, start + timedelta(hours=2))
+    assert result["missing_hour_count"] == 0
+    assert result["complete"] is True
