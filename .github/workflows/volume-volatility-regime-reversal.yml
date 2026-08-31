@@ -52,7 +52,7 @@ jobs:
       - name: Run frozen regime hypothesis
         run: |
           set -euo pipefail
-          python scripts/run_volume_volatility_regime_hypothesis.py \
+          python scripts/run_volume_volatility_regime_reversal.py \
             --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv \
             --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv \
             --output artifacts/volume-volatility-regime-reversal/hypothesis.json
