@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Download the current Binance top-trader positioning history.
 
-Binance exposes this series only as a rolling recent window.  The collector
+Binance exposes this series only as a rolling recent window. The public market-data collector
 never treats a missing key, unavailable endpoint, or missing observation as a
 zero signal; it writes an explicit blocked manifest so the research runner can
 record a skip instead of manufacturing evidence.
@@ -70,8 +70,10 @@ def _request(
         headers={
             "Accept": "application/json",
             "User-Agent": "trading-bot-large-trader-research/1.0",
-            "X-MBX-APIKEY": api_key,
         },
+    )
+    if api_key:
+        request.add_header("X-MBX-APIKEY", api_key)
     )
     with urllib.request.urlopen(request, timeout=60) as response:
         payload = json.loads(response.read().decode("utf-8"))
@@ -159,7 +161,7 @@ def fetch_symbol(
         "period": "1h",
         "requested_start": since.isoformat(),
         "requested_end_exclusive": until.isoformat(),
-        "api_key_required": True,
+        "api_key_required": False,
         "rolling_history_limit_days": 30,
         "available": False,
         "status": "blocked",
@@ -170,11 +172,6 @@ def fetch_symbol(
 
     with output_path.open("w", newline="", encoding="utf-8") as handle:
         csv.DictWriter(handle, fieldnames=FIELDS).writeheader()
-
-    if not api_key:
-        base_manifest["reason"] = "BINANCE_API_KEY is not configured"
-        manifest_path.write_text(json.dumps(base_manifest, indent=2), encoding="utf-8")
-        return base_manifest
 
     start_ms = int(since.timestamp() * 1000)
     end_ms = int(until.timestamp() * 1000)
