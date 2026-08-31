@@ -62,6 +62,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: volume-volatility-regime-reversal-${{ github.run_number }}
-          path: artifacts/volume-volatility-regime
+          path: artifacts/volume-volatility-regime-reversal
           if-no-files-found: error
           retention-days: 90
