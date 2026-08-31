@@ -1,0 +1,104 @@
+# Frozen top-trader positioning plus high-volume continuation; research-only.
+name: Large Trader Volume Confirmation
+
+on:
+  push:
+    branches:
+      - research/large-trader-volume-confirmation
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/large-trader-volume-confirmation.yml"
+      - ".github/workflows/collect-top-trader-snapshots.yml"
+      - "scripts/fetch_binance_top_trader_positioning.py"
+      - "scripts/fetch_binance_recent_spot.py"
+      - "scripts/run_large_trader_positioning.py"
+      - "scripts/execution_model.py"
+      - "scripts/run_momentum_volatility_research.py"
+      - "tests/test_large_trader_positioning.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: large-trader-volume-confirmation
+  cancel-in-progress: true
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      BINANCE_API_KEY: ${{ secrets.BINANCE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install research dependencies
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Run regression tests
+        run: python -m pytest -q tests/test_large_trader_positioning.py
+
+      - name: Define completed 60-day research window
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "$GITHUB_ENV"
+          from datetime import datetime, timedelta, timezone
+          end = datetime.now(timezone.utc).replace(
+              hour=0, minute=0, second=0, microsecond=0
+          )
+          values = {
+              "DATA_START": end - timedelta(days=60),
+              "EVAL_START": end - timedelta(days=58),
+              "DEVELOPMENT_END": end - timedelta(days=28),
+              "END_EXCLUSIVE": end,
+          }
+          for key, value in values.items():
+              print(f"{key}={value:%Y-%m-%d}")
+          PY
+
+      - name: Download completed spot candles
+        run: |
+          set -euo pipefail
+          python scripts/fetch_binance_recent_spot.py \
+            --symbols BTCUSDT ETHUSDT \
+            --since "$DATA_START" \
+            --until "$END_EXCLUSIVE" \
+            --output-dir data/historical/binance/recent_spot
+
+      - name: Refresh and merge rolling top-trader snapshots
+        run: |
+          set -euo pipefail
+          python scripts/fetch_binance_top_trader_positioning.py \
+            --symbols BTCUSDT ETHUSDT \
+            --since "$DATA_START" \
+            --until "$END_EXCLUSIVE" \
+            --output-dir data/historical/binance/top_trader_staging \
+            --archive-dir data/historical/binance/top_trader_archive
+
+      - name: Run frozen research candidate
+        run: |
+          set -euo pipefail
+          PYTHONPATH=. python scripts/run_large_trader_positioning.py \
+            --btc-path data/historical/binance/recent_spot/BTCUSDT_1h.csv \
+            --eth-path data/historical/binance/recent_spot/ETHUSDT_1h.csv \
+            --positioning-dir data/historical/binance/top_trader_archive \
+            --start "$EVAL_START" \
+            --development-end "$DEVELOPMENT_END" \
+            --end "$END_EXCLUSIVE" \
+            --output artifacts/large-trader-volume-confirmation/report.json
+
+      - name: Upload research artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: large-trader-volume-confirmation
+          path: artifacts/large-trader-volume-confirmation
+          if-no-files-found: warn
+          retention-days: 90
