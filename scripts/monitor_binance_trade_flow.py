@@ -303,15 +303,17 @@ def run_monitor(
             connected = True
             received_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
             try:
+                raw_payload = json.loads(message)
                 events = parse_message(message)
             except (json.JSONDecodeError, TypeError, ValueError) as exc:
                 errors.append(f"parse error: {exc}")
+                raw_payload = {"_raw_message": str(message)}
                 events = []
             raw_handle.write(
                 json.dumps(
                     {
                         "received_at": received_at,
-                        "message": json.loads(message),
+                        "message": raw_payload,
                     },
                     separators=(",", ":"),
                 )
@@ -355,7 +357,10 @@ def run_monitor(
             if timer is not None:
                 timer.cancel()
             if deadline is None:
-                break
+                if attempt >= max(0, reconnect_attempts):
+                    break
+                time.sleep(2.0)
+                continue
             if time.monotonic() >= deadline:
                 break
             time.sleep(min(2.0, max(0.0, deadline - time.monotonic())))
