@@ -1,9 +1,6 @@
 name: Public Trade Flow Collection
 
 on:
-  push:
-    branches:
-      - research/public-trade-flow-observer
   workflow_dispatch:
 
 permissions:
