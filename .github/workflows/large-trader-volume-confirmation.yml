@@ -10,6 +10,7 @@ on:
       - main
     paths:
       - ".github/workflows/large-trader-volume-confirmation.yml"
+      - ".github/workflows/collect-top-trader-snapshots.yml"
       - "scripts/fetch_binance_top_trader_positioning.py"
       - "scripts/fetch_binance_recent_spot.py"
       - "scripts/run_large_trader_positioning.py"
@@ -28,7 +29,7 @@ concurrency:
 jobs:
   research:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     env:
       BINANCE_API_KEY: ${{ secrets.BINANCE_API_KEY }}
     steps:
@@ -44,7 +45,7 @@ jobs:
       - name: Run regression tests
         run: python -m pytest -q tests/test_large_trader_positioning.py
 
-      - name: Define completed research window
+      - name: Define completed 60-day research window
         run: |
           set -euo pipefail
           python - <<'PY' >> "$GITHUB_ENV"
@@ -53,16 +54,16 @@ jobs:
               hour=0, minute=0, second=0, microsecond=0
           )
           values = {
-              "DATA_START": end - timedelta(days=30),
-              "EVAL_START": end - timedelta(days=28),
-              "DEVELOPMENT_END": end - timedelta(days=10),
+              "DATA_START": end - timedelta(days=60),
+              "EVAL_START": end - timedelta(days=58),
+              "DEVELOPMENT_END": end - timedelta(days=28),
               "END_EXCLUSIVE": end,
           }
           for key, value in values.items():
               print(f"{key}={value:%Y-%m-%d}")
           PY
 
-      - name: Download completed recent spot candles
+      - name: Download completed spot candles
         run: |
           set -euo pipefail
           python scripts/fetch_binance_recent_spot.py \
@@ -71,14 +72,15 @@ jobs:
             --until "$END_EXCLUSIVE" \
             --output-dir data/historical/binance/recent_spot
 
-      - name: Download anonymous top-trader positioning
+      - name: Refresh and merge rolling top-trader snapshots
         run: |
           set -euo pipefail
           python scripts/fetch_binance_top_trader_positioning.py \
             --symbols BTCUSDT ETHUSDT \
             --since "$DATA_START" \
             --until "$END_EXCLUSIVE" \
-            --output-dir data/historical/binance/top_trader
+            --output-dir data/historical/binance/top_trader_staging \
+            --archive-dir data/historical/binance/top_trader_archive
 
       - name: Run frozen research candidate
         run: |
@@ -86,7 +88,7 @@ jobs:
           PYTHONPATH=. python scripts/run_large_trader_positioning.py \
             --btc-path data/historical/binance/recent_spot/BTCUSDT_1h.csv \
             --eth-path data/historical/binance/recent_spot/ETHUSDT_1h.csv \
-            --positioning-dir data/historical/binance/top_trader \
+            --positioning-dir data/historical/binance/top_trader_archive \
             --start "$EVAL_START" \
             --development-end "$DEVELOPMENT_END" \
             --end "$END_EXCLUSIVE" \
