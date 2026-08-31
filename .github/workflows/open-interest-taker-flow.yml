@@ -50,7 +50,7 @@ jobs:
       - name: Run frozen derivatives-flow candidate
         run: |
           set -euo pipefail
-          python scripts/run_open_interest_taker_flow.py             --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv             --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv             --metrics-dir data/historical/binance/open_interest             --output artifacts/open-interest-taker-flow/report.json
+          PYTHONPATH=. python -m scripts.run_open_interest_taker_flow             --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv             --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv             --metrics-dir data/historical/binance/open_interest             --output artifacts/open-interest-taker-flow/report.json
       - name: Upload result artifact
         if: always()
         uses: actions/upload-artifact@v4
