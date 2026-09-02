@@ -84,6 +84,7 @@ jobs:
           if [ -z "$days" ]; then days="$DEFAULT_DAYS"; fi
           if [ -z "$segment" ]; then segment="$DEFAULT_SEGMENT"; fi
           : "\${bucket:?Set workflow input gcs_bucket or repository variable TRADE_FLOW_GCS_BUCKET}"
+          : "\${prefix:=research/binance-trade-flow}"
           : "\${window:=btc-eth-public-flow-90d}"
           : "\${days:=90}"
           : "\${segment:=3300}"
