@@ -1,6 +1,9 @@
 name: Public Trade Flow Collection
 
 on:
+  push:
+    branches:
+      - research/public-trade-flow-observer
   schedule:
     - cron: "17 */6 * * *"
   workflow_dispatch:
