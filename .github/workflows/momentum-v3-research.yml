@@ -164,17 +164,33 @@ jobs:
       - name: Download completed Binance Vision history
         run: |
           set -euo pipefail
-          # --until is exclusive; the first day of the current month includes
-          # every completed month while avoiding an incomplete current month.
-          UNTIL="$(python - <<'PY'
+          # Binance may publish the prior calendar month late. Try the
+          # newest boundary first, then step back until a complete archive
+          # exists. The result remains timestamped and fail-closed.
+          for MONTHS_BACK in 0 1 2; do
+            UNTIL="$(python - "$MONTHS_BACK" <<'PY'
           from datetime import datetime, timezone
-          print(datetime.now(timezone.utc).strftime("%Y-%m"))
+          import sys
+          current = datetime.now(timezone.utc).replace(day=1)
+          months_back = int(sys.argv[1])
+          month_index = current.year * 12 + current.month - 1 - months_back
+          year, month = divmod(month_index, 12)
+          print(f"{year:04d}-{month + 1:02d}")
           PY
-          )"
-          python scripts/fetch_binance_vision_klines.py \
-            --symbols BTCUSDT ETHUSDT \
-            --since 2023-01 \
-            --until "$UNTIL"
+            )"
+            if python scripts/fetch_binance_vision_klines.py \
+              --symbols BTCUSDT ETHUSDT \
+              --since 2023-01 \
+              --until "$UNTIL"; then
+              echo "Using complete-month boundary $UNTIL."
+              break
+            fi
+            if [[ "$MONTHS_BACK" == "2" ]]; then
+              echo "No complete-month archive boundary available." >&2
+              exit 1
+            fi
+            echo "Boundary $UNTIL unavailable; trying an earlier complete month." >&2
+          done
 
       - name: Run non-promotable paper-only research snapshot
         run: |
