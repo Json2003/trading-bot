@@ -1,5 +1,3 @@
-import json
-
 import pytest
 
 from scripts.collect_trade_flow_window import (
