@@ -23,7 +23,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from monitor_binance_trade_flow import run_monitor
+try:\n    from scripts.monitor_binance_trade_flow import run_monitor\nexcept ModuleNotFoundError:\n    from monitor_binance_trade_flow import run_monitor
 
 UTC = timezone.utc
 SCHEMA_VERSION = 1
