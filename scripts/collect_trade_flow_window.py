@@ -223,6 +223,7 @@ def _initialize_window_manifest(
             "!forceOrder@arr",
         ],
         "research_only": True,
+        "orders_allowed": False,
         "paper_orders_placed": False,
         "live_orders_placed": False,
         "leverage_enabled": False,
