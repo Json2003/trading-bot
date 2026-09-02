@@ -170,10 +170,12 @@ jobs:
           for MONTHS_BACK in 0 1 2; do
             UNTIL="$(python - "$MONTHS_BACK" <<'PY'
           from datetime import datetime, timezone
-          from dateutil.relativedelta import relativedelta
           import sys
           current = datetime.now(timezone.utc).replace(day=1)
-          print((current - relativedelta(months=int(sys.argv[1]))).strftime("%Y-%m"))
+          months_back = int(sys.argv[1])
+          month_index = current.year * 12 + current.month - 1 - months_back
+          year, month = divmod(month_index, 12)
+          print(f"{year:04d}-{month + 1:02d}")
           PY
             )"
             if python scripts/fetch_binance_vision_klines.py \
