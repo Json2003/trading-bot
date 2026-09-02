@@ -34,14 +34,13 @@ jobs:
           python-version: "3.11"
       - name: Install test dependencies
         run: python -m pip install --upgrade pip pytest
-      - name: Download completed Binance Vision candles
+      - name: Download completed Binance Vision candles through last complete month
         run: |
           set -euo pipefail
-          until_month="$(date -u +%Y-%m)"
           python scripts/fetch_binance_vision_klines.py \
             --symbols BTCUSDT ETHUSDT \
             --since 2023-01 \
-            --until "$until_month"
+            --until 2026-08
       - name: Run hypothesis unit tests
         run: python -m pytest -q tests/test_failed_breakout_exhaustion.py
       - name: Run frozen hypothesis
