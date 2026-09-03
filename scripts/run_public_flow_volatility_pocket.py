@@ -47,8 +47,9 @@ def quantile(values: list[float], probability: float) -> float:
     return ordered[index]
 
 
-def load_rows(data_dir: Path) -> dict[str, list[dict[str, Any]]]:
+def load_rows(data_dir: Path) -> tuple[dict[str, list[dict[str, Any]]], int]:
     grouped: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+    duplicate_count = 0
     files = sorted(data_dir.rglob("completed_minute_flow.csv"))
     for path in files:
         with path.open(newline="", encoding="utf-8") as handle:
@@ -73,6 +74,9 @@ def load_rows(data_dir: Path) -> dict[str, list[dict[str, Any]]]:
                     continue
                 if price <= 0 or bid <= 0 or ask <= 0 or buy + sell <= 0:
                     continue
+                if bucket in grouped[symbol]:
+                    duplicate_count += 1
+                    continue
                 grouped[symbol][bucket] = {
                     "time": parse_time(bucket),
                     "price": price,
@@ -81,10 +85,10 @@ def load_rows(data_dir: Path) -> dict[str, list[dict[str, Any]]]:
                     "net": net,
                     "book": book,
                 }
-    return {
+    return ({
         symbol: [grouped[symbol][key] for key in sorted(grouped[symbol])]
         for symbol in sorted(grouped)
-    }
+    }, duplicate_count)
 
 
 def continuity(rows: list[dict[str, Any]]) -> tuple[bool, str | None]:
@@ -215,7 +219,7 @@ def main() -> int:
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    rows_by_symbol = load_rows(args.data_dir)
+    rows_by_symbol, duplicate_count = load_rows(args.data_dir)
     continuity_info: dict[str, Any] = {}
     for symbol in ("BTCUSDT", "ETHUSDT"):
         rows = rows_by_symbol.get(symbol, [])
@@ -248,6 +252,7 @@ def main() -> int:
             "fixed_trade_notional": NOTIONAL,
         },
         "continuity": continuity_info,
+        "duplicate_row_count": duplicate_count,
         "status": "skip",
         "confirmed": False,
         "reason": None,
@@ -267,8 +272,10 @@ def main() -> int:
     ]
     if len(starts) != 2 or len(ends) != 2:
         report["reason"] = "missing BTCUSDT or ETHUSDT completed public-flow data"
+    elif duplicate_count:
+        report["reason"] = "overlapping or duplicate minute rows detected"
     elif any(not info["continuous"] for info in continuity_info.values()):
-        report["reason"] = "gap, overlap, or malformed timestamp sequence"
+        report["reason"] = "gap or malformed timestamp sequence"
     else:
         start = max(starts)
         end = min(ends)
