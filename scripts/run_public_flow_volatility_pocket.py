@@ -289,17 +289,36 @@ def main() -> int:
                     row["symbol"] = symbol
                 all_signals.extend(build_signals(usable))
             trades = choose_non_overlapping(all_signals)
-            duration = end - start + MINUTE
-            block_duration = duration / 6
+            evaluation_start = start + WARMUP_DURATION
+            development_end = evaluation_start + DEVELOPMENT_DURATION
+            holdout_end = development_end + HOLDOUT_DURATION
             for trade in trades:
-                offset = trade["entry_time"] - start
-                block = min(5, int(offset / block_duration))
-                trade["block"] = block
+                if trade["entry_time"] < evaluation_start or trade["exit_time"] > holdout_end:
+                    trade["block"] = -1
+                    continue
+                if trade["entry_time"] < development_end:
+                    fraction = (
+                        (trade["entry_time"] - evaluation_start).total_seconds()
+                        / DEVELOPMENT_DURATION.total_seconds()
+                    )
+                    trade["block"] = min(3, int(fraction * 4.0))
+                else:
+                    fraction = (
+                        (trade["entry_time"] - development_end).total_seconds()
+                        / HOLDOUT_DURATION.total_seconds()
+                    )
+                    trade["block"] = 4 + min(1, int(fraction * 2.0))
+            trades = [trade for trade in trades if trade["block"] >= 0]
             development = [trade for trade in trades if trade["block"] < 4]
             holdout = [trade for trade in trades if trade["block"] >= 4]
+            duration = holdout_end - evaluation_start
             report["status"] = "evaluated"
             report["data_from"] = iso(start)
-            report["data_through"] = iso(end)
+            report["evaluation_from"] = iso(evaluation_start)
+            report["data_through"] = iso(holdout_end - MINUTE)
+            report["source_duration_days"] = round(
+                (end - start + MINUTE).total_seconds() / 86400.0, 4
+            )
             report["duration_days"] = round(duration.total_seconds() / 86400.0, 4)
             report["segments"] = {
                 "development": metrics(development),
