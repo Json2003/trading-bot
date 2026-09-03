@@ -19,7 +19,7 @@ candle-only breakout/reversal rules.
 
 ## One frozen rule
 
-The following values are fixed before examining the research outcome:
+The values below are fixed before examining any outcome:
 
 1. For each symbol, calculate rolling reference distributions from the prior
    24 hours of completed one-minute rows only.
@@ -28,38 +28,39 @@ The following values are fixed before examining the research outcome:
 3. A volume pocket requires total aggressive notional
    (buy_notional + sell_notional) at or above the prior-24-hour 95th
    percentile.
-4. Flow direction requires
-   net_aggressive_notional / (buy_notional + sell_notional) to be at least
-   +0.30 for a long or at most -0.30 for a short.
-5. The latest completed book imbalance must agree with the flow direction:
-   at least +0.10 for a long or at most -0.10 for a short.
-6. Enter at the next completed-minute midpoint, with one-minute latency.
-7. Exit after a fixed 30 completed minutes. Do not use future candles to alter
-   the exit, threshold, or direction.
+4. Flow direction requires net aggressive notional divided by total notional to
+   be at least +0.30 for a long or at most -0.30 for a short.
+5. The latest completed book imbalance must agree with direction: at least +0.10
+   for a long or at most -0.10 for a short.
+6. Enter at the next completed-minute midpoint with one-minute latency.
+7. Exit after a fixed 30 completed minutes.
 8. Do not open another position until the prior position and its 30-minute
    cooldown are complete. Signals inside an active window are not separate
    evidence.
 9. Use fixed trade notional, the existing 86-basis-point round-trip stress
    execution model, and the existing partial-fill/rejection assumptions.
 
-Only rows marked completed=true are eligible. Missing fields, gaps, overlaps,
-and final partial minutes are excluded or marked unknown; they are never
-treated as zero.
+Only completed rows are eligible. Missing fields, gaps, overlaps, and final
+partial minutes are excluded or marked unknown; they are never treated as zero.
 
-## Evaluation design
+## Staged evaluation design
 
-The first immutable public-flow window must be at least 90 continuous days for
-BTCUSDT and ETHUSDT, with no gap or overlap in its checkpoint history. Split
-chronologically into six non-overlapping 15-day blocks. The first four blocks
-are development; the final two are untouched confirmation data.
+The three-minute sample and six-hour collection are pipeline checks only.
 
-All thresholds and the 30-minute hold are frozen before the first development
-result is inspected. The confirmation blocks remain unavailable to discovery,
-diagnostic selection, or tuning. A repeated run on the same checkpoint is a
-deterministic reproduction, not new evidence.
+The first meaningful screen uses a continuous 60-day BTCUSDT/ETHUSDT archive:
+the first two days provide rolling-feature warmup, the next 30 days are
+development data, and the final 28 days are untouched confirmation data. This
+is an early evidence screen, not a final year-long confirmation.
 
-Report separately for each symbol, each development/confirmation segment, and
-each six-block result:
+The original one-year protocol remains the final standard: six months of
+development followed by six months of untouched confirmation when enough
+archived public-flow history exists.
+
+All thresholds and the 30-minute hold are frozen before results are inspected.
+The confirmation data cannot be used for discovery, diagnostics, or tuning. A
+repeat on the same checkpoint is deterministic reproduction, not new evidence.
+
+Report by symbol, segment, and block:
 
 - net return and net P&L
 - maximum drawdown
@@ -69,10 +70,8 @@ each six-block result:
 - gross P&L and modeled execution costs
 - data-through timestamp, gap/overlap counts, and excluded/unknown rows
 
-The existing confirmation gates remain in force. A positive development result
-alone cannot advance the candidate. A candidate advances only if it passes the
-untouched confirmation and sample/block requirements under the same stressed
-cost model.
+A positive development screen alone cannot advance the candidate. Confirmation
+still requires the existing sample, block, and stressed-cost gates.
 
 ## Safety boundary
 
