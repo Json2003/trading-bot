@@ -1,0 +1,122 @@
+name: Public Flow Volatility-Pocket Research
+
+on:
+  push:
+    branches:
+      - research/public-flow-volatility-pocket
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/run_public_flow_volatility_pocket.py"
+      - "docs/public_flow_volatility_pocket_hypothesis.md"
+      - ".github/workflows/public-flow-volatility-pocket.yml"
+      - "requirements_research.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-flow-volatility-pocket
+  cancel-in-progress: false
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out frozen evaluator
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install research dependencies
+        run: python -m pip install --upgrade pip -r requirements_research.txt
+
+      - name: Prepare immutable input directory
+        id: inputs
+        env:
+          HAS_GCP_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
+          GCS_BUCKET: ${{ vars.TRADE_FLOW_GCS_BUCKET }}
+          GCS_PREFIX: ${{ vars.TRADE_FLOW_GCS_PREFIX }}
+        run: |
+          set -euo pipefail
+          mkdir -p data/inputs/public_flow
+          if [ "$HAS_GCP_KEY" = "true" ] && [ -n "$GCS_BUCKET" ]; then
+            echo "download=true" >> "$GITHUB_OUTPUT"
+            echo "bucket=$GCS_BUCKET" >> "$GITHUB_OUTPUT"
+            echo "prefix=$GCS_PREFIX" >> "$GITHUB_OUTPUT"
+          else
+            echo "download=false" >> "$GITHUB_OUTPUT"
+            echo "No durable public-flow archive is configured; evaluator will emit SKIP."
+            cat > data/inputs/public_flow/SKIP.json <<'JSON'
+          {
+            "status": "skip",
+            "reason": "GCP_SERVICE_ACCOUNT_KEY or TRADE_FLOW_GCS_BUCKET is unavailable",
+            "research_only": true,
+            "strategy_evaluated": false
+          }
+          JSON
+          fi
+
+      - name: Authenticate to archive storage
+        if: steps.inputs.outputs.download == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Download only finalized public-flow segments
+        if: steps.inputs.outputs.download == 'true'
+        env:
+          GCS_BUCKET: ${{ steps.inputs.outputs.bucket }}
+          GCS_PREFIX: ${{ steps.inputs.outputs.prefix }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from google.cloud import storage
+
+          bucket_name = os.environ["GCS_BUCKET"]
+          prefix = os.environ.get("GCS_PREFIX", "").strip("/")
+          root = Path("data/inputs/public_flow")
+          client = storage.Client()
+          bucket = client.bucket(bucket_name)
+          blob_prefix = f"{prefix}/segments/" if prefix else "segments/"
+          downloaded = 0
+          for blob in client.list_blobs(bucket, prefix=blob_prefix):
+              name = blob.name
+              if not name.endswith("/completed_minute_flow.csv"):
+                  continue
+              relative = Path(name[len(blob_prefix):])
+              if len(relative.parts) != 2:
+                  continue
+              target = root / relative.parts[0] / relative.parts[1]
+              target.parent.mkdir(parents=True, exist_ok=True)
+              blob.download_to_filename(target)
+              downloaded += 1
+          print(f"Downloaded {downloaded} finalized summary files.")
+          if downloaded == 0:
+              (root / "SKIP.json").write_text(
+                  '{"status":"skip","reason":"durable archive contains no finalized summary files","research_only":true,"strategy_evaluated":false}\n',
+                  encoding="utf-8",
+              )
+          PY
+
+      - name: Run frozen research evaluator
+        run: |
+          set -euo pipefail
+          python scripts/run_public_flow_volatility_pocket.py             --data-dir data/inputs/public_flow             --output-dir artifacts/public-flow-volatility-pocket
+
+      - name: Upload research report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-flow-volatility-pocket-${{ github.run_id }}
+          path: artifacts/public-flow-volatility-pocket
+          if-no-files-found: error
+          retention-days: 90
