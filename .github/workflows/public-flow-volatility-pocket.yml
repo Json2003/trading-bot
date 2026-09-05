@@ -9,10 +9,25 @@ on:
       - main
     paths:
       - "scripts/run_public_flow_volatility_pocket.py"
+      - "scripts/restore_public_flow_checkpoint.py"
+      - "tests/test_public_flow_volatility_pocket.py"
       - "docs/public_flow_volatility_pocket_hypothesis.md"
       - ".github/workflows/public-flow-volatility-pocket.yml"
       - "requirements_research.txt"
   workflow_dispatch:
+    inputs:
+      gcs_bucket:
+        description: "Existing research archive bucket (or TRADE_FLOW_GCS_BUCKET variable)"
+        type: string
+        required: false
+      gcs_prefix:
+        description: "Frozen archive prefix"
+        type: string
+        default: "research/binance-trade-flow"
+      checkpoint:
+        description: "Explicit immutable checkpoints/<name>.json covering the screen"
+        type: string
+        required: true
 
 permissions:
   contents: read
@@ -37,11 +52,60 @@ jobs:
       - name: Install research dependencies
         run: python -m pip install --upgrade pip -r requirements_research.txt
 
-      - name: Run strict local-input check
+      - name: Test evaluation and checkpoint boundaries with synthetic data
+        run: python -m pytest -q tests/test_public_flow_volatility_pocket.py
+
+      - name: Authenticate for archive reads
+        if: github.event_name == 'workflow_dispatch'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Restore explicitly pinned research checkpoint
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          ARCHIVE_BUCKET: ${{ inputs.gcs_bucket || vars.TRADE_FLOW_GCS_BUCKET }}
+          ARCHIVE_PREFIX: ${{ inputs.gcs_prefix }}
+          ARCHIVE_CHECKPOINT: ${{ inputs.checkpoint }}
         run: |
           set -euo pipefail
-          mkdir -p data/inputs/public_flow artifacts/public-flow-volatility-pocket
-          python scripts/run_public_flow_volatility_pocket.py             --data-dir data/observations/binance_trade_flow             --output-dir artifacts/public-flow-volatility-pocket
+          python scripts/restore_public_flow_checkpoint.py \
+            --bucket "${ARCHIVE_BUCKET:?Research archive bucket required}" \
+            --prefix "$ARCHIVE_PREFIX" \
+            --checkpoint "$ARCHIVE_CHECKPOINT" \
+            --destination "$RUNNER_TEMP/public-flow-pinned" \
+            --provenance artifacts/public-flow-volatility-pocket/input_checkpoint.json
+
+      - name: Evaluate pinned archive
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          python scripts/run_public_flow_volatility_pocket.py \
+            --data-dir "$RUNNER_TEMP/public-flow-pinned" \
+            --output-dir artifacts/public-flow-volatility-pocket \
+            --require-evaluation
+
+      - name: Check local fixture readiness (skip is not research evidence)
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          python scripts/run_public_flow_volatility_pocket.py \
+            --data-dir data/observations/binance_trade_flow \
+            --output-dir artifacts/public-flow-volatility-pocket
+
+      - name: Summarize research status
+        if: always()
+        run: |
+          python - <<'PYCODE'
+          import json
+          import os
+          from pathlib import Path
+          path = Path("artifacts/public-flow-volatility-pocket/report.json")
+          text = "Evaluation did not finish; inspect the failed step."
+          if path.exists():
+              report = json.loads(path.read_text())
+              text = f"Research status: {report['status']}; {report['reason']}"
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write(text + "\n")
+          PYCODE
 
       - name: Upload research report
         if: always()

@@ -78,3 +78,27 @@ still requires the existing sample, block, and stressed-cost gates.
 No live or paper orders, leverage, risk-limit changes, broker credentials, or
 automatic promotion are permitted. A negative or insufficient result is
 reported as research evidence and does not trigger parameter changes.
+
+## Running the staged screen
+
+Push/PR runs execute synthetic evaluator regression tests and report local
+fixture readiness. A green fixture check with `status: skip` is not an
+experiment result.
+
+For an archived screen, manually dispatch `Public Flow Volatility-Pocket
+Research` on this branch with the existing GCS bucket/prefix and an explicit
+immutable `checkpoints/<name>.json` covering at least 60 continuous days for
+both symbols. The restore step reads only segments through that checkpoint,
+checks the recorded CSV hashes, and uploads checkpoint provenance alongside
+`report.json`. It does not read the mutable latest checkpoint or newer segments.
+Archive validation failure or an evaluator skip makes the manual run fail.
+
+The evaluator uses the first 60 days of common coverage: two warmup days,
+30 development days (four chronological blocks), then 28 confirmation days
+(two blocks). Signals before warmup completion and trades crossing from
+development into confirmation are excluded before portfolio selection. Exit
+prices must be strictly before the screen's exclusive end. Confirmation
+features may use preceding history, but development outcomes cannot use any
+confirmation prices. Extra archived days do not extend or retune this screen.
+The existing thresholds, cooldown, 20-trade block minimum and 86-bps stress
+cost are unchanged. Synthetic tests are software checks, not market evidence.

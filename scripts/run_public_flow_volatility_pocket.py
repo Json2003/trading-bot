@@ -20,7 +20,10 @@ from typing import Any
 UTC = timezone.utc
 MINUTE = timedelta(minutes=1)
 WINDOW_MINUTES = 1440
-MIN_DURATION = timedelta(days=90)
+WARMUP_DURATION = timedelta(days=2)
+DEVELOPMENT_DURATION = timedelta(days=30)
+HOLDOUT_DURATION = timedelta(days=28)
+MIN_DURATION = WARMUP_DURATION + DEVELOPMENT_DURATION + HOLDOUT_DURATION
 NOTIONAL = 3000.0
 ROUND_TRIP_COST = 0.0086
 HOLD_MINUTES = 30
@@ -216,6 +219,8 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--require-evaluation", action="store_true",
+                        help="Return nonzero when archive validation skips evaluation")
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -280,18 +285,29 @@ def main() -> int:
         start = max(starts)
         end = min(ends)
         if end - start + MINUTE < MIN_DURATION:
-            report["reason"] = "continuous public-flow window is shorter than 90 days"
+            report["reason"] = "continuous public-flow window is shorter than 60 days"
         else:
-            all_signals: list[dict[str, Any]] = []
-            for symbol, rows in rows_by_symbol.items():
-                usable = [row for row in rows if start <= row["time"] <= end]
-                for row in usable:
-                    row["symbol"] = symbol
-                all_signals.extend(build_signals(usable))
-            trades = choose_non_overlapping(all_signals)
             evaluation_start = start + WARMUP_DURATION
             development_end = evaluation_start + DEVELOPMENT_DURATION
             holdout_end = development_end + HOLDOUT_DURATION
+            all_signals: list[dict[str, Any]] = []
+            for symbol, rows in rows_by_symbol.items():
+                usable = [row for row in rows if start <= row["time"] < holdout_end]
+                for row in usable:
+                    row["symbol"] = symbol
+                all_signals.extend(build_signals(usable))
+            # Exclude boundary-crossing outcomes before portfolio selection.
+            # Development P&L must never use a confirmation-minute price.
+            eligible_signals = [
+                signal for signal in all_signals
+                if evaluation_start <= signal["signal_time"]
+                and signal["exit_time"] < holdout_end
+                and not (
+                    signal["signal_time"] < development_end
+                    and signal["exit_time"] >= development_end
+                )
+            ]
+            trades = choose_non_overlapping(eligible_signals)
             for trade in trades:
                 if trade["entry_time"] < evaluation_start or trade["exit_time"] > holdout_end:
                     trade["block"] = -1
@@ -340,7 +356,7 @@ def main() -> int:
         encoding="utf-8",
     )
     print(json.dumps(report, indent=2, sort_keys=True))
-    return 0
+    return 1 if args.require_evaluation and report["status"] != "evaluated" else 0
 
 
 if __name__ == "__main__":
