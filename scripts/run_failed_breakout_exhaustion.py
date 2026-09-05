@@ -27,7 +27,7 @@ except ModuleNotFoundError:
 LOOKBACK_HOURS = 24
 WARMUP_HOURS = 220
 HOLD_BARS = 4
-LATENCY_BARS = 1
+LATENCY_BARS = 1  # Signal candle to entry candle: next candle's open.
 REQUIRED_HOURS = 3 * 365 * 24
 HOLDOUT_HOURS = 11_520
 BLOCKS = 6
@@ -138,8 +138,9 @@ def candidate(index: int, btc: dict, eth: dict):
 
 
 def trade_return(pair, symbol: str, direction: int, signal_index: int):
-    entry_index = signal_index + 1 + LATENCY_BARS
-    exit_index = entry_index + HOLD_BARS
+    entry_index = signal_index + LATENCY_BARS
+    # Four hourly candles from entry open through the fourth candle's close.
+    exit_index = entry_index + HOLD_BARS - 1
     if exit_index >= len(pair):
         return None
     entry_bar = pair[entry_index].btc if symbol == "BTC" else pair[entry_index].eth
@@ -169,7 +170,8 @@ def trade_return(pair, symbol: str, direction: int, signal_index: int):
 def collect_segment(pair, btc, eth, start: int, end: int):
     rows = []
     index = max(start, WARMUP_HOURS)
-    last_allowed = end - (1 + LATENCY_BARS + HOLD_BARS)
+    # end is exclusive: every exit must remain inside this segment.
+    last_allowed = end - (LATENCY_BARS + HOLD_BARS)
     while index <= last_allowed:
         selected = candidate(index, btc, eth)
         if selected is None:
@@ -183,7 +185,7 @@ def collect_segment(pair, btc, eth, start: int, end: int):
                 "range_ratio": selected["range_ratio"],
             })
             rows.append(row)
-        index += 1 + LATENCY_BARS + HOLD_BARS
+        index += LATENCY_BARS + HOLD_BARS
     return rows
 
 
@@ -297,6 +299,8 @@ def run(btc_path: Path, eth_path: Path) -> dict:
             "range_multiple": RANGE_MULTIPLE,
             "hold_bars": HOLD_BARS,
             "latency_bars": LATENCY_BARS,
+            "entry_timing": "open of signal_index + latency_bars",
+            "exit_timing": "close of entry_index + hold_bars - 1",
             "symbols": ["BTCUSDT", "ETHUSDT"],
             "ambiguous_two_sided_breaches": "excluded",
         },
