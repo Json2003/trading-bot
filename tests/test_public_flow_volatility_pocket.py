@@ -165,3 +165,35 @@ def test_restore_rejects_invalid_archive(case, tmp_path):
         del bucket.objects["prefix/segments/segment-000001/completed_minute_flow.csv"]
     with pytest.raises((ValueError, KeyError)):
         restore_checkpoint(bucket, "prefix", name, tmp_path)
+
+
+@pytest.mark.parametrize("read_only", [True, False])
+def test_storage_client_uses_scoped_in_memory_credentials(monkeypatch, read_only):
+    from types import ModuleType, SimpleNamespace
+    from scripts.public_flow_storage import storage_client
+
+    recorded = {}
+    class Credentials:
+        project_id = "synthetic-project"
+
+        @classmethod
+        def from_service_account_info(cls, info, scopes):
+            recorded.update(info=info, scopes=scopes)
+            return cls()
+
+    def client(**kwargs):
+        recorded.update(kwargs)
+        return "synthetic-client"
+
+    google = ModuleType("google")
+    cloud = ModuleType("google.cloud")
+    oauth2 = ModuleType("google.oauth2")
+    cloud.storage = SimpleNamespace(Client=client)
+    oauth2.service_account = SimpleNamespace(Credentials=Credentials)
+    for name, module in (("google", google), ("google.cloud", cloud), ("google.oauth2", oauth2)):
+        monkeypatch.setitem(sys.modules, name, module)
+    monkeypatch.setenv("PUBLIC_FLOW_GCS_CREDENTIALS", '{"synthetic": true}')
+    assert storage_client(read_only=read_only) == "synthetic-client"
+    suffix = "read_only" if read_only else "read_write"
+    assert recorded["scopes"] == [f"https://www.googleapis.com/auth/devstorage.{suffix}"]
+    assert recorded["project"] == "synthetic-project"

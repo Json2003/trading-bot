@@ -378,12 +378,15 @@ class GCSArchive:
 
     def __init__(self, bucket_name: str, prefix: str) -> None:
         try:
-            from google.cloud import storage
+            try:
+                from scripts.public_flow_storage import storage_client
+            except ModuleNotFoundError:
+                from public_flow_storage import storage_client
         except ImportError as exc:
             raise RuntimeError(
                 "google-cloud-storage is required when --gcs-bucket is used"
             ) from exc
-        self.client = storage.Client()
+        self.client = storage_client()
         self.bucket = self.client.bucket(bucket_name)
         self.prefix = prefix.strip("/")
 

@@ -10,6 +10,7 @@ on:
     paths:
       - "scripts/run_public_flow_volatility_pocket.py"
       - "scripts/restore_public_flow_checkpoint.py"
+      - "scripts/public_flow_storage.py"
       - "tests/test_public_flow_volatility_pocket.py"
       - "docs/public_flow_volatility_pocket_hypothesis.md"
       - ".github/workflows/public-flow-volatility-pocket.yml"
@@ -55,15 +56,10 @@ jobs:
       - name: Test evaluation and checkpoint boundaries with synthetic data
         run: python -m pytest -q tests/test_public_flow_volatility_pocket.py
 
-      - name: Authenticate for archive reads
-        if: github.event_name == 'workflow_dispatch'
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-
       - name: Restore explicitly pinned research checkpoint
         if: github.event_name == 'workflow_dispatch'
         env:
+          PUBLIC_FLOW_GCS_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           ARCHIVE_BUCKET: ${{ inputs.gcs_bucket || vars.TRADE_FLOW_GCS_BUCKET }}
           ARCHIVE_PREFIX: ${{ inputs.gcs_prefix }}
           ARCHIVE_CHECKPOINT: ${{ inputs.checkpoint }}

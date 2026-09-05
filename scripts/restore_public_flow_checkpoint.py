@@ -74,9 +74,12 @@ def main() -> None:
     parser.add_argument("--destination", type=Path, required=True)
     parser.add_argument("--provenance", type=Path, required=True)
     args = parser.parse_args()
-    from google.cloud import storage
+    try:
+        from scripts.public_flow_storage import storage_client
+    except ModuleNotFoundError:
+        from public_flow_storage import storage_client
 
-    provenance = restore_checkpoint(storage.Client().bucket(args.bucket), args.prefix,
+    provenance = restore_checkpoint(storage_client(read_only=True).bucket(args.bucket), args.prefix,
                                     args.checkpoint, args.destination)
     args.provenance.parent.mkdir(parents=True, exist_ok=True)
     args.provenance.write_text(json.dumps(provenance, indent=2, sort_keys=True) + "\n")

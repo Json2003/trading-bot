@@ -47,3 +47,18 @@ gaps and zero overlaps.
 The workflow remains research-only. It does not import the broker, access
 account credentials, place orders, enable leverage, modify risk settings, or
 promote a strategy.
+
+## Execution requirements
+
+Archive clients consume `PUBLIC_FLOW_GCS_CREDENTIALS` in memory, supplied by
+the existing `GCP_SERVICE_ACCOUNT_KEY` secret in Actions. Evaluation requests
+read-only Storage scope; collection requests read/write scope. No third-party
+GitHub authentication action or on-disk credential file is needed. Persistent
+hosts may instead use application default credentials.
+
+The hourly 3,300-second Actions collector is a bounded pipeline check. It has
+an uncovered interval between jobs and cannot establish the evaluator's
+continuous 60-day window. Do not describe elapsed calendar time or a green
+segment as continuous coverage. A persistent collector must supply every
+completed minute and preserve checkpoints across restarts before this archive
+can qualify. Keep gaps explicit; do not fill them with invented observations.
