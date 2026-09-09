@@ -22,10 +22,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Restore historical data cache
+      - name: Restore historical data and checkpoint cache
         uses: actions/cache/restore@v4
         with:
-          path: data/historical/binance
+          path: |
+            data/historical/binance
+            artifacts/research/checkpoint.json
           key: binance-history-\${{ github.run_id }}
           restore-keys: |
             binance-history-
@@ -57,11 +59,13 @@ jobs:
             --min-aligned-bars 26280 \
             --max-data-age-days 45 \
             --output-dir artifacts/research/controller
-      - name: Save historical data cache
+      - name: Save historical data and checkpoint cache
         if: \${{ always() }}
         uses: actions/cache/save@v4
         with:
-          path: data/historical/binance
+          path: |
+            data/historical/binance
+            artifacts/research/checkpoint.json
           key: binance-history-\${{ github.run_id }}
       - name: Upload research report
         if: \${{ always() }}
