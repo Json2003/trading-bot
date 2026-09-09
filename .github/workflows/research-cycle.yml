@@ -28,7 +28,7 @@ jobs:
           path: |
             data/historical/binance
             artifacts/research/checkpoint.json
-          key: binance-history-\${{ github.run_id }}
+          key: binance-history-${{ github.run_id }}
           restore-keys: |
             binance-history-
       - name: Install dependencies
@@ -47,7 +47,7 @@ jobs:
       - name: Build data manifest
         run: |
           python scripts/build_research_manifest.py \
-            --dataset-id "binance-vision-\${{ github.run_id }}" \
+            --dataset-id "binance-vision-${{ github.run_id }}" \
             --file data/historical/binance/normalized/BTCUSDT_1h.csv \
             --file data/historical/binance/normalized/ETHUSDT_1h.csv \
             --output artifacts/research/manifest.json
@@ -60,18 +60,18 @@ jobs:
             --max-data-age-days 45 \
             --output-dir artifacts/research/controller
       - name: Save historical data and checkpoint cache
-        if: \${{ always() }}
+        if: ${{ always() }}
         uses: actions/cache/save@v4
         with:
           path: |
             data/historical/binance
             artifacts/research/checkpoint.json
-          key: binance-history-\${{ github.run_id }}
+          key: binance-history-${{ github.run_id }}
       - name: Upload research report
-        if: \${{ always() }}
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: governed-research-\${{ github.run_number }}
+          name: governed-research-${{ github.run_number }}
           path: artifacts/research
           if-no-files-found: error
           retention-days: 90
