@@ -51,12 +51,7 @@ jobs:
 
       - name: Merge verified daily increments
         run: |
-          python scripts/merge_daily_incremental.py \\
-            --symbols BTCUSDT ETHUSDT \\
-            --monthly-dir data/historical/binance/normalized \\
-            --daily-dir data/daily/binance \\
-            --output-dir data/historical/binance/normalized \\
-            --output artifacts/research/merged-data.json
+          python scripts/merge_daily_incremental.py --symbols BTCUSDT ETHUSDT --monthly-dir data/historical/binance/normalized --daily-dir data/daily/binance --output-dir data/historical/binance/normalized --output artifacts/research/merged-data.json
 
       - name: Build data manifest
         run: |
