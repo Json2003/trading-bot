@@ -59,6 +59,14 @@ jobs:
             --min-aligned-bars 26280 \
             --max-data-age-days 45 \
             --output-dir artifacts/research/controller
+      - name: Canonicalize controller results
+        if: ${{ always() }}
+        run: |
+          if test -f artifacts/research/controller/latest.json; then
+            python scripts/canonicalize_v3_results.py \\
+              --state artifacts/research/controller/latest.json \\
+              --output artifacts/research/canonical-results.json
+          fi
       - name: Save historical data and checkpoint cache
         if: ${{ always() }}
         uses: actions/cache/save@v4
