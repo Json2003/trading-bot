@@ -22,6 +22,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Restore historical data cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/historical/binance
+          key: binance-history-\${{ github.run_id }}
+          restore-keys: |
+            binance-history-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -29,23 +36,38 @@ jobs:
       - name: Download completed history
         run: |
           set -euo pipefail
-          UNTIL="\$(python - <<'PY'
+          UNTIL="$(python - <<'PY'
           from datetime import datetime, timezone
           print(datetime.now(timezone.utc).strftime("%Y-%m"))
           PY
           )"
-          python scripts/fetch_binance_vision_klines.py --symbols BTCUSDT ETHUSDT --since 2023-01 --until "\$UNTIL"
+          python scripts/fetch_binance_vision_klines.py --symbols BTCUSDT ETHUSDT --since 2023-01 --until "$UNTIL"
       - name: Build data manifest
         run: |
-          python scripts/build_research_manifest.py --dataset-id "binance-vision-\${GITHUB_RUN_ID}" --file data/historical/binance/normalized/BTCUSDT_1h.csv --file data/historical/binance/normalized/ETHUSDT_1h.csv --output artifacts/research/manifest.json
+          python scripts/build_research_manifest.py \
+            --dataset-id "binance-vision-\${{ github.run_id }}" \
+            --file data/historical/binance/normalized/BTCUSDT_1h.csv \
+            --file data/historical/binance/normalized/ETHUSDT_1h.csv \
+            --output artifacts/research/manifest.json
       - name: Run existing research controller
         run: |
-          python scripts/run_v3_research_controller.py --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv --min-aligned-bars 26280 --max-data-age-days 45 --output-dir artifacts/research/controller
+          python scripts/run_v3_research_controller.py \
+            --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv \
+            --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv \
+            --min-aligned-bars 26280 \
+            --max-data-age-days 45 \
+            --output-dir artifacts/research/controller
+      - name: Save historical data cache
+        if: \${{ always() }}
+        uses: actions/cache/save@v4
+        with:
+          path: data/historical/binance
+          key: binance-history-\${{ github.run_id }}
       - name: Upload research report
         if: \${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: governed-research-\${{ github.run_number }}
           path: artifacts/research
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 90
