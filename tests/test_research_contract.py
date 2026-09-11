@@ -1,4 +1,6 @@
 from research.checkpoint import CheckpointError, advance_checkpoint, can_advance
+from scripts.build_research_manifest import inspect_csv
+from scripts.merge_daily_incremental import merge_symbol
 from scripts.run_governed_research_cycle import iter_results, validate_result
 
 
@@ -83,3 +85,26 @@ def test_result_contract_rejects_execution_flags():
     except CheckpointError:
         return
     raise AssertionError("leverage-enabled result was accepted")
+
+
+def test_merge_and_manifest_preserve_bounded_source_gap(tmp_path):
+    monthly = tmp_path / "monthly"
+    daily = tmp_path / "daily"
+    output = tmp_path / "output"
+    monthly.mkdir()
+    rows = [
+        "timestamp,open,high,low,close,volume",
+        "2023-03-24T11:00:00Z,100,101,99,100,10",
+        "2023-03-24T14:00:00Z,100,101,99,100,10",
+    ]
+    (monthly / "BTCUSDT_1h.csv").write_text("\n".join(rows) + "\n", encoding="utf-8")
+
+    result = merge_symbol(
+        "BTCUSDT",
+        monthly_dir=monthly,
+        daily_dir=daily,
+        output_dir=output,
+    )
+    assert result["rows"] == 2
+    manifest_file = inspect_csv(output / "BTCUSDT_1h.csv")
+    assert manifest_file["gaps_over_1_5_hours"][0]["hours"] == 3.0
