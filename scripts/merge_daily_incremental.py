@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 FIELDS = ("timestamp", "open", "high", "low", "close", "volume")
+MAX_ALLOWED_GAP_HOURS = 6.0
 
 
 def read_csv(path: Path) -> dict[str, dict[str, str]]:
@@ -42,10 +43,11 @@ def validate_contiguous(rows: dict[str, dict[str, str]], symbol: str) -> None:
         for value in rows
     )
     for previous, current in zip(timestamps, timestamps[1:]):
-        if (current - previous).total_seconds() > 5400:
+        gap_hours = (current - previous).total_seconds() / 3600
+        if gap_hours > MAX_ALLOWED_GAP_HOURS:
             raise ValueError(
-                f"{symbol} merged data has a gap from {previous.isoformat()} "
-                f"to {current.isoformat()}"
+                f"{symbol} merged data has a gap over {MAX_ALLOWED_GAP_HOURS:g} hours "
+                f"from {previous.isoformat()} to {current.isoformat()}"
             )
 
 
