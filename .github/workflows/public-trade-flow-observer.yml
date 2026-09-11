@@ -1,0 +1,33 @@
+name: Public Trade Flow Observer Tests
+
+on:
+  push:
+    branches:
+      - research/public-trade-flow-observer
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/monitor_binance_trade_flow.py"
+      - "tests/test_trade_flow_monitor.py"
+      - "requirements_research.txt"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-trade-flow-observer
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install observer dependencies
+        run: python -m pip install --upgrade pip -r requirements_research.txt
+      - name: Run observer regression tests
+        run: python -m pytest -q tests/test_trade_flow_monitor.py
