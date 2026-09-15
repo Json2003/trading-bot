@@ -1,0 +1,83 @@
+name: Funding 8bps One-Year Reproduction
+
+on:
+  push:
+    branches:
+      - research/funding-8bps-one-year
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/funding-8bps-one-year.yml"
+      - "scripts/fetch_binance_vision_klines.py"
+      - "scripts/fetch_binance_funding_rates.py"
+      - "scripts/fetch_current_binance_data.py"
+      - "scripts/run_funding_8bps_one_year.py"
+      - "scripts/run_funding_positioning_reversal.py"
+      - "scripts/execution_model.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: funding-8bps-one-year
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Download completed historical monthly data
+        run: |
+          set -euo pipefail
+          UNTIL="$(date -u +%Y-%m)"
+          for attempt in 1 2 3; do
+            if python scripts/fetch_binance_vision_klines.py --symbols BTCUSDT ETHUSDT --since 2023-01 --until "$UNTIL"; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep 15
+          done
+          for attempt in 1 2 3; do
+            if python scripts/fetch_binance_funding_rates.py --symbols BTCUSDT ETHUSDT --since 2023-01 --until "$UNTIL"; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep 15
+          done
+      - name: Append completed current-month data
+        run: |
+          set -euo pipefail
+          CUTOFF="$(date -u -d '1 hour ago' +%Y-%m-%dT%H:00:00Z)"
+          for attempt in 1 2 3; do
+            if python scripts/fetch_current_binance_data.py --cutoff "$CUTOFF"; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep 15
+          done
+          echo "CUTOFF=$CUTOFF" >> "$GITHUB_ENV"
+      - name: Run one-year backtest and exact reproduction
+        run: |
+          set -euo pipefail
+          python scripts/run_funding_8bps_one_year.py             --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv             --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv             --btc-funding-path data/historical/binance/funding/BTCUSDT_funding.csv             --eth-funding-path data/historical/binance/funding/ETHUSDT_funding.csv             --output artifacts/funding-8bps-one-year/report.json
+      - name: Upload one-year artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: funding-8bps-one-year-${{ github.run_number }}
+          path: artifacts/funding-8bps-one-year
+          if-no-files-found: error
+          retention-days: 90
