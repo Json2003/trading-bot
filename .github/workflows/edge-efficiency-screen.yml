@@ -1,0 +1,43 @@
+name: Edge Efficiency Screen
+
+on:
+  push:
+    branches:
+      - agent/edge-efficiency-screen
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: edge-efficiency-screen
+  cancel-in-progress: false
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Download completed Binance Vision history
+        run: |
+          set -euo pipefail
+          UNTIL="$(date -u +%Y-%m)"
+          python scripts/fetch_binance_vision_klines.py             --symbols BTCUSDT ETHUSDT             --since 2023-01             --until "$UNTIL"
+      - name: Run edge-efficiency screen
+        run: |
+          python scripts/run_edge_efficiency_screen.py             --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv             --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv             --output artifacts/edge-efficiency/edge_screen.json
+      - name: Run mathematical pattern scan
+        run: |
+          python scripts/run_pattern_trend_scan.py             --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv             --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv             --output artifacts/edge-efficiency/pattern_scan.json
+      - name: Upload edge report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: edge-efficiency-screen-${{ github.run_number }}
+          path: artifacts/edge-efficiency
+          if-no-files-found: error
+          retention-days: 90

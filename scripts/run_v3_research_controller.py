@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Keep the v3 historical research loop running until it is ready.
+"""Run bounded v3 historical research without automatic readiness.
 
 This controller is deliberately research-only.  It runs the existing causal
 v3 backtest at the two requested order sizes, persists a small state file, and
@@ -7,10 +7,13 @@ returns to a waiting state when the data and code have not changed.  It never
 changes an active portfolio, stages a candidate, enables leverage, contacts a
 broker, or places an order.
 
-For a long-running local process use ``--until-ready``.  For a scheduler such
-as GitHub Actions, invoke the controller once per scheduled run; a new data
-fingerprint causes a fresh research iteration.  ``--force`` is available for
-deliberate reruns against unchanged inputs.
+Historical confirmation windows roll forward as new data arrives, so they
+overlap almost completely.  They cannot be counted as independent evidence.
+This controller therefore never sets ``strategy_ready`` or accumulates a
+readiness streak.  A historical pass is only a manual-freeze candidate for a
+separate confirmation process that must use newly observed, non-overlapping
+future data.  For a scheduler such as GitHub Actions, invoke the controller
+once per completed calendar month; unchanged inputs are skipped.
 """
 
 from __future__ import annotations
@@ -20,7 +23,6 @@ import hashlib
 import json
 import math
 import statistics
-import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -33,7 +35,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct import fallback
     from run_momentum_volatility_v3 import align_pair, research
 
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 DEFAULT_MIN_CONFIRMATION_ENTRIES = 5
 DEFAULT_MAX_DATA_AGE_DAYS = 45.0
 REQUIRED_ORDER_SIZE_KEYS = frozenset({"4000", "6000"})
@@ -44,6 +46,23 @@ DEFAULT_MIN_ALIGNED_BARS = 3 * 365 * 24
 DEFAULT_ORDER_NOTIONALS = (4_000.0, 6_000.0)
 DEFAULT_MIN_FULL_ENTRIES = 8
 DEFAULT_MIN_FOLD_ENTRIES = 5
+
+
+def _fresh_state(*, migration_notice: str | None = None) -> dict[str, Any]:
+    """Return a fail-closed, non-promotable controller state."""
+
+    state: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION,
+        "status": "researching",
+        "strategy_ready": False,
+        "iterations_completed": 0,
+        "history": [],
+        "automatic_promotion": False,
+        "manual_frozen_confirmation_required": True,
+    }
+    if migration_notice:
+        state["migration_notice"] = migration_notice
+    return state
 
 
 def _utc_now() -> str:
@@ -64,14 +83,7 @@ def _atomic_write_json(path: Path, payload: Mapping[str, Any]) -> None:
 
 def _read_state(path: Path) -> dict[str, Any]:
     if not path.exists():
-        return {
-            "schema_version": SCHEMA_VERSION,
-            "status": "researching",
-            "strategy_ready": False,
-            "iterations_completed": 0,
-            "consecutive_ready_passes": 0,
-            "history": [],
-        }
+        return _fresh_state()
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError(f"research state must be a JSON object: {path}")
@@ -79,18 +91,12 @@ def _read_state(path: Path) -> dict[str, Any]:
         # Never trust readiness from an older state format. Reset to a clean
         # research state so an optional artifact restore cannot block the
         # monthly job or carry an old winner across changed gate semantics.
-        return {
-            "schema_version": SCHEMA_VERSION,
-            "status": "researching",
-            "strategy_ready": False,
-            "iterations_completed": 0,
-            "consecutive_ready_passes": 0,
-            "history": [],
-            "migration_notice": (
+        return _fresh_state(
+            migration_notice=(
                 f"discarded unsupported research state schema "
                 f"{payload.get('schema_version')!r}"
-            ),
-        }
+            )
+        )
     if not isinstance(payload.get("strategy_ready", False), bool):
         raise ValueError("research state strategy_ready must be boolean")
     if (
@@ -102,38 +108,17 @@ def _read_state(path: Path) -> dict[str, Any]:
     history = payload.get("history", [])
     if not isinstance(history, list):
         raise ValueError("research state history must be a list")
-    payload.setdefault("consecutive_ready_passes", 0)
-    payload.setdefault("last_ready_signature", None)
-    payload.setdefault("last_ready_experiment", None)
-    payload.setdefault("last_ready_candidates", [])
-    consecutive = payload["consecutive_ready_passes"]
-    if not isinstance(consecutive, int) or isinstance(consecutive, bool) or consecutive < 0:
-        raise ValueError("research state consecutive_ready_passes must be non-negative")
-    for field in ("last_ready_signature", "last_ready_experiment"):
-        if payload[field] is not None and not isinstance(payload[field], Mapping):
-            raise ValueError(f"research state {field} must be an object or null")
-    if (
-        not isinstance(payload["last_ready_candidates"], list)
-        or not all(isinstance(item, str) for item in payload["last_ready_candidates"])
-    ):
-        raise ValueError("research state last_ready_candidates must be a string list")
+    payload["automatic_promotion"] = False
+    payload["manual_frozen_confirmation_required"] = True
     if payload.get("strategy_ready"):
-        last_run = payload.get("last_run")
-        readiness = last_run.get("readiness") if isinstance(last_run, Mapping) else None
-        if (
-            not isinstance(last_run, Mapping)
-            or last_run.get("strategy_ready") is not True
-            or not isinstance(readiness, Mapping)
-            or readiness.get("strategy_ready") is not True
-        ):
-            # A cached flag without the complete evidence record is not
-            # sufficient to report readiness after an artifact restore.
-            payload["strategy_ready"] = False
-            payload["status"] = "researching"
-            payload["consecutive_ready_passes"] = 0
-            payload["last_ready_signature"] = None
-            payload["last_ready_experiment"] = None
-            payload["last_ready_candidates"] = []
+        # Even a complete artifact cannot establish readiness here because
+        # rolling historical confirmation periods overlap across iterations.
+        payload["strategy_ready"] = False
+        payload["status"] = "researching"
+        payload["migration_notice"] = (
+            "cleared cached readiness: overlapping historical confirmations "
+            "cannot establish strategy readiness"
+        )
     return payload
 
 
@@ -488,7 +473,13 @@ def evaluate_readiness(
     minimum_fold_entries: int = DEFAULT_MIN_FOLD_ENTRIES,
     minimum_confirmation_entries: int = DEFAULT_MIN_CONFIRMATION_ENTRIES,
 ) -> dict[str, Any]:
-    """Require one candidate to pass the complete gate at exactly both sizes."""
+    """Evaluate the historical gate without authorizing promotion.
+
+    The candidate reports include a rolling final-year holdout.  That is useful
+    diagnostics, but later controller runs share most of the same bars.  A
+    historical pass can therefore only create a manual-freeze shortlist; it
+    must never become ``strategy_ready`` in this controller.
+    """
 
     normalized_reports = {str(size): report for size, report in reports.items()}
     global_reasons: list[str] = []
@@ -531,10 +522,18 @@ def evaluate_readiness(
     )
     if global_reasons:
         ready_candidates = []
+    historical_gate_pass = bool(ready_candidates)
     return {
-        "pass": bool(ready_candidates),
-        "strategy_ready": bool(ready_candidates),
+        "pass": historical_gate_pass,
+        "historical_gate_pass": historical_gate_pass,
+        "strategy_ready": False,
         "ready_candidates": ready_candidates,
+        "shortlist_for_manual_freeze_only": ready_candidates,
+        "promotion_blocker": (
+            "rolling historical confirmation windows overlap across data vintages; "
+            "a separately frozen manual confirmation on new, non-overlapping "
+            "future data is required"
+        ),
         "required_sizes": sorted(REQUIRED_ORDER_SIZE_KEYS),
         "common_candidates": sorted(common_candidates),
         "checks_by_size": checks_by_size,
@@ -543,7 +542,9 @@ def evaluate_readiness(
             "same_candidate_must_pass_all_required_sizes": True,
             "required_order_notionals": [4_000.0, 6_000.0],
             "required_confirmation_holdout": True,
-            "required_distinct_data_vintages": 3,
+            "overlapping_historical_vintages_count_as_confirmation": False,
+            "automatic_strategy_ready": False,
+            "manual_frozen_non_overlapping_confirmation_required": True,
             "leverage_allowed": False,
             "paper_promotion_is_not_automatic": True,
         },
@@ -641,8 +642,15 @@ def _run_iteration(
     finished_at = _utc_now()
     return {
         "schema_version": SCHEMA_VERSION,
-        "status": "ready" if readiness["strategy_ready"] else "researching",
-        "strategy_ready": bool(readiness["strategy_ready"]),
+        "status": (
+            "candidate_requires_manual_frozen_confirmation"
+            if readiness["historical_gate_pass"]
+            else "researching"
+        ),
+        "historical_gate_pass": bool(readiness["historical_gate_pass"]),
+        "strategy_ready": False,
+        "automatic_promotion": False,
+        "manual_frozen_confirmation_required": True,
         "iteration": iteration,
         "started_at": started_at,
         "finished_at": finished_at,
@@ -685,11 +693,6 @@ def run_controller(
     minimum_fold_entries: int = DEFAULT_MIN_FOLD_ENTRIES,
     minimum_confirmation_entries: int = DEFAULT_MIN_CONFIRMATION_ENTRIES,
     max_data_age_days: float | None = DEFAULT_MAX_DATA_AGE_DAYS,
-    required_consecutive_passes: int = 3,
-    until_ready: bool = False,
-    interval_hours: float = 24.0,
-    max_iterations: int = 0,
-    force: bool = False,
 ) -> dict[str, Any]:
     if len(order_notionals) != 2 or set(order_notionals) != {4_000.0, 6_000.0}:
         raise ValueError("the controller requires exactly $4,000 and $6,000 order notionals")
@@ -702,8 +705,6 @@ def run_controller(
         or minimum_confirmation_entries < 1
     ):
         raise ValueError("research minimums must be positive")
-    if required_consecutive_passes < 1:
-        raise ValueError("required_consecutive_passes must be positive")
     cost_values = (fees_bps, slippage_bps, stress_fees_bps, stress_slippage_bps)
     if not all(math.isfinite(value) and value >= 0 for value in cost_values):
         raise ValueError("cost assumptions must be finite and non-negative")
@@ -719,13 +720,6 @@ def run_controller(
         not math.isfinite(max_data_age_days) or max_data_age_days <= 0
     ):
         raise ValueError("max_data_age_days must be finite and positive")
-    if until_ready and max_iterations == 0:
-        raise ValueError("--until-ready requires a finite --max-iterations safety bound")
-    if until_ready and (not math.isfinite(interval_hours) or interval_hours < 0):
-        raise ValueError("interval_hours must be finite and non-negative")
-    if max_iterations < 0:
-        raise ValueError("max_iterations cannot be negative")
-
     btc_path = btc_path.resolve()
     eth_path = eth_path.resolve()
     context_path = context_path.resolve() if context_path else None
@@ -751,115 +745,89 @@ def run_controller(
         "minimum_fold_entries": minimum_fold_entries,
         "minimum_confirmation_entries": minimum_confirmation_entries,
         "max_data_age_days": max_data_age_days,
-        "required_consecutive_passes": required_consecutive_passes,
+        "automatic_strategy_ready": False,
+        "overlapping_historical_vintages_count_as_confirmation": False,
     }
 
     state = _read_state(state_path)
     source_fingerprint = _source_fingerprint()
-    iterations_this_call = 0
-    while True:
-        data_paths = (btc_path, eth_path) + ((context_path,) if context_path else ())
-        data_fingerprint = _data_fingerprint(data_paths)
-        signature = _signature(data_fingerprint, source_fingerprint, research_config)
-        if not force and state.get("last_signature") == signature:
-            state.update({
-                "schema_version": SCHEMA_VERSION,
-                "status": "ready" if state.get("strategy_ready") else "waiting_for_new_data",
-                "last_checked_at": _utc_now(),
-                "active_profile_changed": False,
-            })
-            _save_status(state_path, state)
-            if not until_ready:
-                return state
-            iterations_this_call += 1
-            if max_iterations and iterations_this_call >= max_iterations:
-                return state
-            time.sleep(interval_hours * 3600.0)
-            continue
-
-        iteration = int(state.get("iterations_completed", 0)) + 1
-        result = _run_iteration(
-            iteration=iteration,
-            btc_path=btc_path,
-            eth_path=eth_path,
-            output_dir=output_dir,
-            minimum_aligned_bars=minimum_aligned_bars,
-            order_notionals=order_notionals,
-            research_initial_balance=research_initial_balance,
-            fees_bps=fees_bps,
-            slippage_bps=slippage_bps,
-            stress_fees_bps=stress_fees_bps,
-            stress_slippage_bps=stress_slippage_bps,
-            horizon_initial_balance=horizon_initial_balance,
-            context_path=context_path,
-            minimum_full_entries=minimum_full_entries,
-            minimum_fold_entries=minimum_fold_entries,
-            minimum_confirmation_entries=minimum_confirmation_entries,
-            max_data_age_days=max_data_age_days,
-            research_config=research_config,
-            data_fingerprint=data_fingerprint,
-            source_fingerprint=source_fingerprint,
-        )
-        candidate_ready = bool(result["strategy_ready"])
-        ready_candidates = list(result["readiness"]["ready_candidates"])
-        experiment_signature = {"source": dict(source_fingerprint), "config": dict(research_config)}
-        previous_ready_signature = state.get("last_ready_signature")
-        same_data = previous_ready_signature == signature
-        same_experiment = state.get("last_ready_experiment") == experiment_signature
-        same_candidates = state.get("last_ready_candidates") == ready_candidates
-        if candidate_ready:
-            previous_count = int(state.get("consecutive_ready_passes", 0))
-            consecutive_ready_passes = (
-                previous_count + 1
-                if same_experiment and same_candidates and not same_data
-                else 1
-            )
-            state["last_ready_signature"] = signature
-            state["last_ready_experiment"] = experiment_signature
-            state["last_ready_candidates"] = ready_candidates
-        else:
-            consecutive_ready_passes = 0
-            state["last_ready_signature"] = None
-            state["last_ready_experiment"] = None
-            state["last_ready_candidates"] = []
-        strategy_ready = candidate_ready and consecutive_ready_passes >= required_consecutive_passes
-        result["candidate_ready"] = candidate_ready
-        result["strategy_ready"] = strategy_ready
-        result["consecutive_ready_passes"] = consecutive_ready_passes
-        result["required_consecutive_passes"] = required_consecutive_passes
-
+    data_paths = (btc_path, eth_path) + ((context_path,) if context_path else ())
+    data_fingerprint = _data_fingerprint(data_paths)
+    signature = _signature(data_fingerprint, source_fingerprint, research_config)
+    if state.get("last_signature") == signature:
         state.update({
             "schema_version": SCHEMA_VERSION,
-            "status": "ready" if strategy_ready else "candidate_for_review" if candidate_ready else "researching",
-            "strategy_ready": strategy_ready,
-            "iterations_completed": iteration,
+            "status": "waiting_for_new_data",
+            "strategy_ready": False,
             "last_checked_at": _utc_now(),
-            "last_run": result,
-            "last_signature": signature,
             "active_profile_changed": False,
-            "paper_orders_placed": False,
-            "leverage_enabled": False,
-            "consecutive_ready_passes": consecutive_ready_passes,
-        })
-        _append_history(state, {
-            "iteration": iteration,
-            "finished_at": result["finished_at"],
-            "data_end": result["data_quality"]["end"],
-            "data_signature": signature,
-            "candidate_ready": candidate_ready,
-            "strategy_ready": strategy_ready,
-            "consecutive_ready_passes": consecutive_ready_passes,
-            "ready_candidates": result["readiness"]["ready_candidates"],
-            "report_paths": result["report_paths"],
+            "automatic_promotion": False,
+            "manual_frozen_confirmation_required": True,
         })
         _save_status(state_path, state)
-        iterations_this_call += 1
-        force = False
-        if strategy_ready or not until_ready:
-            return state
-        if max_iterations and iterations_this_call >= max_iterations:
-            return state
-        time.sleep(interval_hours * 3600.0)
+        return state
+
+    iteration = int(state.get("iterations_completed", 0)) + 1
+    result = _run_iteration(
+        iteration=iteration,
+        btc_path=btc_path,
+        eth_path=eth_path,
+        output_dir=output_dir,
+        minimum_aligned_bars=minimum_aligned_bars,
+        order_notionals=order_notionals,
+        research_initial_balance=research_initial_balance,
+        fees_bps=fees_bps,
+        slippage_bps=slippage_bps,
+        stress_fees_bps=stress_fees_bps,
+        stress_slippage_bps=stress_slippage_bps,
+        horizon_initial_balance=horizon_initial_balance,
+        context_path=context_path,
+        minimum_full_entries=minimum_full_entries,
+        minimum_fold_entries=minimum_fold_entries,
+        minimum_confirmation_entries=minimum_confirmation_entries,
+        max_data_age_days=max_data_age_days,
+        research_config=research_config,
+        data_fingerprint=data_fingerprint,
+        source_fingerprint=source_fingerprint,
+    )
+    historical_gate_pass = bool(result["historical_gate_pass"])
+    result["candidate_ready"] = historical_gate_pass
+    result["strategy_ready"] = False
+    result["automatic_promotion"] = False
+    result["manual_frozen_confirmation_required"] = True
+
+    state.update({
+        "schema_version": SCHEMA_VERSION,
+        "status": (
+            "candidate_requires_manual_frozen_confirmation"
+            if historical_gate_pass
+            else "researching"
+        ),
+        "strategy_ready": False,
+        "iterations_completed": iteration,
+        "last_checked_at": _utc_now(),
+        "last_run": result,
+        "last_signature": signature,
+        "active_profile_changed": False,
+        "paper_orders_placed": False,
+        "leverage_enabled": False,
+        "automatic_promotion": False,
+        "manual_frozen_confirmation_required": True,
+    })
+    _append_history(state, {
+        "iteration": iteration,
+        "finished_at": result["finished_at"],
+        "data_end": result["data_quality"]["end"],
+        "data_signature": signature,
+        "historical_gate_pass": historical_gate_pass,
+        "candidate_ready": historical_gate_pass,
+        "strategy_ready": False,
+        "automatic_promotion": False,
+        "ready_candidates": result["readiness"]["ready_candidates"],
+        "report_paths": result["report_paths"],
+    })
+    _save_status(state_path, state)
+    return state
 
 
 def main() -> int:
@@ -880,34 +848,6 @@ def main() -> int:
     parser.add_argument("--min-fold-entries", type=int, default=DEFAULT_MIN_FOLD_ENTRIES)
     parser.add_argument("--min-confirmation-entries", type=int, default=DEFAULT_MIN_CONFIRMATION_ENTRIES)
     parser.add_argument("--max-data-age-days", type=float, default=DEFAULT_MAX_DATA_AGE_DAYS)
-    parser.add_argument(
-        "--required-consecutive-passes",
-        type=int,
-        default=3,
-        help="distinct data vintages required before strategy_ready becomes true",
-    )
-    parser.add_argument(
-        "--until-ready",
-        action="store_true",
-        help="continue polling until the same candidate passes the required data vintages",
-    )
-    parser.add_argument(
-        "--interval-hours",
-        type=float,
-        default=24.0,
-        help="sleep between checks while --until-ready is active",
-    )
-    parser.add_argument(
-        "--max-iterations",
-        type=int,
-        default=0,
-        help="optional safety bound for one invocation; 0 means no bound",
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="rerun even when the data and research code are unchanged",
-    )
     args = parser.parse_args()
     state = run_controller(
         btc_path=args.btc_path,
@@ -926,11 +866,6 @@ def main() -> int:
         minimum_fold_entries=args.min_fold_entries,
         minimum_confirmation_entries=args.min_confirmation_entries,
         max_data_age_days=args.max_data_age_days,
-        required_consecutive_passes=args.required_consecutive_passes,
-        until_ready=args.until_ready,
-        interval_hours=args.interval_hours,
-        max_iterations=args.max_iterations,
-        force=args.force,
     )
     print(
         json.dumps(

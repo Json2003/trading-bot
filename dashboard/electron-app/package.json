@@ -17,8 +17,8 @@
     "dist": "npm run check && npm test && electron-builder -p never"
   },
   "devDependencies": {
-    "electron": "^38.0.0",
-    "electron-builder": "^24.13.3"
+    "electron": "^39.8.10",
+    "electron-builder": "^26.15.3"
   },
   "build": {
     "publish": null,

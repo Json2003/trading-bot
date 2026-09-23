@@ -176,7 +176,7 @@ jobs:
             --since 2023-01 \
             --until "$UNTIL"
 
-      - name: Run strict paper-only research controller
+      - name: Run non-promotable paper-only research snapshot
         run: |
           set -euo pipefail
           python scripts/run_v3_research_controller.py \
@@ -184,7 +184,6 @@ jobs:
             --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv \
             --min-aligned-bars 26280 \
             --max-data-age-days 45 \
-            --required-consecutive-passes 3 \
             --output-dir artifacts/momentum-v3/research-controller
 
       - name: Upload research state and reports

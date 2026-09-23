@@ -1,0 +1,64 @@
+version: 1
+description: >
+  Predefined cryptocurrency research families. Entries are hypotheses to test,
+  not trading recommendations. Holdouts are never used for selection.
+defaults:
+  data_cutoff_policy: completed_utc_candles_only
+  latency_bars: 1
+  round_trip_cost_bps: 86
+  fill_fraction: 0.80
+  rejected_fill_rate: 0.02
+  leverage_enabled: false
+  orders_enabled: false
+  promotion_enabled: false
+  min_trades_per_walk_forward_block: 20
+  walk_forward_blocks: 6
+families:
+  - id: trend_structure
+    status: active
+    mechanisms: [slope, acceleration, higher_highs, higher_lows, trend_duration]
+    required_data: [spot_ohlcv]
+  - id: momentum
+    status: active
+    mechanisms: [persistence, decay, impulse_continuation, multi_horizon_returns]
+    required_data: [spot_ohlcv]
+  - id: volatility
+    status: active
+    mechanisms: [contraction_expansion, clustering, exhaustion, range_regimes]
+    required_data: [spot_ohlcv]
+  - id: breakout
+    status: active
+    mechanisms: [continuation, retest, failed_breakout]
+    required_data: [spot_ohlcv]
+  - id: mean_reversion
+    status: active
+    mechanisms: [overshoot, vwap_distance, ema_distance, range_return]
+    required_data: [spot_ohlcv]
+  - id: volume_confirmation
+    status: active
+    mechanisms: [abnormal_volume, price_volume_confirmation]
+    required_data: [spot_ohlcv]
+  - id: derivatives_positioning
+    status: active
+    mechanisms: [funding, open_interest, basis, liquidations]
+    required_data: [spot_ohlcv, futures_metrics]
+  - id: order_flow
+    status: staged
+    mechanisms: [aggressive_flow, book_imbalance, large_trades]
+    required_data: [trade_flow, book_ticker]
+  - id: cross_asset
+    status: active
+    mechanisms: [btc_eth_leadership, divergence, correlation]
+    required_data: [spot_ohlcv]
+  - id: regime_transition
+    status: active
+    mechanisms: [trend_range, panic_recovery, boom_bust]
+    required_data: [spot_ohlcv, macro_reference]
+  - id: calendar_effects
+    status: exploratory
+    mechanisms: [hour_of_day, day_of_week, weekend, month_end]
+    required_data: [spot_ohlcv]
+  - id: external_positioning
+    status: exploratory
+    mechanisms: [etf_flows, options_skew, implied_volatility]
+    required_data: [external_timestamped_data]

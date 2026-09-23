@@ -159,4 +159,5 @@ include = [
   "strategies*",
   "tradingbot_core*",
   "tradingbot_ibkr*",
+  "research*",
 ]

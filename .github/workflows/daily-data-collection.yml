@@ -31,12 +31,9 @@ jobs:
           fi
 
       - name: Run daily collector
-        env:
-          BINANCE_API_KEY: ${{ secrets.BINANCE_API_KEY }}
-          BINANCE_SECRET:  ${{ secrets.BINANCE_SECRET }}
         run: |
-          set -euxo pipefail
-          python scripts/daily_collect.py  # your data script
+          set -euo pipefail
+          python scripts/daily_collect.py --symbols BTCUSDT ETHUSDT --days 45 --out-dir data/daily/binance
           echo "Collector finished."
 
       - name: Configure git user

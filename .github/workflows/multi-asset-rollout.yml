@@ -1,0 +1,31 @@
+name: Multi-Asset Rollout Policy
+
+on:
+  pull_request:
+    paths:
+      - "config/multi_asset_rollout.json"
+      - "scripts/evaluate_multi_asset_rollout.py"
+      - "tests/test_multi_asset_rollout.py"
+      - ".github/workflows/multi-asset-rollout.yml"
+  workflow_dispatch:
+    inputs:
+      equity:
+        description: "Settled account equity used for policy evaluation"
+        required: false
+        default: "25000"
+
+permissions:
+  contents: read
+
+jobs:
+  policy-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run policy tests
+        run: python -m unittest -v tests/test_multi_asset_rollout.py
+      - name: Evaluate default milestone
+        run: python scripts/evaluate_multi_asset_rollout.py --equity "${{ inputs.equity || '25000' }}"
