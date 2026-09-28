@@ -1,0 +1,52 @@
+# Single frozen, paper-only hypothesis. No orders or promotion.
+name: Liquidity Shock Mean Reversion
+
+on:
+  push:
+    branches:
+      - research/liquidity-shock-mean-reversion
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/liquidity-shock-mean-reversion.yml"
+      - "scripts/run_liquidity_shock_mean_reversion.py"
+      - "scripts/execution_model.py"
+      - "scripts/run_momentum_volatility_research.py"
+      - "scripts/run_momentum_volatility_v3.py"
+      - "scripts/fetch_binance_vision_klines.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: liquidity-shock-mean-reversion
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Download completed Binance Vision candles
+        run: |
+          set -euo pipefail
+          UNTIL="$(date -u +%Y-%m)"
+          python scripts/fetch_binance_vision_klines.py --symbols BTCUSDT ETHUSDT --since 2023-01 --until "$UNTIL"
+      - name: Run one frozen hypothesis
+        run: |
+          set -euo pipefail
+          python scripts/run_liquidity_shock_mean_reversion.py             --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv             --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv             --output artifacts/liquidity-shock-mean-reversion/report.json
+      - name: Upload result artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: liquidity-shock-mean-reversion-${{ github.run_number }}
+          path: artifacts/liquidity-shock-mean-reversion
+          if-no-files-found: error
+          retention-days: 90
