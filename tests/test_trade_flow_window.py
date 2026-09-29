@@ -1,6 +1,7 @@
 import pytest
 
 from scripts.collect_trade_flow_window import (
+    GCSArchive,
     _checkpoint_after,
     _initialize_window_manifest,
     _recover_cursor,
@@ -89,3 +90,34 @@ def test_research_safeguard_fields_are_not_derived_from_trading_runtime():
     assert "ib_insync" not in source
     assert "placeOrder" not in source
     assert "submit_order" not in source
+
+
+def test_gcs_segment_objects_are_create_only(tmp_path):
+    uploads = []
+
+    class FakeBlob:
+        def __init__(self, name):
+            self.name = name
+
+        def upload_from_filename(self, filename, **kwargs):
+            uploads.append((self.name, kwargs))
+
+    class FakeBucket:
+        def blob(self, name):
+            return FakeBlob(name)
+
+    segment_dir = tmp_path / "segment-000001"
+    segment_dir.mkdir()
+    (segment_dir / "raw_events.jsonl.gz").write_bytes(b"raw")
+    (segment_dir / "segment_manifest.json").write_text("{}", encoding="utf-8")
+
+    archive = GCSArchive.__new__(GCSArchive)
+    archive.bucket = FakeBucket()
+    archive.prefix = "research/window"
+    archive.upload_segment(segment_dir)
+
+    assert [name for name, _ in uploads] == [
+        "research/window/segments/segment-000001/raw_events.jsonl.gz",
+        "research/window/segments/segment-000001/segment_manifest.json",
+    ]
+    assert all(options["if_generation_match"] == 0 for _, options in uploads)
