@@ -1,6 +1,6 @@
 # Sustained public trade-flow research window
 
-PR #276 now supports a durable, restart-safe collection window for the
+PR #276 supports a durable, restart-safe collection window for the
 normalized Binance USD-M public streams used by the observer.
 
 ## Storage contract
@@ -35,14 +35,35 @@ Any minute gap or overlap is recorded in the segment manifest. The sustained
 window must not be called continuous unless its checkpoint history has zero
 gaps and zero overlaps.
 
+## Starting collection
+
+The hourly workflow is scheduled on the repository's default branch only.
+Merge this workflow onto `main` before expecting scheduled runs. Manual
+dispatch is restricted to `main` as well.
+
+Before the first run, set the required repository secret and bucket variable
+below. Use a new empty GCS prefix for the initial archive. The workflow uses
+`TRADE_FLOW_GCS_PREFIX` when set; otherwise it selects
+`research/binance-trade-flow/pr276-btc-eth-90d-2026-09`. Later runs must
+reuse the same prefix and window ID. Do not point another window at an
+existing prefix. The collector checks its frozen window manifest and refuses
+a configuration mismatch.
+
+The workflow validates the secret and bucket before attempting Google
+authentication, so missing setup is reported before collection starts. It
+does not print the service-account key.
+
 ## Required repository configuration
 
 - Secret: `GCP_SERVICE_ACCOUNT_KEY`, with write access to the selected bucket
   and prefix.
 - Variable: `TRADE_FLOW_GCS_BUCKET`.
-- Optional variables: `TRADE_FLOW_GCS_PREFIX`,
-  `TRADE_FLOW_WINDOW_ID`, `TRADE_FLOW_TARGET_DAYS`, and
-  `TRADE_FLOW_SEGMENT_SECONDS`.
+
+Optional repository variables override defaults: `TRADE_FLOW_GCS_PREFIX`,
+`TRADE_FLOW_WINDOW_ID`, `TRADE_FLOW_TARGET_DAYS`, and
+`TRADE_FLOW_SEGMENT_SECONDS`. Alternatively, a manual dispatch can supply a
+bucket and prefix; it should use the same settings as the scheduled workflow
+so it resumes the same window.
 
 The workflow remains research-only. It does not import the broker, access
 account credentials, place orders, enable leverage, modify risk settings, or
