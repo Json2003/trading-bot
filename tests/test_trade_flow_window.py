@@ -121,3 +121,24 @@ def test_gcs_segment_objects_are_create_only(tmp_path):
         "research/window/segments/segment-000001/segment_manifest.json",
     ]
     assert all(options["if_generation_match"] == 0 for _, options in uploads)
+
+
+def test_gcs_sync_controls_reports_existing_objects(tmp_path):
+    class FakeBlob:
+        def __init__(self, name):
+            self.name = name
+
+    class FakeBucket:
+        def __init__(self, blobs):
+            self.blobs = blobs
+
+        def list_blobs(self, prefix):
+            return [blob for blob in self.blobs if blob.name.startswith(prefix)]
+
+    archive = GCSArchive.__new__(GCSArchive)
+    archive.prefix = "research/window"
+    archive.bucket = FakeBucket([FakeBlob("research/window/partial-object")])
+    assert archive.sync_controls(tmp_path) is True
+
+    archive.bucket = FakeBucket([])
+    assert archive.sync_controls(tmp_path) is False
