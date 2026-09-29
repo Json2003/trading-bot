@@ -44,7 +44,7 @@ Merge this workflow onto `main` before expecting scheduled runs. Manual
 dispatch is restricted to `main` as well.
 
 Before the first run, set the required repository secret and bucket variable
-below. Use a new empty GCS prefix for the initial archive. The workflow uses
+below. Use a new empty GCS prefix for the initial archive. If the selected prefix contains objects but has no trade-flow window manifest, the collector stops before capturing a segment. The workflow uses
 `TRADE_FLOW_GCS_PREFIX` when set; otherwise it selects
 `research/binance-trade-flow/pr276-btc-eth-90d-2026-09`. Later runs must
 reuse the same prefix and window ID. Do not point another window at an
