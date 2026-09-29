@@ -10,14 +10,13 @@ on:
         required: false
         type: string
       gcs_prefix:
-        description: "Immutable object prefix for this research window"
+        description: "New empty GCS object prefix for this research window"
         required: false
-        default: "research/binance-trade-flow"
         type: string
       window_id:
         description: "Frozen window identifier; use a new ID for a new window"
         required: false
-        default: "btc-eth-public-flow-90d"
+        default: "btc-eth-public-flow-90d-2026-09"
         type: string
       target_days:
         description: "Frozen collection target in days"
@@ -39,6 +38,7 @@ concurrency:
 
 jobs:
   collect:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 70
     steps:
@@ -53,24 +53,20 @@ jobs:
       - name: Install observer dependencies
         run: python -m pip install --upgrade pip -r requirements_research.txt
 
-      - name: Authenticate to GCS
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: \${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-
-      - name: Resolve frozen collection settings
+      - name: Resolve and validate frozen collection settings
         id: settings
         env:
-          INPUT_BUCKET: \${{ inputs.gcs_bucket }}
-          INPUT_PREFIX: \${{ inputs.gcs_prefix }}
-          INPUT_WINDOW: \${{ inputs.window_id }}
-          INPUT_DAYS: \${{ inputs.target_days }}
-          INPUT_SEGMENT: \${{ inputs.segment_seconds }}
-          DEFAULT_BUCKET: \${{ vars.TRADE_FLOW_GCS_BUCKET }}
-          DEFAULT_PREFIX: \${{ vars.TRADE_FLOW_GCS_PREFIX }}
-          DEFAULT_WINDOW: \${{ vars.TRADE_FLOW_WINDOW_ID }}
-          DEFAULT_DAYS: \${{ vars.TRADE_FLOW_TARGET_DAYS }}
-          DEFAULT_SEGMENT: \${{ vars.TRADE_FLOW_SEGMENT_SECONDS }}
+          INPUT_BUCKET: ${{ inputs.gcs_bucket }}
+          INPUT_PREFIX: ${{ inputs.gcs_prefix }}
+          INPUT_WINDOW: ${{ inputs.window_id }}
+          INPUT_DAYS: ${{ inputs.target_days }}
+          INPUT_SEGMENT: ${{ inputs.segment_seconds }}
+          DEFAULT_BUCKET: ${{ vars.TRADE_FLOW_GCS_BUCKET }}
+          DEFAULT_PREFIX: ${{ vars.TRADE_FLOW_GCS_PREFIX }}
+          DEFAULT_WINDOW: ${{ vars.TRADE_FLOW_WINDOW_ID }}
+          DEFAULT_DAYS: ${{ vars.TRADE_FLOW_TARGET_DAYS }}
+          DEFAULT_SEGMENT: ${{ vars.TRADE_FLOW_SEGMENT_SECONDS }}
+          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
         run: |
           set -euo pipefail
           bucket="$INPUT_BUCKET"
@@ -83,28 +79,34 @@ jobs:
           if [ -z "$window" ]; then window="$DEFAULT_WINDOW"; fi
           if [ -z "$days" ]; then days="$DEFAULT_DAYS"; fi
           if [ -z "$segment" ]; then segment="$DEFAULT_SEGMENT"; fi
-          : "\${bucket:?Set workflow input gcs_bucket or repository variable TRADE_FLOW_GCS_BUCKET}"
-          : "\${prefix:=research/binance-trade-flow}"
-          : "\${window:=btc-eth-public-flow-90d}"
-          : "\${days:=90}"
-          : "\${segment:=3300}"
+          : "${GCP_SERVICE_ACCOUNT_KEY:?Set repository secret GCP_SERVICE_ACCOUNT_KEY before collection}"
+          : "${bucket:?Set workflow input gcs_bucket or repository variable TRADE_FLOW_GCS_BUCKET}"
+          : "${prefix:=research/binance-trade-flow/pr276-btc-eth-90d-2026-09}"
+          : "${window:=btc-eth-public-flow-90d-2026-09}"
+          : "${days:=90}"
+          : "${segment:=3300}"
           echo "bucket=$bucket" >> "$GITHUB_OUTPUT"
           echo "prefix=$prefix" >> "$GITHUB_OUTPUT"
           echo "window=$window" >> "$GITHUB_OUTPUT"
           echo "days=$days" >> "$GITHUB_OUTPUT"
           echo "segment=$segment" >> "$GITHUB_OUTPUT"
 
+      - name: Authenticate to GCS
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
       - name: Collect and durably checkpoint one segment
         run: |
           set -euo pipefail
           python scripts/collect_trade_flow_window.py \
-            --window-id "\${{ steps.settings.outputs.window }}" \
+            --window-id "${{ steps.settings.outputs.window }}" \
             --symbols BTCUSDT ETHUSDT \
             --state-dir "$RUNNER_TEMP/binance_trade_flow_state" \
-            --gcs-bucket "\${{ steps.settings.outputs.bucket }}" \
-            --gcs-prefix "\${{ steps.settings.outputs.prefix }}" \
-            --target-days "\${{ steps.settings.outputs.days }}" \
-            --segment-seconds "\${{ steps.settings.outputs.segment }}" \
+            --gcs-bucket "${{ steps.settings.outputs.bucket }}" \
+            --gcs-prefix "${{ steps.settings.outputs.prefix }}" \
+            --target-days "${{ steps.settings.outputs.days }}" \
+            --segment-seconds "${{ steps.settings.outputs.segment }}" \
             --large-trade-notional 100000 \
             --reconnect-attempts 6 \
             --max-gap-seconds 120 \
@@ -114,7 +116,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: binance-trade-flow-segment-\${{ github.run_id }}
-          path: \${{ runner.temp }}/binance_trade_flow_state
+          name: binance-trade-flow-segment-${{ github.run_id }}
+          path: ${{ runner.temp }}/binance_trade_flow_state
           if-no-files-found: warn
           retention-days: 14
