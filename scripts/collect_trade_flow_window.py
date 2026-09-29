@@ -390,13 +390,15 @@ class GCSArchive:
     def _name(self, relative: str) -> str:
         return f"{self.prefix}/{relative}" if self.prefix else relative
 
-    def sync_controls(self, state_dir: Path) -> None:
+    def sync_controls(self, state_dir: Path) -> bool:
         prefix = f"{self.prefix}/" if self.prefix else ""
+        found_any_object = False
         control_files = {
             "window_manifest.json",
             "checkpoint.json",
         }
         for blob in self.bucket.list_blobs(prefix=prefix):
+            found_any_object = True
             relative = blob.name[len(prefix) :]
             if not (
                 relative in control_files
@@ -421,6 +423,7 @@ class GCSArchive:
                     state_dir / ".checkpoint.generation",
                     str(blob.generation),
                 )
+        return found_any_object
 
     def create_json(self, relative: str, payload: dict[str, Any]) -> None:
         blob = self.bucket.blob(self._name(relative))
@@ -524,7 +527,12 @@ def main() -> int:
         else None
     )
     if archive is not None:
-        archive.sync_controls(state_dir)
+        archive_has_objects = archive.sync_controls(state_dir)
+        if archive_has_objects and not (state_dir / "window_manifest.json").exists():
+            raise ValueError(
+                "GCS prefix contains objects but no trade-flow window manifest; "
+                "use a new empty prefix or inspect the existing archive"
+            )
     _recover_staging(state_dir)
 
     window_manifest, created = _initialize_window_manifest(
