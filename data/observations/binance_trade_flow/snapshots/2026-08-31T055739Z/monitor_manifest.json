@@ -1,0 +1,29 @@
+{
+  "research_only": true,
+  "paper_orders_placed": false,
+  "live_orders_placed": false,
+  "leverage_enabled": false,
+  "active_profile_changed": false,
+  "promotion_allowed": false,
+  "source": "Binance USD-M public WebSocket market streams",
+  "stream_url": "wss://fstream.binance.com/market/stream",
+  "streams": [
+    "symbol@aggTrade",
+    "symbol@bookTicker",
+    "!forceOrder@arr"
+  ],
+  "symbols": [
+    "BTCUSDT",
+    "ETHUSDT"
+  ],
+  "large_trade_notional": 100000.0,
+  "started_at": "2026-08-31T05:57:39.331164Z",
+  "finished_at": "2026-08-31T06:00:49.321953Z",
+  "duration_seconds": 189.990789,
+  "connected": true,
+  "normalized_event_count": 4103,
+  "summary_row_count": 8,
+  "errors": [],
+  "completed_minute_rows_only": true,
+  "final_partial_minute_marked_completed_false": true
+}

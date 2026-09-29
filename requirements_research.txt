@@ -1,0 +1,4 @@
+# Dependencies for the observer-only public trade-flow collector
+pytest>=8.2,<10
+websocket-client>=1.8,<2
+google-cloud-storage>=2.18,<3
