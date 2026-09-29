@@ -458,11 +458,14 @@ class GCSArchive:
                 content_type="application/gzip"
                 if path.suffix == ".gz"
                 else "application/octet-stream",
+                if_generation_match=0,
             )
         for path in manifest:
             relative = f"segments/{segment_dir.name}/{path.name}"
             self.bucket.blob(self._name(relative)).upload_from_filename(
-                str(path), content_type="application/json"
+                str(path),
+                content_type="application/json",
+                if_generation_match=0,
             )
 
 
