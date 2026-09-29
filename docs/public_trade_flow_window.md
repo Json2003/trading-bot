@@ -15,7 +15,9 @@ Each completed segment is immutable:
 
 It contains the raw normalized observer output, completed-minute summaries,
 the original monitor manifest, and a checksummed `segment_manifest.json`.
-The controller uploads the segment before advancing `checkpoint.json`.
+The controller uploads the segment before advancing `checkpoint.json`. Each segment object is written with
+a GCS create-only generation precondition, so retries cannot replace an
+already archived raw file.
 
 The controller also writes immutable files under `checkpoints/`. Each
 checkpoint records `data_through_utc`. A future analysis must pin one
