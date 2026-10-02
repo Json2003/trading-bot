@@ -1,0 +1,12 @@
+{
+  "archive_sha256": "e947446abe67158757aafbc2024bba4dcc65b1251df9846a315a5cdb4d37bcf9",
+  "completed_candles_only": true,
+  "date": "2026-10-01",
+  "from": "2026-10-01T00:00:00Z",
+  "interval": "1h",
+  "rows": 24,
+  "schema_version": 1,
+  "source": "https://data.binance.vision/data/spot/daily/klines/BTCUSDT/1h/BTCUSDT-1h-2026-10-01.zip",
+  "symbol": "BTCUSDT",
+  "through": "2026-10-01T23:00:00Z"
+}
