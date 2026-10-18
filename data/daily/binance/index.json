@@ -3,15 +3,6 @@
   "days_requested": 45,
   "files": [
     {
-      "date": "2026-09-02",
-      "from": "2026-09-02T00:00:00Z",
-      "path": "data/daily/binance/BTCUSDT/2026-09-02.csv",
-      "rows": 24,
-      "status": "downloaded",
-      "symbol": "BTCUSDT",
-      "through": "2026-09-02T23:00:00Z"
-    },
-    {
       "date": "2026-09-03",
       "from": "2026-09-03T00:00:00Z",
       "path": "data/daily/binance/BTCUSDT/2026-09-03.csv",
@@ -408,13 +399,13 @@
       "through": "2026-10-16T23:00:00Z"
     },
     {
-      "date": "2026-09-02",
-      "from": "2026-09-02T00:00:00Z",
-      "path": "data/daily/binance/ETHUSDT/2026-09-02.csv",
+      "date": "2026-10-17",
+      "from": "2026-10-17T00:00:00Z",
+      "path": "data/daily/binance/BTCUSDT/2026-10-17.csv",
       "rows": 24,
       "status": "downloaded",
-      "symbol": "ETHUSDT",
-      "through": "2026-09-02T23:00:00Z"
+      "symbol": "BTCUSDT",
+      "through": "2026-10-17T23:00:00Z"
     },
     {
       "date": "2026-09-03",
@@ -811,6 +802,15 @@
       "status": "downloaded",
       "symbol": "ETHUSDT",
       "through": "2026-10-16T23:00:00Z"
+    },
+    {
+      "date": "2026-10-17",
+      "from": "2026-10-17T00:00:00Z",
+      "path": "data/daily/binance/ETHUSDT/2026-10-17.csv",
+      "rows": 24,
+      "status": "downloaded",
+      "symbol": "ETHUSDT",
+      "through": "2026-10-17T23:00:00Z"
     }
   ],
   "interval": "1h",
@@ -820,5 +820,5 @@
     "BTCUSDT",
     "ETHUSDT"
   ],
-  "through": "2026-10-16"
+  "through": "2026-10-17"
 }
