@@ -1,0 +1,11 @@
+{
+  "candidate_id": "btc_perp_negative_funding_volatility_drag_v1",
+  "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7529458",
+  "published_at": "2026-09-29T23:59:59+00:00",
+  "measurement": "At each settled Binance BTCUSDT perpetual funding event, multiply continuous negative-funding extremeness by the ratio of trailing 24-hour to trailing 168-hour realized mark-price volatility; compute only after the funding record and all required closed hourly mark-price bars are available.",
+  "formula": "Let f_t be the settled fundingRate at t and let mu90_t and sd90_t be the mean and sample standard deviation of the 90 immediately preceding settled 8-hour funding rates, excluding f_t. neg_extreme_t=max(0,-((f_t-mu90_t)/sd90_t)). For closed hourly mark-price log returns r_i ending no later than t, sigma24_t=sqrt(mean(r_i^2 over the latest 24 returns)) and sigma168_t=sqrt(mean(r_i^2 over the latest 168 returns)). value_t=neg_extreme_t*(sigma24_t/sigma168_t). Reject observations when sd90_t<=0, sigma168_t<=0, a required bar is missing, or source timestamps are non-monotonic.",
+  "data_source": "Official Binance USD-M Futures public REST endpoints GET /fapi/v1/fundingRate and GET /fapi/v1/markPriceKlines for BTCUSDT; preserve fundingTime, kline open/close times, collector receipt time as available_at, raw responses, request parameters, and SHA-256 hashes.",
+  "symbol": "BTCUSDT",
+  "venue": "binance-usds-m-perpetual",
+  "max_age_hours": 8
+}

@@ -1,0 +1,11 @@
+{
+  "candidate_id": "btc_perp_cross_venue_liquidity_dispersion_v1",
+  "source_url": "https://tokeninsight.com/en/research/reports/crypto-exchange-liquidity-report-sep-2026",
+  "published_at": "2026-09-24T00:00:00+00:00",
+  "measurement": "Cross-venue coefficient of variation of combined bid-plus-ask USD notional depth within 3 basis points of each venue mid price for BTCUSDT linear perpetuals, sampled every 30 minutes after synchronized official-API snapshots are available; require at least four eligible venues.",
+  "formula": "For each venue v, mid_v=(best_bid_v+best_ask_v)/2 and D_v=sum(price*quantity for bids with price>=mid_v*(1-0.0003))+sum(price*quantity for asks with price<=mid_v*(1+0.0003)); value=sample_stdev(D_v)/mean(D_v) across eligible venues whose snapshot timestamps are within 60 seconds of the observation timestamp.",
+  "data_source": "Official public Level-2 order-book APIs for Binance, OKX, Bybit, Bitget, MEXC, and Hyperliquid; preserve raw responses, exchange event timestamps when supplied, collector receipt timestamps, sequence identifiers, and SHA-256 hashes.",
+  "symbol": "BTCUSDT",
+  "venue": "cross-venue:binance,okx,bybit,bitget,mexc,hyperliquid",
+  "max_age_hours": 1
+}
