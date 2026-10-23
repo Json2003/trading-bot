@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from math import isclose
 
 from research.microstructure_state import StateInput, aggregate_state
 
@@ -28,7 +29,8 @@ def test_state_uses_fixed_equal_weight_mean() -> None:
         },
     )
     assert result.status == "research_only"
-    assert result.stress_score == 0.6
+    assert result.stress_score is not None
+    assert isclose(result.stress_score, 0.6, rel_tol=1e-12, abs_tol=1e-12)
     assert result.used_components == (
         "funding_persistence",
         "cross_venue_liquidity",
