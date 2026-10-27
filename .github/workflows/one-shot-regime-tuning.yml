@@ -1,0 +1,56 @@
+name: One-Shot Regime Discovery Tuning
+
+on:
+  push:
+    branches:
+      - research/one-shot-regime-tuning
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/one-shot-regime-tuning.yml"
+      - "scripts/tune_one_shot_regime_entry.py"
+      - "scripts/run_one_shot_regime_entry.py"
+      - "scripts/fetch_cross_asset_regime_data.py"
+      - "scripts/execution_model.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: one-shot-regime-discovery-tuning
+  cancel-in-progress: true
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install research dependencies
+        run: python -m pip install --upgrade pip pytest
+      - name: Run regression tests
+        run: python -m pytest -q tests/test_cross_asset_regime.py
+      - name: Download completed cross-asset and execution data
+        run: |
+          set -euo pipefail
+          python scripts/fetch_cross_asset_regime_data.py             --since 2021-01             --until 2026-08             --output-dir data/historical/cross_asset
+      - name: Run discovery-only parameter screen
+        env:
+          PYTHONPATH: .
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/tune_one_shot_regime_entry.py
+          python -m scripts.tune_one_shot_regime_entry             --data-dir data/historical/cross_asset             --output artifacts/one-shot-regime-tuning/report.json
+      - name: Upload result artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: one-shot-regime-discovery-tuning
+          path: artifacts/one-shot-regime-tuning
+          if-no-files-found: error
+          retention-days: 90
