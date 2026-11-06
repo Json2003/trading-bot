@@ -1,0 +1,12 @@
+{
+  "archive_sha256": "4547e84b8c76c1f92f11e5d54e628f4467a3227c0b93bd97bc6f4b301f864c43",
+  "completed_candles_only": true,
+  "date": "2026-11-05",
+  "from": "2026-11-05T00:00:00Z",
+  "interval": "1h",
+  "rows": 24,
+  "schema_version": 1,
+  "source": "https://data.binance.vision/data/spot/daily/klines/ETHUSDT/1h/ETHUSDT-1h-2026-11-05.zip",
+  "symbol": "ETHUSDT",
+  "through": "2026-11-05T23:00:00Z"
+}
