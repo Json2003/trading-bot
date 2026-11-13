@@ -1,0 +1,58 @@
+# Single frozen funding-positioning hypothesis; paper-only.
+name: Funding Positioning Reversal
+
+on:
+  push:
+    branches:
+      - research/funding-positioning-reversal
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/funding-positioning-reversal.yml"
+      - "scripts/fetch_binance_funding_rates.py"
+      - "scripts/run_funding_positioning_reversal.py"
+      - "scripts/execution_model.py"
+      - "scripts/run_momentum_volatility_research.py"
+      - "scripts/run_momentum_volatility_v3.py"
+      - "scripts/fetch_binance_vision_klines.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: funding-positioning-reversal
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Download completed spot candles
+        run: |
+          set -euo pipefail
+          UNTIL="$(date -u +%Y-%m)"
+          python scripts/fetch_binance_vision_klines.py --symbols BTCUSDT ETHUSDT --since 2023-01 --until "$UNTIL"
+      - name: Download completed funding rates
+        run: |
+          set -euo pipefail
+          UNTIL="$(date -u +%Y-%m)"
+          python scripts/fetch_binance_funding_rates.py --symbols BTCUSDT ETHUSDT --since 2023-01 --until "$UNTIL"
+      - name: Run frozen funding hypothesis
+        run: |
+          set -euo pipefail
+          python scripts/run_funding_positioning_reversal.py             --btc-path data/historical/binance/normalized/BTCUSDT_1h.csv             --eth-path data/historical/binance/normalized/ETHUSDT_1h.csv             --btc-funding-path data/historical/binance/funding/BTCUSDT_funding.csv             --eth-funding-path data/historical/binance/funding/ETHUSDT_funding.csv             --output artifacts/funding-positioning-reversal/report.json
+      - name: Upload result artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: funding-positioning-reversal-${{ github.run_number }}
+          path: artifacts/funding-positioning-reversal
+          if-no-files-found: error
+          retention-days: 90
