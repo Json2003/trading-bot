@@ -55,6 +55,16 @@ The workflow validates the secret and bucket before attempting Google
 authentication, so missing setup is reported before collection starts. It
 does not print the service-account key.
 
+The collector passes the existing service-account JSON directly to the
+Google Cloud Storage client in memory. No credential file is written or
+uploaded, and no third-party authentication Action is required. The workflow
+retains the repository's owner-only/GitHub Actions restriction and read-only
+GitHub token permission. This does not create a service account, grant IAM
+permissions, or change the existing bucket, prefix, or collection window.
+For local callers that omit `GCP_SERVICE_ACCOUNT_KEY`, the existing Application
+Default Credentials path is unchanged. An explicitly set but invalid or empty
+key fails closed instead of falling back to another identity.
+
 ## Required repository configuration
 
 - Secret: `GCP_SERVICE_ACCOUNT_KEY`, with write access to the selected bucket
@@ -70,3 +80,4 @@ so it resumes the same window.
 The workflow remains research-only. It does not import the broker, access
 account credentials, place orders, enable leverage, modify risk settings, or
 promote a strategy.
+

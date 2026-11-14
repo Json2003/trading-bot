@@ -383,7 +383,21 @@ class GCSArchive:
             raise RuntimeError(
                 "google-cloud-storage is required when --gcs-bucket is used"
             ) from exc
-        self.client = storage.Client()
+        # Use only the existing service account, without writing credentials to
+        # the workspace or requiring a third-party GitHub Action. Local callers
+        # without this variable retain their existing ADC authentication path.
+        key_json = os.environ.get("GCP_SERVICE_ACCOUNT_KEY")
+        if key_json is None:
+            self.client = storage.Client()
+        else:
+            try:
+                key_info = json.loads(key_json)
+                if not isinstance(key_info, dict) or key_info.get("type") != "service_account":
+                    raise ValueError("not a service-account object")
+                self.client = storage.Client.from_service_account_info(key_info)
+            except (ValueError, TypeError, KeyError):
+                # Never expose the JSON, PEM material, or underlying exception.
+                raise ValueError("GCP_SERVICE_ACCOUNT_KEY is not a valid service-account key") from None
         self.bucket = self.client.bucket(bucket_name)
         self.prefix = prefix.strip("/")
 
@@ -658,3 +672,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

@@ -11,6 +11,11 @@ on:
       - "scripts/monitor_binance_trade_flow.py"
       - "tests/test_trade_flow_monitor.py"
       - "requirements_research.txt"
+      - "scripts/collect_trade_flow_window.py"
+      - "tests/test_trade_flow_window.py"
+      - "tests/test_trade_flow_auth*.py"
+      - ".github/workflows/public-trade-flow-observer.yml"
+      - ".github/workflows/public-trade-flow-collect.yml"
 
 permissions:
   contents: read
@@ -26,8 +31,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Install observer dependencies
         run: python -m pip install --upgrade pip -r requirements_research.txt
+      - name: Require real GCS SDK for integration checks
+        run: python -I -c "from google.cloud import storage; assert callable(storage.Client.from_service_account_info)"
       - name: Run observer regression tests
-        run: python -m pytest -q tests/test_trade_flow_monitor.py
+        run: >-
+          python -m pytest -q
+          tests/test_trade_flow_monitor.py
+          tests/test_trade_flow_window.py
+          tests/test_trade_flow_auth.py
+          tests/test_trade_flow_auth_sdk.py
+
