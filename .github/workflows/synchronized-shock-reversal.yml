@@ -1,0 +1,41 @@
+name: Synchronized Shock Reversal
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/run_synchronized_shock_reversal.py"
+      - ".github/workflows/synchronized-shock-reversal.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run frozen research backtest
+        run: |
+          set -euo pipefail
+          python scripts/run_synchronized_shock_reversal.py \
+            --since 2020-12 \
+            --until 2026-08 \
+            --discovery-start 2021-01-01 \
+            --discovery-end 2025-01-01 \
+            --end 2026-08-01 \
+            --output synchronized-shock-reversal-report.json
+
+      - name: Upload research artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: synchronized-shock-reversal
+          path: synchronized-shock-reversal-report.json
