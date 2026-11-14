@@ -91,12 +91,9 @@ jobs:
           echo "days=$days" >> "$GITHUB_OUTPUT"
           echo "segment=$segment" >> "$GITHUB_OUTPUT"
 
-      - name: Authenticate to GCS
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-
       - name: Collect and durably checkpoint one segment
+        env:
+          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
         run: |
           set -euo pipefail
           python scripts/collect_trade_flow_window.py \
@@ -120,3 +117,4 @@ jobs:
           path: ${{ runner.temp }}/binance_trade_flow_state
           if-no-files-found: warn
           retention-days: 14
+
