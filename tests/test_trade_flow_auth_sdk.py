@@ -7,11 +7,15 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-from google.cloud import storage
+try:
+    from google.cloud import storage
+except ImportError:
+    storage = None
 
 from scripts.collect_trade_flow_window import GCSArchive
 
 
+@unittest.skipIf(storage is None, "optional GCS SDK not installed; required in observer CI")
 class TradeFlowSDKTests(unittest.TestCase):
     def test_real_sdk_constructs_in_memory_without_network(self):
         # The generated key has no account or permissions and is never persisted.
