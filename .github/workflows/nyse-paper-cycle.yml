@@ -1,0 +1,60 @@
+name: NYSE Stock Paper Research Cycle
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/run_nyse_research_cycle.py'
+      - 'scripts/infer_api.py'
+      - 'scripts/ml_gate.py'
+      - 'research/experiments/nyse_stock_cycle_v1.json'
+      - 'research/equity_analysis.py'
+      - 'research/education/trading_curriculum_v1.json'
+      - 'tests/test_nyse_research_cycle.py'
+      - 'tests/test_equity_analysis.py'
+      - 'tests/test_neural_execution_integrity.py'
+      - '.github/workflows/nyse-paper-cycle.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nyse-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install minimal research dependencies
+        run: python -m pip install 'numpy==2.2.6' 'pandas==2.2.3'
+      - name: Check next-open execution and equity restrictions
+        run: |
+          python -m unittest discover -s tests -p test_nyse_research_cycle.py -v
+          python -m unittest discover -s tests -p test_equity_analysis.py -v
+          python -m unittest discover -s tests -p test_neural_execution_integrity.py -v
+      - name: Evaluate the frozen NYSE universe
+        env:
+          RESEARCH_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python scripts/run_nyse_research_cycle.py
+      - name: Publish measured diagnostic summary
+        if: always()
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          summary = Path('artifacts/nyse-paper-cycle/summary.json')
+          if summary.exists():
+              with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+                  out.write('## NYSE-only historical paper diagnostic\n\n```json\n' + summary.read_text() + '\n```\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nyse-stock-cycle-${{ github.run_number }}
+          path: artifacts/nyse-paper-cycle
+          if-no-files-found: warn
+          retention-days: 90
