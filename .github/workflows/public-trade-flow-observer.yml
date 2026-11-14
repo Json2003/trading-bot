@@ -35,7 +35,7 @@ jobs:
       - name: Install observer dependencies
         run: python -m pip install --upgrade pip -r requirements_research.txt
       - name: Require real GCS SDK for integration checks
-        run: python -c "from google.cloud import storage; assert callable(storage.Client.from_service_account_info)"
+        run: python -I -c "from google.cloud import storage; assert callable(storage.Client.from_service_account_info)"
       - name: Run observer regression tests
         run: >-
           python -m pytest -q
