@@ -229,6 +229,13 @@ def main() -> int:
     module_spec = importlib.util.spec_from_file_location("nyse_frozen_strategy", strategy_path)
     module = importlib.util.module_from_spec(module_spec)
     module_spec.loader.exec_module(module)
+    analysis_spec = importlib.util.spec_from_file_location("nyse_equity_analysis", ROOT / "research/equity_analysis.py")
+    analysis = importlib.util.module_from_spec(analysis_spec)
+    analysis_spec.loader.exec_module(analysis)
+    catalog_bytes = (ROOT / "research/education/trading_curriculum_v1.json").read_bytes()
+    catalog = json.loads(catalog_bytes)
+    analysis.validate_catalog(catalog)
+    (args.output_dir / "education_catalog.json").write_bytes(catalog_bytes)
     report = {"experiment_id": spec["experiment_id"], "generated_at": datetime.now(timezone.utc).isoformat(),
               "source_commit": os.environ.get("RESEARCH_SOURCE_COMMIT", "local-verification"),
               "workflow_event_sha": os.environ.get("GITHUB_SHA"),
@@ -236,6 +243,7 @@ def main() -> int:
               "strategy_sha256": spec["strategy_sha256"], "research_only": True, "crypto_evaluated": False,
               "orders_placed": False, "paper_orders_placed": False, "leverage_enabled": False,
               "promotion_allowed": False, "forward_confirmation": False, "historical_asof_availability_verified": False,
+              "education_catalog_sha256": digest(catalog_bytes),
               "data": {}, "errors": {}, "results": [], "benchmarks": [], "limitations": spec["notes"] + [
                   "Historical download receipt is recorded now; historical quote availability and revisions were not reconstructed.",
                   "No NBBO, opening-auction size, broker fills, payment-date dividend ledger or delisted stock panel.",
@@ -262,6 +270,17 @@ def main() -> int:
         except Exception as exc:
             report["status"] = "blocked_validation"
             report["errors"]["replay"] = f"{type(exc).__name__}: {exc}"
+    report["stock_signal_context"] = {}
+    if report["status"] == "historical_diagnostic_complete":
+        for symbol, frame in frames.items():
+            context = analysis.stock_context(
+                frame, symbol=symbol, as_of_session=spec["completed_through"],
+                received_at=report["data"][symbol]["received_at"],
+                calculated_at=datetime.now(timezone.utc).isoformat(),
+                risk_latched=report["results"][-1]["drawdown_latched_at"] is not None)
+            context["relevant_literature"] = analysis.select_lessons(catalog, context.get("lesson_tags", []))
+            report["stock_signal_context"][symbol] = context
+    report["capability_review"] = analysis.review_cycle(report, catalog)
     write_json(args.output_dir / "report.json", report)
     summary = {k: v for k, v in report.items() if k not in ("results", "benchmarks")}
     summary["results"] = [{k: v for k, v in row.items() if k not in ("trades", "equity_curve")} for row in report["results"]]

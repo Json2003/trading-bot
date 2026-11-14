@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timezone
 import pathlib
 
 REGISTRY_PATH = "models/registry.json"
@@ -47,6 +47,7 @@ class LSTMClassifier(nn.Module):
 
 class _State:
     def __init__(self):
+        self.lock = threading.RLock()
         self.tag: Optional[str] = None
         self.model: Optional[LSTMClassifier] = None
         self.scaler = None
@@ -100,7 +101,8 @@ def _load_latest(tag: Optional[str] = None) -> str:
     model.load_state_dict(ckpt["state_dict"])  # type: ignore[arg-type]
     model.eval().to(_device)
     scaler = joblib.load(scaler_path)
-    S.tag, S.model, S.scaler, S.meta = chosen_tag, model, scaler, meta
+    with S.lock:
+        S.tag, S.model, S.scaler, S.meta = chosen_tag, model, scaler, meta
     return chosen_tag
 
 
@@ -125,29 +127,45 @@ def _startup():
 
 @app.get("/health")
 def health():
-    return {"ok": S.model is not None, "tag": S.tag}
+    with S.lock:
+        return {"ok": S.model is not None, "tag": S.tag}
 
 
 @app.post("/infer")
 def infer(req: InferenceRequest):
-    if S.model is None:
+    with S.lock:
+        active_tag, model, scaler = S.tag, S.model, S.scaler
+    if model is None or scaler is None or not active_tag:
         raise HTTPException(500, "Model not loaded")
-    tag = req.tag or S.tag or ""
-    X = np.array(req.features, dtype=np.float32)  # (T,F)
-    if X.ndim != 2:
-        raise HTTPException(400, "features must be shape [T,F]")
+    if req.tag and req.tag != active_tag:
+        raise HTTPException(409, "Requested model tag is not the loaded model")
+    tag = active_tag
+    if not np.isfinite(req.threshold) or not 0 <= req.threshold <= 1:
+        raise HTTPException(400, "threshold must be finite and between zero and one")
     try:
-        Xs = S.scaler.transform(X)  # scale
+        X = np.array(req.features, dtype=np.float32)  # (T,F)
+    except (TypeError, ValueError):
+        raise HTTPException(400, "features must be a rectangular numeric matrix") from None
+    if X.ndim != 2 or not X.size or not np.isfinite(X).all():
+        raise HTTPException(400, "features must be nonempty finite shape [T,F]")
+    if X.shape[1] != model.lstm.input_size:
+        raise HTTPException(400, "feature count does not match loaded model")
+    try:
+        Xs = scaler.transform(X)  # scale the same model/scaler snapshot
     except Exception as e:
         raise HTTPException(400, f"Scaler transform failed: {e}")
+    if np.shape(Xs) != X.shape or not np.isfinite(Xs).all():
+        raise HTTPException(400, "Scaler output is invalid")
     xs = torch.tensor(Xs, dtype=torch.float32, device=_device).unsqueeze(0)  # (1,T,F)
     with torch.no_grad():
-        p = torch.sigmoid(S.model(xs)).cpu().numpy().ravel()[0]
+        p = torch.sigmoid(model(xs)).cpu().numpy().ravel()[0]
+    if not np.isfinite(p) or not 0 <= p <= 1:
+        raise HTTPException(500, "Model returned an invalid probability")
     out = {
         "tag": tag,
         "p_up": float(p),
         "allow": bool(p >= float(req.threshold)),
-        "ts": datetime.utcnow().isoformat() + "Z",
+        "ts": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
     # Append simple JSONL log for monitoring
     try:
