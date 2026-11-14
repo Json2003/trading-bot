@@ -6,7 +6,7 @@ No source reviewed establishes a definite executable edge for this bot's NYSE co
 
 | Source | Evidence found | Decision for this bot |
 | --- | --- | --- |
-| Stocks-in-play opening-range breakout (ORB), author paper, 2024-02-16 | The study reports materially better results after conditioning on abnormal opening activity. | **Maybe — first research priority.** Published shorts, leverage and cost assumptions differ from our contract. |
+| Stocks-in-play opening-range breakout (ORB), author paper, 2024-02-16 | Opening-activity selection improves reported results. | **Maybe — first research priority.** Published shorts, leverage and cost assumptions differ from our contract. |
 | `hsaeed22058/strategy-backtest`, GitHub, inspected 2026-11-14 | Public implementation and unusually candid bias disclosures; direct engine inspection found unresolved fill and timing problems. | **No as delivered.** Useful reference, not trusted execution logic. |
 | `liu-xuhui/us-stock`, GitHub, April 2026 | Chronological stock-ranking research, but its own results turn negative at costs below our stress hurdle. | **No under the existing cost contract.** Retain data-engineering lessons. |
 | Kronos, Hugging Face / arXiv, 2025-08-02 | A financial forecasting model with published temporal separation and an investment simulation. | **Maybe as a later benchmark; no demonstrated NYSE edge.** |
@@ -21,9 +21,7 @@ No source reviewed establishes a definite executable edge for this bot's NYSE co
 
 [Zarattini, Barbon and Aziz, A Profitable Day Trading Strategy For The U.S. Equity Market](https://concretumgroup.com/wp-content/uploads/2026/02/A-Profitable-Day-Trading-Strategy-For-The-U.S.-Equity-Market.pdf), first version 2024-02-16.
 
-The authors study over 7,000 US stocks during 2016–2023. Their base ORB has reported Sharpe 0.48; selecting unusually active opening sessions raises reported Sharpe to 2.81. The lesson for hypothesis design is stock/session selection, not merely another crossover.
-
-The published experiment is long/short, permits up to 4x leverage and charges $0.0035/share commission. These results do not validate a cash-only NYSE adaptation under 86-bps stress. The paper describes a database including delisted stocks; that coverage must be reproduced rather than assumed.
+Reported Sharpe rises from 0.48 for basic ORB to 2.81 with opening-activity selection. The long/short experiment permits 4x leverage and charges $0.0035/share commission; it does not validate our cash-only, 86-bps adaptation.
 
 ### Public engine audit
 
@@ -46,7 +44,7 @@ These are code-audit findings, not a claim that we reproduced or quantified thei
 
 This is a proposed adaptation, **not yet implemented or a validated replication**. Freeze its implementation and calendar before examining new test outcomes; do not search alternate thresholds, assets, exits or horizons.
 
-- Eligible securities: point-in-time NYSE common stocks, including later delistings. Opening price above $5; previous 14 sessions' mean volume at least 1 million shares and ATR above $0.50.
+- Eligible: point-in-time NYSE common stocks, including delistings; opening price >$5; prior-14-session mean volume ≥1 million shares and ATR >$0.50.
 - Measure the completed 09:30–09:35 America/New_York range and volume. Relative volume equals that volume divided by the mean volume in the identical interval over the previous 14 complete sessions. Reject missing intervals.
 - Rank eligible names once by relative volume, require at least 1.0, retain the top 20, and resolve ties by permanent security ID. Within that fixed set, consider only positive opening ranges; do not replace bearish or untradeable names with hindsight.
 - Observe the first later completed one-minute close above the range high. A hypothetical entry cannot precede input availability plus latency; use the first minute boundary strictly after that time and an executable ask, with gap treatment. This close-confirmed, delayed entry differs from the paper.
