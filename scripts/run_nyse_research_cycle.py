@@ -285,6 +285,10 @@ def main() -> int:
     summary = {k: v for k, v in report.items() if k not in ("results", "benchmarks")}
     summary["results"] = [{k: v for k, v in row.items() if k not in ("trades", "equity_curve")} for row in report["results"]]
     summary["benchmarks"] = [{k: v for k, v in row.items() if k not in ("trades", "equity_curve")} for row in report["benchmarks"]]
+    summary["stock_signal_context"] = {
+        symbol: {**{k: v for k, v in context.items() if k != "relevant_literature"},
+                 "literature_source_ids": [source["source_id"] for source in context.get("relevant_literature", [])]}
+        for symbol, context in report["stock_signal_context"].items()}
     write_json(args.output_dir / "summary.json", summary)
     print(json.dumps(summary, indent=2, allow_nan=False))
     return 0 if report["status"] == "historical_diagnostic_complete" else 2

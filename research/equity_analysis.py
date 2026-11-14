@@ -89,6 +89,7 @@ def review_cycle(report, catalog):
         {"skill": "profitable_forward_edge", "status": "not_demonstrated", "needed": "positive net untouched forward results with enough independent events"}]
     return {"research_only": True, "model_weights_trained": False, "promotion_allowed": False,
             "catalog_source_count": len(catalog["sources"]), "book_full_texts_ingested": 0,
+            "catalog_book_count": sum(source["kind"] == "book" for source in catalog["sources"]),
             "blocks": blocks, "capability_gaps": priorities,
             "lessons": ["Forecast direction and realizable net profit are separate questions.",
                         "Correlated or overlapping trades do not multiply independent evidence.",

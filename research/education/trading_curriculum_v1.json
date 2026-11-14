@@ -304,6 +304,473 @@
       "content_scope": "official_rule_overview",
       "full_book_text_ingested": false,
       "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "pring_technical",
+      "kind": "book",
+      "title": "Technical Analysis Explained, Fifth Edition",
+      "authors": "Martin J. Pring",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.mheducation.com/highered/mhp/product/technical-analysis-explained-fifth-edition-successful-investor-s-guide-spotting-investment-trends-turning-points.html",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "technical_signals",
+        "regime"
+      ],
+      "lesson": "Trend and momentum indicators provide a vocabulary for price behavior.",
+      "research_translation": "Specify objective rules and holdouts before testing any chart interpretation.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "nison_candlesticks",
+      "kind": "book",
+      "title": "Japanese Candlestick Charting Techniques",
+      "authors": "Steve Nison",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.penguinrandomhouse.com/books/350650/japanese-candlestick-charting-techniques-by-steve-nison/",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "technical_signals",
+        "price_action"
+      ],
+      "lesson": "Candlestick descriptions organize open-high-low-close observations.",
+      "research_translation": "Define patterns numerically and evaluate incremental value after costs.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "bollinger_bands",
+      "kind": "book",
+      "title": "Bollinger on Bollinger Bands",
+      "authors": "John Bollinger",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.mheducation.com/highered/mhp/product/bollinger-bollinger-bands",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "technical_signals",
+        "volatility"
+      ],
+      "lesson": "Volatility bands describe prices relative to a changing distribution.",
+      "research_translation": "Treat a band touch as context until a regime-specific hypothesis passes validation.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "elder_trading",
+      "kind": "book",
+      "title": "The New Trading for a Living",
+      "authors": "Alexander Elder",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.wiley.com/en-us/shop/general-finance-investments/the-new-trading-for-a-living-psychology-discipline-trading-tools-and-systems-risk-control-trade-management-p-9781118443927",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "risk",
+        "technical_signals",
+        "trade_management"
+      ],
+      "lesson": "Trading tools, discipline, risk control and trade management are connected.",
+      "research_translation": "Record a pre-trade plan and test exits as rigorously as entries.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "kaufman_systems",
+      "kind": "book",
+      "title": "Trading Systems and Methods, Sixth Edition",
+      "authors": "Perry J. Kaufman",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.wiley.com/en-us/trading-systems-and-methods-6th-edition-p-9781119605355",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "validation",
+        "momentum",
+        "mean_reversion"
+      ],
+      "lesson": "Trading-system design encompasses many competing methods and assumptions.",
+      "research_translation": "Catalog families without sweeping them against the same confirmation sample.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "chan_quantitative",
+      "kind": "book",
+      "title": "Quantitative Trading: How to Build Your Own Algorithmic Trading Business, Revised Second Edition",
+      "authors": "Ernest P. Chan",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.wiley.com/en-us/shop/general-finance-investments/quantitative-trading-how-to-build-your-own-algorithmic-trading-business-revised-edition-2nd-edition-p-9781394378043",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "validation",
+        "execution",
+        "data_quality"
+      ],
+      "lesson": "Quantitative trading combines strategy design with a reproducible operating process.",
+      "research_translation": "Require a data, implementation, costs and operational evidence package for each hypothesis.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "chan_machine",
+      "kind": "book",
+      "title": "Machine Trading: Deploying Computer Algorithms to Conquer the Markets",
+      "authors": "Ernest P. Chan",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://onlinelibrary.wiley.com/doi/book/10.1002/9781119244066",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "neural_models",
+        "validation",
+        "execution"
+      ],
+      "lesson": "Automated strategies need deployment and testing discipline.",
+      "research_translation": "Connect model output to a versioned, reconciled execution contract.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "ilmanen_returns",
+      "kind": "book",
+      "title": "Expected Returns: An Investor's Guide to Harvesting Market Rewards",
+      "authors": "Antti Ilmanen",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://onlinelibrary.wiley.com/doi/book/10.1002/9781118467190",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "portfolio",
+        "regime",
+        "risk"
+      ],
+      "lesson": "Return expectations depend on risk exposures, strategies and economic conditions.",
+      "research_translation": "Separate risk-premium exposure from incremental stock-selection skill.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "cartea_algorithmic",
+      "kind": "book",
+      "title": "Algorithmic and High-Frequency Trading",
+      "authors": "Alvaro Cartea, Sebastian Jaimungal and Jose Penalva",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://assets.cambridge.org/97811070/91146/frontmatter/9781107091146_frontmatter.pdf",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "execution",
+        "liquidity",
+        "market_structure"
+      ],
+      "lesson": "Execution and market making require models tied to market mechanics.",
+      "research_translation": "Require order-level data and fill assumptions before using an execution model.",
+      "content_scope": "indexed_publisher_frontmatter_and_excerpt",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "ohara_microstructure",
+      "kind": "book",
+      "title": "Market Microstructure Theory",
+      "authors": "Maureen O'Hara",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.wiley.com/en-us/Market%20Microstructure%20Theory-p-9781557864437",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "market_structure",
+        "liquidity",
+        "execution"
+      ],
+      "lesson": "Market microstructure theory studies how trading arrangements affect prices and liquidity.",
+      "research_translation": "Distinguish information, inventory and transaction-cost hypotheses in execution research.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "graham_security",
+      "kind": "book",
+      "title": "Security Analysis, Seventh Edition",
+      "authors": "Benjamin Graham and David Dodd",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.mheducation.com/highered/mhp/product/security-analysis-seventh-edition-principles-techniques.html?viewOption=student",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "fundamentals",
+        "valuation",
+        "risk"
+      ],
+      "lesson": "Security analysis connects financial statements, valuation and downside considerations.",
+      "research_translation": "Use contemporaneously available fundamentals instead of present-day restated snapshots.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "graham_intelligent",
+      "kind": "book",
+      "title": "The Intelligent Investor, Updated Edition",
+      "authors": "Benjamin Graham; updated commentary by Jason Zweig",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://jasonzweig.com/books/the-intelligent-investor/",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "fundamentals",
+        "valuation",
+        "risk"
+      ],
+      "lesson": "The book's value-investing framework emphasizes analytical discipline and long-horizon decisions.",
+      "research_translation": "Keep valuation hypotheses separate from short-horizon technical timing rules.",
+      "content_scope": "commentary_author_book_overview",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "fisher_common_stocks",
+      "kind": "book",
+      "title": "Common Stocks and Uncommon Profits and Other Writings",
+      "authors": "Philip A. Fisher",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.wiley.com/en-us/common-stocks-and-uncommon-profits-and-other-writings-2nd-edition-p-9780471445500",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "fundamentals",
+        "valuation"
+      ],
+      "lesson": "Business quality and growth analysis provide a distinct approach to equity selection.",
+      "research_translation": "Translate qualitative claims into timestamped financial or operational measurements before testing.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "damodaran_investment_valuation",
+      "kind": "book",
+      "title": "Investment Valuation, Fourth Edition",
+      "authors": "Aswath Damodaran",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.wiley.com/en-us/shop/general-finance-investments/investment-valuation-tools-and-techniques-for-determining-the-value-of-any-asset-4th-edition-p-9781394254606",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "valuation",
+        "fundamentals",
+        "data_quality"
+      ],
+      "lesson": "Valuation models make assumptions about cash flows, growth and risk explicit.",
+      "research_translation": "Preserve assumption versions and the publication dates of every input.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "mckinsey_valuation",
+      "kind": "book",
+      "title": "Valuation: Measuring and Managing the Value of Companies, Eighth Edition",
+      "authors": "Tim Koller, Marc Goedhart and David Wessels",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.wiley.com/en-us/valuation-measuring-and-managing-the-value-of-companies-8th-edition-p-9781394279418",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "valuation",
+        "fundamentals",
+        "portfolio"
+      ],
+      "lesson": "Company value analysis connects operating performance, investment and financial expectations.",
+      "research_translation": "Audit accounting definitions and use sensitivity analysis without optimizing trading outcomes.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "malkiel_random_walk",
+      "kind": "book",
+      "title": "A Random Walk Down Wall Street",
+      "authors": "Burton G. Malkiel",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://wwnorton.com/books/9781324035435",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "validation",
+        "portfolio",
+        "benchmarking"
+      ],
+      "lesson": "Market efficiency and low-cost benchmark perspectives challenge claims of easy active outperformance.",
+      "research_translation": "Require evidence of net incremental value relative to a suitable benchmark.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "bernstein_four_pillars",
+      "kind": "book",
+      "title": "The Four Pillars of Investing, Second Edition",
+      "authors": "William J. Bernstein",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.mheducation.com/highered/mhp/product/four-pillars-investing-second-edition-lessons-building-winning-portfolio.html",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "portfolio",
+        "risk",
+        "decision_process"
+      ],
+      "lesson": "Investment theory, history, psychology and business costs shape portfolio outcomes.",
+      "research_translation": "Review concentration, costs and benchmark risk before accepting apparent strategy skill.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "bernstein_risk_history",
+      "kind": "book",
+      "title": "Against the Gods: The Remarkable Story of Risk",
+      "authors": "Peter L. Bernstein",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.wiley.com/en-us/against-the-gods-the-remarkable-story-of-risk-p-9780471121046",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "risk",
+        "decision_process"
+      ],
+      "lesson": "The history of risk measurement provides perspective on probabilistic decisions.",
+      "research_translation": "Report uncertainty and tail scenarios rather than treating a point estimate as certainty.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "taleb_randomness",
+      "kind": "book",
+      "title": "Fooled by Randomness",
+      "authors": "Nassim Nicholas Taleb",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.penguinrandomhouse.com/books/176225/fooled-by-randomness-by-nassim-nicholas-taleb/9781400067930/",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "risk",
+        "validation",
+        "decision_process"
+      ],
+      "lesson": "Observed success can mix luck, selection and genuine skill.",
+      "research_translation": "Preserve failed experiments and demand enough independent future outcomes.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "kahneman_decisions",
+      "kind": "book",
+      "title": "Thinking, Fast and Slow",
+      "authors": "Daniel Kahneman",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://us.macmillan.com/books/9780374533557/thinkingfastandslow/",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "decision_process",
+        "validation"
+      ],
+      "lesson": "Judgment and intuition can be affected by systematic biases.",
+      "research_translation": "Use a reproducible decision journal and precommitted rules; this is process guidance, not trading alpha.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "douglas_zone",
+      "kind": "book",
+      "title": "Trading in the Zone",
+      "authors": "Mark Douglas",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.penguinrandomhouse.com/books/350665/trading-in-the-zone-by-mark-douglas/",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "decision_process",
+        "risk"
+      ],
+      "lesson": "Trader consistency is a process and behavioral concern.",
+      "research_translation": "Translate process discipline into bounded controls and reviewable actions rather than claims about a bot's emotions.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "steenbarger_coach",
+      "kind": "book",
+      "title": "The Daily Trading Coach",
+      "authors": "Brett N. Steenbarger",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.wiley.com/en-us/the-daily-trading-coach-101-lessons-for-becoming-your-own-trading-psychologist-p-9780470398562",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "decision_process",
+        "validation"
+      ],
+      "lesson": "Structured self-review can distinguish repeatable process from reactive decisions.",
+      "research_translation": "Use measured post-run attribution and document falsification before starting another experiment.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "schwager_wizards",
+      "kind": "book",
+      "title": "Market Wizards: Interviews with Top Traders, Updated",
+      "authors": "Jack D. Schwager",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.wiley.com/en-us/market-wizards-interviews-with-top-traders-updated-p-9781118273050",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "expert_practice",
+        "risk",
+        "decision_process"
+      ],
+      "lesson": "Trader interviews present diverse practices and experiences.",
+      "research_translation": "Label interviews as practitioner accounts; do not infer a replicable edge from reputation or anecdotes.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "kirkpatrick_technical",
+      "kind": "book",
+      "title": "Technical Analysis: The Complete Resource for Financial Market Technicians, Third Edition",
+      "authors": "Charles D. Kirkpatrick II and Julie R. Dahlquist",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.pearson.com/en-us/subject-catalog/p/technical-analysis-the-complete-resource-for-financial-market-technicians/P200000000373/9780134137049",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "technical_signals",
+        "validation",
+        "market_structure"
+      ],
+      "lesson": "Technical methods can be organized alongside evidence for and against their use.",
+      "research_translation": "Maintain both a hypothesis and its strongest counterargument for each indicator.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
+    },
+    {
+      "source_id": "housel_money",
+      "kind": "book",
+      "title": "The Psychology of Money",
+      "authors": "Morgan Housel",
+      "edition_or_date": "publisher/author-listed edition; verified 2026-11-14",
+      "source_url": "https://www.harriman-house.com/authors/morgan-housel/the-psychology-of-money/9780857197696",
+      "verified_on": "2026-11-14",
+      "skill_tags": [
+        "decision_process",
+        "risk"
+      ],
+      "lesson": "Financial decisions involve behavior and uncertainty as well as calculations.",
+      "research_translation": "Use bounded capital, documented objectives and explicit uncertainty; this does not create a return signal.",
+      "content_scope": "publisher_overview_or_contents",
+      "full_book_text_ingested": false,
+      "empirical_edge_for_this_bot": "not_established"
     }
-  ]
+  ],
+  "catalog_status": "Initial expanding curriculum; source records and original lesson notes are not full-text ingestion or model training."
 }

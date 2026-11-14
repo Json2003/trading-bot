@@ -37,7 +37,7 @@ not a matched-risk experiment.
   unknown. The new indicators do not alter the frozen strategy or its results.
 - A post-run review attributes execution-cost drag, compares the benchmark,
   counts nonoverlapping observations and identifies operational/data gaps.
-- A 16-source learning catalog, including eight books, links concepts to data
+- A 41-source learning catalog, including 33 books, links concepts to data
   requirements and research translations. Source types distinguish textbooks,
   empirical papers, expert opinion, courses and official rules. Relevant source
   records are attached to each stock report.

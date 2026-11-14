@@ -44,7 +44,8 @@ class EquityAnalysisTests(unittest.TestCase):
     def test_catalog_has_primary_links_and_separate_opinions(self):
         catalog = json.loads((ROOT / "research/education/trading_curriculum_v1.json").read_text())
         analysis.validate_catalog(catalog)
-        self.assertEqual(len(catalog["sources"]), 16)
+        topics = {tag for source in catalog["sources"] for tag in source["skill_tags"]}
+        self.assertTrue({"execution", "technical_signals", "validation", "fundamentals", "risk", "portfolio"}.issubset(topics))
         self.assertTrue(any(s["kind"] == "expert_opinion" for s in catalog["sources"]))
         selected = analysis.select_lessons(catalog, ["technical_signals"])
         self.assertTrue(selected)
