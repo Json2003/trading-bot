@@ -28,6 +28,8 @@ jobs:
       - name: Check next-open execution and equity restrictions
         run: python -m unittest discover -s tests -p test_nyse_research_cycle.py -v
       - name: Evaluate the frozen NYSE universe
+        env:
+          RESEARCH_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python scripts/run_nyse_research_cycle.py
       - name: Publish measured diagnostic summary
         if: always()

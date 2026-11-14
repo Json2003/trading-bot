@@ -222,6 +222,7 @@ def main() -> int:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     raw_spec = args.spec.read_bytes()
     spec = json.loads(raw_spec)
+    (args.output_dir / "frozen_spec.json").write_bytes(raw_spec)
     strategy_path = ROOT / spec["strategy_file"]
     if digest(strategy_path.read_bytes()) != spec["strategy_sha256"]:
         raise ValueError("frozen strategy source changed")
@@ -229,7 +230,9 @@ def main() -> int:
     module = importlib.util.module_from_spec(module_spec)
     module_spec.loader.exec_module(module)
     report = {"experiment_id": spec["experiment_id"], "generated_at": datetime.now(timezone.utc).isoformat(),
-              "source_commit": os.environ.get("GITHUB_SHA", "local-verification"), "spec_sha256": digest(raw_spec),
+              "source_commit": os.environ.get("RESEARCH_SOURCE_COMMIT", "local-verification"),
+              "workflow_event_sha": os.environ.get("GITHUB_SHA"),
+              "executed_script_sha256": digest(Path(__file__).read_bytes()), "spec_sha256": digest(raw_spec),
               "strategy_sha256": spec["strategy_sha256"], "research_only": True, "crypto_evaluated": False,
               "orders_placed": False, "paper_orders_placed": False, "leverage_enabled": False,
               "promotion_allowed": False, "forward_confirmation": False, "historical_asof_availability_verified": False,
