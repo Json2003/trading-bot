@@ -1,0 +1,55 @@
+name: Volume Volatility Pocket
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/run_volume_volatility_pocket.py"
+      - ".github/workflows/volume-volatility-pocket.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy pandas
+
+      - name: Download completed hourly candles
+        run: |
+          set -euo pipefail
+          python scripts/fetch_binance_vision_klines.py \
+            --symbols BTCUSDT ETHUSDT \
+            --since 2023-01 \
+            --until 2026-08 \
+            --raw-dir data/historical/binance/raw \
+            --out-dir data/historical/binance/normalized
+
+      - name: Run frozen research backtest
+        run: |
+          set -euo pipefail
+          python scripts/run_volume_volatility_pocket.py \
+            --data-dir data/historical/binance/normalized \
+            --discovery-start 2023-01-01T00:00:00 \
+            --discovery-end 2025-01-01T00:00:00 \
+            --end 2026-08-01T00:00:00 \
+            --output volume-volatility-pocket-report.json
+
+      - name: Upload research artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: volume-volatility-pocket
+          path: volume-volatility-pocket-report.json
