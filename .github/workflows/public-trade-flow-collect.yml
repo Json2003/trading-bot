@@ -1,8 +1,7 @@
 name: Public Trade Flow Collection
 
 on:
-  schedule:
-    - cron: "7 * * * *"
+  # Automatic crypto collection paused while NYSE research is prioritized.
   workflow_dispatch:
     inputs:
       gcs_bucket:
