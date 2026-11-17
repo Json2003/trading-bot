@@ -87,3 +87,14 @@ Each record must distinguish discovered, source-audited, independently reproduce
 Next action: specify and source the data for the single momentum/retention-buffer comparison, then implement a research-only experiment if those inputs pass availability checks. Keep paper/live order APIs disconnected. No neural weights have been trained by this audit.
 
 Verification of this record: inspected actual source files and model cards; checked quoted figures against source tables; no executable strategy or neural-training validation was run. Documentation only.
+
+
+## Evening continuation — 2026-11-16
+
+[Source/data feasibility audit](../strategy_sources/2026-11-16-ranking-data-feasibility.md) and [machine-readable integrity results](2026-11-16-nyse-listing-snapshot-audit.json) extend this record without changing the proposed experiment.
+
+New evidence: Microsoft's MIT-licensed Qlib replacement cap and minimum holding duration are different from rank-based retention; preserve a single naive-versus-buffer comparison. A Hugging Face price candidate requires subscription access and has explicit-symbol survivor coverage limitations. Its newer universe-loader claims were not reproduced.
+
+Two original NYSE listing snapshots were independently parsed: 3,170 and 2,717 unique symbols; 2,094 in common. Both raw Git blob hashes matched repository metadata and four integrity assertion groups passed. The snapshots omit permanent IDs, explicit instrument types and row availability times; names include non-common instruments. Symbol-string changes do not establish delistings. Two snapshots do not establish complete historical coverage.
+
+Profitability status unchanged: zero investment trials; no returns/costs measured and no model trained. Next action is a fixed-interval identity/type and delisting-price coverage audit before implementing or evaluating the momentum/buffer comparison. Both earlier draft PRs had no owner comments when checked. Keep PR #292 draft; no merge or runtime/configuration change.
