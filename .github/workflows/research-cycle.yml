@@ -49,6 +49,12 @@ jobs:
           )"
           python scripts/fetch_binance_vision_klines.py             --symbols BTCUSDT ETHUSDT             --since 2023-01             --until "$UNTIL"
 
+      # Daily CSVs are intentionally gitignored. Sidecars in checkout and the
+      # historical cache are not evidence that the candle files are present.
+      - name: Download completed daily increments
+        run: |
+          python scripts/daily_collect.py --symbols BTCUSDT ETHUSDT --days 45 --out-dir data/daily/binance
+
       - name: Merge verified daily increments
         run: |
           python scripts/merge_daily_incremental.py --symbols BTCUSDT ETHUSDT --monthly-dir data/historical/binance/normalized --daily-dir data/daily/binance --output-dir data/historical/binance/normalized --output artifacts/research/merged-data.json
