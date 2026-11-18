@@ -1,0 +1,1216 @@
+{
+  "audit_date": "2026-11-18",
+  "basis": {
+    "now_normalization": "Multiply historical OHLC by five and divide historical volume by five to undo the documented December 2025 split for comparison only. Not a 2021 action.",
+    "price_tolerance_usd": ".01",
+    "rights": "Yahoo source data not republished here. Only audit counts, field-agreement flags, URLs and hashes retained; raw prices remain outside Git.",
+    "secondary_retrieval_cutoff": "2026-11-18; not historical 2022 availability",
+    "source_independence": "Separately retrieved Yahoo/CSI historical endpoint versus Dolt archive. Dolt upstream provenance is unknown; full upstream independence is not established.",
+    "sq_alias": "Request current XYZ, preserve historical SQ and its class; alias evidence is a January 2025 issuer/SEC record. Not a 2021 ticker change.",
+    "volume_tolerance": 0
+  },
+  "cash_dividend_evidence": [
+    {
+      "cash_dividend_evidence": {
+        "original_text_character_offset": 212635,
+        "quote": "We have never paid any cash dividends on our common stock.",
+        "role": "retrospective_quality_check",
+        "statement_scope": "Issuer reports never paying cash dividends; supports historical absence retrospectively, not pre-decision publication."
+      },
+      "complete_action_ledger_certified": false,
+      "filing": {
+        "acceptanceDateTime": "2022-03-11T13:06:16.000Z",
+        "accessionNumber": "0001108524-22-000013",
+        "act": "34",
+        "core_type": "XBRL",
+        "fileNumber": "001-32224",
+        "filingDate": "2022-03-11",
+        "filmNumber": "22731196",
+        "form": "10-K",
+        "isInlineXBRL": 1,
+        "isXBRL": 1,
+        "isXBRLNumeric": null,
+        "items": "",
+        "primaryDocDescription": "10-K",
+        "primaryDocument": "crm-20220131.htm",
+        "reportDate": "2022-01-31",
+        "size": 15816708
+      },
+      "source_records": [
+        {
+          "bytes": 307556,
+          "path": "/workspace/scratch/749efeffbf35/market-manifest-audit/sec/CIK0001108524-submissions-001.json",
+          "sha256": "f71caf4521bd2c2bc134b0aab2d1bbe9a6fb314a7ec14f74c038ae87227eebfd",
+          "url": "https://data.sec.gov/submissions/CIK0001108524-submissions-001.json"
+        },
+        {
+          "bytes": 3024998,
+          "path": "sec/CRM-annual.htm",
+          "received_at_upper_bound": "2026-11-18T23:45:32.220392+00:00",
+          "sha256": "a3d574c2611485b0288a60d5230b476c68219122ba0fff64afbf145f6aeb488d",
+          "url": "https://www.sec.gov/Archives/edgar/data/1108524/000110852422000013/crm-20220131.htm"
+        }
+      ],
+      "split_text_mentions": 0,
+      "symbol": "CRM"
+    },
+    {
+      "cash_dividend_evidence": {
+        "original_text_character_offset": 168138,
+        "quote": "We have never declared or paid any cash dividends on our common stock and we do not intend to declare or pay",
+        "role": "retrospective_quality_check",
+        "statement_scope": "Issuer reports never paying cash dividends; supports historical absence retrospectively, not pre-decision publication."
+      },
+      "complete_action_ledger_certified": false,
+      "filing": {
+        "acceptanceDateTime": "2022-02-03T22:07:54.000Z",
+        "accessionNumber": "0001373715-22-000024",
+        "act": "34",
+        "core_type": "XBRL",
+        "fileNumber": "001-35580",
+        "filingDate": "2022-02-03",
+        "filmNumber": "22589576",
+        "form": "10-K",
+        "isInlineXBRL": 1,
+        "isXBRL": 1,
+        "isXBRLNumeric": null,
+        "items": "",
+        "primaryDocDescription": "10-K",
+        "primaryDocument": "now-20211231.htm",
+        "reportDate": "2021-12-31",
+        "size": 11528538
+      },
+      "source_records": [
+        {
+          "bytes": 247832,
+          "path": "/workspace/scratch/749efeffbf35/market-manifest-audit/sec/CIK0001373715-submissions-001.json",
+          "sha256": "6453b119610d2bd5644c448ddcc1e9a55ba27d5a5168560b8caf2562ee6aa57a",
+          "url": "https://data.sec.gov/submissions/CIK0001373715-submissions-001.json"
+        },
+        {
+          "bytes": 2456466,
+          "path": "sec/NOW-annual.htm",
+          "received_at_upper_bound": "2026-11-18T23:45:32.296022+00:00",
+          "sha256": "b963bced9de79b5d1c8dc8e472bd5657d5281aba8f6ba47178d09ba7a2f539b4",
+          "url": "https://www.sec.gov/Archives/edgar/data/1373715/000137371522000024/now-20211231.htm"
+        }
+      ],
+      "split_text_mentions": 0,
+      "symbol": "NOW"
+    },
+    {
+      "cash_dividend_evidence": {
+        "original_text_character_offset": 294686,
+        "quote": "We have never declared nor paid any cash dividends on our capital stock.",
+        "role": "retrospective_quality_check",
+        "statement_scope": "Issuer reports never paying cash dividends; supports historical absence retrospectively, not pre-decision publication."
+      },
+      "complete_action_ledger_certified": false,
+      "filing": {
+        "acceptanceDateTime": "2022-02-24T21:19:13.000Z",
+        "accessionNumber": "0001628280-22-003825",
+        "act": "34",
+        "core_type": "XBRL",
+        "fileNumber": "001-37622",
+        "filingDate": "2022-02-24",
+        "filmNumber": "22671253",
+        "form": "10-K",
+        "isInlineXBRL": 1,
+        "isXBRL": 1,
+        "isXBRLNumeric": null,
+        "items": "",
+        "primaryDocDescription": "10-K",
+        "primaryDocument": "sq-20211231.htm",
+        "reportDate": "2021-12-31",
+        "size": 24112681
+      },
+      "source_records": [
+        {
+          "bytes": 4197805,
+          "path": "sec/SQ-annual.htm",
+          "received_at_upper_bound": "2026-11-18T23:45:31.930171+00:00",
+          "sha256": "c8ebbc11b82593558da6d9cb705343d59156d4c839b4d5be2ba77e20f59b6235",
+          "url": "https://www.sec.gov/Archives/edgar/data/1512673/000162828022003825/sq-20211231.htm"
+        }
+      ],
+      "split_text_mentions": 0,
+      "symbol": "SQ"
+    },
+    {
+      "cash_dividend_evidence": {
+        "original_text_character_offset": 193897,
+        "quote": "We have never declared or paid cash dividends on our capital stock.",
+        "role": "retrospective_quality_check",
+        "statement_scope": "Issuer reports never paying cash dividends; supports historical absence retrospectively, not pre-decision publication."
+      },
+      "complete_action_ledger_certified": false,
+      "filing": {
+        "acceptanceDateTime": "2022-03-30T20:18:31.000Z",
+        "accessionNumber": "0001640147-22-000023",
+        "act": "34",
+        "core_type": "XBRL",
+        "fileNumber": "001-39504",
+        "filingDate": "2022-03-30",
+        "filmNumber": "22786704",
+        "form": "10-K",
+        "isInlineXBRL": 1,
+        "isXBRL": 1,
+        "isXBRLNumeric": null,
+        "items": "",
+        "primaryDocDescription": "10-K",
+        "primaryDocument": "snow-20220131.htm",
+        "reportDate": "2022-01-31",
+        "size": 13736433
+      },
+      "source_records": [
+        {
+          "bytes": 52657,
+          "path": "/workspace/scratch/749efeffbf35/market-manifest-audit/sec/CIK0001640147-submissions-001.json",
+          "sha256": "19e493c680e2c9a1b829e57e555bbcd5037cbc6bfe2eacda70118d3206c27a07",
+          "url": "https://data.sec.gov/submissions/CIK0001640147-submissions-001.json"
+        },
+        {
+          "bytes": 2832399,
+          "path": "sec/SNOW-annual.htm",
+          "received_at_upper_bound": "2026-11-18T23:45:36.899558+00:00",
+          "sha256": "e517f726ea8238c22aa9c9052053d444a802a540bb07197d878a8b340fe3b987",
+          "url": "https://www.sec.gov/Archives/edgar/data/1640147/000164014722000023/snow-20220131.htm"
+        }
+      ],
+      "split_text_mentions": 0,
+      "symbol": "SNOW"
+    },
+    {
+      "cash_dividend_evidence": {
+        "original_text_character_offset": 346812,
+        "quote": "We have never declared or paid cash dividends on our capital stock.",
+        "role": "retrospective_quality_check",
+        "statement_scope": "Issuer reports never paying cash dividends; supports historical absence retrospectively, not pre-decision publication."
+      },
+      "complete_action_ledger_certified": false,
+      "filing": {
+        "acceptanceDateTime": "2022-02-24T21:33:34.000Z",
+        "accessionNumber": "0001543151-22-000008",
+        "act": "34",
+        "core_type": "XBRL",
+        "fileNumber": "001-38902",
+        "filingDate": "2022-02-24",
+        "filmNumber": "22671636",
+        "form": "10-K",
+        "isInlineXBRL": 1,
+        "isXBRL": 1,
+        "isXBRLNumeric": null,
+        "items": "",
+        "primaryDocDescription": "10-K",
+        "primaryDocument": "uber-20211231.htm",
+        "reportDate": "2021-12-31",
+        "size": 26628846
+      },
+      "source_records": [
+        {
+          "bytes": 4812018,
+          "path": "sec/UBER-annual.htm",
+          "received_at_upper_bound": "2026-11-18T23:45:36.965884+00:00",
+          "sha256": "dcca949127e2587182851c20b30bd19e8c2079c7dfbe67c13a51ea7d9063ecb2",
+          "url": "https://www.sec.gov/Archives/edgar/data/1543151/000154315122000008/uber-20211231.htm"
+        }
+      ],
+      "split_text_mentions": 0,
+      "symbol": "UBER"
+    },
+    {
+      "cash_dividend_evidence": {
+        "original_text_character_offset": 222122,
+        "quote": "We have never declared or paid dividends on our capital stock and do not intend to pay any dividends in the foreseeable",
+        "role": "retrospective_quality_check",
+        "statement_scope": "Issuer reports never paying cash dividends; supports historical absence retrospectively, not pre-decision publication."
+      },
+      "complete_action_ledger_certified": false,
+      "filing": {
+        "acceptanceDateTime": "2022-02-03T22:07:30.000Z",
+        "accessionNumber": "0001506293-22-000016",
+        "act": "34",
+        "core_type": "XBRL",
+        "fileNumber": "001-38872",
+        "filingDate": "2022-02-03",
+        "filmNumber": "22589571",
+        "form": "10-K",
+        "isInlineXBRL": 1,
+        "isXBRL": 1,
+        "isXBRLNumeric": null,
+        "items": "",
+        "primaryDocDescription": "10-K",
+        "primaryDocument": "pins-20211231.htm",
+        "reportDate": "2021-12-31",
+        "size": 11685798
+      },
+      "source_records": [
+        {
+          "bytes": 2250422,
+          "path": "sec/PINS-annual.htm",
+          "received_at_upper_bound": "2026-11-18T23:45:36.844930+00:00",
+          "sha256": "5c528df26b7451cc70963a711930229d3ab894eb64e10844f397c2514bdfcdcc",
+          "url": "https://www.sec.gov/Archives/edgar/data/1506293/000150629322000016/pins-20211231.htm"
+        }
+      ],
+      "split_text_mentions": 0,
+      "symbol": "PINS"
+    },
+    {
+      "cash_dividend_evidence": {
+        "original_text_character_offset": 208820,
+        "quote": "We have never declared or paid any cash dividends on our capital stock, and we do not currently intend to pay any",
+        "role": "retrospective_quality_check",
+        "statement_scope": "Issuer reports never paying cash dividends; supports historical absence retrospectively, not pre-decision publication."
+      },
+      "complete_action_ledger_certified": false,
+      "filing": {
+        "acceptanceDateTime": "2022-03-29T20:30:10.000Z",
+        "accessionNumber": "0001766502-22-000008",
+        "act": "34",
+        "core_type": "XBRL",
+        "fileNumber": "001-38936",
+        "filingDate": "2022-03-29",
+        "filmNumber": "22781286",
+        "form": "10-K",
+        "isInlineXBRL": 1,
+        "isXBRL": 1,
+        "isXBRLNumeric": null,
+        "items": "",
+        "primaryDocDescription": "10-K",
+        "primaryDocument": "chwy-20220130.htm",
+        "reportDate": "2022-01-30",
+        "size": 7360514
+      },
+      "source_records": [
+        {
+          "bytes": 1720014,
+          "path": "sec/CHWY-annual.htm",
+          "received_at_upper_bound": "2026-11-18T23:45:41.055319+00:00",
+          "sha256": "475badb2557a8f42a4618a8a3c275f537c1325e5c6123070fc4fd906cfd00755",
+          "url": "https://www.sec.gov/Archives/edgar/data/1766502/000176650222000008/chwy-20220130.htm"
+        }
+      ],
+      "split_text_mentions": 0,
+      "symbol": "CHWY"
+    },
+    {
+      "cash_dividend_evidence": {
+        "original_text_character_offset": 287161,
+        "quote": "We have never declared or paid any cash dividends on our capital stock.",
+        "role": "retrospective_quality_check",
+        "statement_scope": "Issuer reports never paying cash dividends; supports historical absence retrospectively, not pre-decision publication."
+      },
+      "complete_action_ledger_certified": false,
+      "filing": {
+        "acceptanceDateTime": "2022-02-22T21:22:54.000Z",
+        "accessionNumber": "0001447669-22-000049",
+        "act": "34",
+        "core_type": "XBRL",
+        "fileNumber": "001-37806",
+        "filingDate": "2022-02-22",
+        "filmNumber": "22658387",
+        "form": "10-K",
+        "isInlineXBRL": 1,
+        "isXBRL": 1,
+        "isXBRLNumeric": null,
+        "items": "",
+        "primaryDocDescription": "10-K",
+        "primaryDocument": "twlo-20211231.htm",
+        "reportDate": "2021-12-31",
+        "size": 14730908
+      },
+      "source_records": [
+        {
+          "bytes": 3120924,
+          "path": "sec/TWLO-annual.htm",
+          "received_at_upper_bound": "2026-11-18T23:45:41.133257+00:00",
+          "sha256": "07ec10f7d5b6227137874e37e05ee8117480a1d8be688cc9a881f0f4b70f5c44",
+          "url": "https://www.sec.gov/Archives/edgar/data/1447669/000144766922000049/twlo-20211231.htm"
+        }
+      ],
+      "split_text_mentions": 0,
+      "symbol": "TWLO"
+    },
+    {
+      "cash_dividend_evidence": {
+        "original_text_character_offset": 340911,
+        "quote": "We have never declared or paid any cash dividends on our capital stock.",
+        "role": "retrospective_quality_check",
+        "statement_scope": "Issuer reports never paying cash dividends; supports historical absence retrospectively, not pre-decision publication."
+      },
+      "complete_action_ledger_certified": false,
+      "filing": {
+        "acceptanceDateTime": "2022-02-24T11:20:34.000Z",
+        "accessionNumber": "0001193125-22-050913",
+        "act": "34",
+        "core_type": "XBRL",
+        "fileNumber": "001-39540",
+        "filingDate": "2022-02-24",
+        "filmNumber": "22666360",
+        "form": "10-K",
+        "isInlineXBRL": 1,
+        "isXBRL": 1,
+        "isXBRLNumeric": null,
+        "items": "",
+        "primaryDocDescription": "FORM 10-K",
+        "primaryDocument": "d273589d10k.htm",
+        "reportDate": "2021-12-31",
+        "size": 11530208
+      },
+      "source_records": [
+        {
+          "bytes": 3162651,
+          "path": "sec/PLTR-annual.htm",
+          "received_at_upper_bound": "2026-11-18T23:45:41.113041+00:00",
+          "sha256": "e23eb9342d84a282c508c1187b3e137f12310cb2ae75430c9b4eebcbef8be951",
+          "url": "https://www.sec.gov/Archives/edgar/data/1321655/000119312522050913/d273589d10k.htm"
+        }
+      ],
+      "split_text_mentions": 0,
+      "symbol": "PLTR"
+    },
+    {
+      "cash_dividend_evidence": {
+        "original_text_character_offset": 328148,
+        "quote": "We have never declared nor paid any cash dividends on our capital stock.",
+        "role": "retrospective_quality_check",
+        "statement_scope": "Issuer reports never paying cash dividends; supports historical absence retrospectively, not pre-decision publication."
+      },
+      "complete_action_ledger_certified": false,
+      "filing": {
+        "acceptanceDateTime": "2022-03-01T21:26:07.000Z",
+        "accessionNumber": "0001477333-22-000008",
+        "act": "34",
+        "core_type": "XBRL",
+        "fileNumber": "001-39039",
+        "filingDate": "2022-03-01",
+        "filmNumber": "22698508",
+        "form": "10-K",
+        "isInlineXBRL": 1,
+        "isXBRL": 1,
+        "isXBRLNumeric": null,
+        "items": "",
+        "primaryDocDescription": "10-K",
+        "primaryDocument": "cloud-20211231.htm",
+        "reportDate": "2021-12-31",
+        "size": 14082898
+      },
+      "source_records": [
+        {
+          "bytes": 3283168,
+          "path": "sec/NET-annual.htm",
+          "received_at_upper_bound": "2026-11-18T23:45:46.499081+00:00",
+          "sha256": "3c0703efb72696f46de6ea42852dea5f292caccf5f8134c548aadd9ba4ce6087",
+          "url": "https://www.sec.gov/Archives/edgar/data/1477333/000147733322000008/cloud-20211231.htm"
+        }
+      ],
+      "split_text_mentions": 0,
+      "symbol": "NET"
+    },
+    {
+      "cash_dividend_evidence": {
+        "original_text_character_offset": 308236,
+        "quote": "We have never declared or paid any cash dividends on our capital stock.",
+        "role": "retrospective_quality_check",
+        "statement_scope": "Issuer reports never paying cash dividends; supports historical absence retrospectively, not pre-decision publication."
+      },
+      "complete_action_ledger_certified": false,
+      "filing": {
+        "acceptanceDateTime": "2022-03-01T22:24:47.000Z",
+        "accessionNumber": "0001517413-22-000038",
+        "act": "34",
+        "core_type": "XBRL",
+        "fileNumber": "001-38897",
+        "filingDate": "2022-03-01",
+        "filmNumber": "22699866",
+        "form": "10-K",
+        "isInlineXBRL": 1,
+        "isXBRL": 1,
+        "isXBRLNumeric": null,
+        "items": "",
+        "primaryDocDescription": "10-K",
+        "primaryDocument": "fsly-20211231.htm",
+        "reportDate": "2021-12-31",
+        "size": 16360129
+      },
+      "source_records": [
+        {
+          "bytes": 3433930,
+          "path": "sec/FSLY-annual.htm",
+          "received_at_upper_bound": "2026-11-18T23:45:46.625104+00:00",
+          "sha256": "9a1d8da39b93adc85d861a221cc96ff43338a872290092cc04065cab1609fb0c",
+          "url": "https://www.sec.gov/Archives/edgar/data/1517413/000151741322000038/fsly-20211231.htm"
+        }
+      ],
+      "split_text_mentions": 0,
+      "symbol": "FSLY"
+    },
+    {
+      "cash_dividend_evidence": {
+        "original_text_character_offset": 233600,
+        "quote": "We have never declared or paid any cash dividends on our capital stock.",
+        "role": "retrospective_quality_check",
+        "statement_scope": "Issuer reports never paying cash dividends; supports historical absence retrospectively, not pre-decision publication."
+      },
+      "complete_action_ledger_certified": false,
+      "filing": {
+        "acceptanceDateTime": "2022-03-24T20:16:22.000Z",
+        "accessionNumber": "0001477720-22-000012",
+        "act": "34",
+        "core_type": "XBRL",
+        "fileNumber": "001-39495",
+        "filingDate": "2022-03-24",
+        "filmNumber": "22766681",
+        "form": "10-K",
+        "isInlineXBRL": 1,
+        "isXBRL": 1,
+        "isXBRLNumeric": null,
+        "items": "",
+        "primaryDocDescription": "10-K",
+        "primaryDocument": "asan-20220131.htm",
+        "reportDate": "2022-01-31",
+        "size": 12568469
+      },
+      "source_records": [
+        {
+          "bytes": 2484341,
+          "path": "sec/ASAN-annual.htm",
+          "received_at_upper_bound": "2026-11-18T23:45:46.500511+00:00",
+          "sha256": "3ded74dd96f97769fd9013591593a93a8c51e8540d75ed6ad62315c4f0014005",
+          "url": "https://www.sec.gov/Archives/edgar/data/1477720/000147772022000012/asan-20220131.htm"
+        }
+      ],
+      "split_text_mentions": 0,
+      "symbol": "ASAN"
+    }
+  ],
+  "corporate_action_completeness_resolved": false,
+  "corporate_action_resolution": {
+    "cash_dividends": "Twelve issuer annual filings after the interval report never paying dividends, supporting a retrospective no-cash-dividend conclusion. This is not pre-decision publication evidence.",
+    "future_transformations": "NOW December 2025 split and SQ January 2025 ticker change are used only to compare present vendor histories in historical units; neither is inserted into the 2021/January 2022 ledger.",
+    "split_and_other_actions": "Secondary event lists are empty within the requested interval; twelve annual texts contain no stock-split or reverse-split phrase. These absence checks are not a complete action register, and no complete-through certificate is issued.",
+    "sq_afterpay": "January 31, 2022 acquisition of Afterpay affects acquisition accounting/new shares; existing SQ holders are not Afterpay conversion recipients. No per-held-SQ-share receipt is inferred.",
+    "sq_name_announcement": "December 1, 2021 issuer notice says SQ ticker and CUSIP would remain unchanged and existing holders need take no action. Do not create a sale, new position or SQ-to-XYZ event in 2021."
+  },
+  "coverage": {
+    "original_invalid_rows_reconciled": [
+      {
+        "fields_agree_with_original_within_one_cent": {
+          "close": true,
+          "high": false,
+          "low": false,
+          "open": true,
+          "volume": false
+        },
+        "original_unchanged": true,
+        "secondary_bar_passes_ohlcv": true,
+        "session": "2021-05-05",
+        "symbol": "NOW"
+      },
+      {
+        "fields_agree_with_original_within_one_cent": {
+          "close": true,
+          "high": false,
+          "low": true,
+          "open": true,
+          "volume": false
+        },
+        "original_unchanged": true,
+        "secondary_bar_passes_ohlcv": true,
+        "session": "2021-05-05",
+        "symbol": "SNOW"
+      },
+      {
+        "fields_agree_with_original_within_one_cent": {
+          "close": true,
+          "high": false,
+          "low": true,
+          "open": true,
+          "volume": false
+        },
+        "original_unchanged": true,
+        "secondary_bar_passes_ohlcv": true,
+        "session": "2021-05-05",
+        "symbol": "UBER"
+      },
+      {
+        "fields_agree_with_original_within_one_cent": {
+          "close": true,
+          "high": false,
+          "low": true,
+          "open": true,
+          "volume": false
+        },
+        "original_unchanged": true,
+        "secondary_bar_passes_ohlcv": true,
+        "session": "2021-05-05",
+        "symbol": "PINS"
+      },
+      {
+        "fields_agree_with_original_within_one_cent": {
+          "close": true,
+          "high": false,
+          "low": true,
+          "open": true,
+          "volume": false
+        },
+        "original_unchanged": true,
+        "secondary_bar_passes_ohlcv": true,
+        "session": "2021-05-05",
+        "symbol": "TWLO"
+      },
+      {
+        "fields_agree_with_original_within_one_cent": {
+          "close": true,
+          "high": false,
+          "low": true,
+          "open": true,
+          "volume": false
+        },
+        "original_unchanged": true,
+        "secondary_bar_passes_ohlcv": true,
+        "session": "2021-05-05",
+        "symbol": "PLTR"
+      },
+      {
+        "fields_agree_with_original_within_one_cent": {
+          "close": true,
+          "high": false,
+          "low": true,
+          "open": true,
+          "volume": false
+        },
+        "original_unchanged": true,
+        "secondary_bar_passes_ohlcv": true,
+        "session": "2021-05-05",
+        "symbol": "FSLY"
+      }
+    ],
+    "original_missing_cells_present_in_secondary": 48,
+    "overlap_field_agreements": {
+      "close": 3504,
+      "high": 3493,
+      "low": 3503,
+      "open": 3504,
+      "volume": 36
+    },
+    "overlap_field_disagreements": {
+      "high": 11,
+      "low": 1,
+      "volume": 3468
+    },
+    "per_stock": {
+      "ASAN": {
+        "field_disagreements": {
+          "volume": 289
+        },
+        "fields_agree_within_one_cent": {
+          "close": 292,
+          "high": 292,
+          "low": 292,
+          "open": 292,
+          "volume": 3
+        },
+        "overlap_sessions": 292,
+        "secondary_sessions": 296
+      },
+      "CHWY": {
+        "field_disagreements": {
+          "high": 1,
+          "volume": 290
+        },
+        "fields_agree_within_one_cent": {
+          "close": 292,
+          "high": 291,
+          "low": 292,
+          "open": 292,
+          "volume": 2
+        },
+        "overlap_sessions": 292,
+        "secondary_sessions": 296
+      },
+      "CRM": {
+        "field_disagreements": {
+          "high": 1,
+          "volume": 291
+        },
+        "fields_agree_within_one_cent": {
+          "close": 292,
+          "high": 291,
+          "low": 292,
+          "open": 292,
+          "volume": 1
+        },
+        "overlap_sessions": 292,
+        "secondary_sessions": 296
+      },
+      "FSLY": {
+        "field_disagreements": {
+          "high": 1,
+          "volume": 288
+        },
+        "fields_agree_within_one_cent": {
+          "close": 292,
+          "high": 291,
+          "low": 292,
+          "open": 292,
+          "volume": 4
+        },
+        "overlap_sessions": 292,
+        "secondary_sessions": 296
+      },
+      "NET": {
+        "field_disagreements": {
+          "high": 1,
+          "volume": 290
+        },
+        "fields_agree_within_one_cent": {
+          "close": 292,
+          "high": 291,
+          "low": 292,
+          "open": 292,
+          "volume": 2
+        },
+        "overlap_sessions": 292,
+        "secondary_sessions": 296
+      },
+      "NOW": {
+        "field_disagreements": {
+          "high": 1,
+          "low": 1,
+          "volume": 286
+        },
+        "fields_agree_within_one_cent": {
+          "close": 292,
+          "high": 291,
+          "low": 291,
+          "open": 292,
+          "volume": 6
+        },
+        "overlap_sessions": 292,
+        "secondary_sessions": 296
+      },
+      "PINS": {
+        "field_disagreements": {
+          "high": 1,
+          "volume": 291
+        },
+        "fields_agree_within_one_cent": {
+          "close": 292,
+          "high": 291,
+          "low": 292,
+          "open": 292,
+          "volume": 1
+        },
+        "overlap_sessions": 292,
+        "secondary_sessions": 296
+      },
+      "PLTR": {
+        "field_disagreements": {
+          "high": 1,
+          "volume": 291
+        },
+        "fields_agree_within_one_cent": {
+          "close": 292,
+          "high": 291,
+          "low": 292,
+          "open": 292,
+          "volume": 1
+        },
+        "overlap_sessions": 292,
+        "secondary_sessions": 296
+      },
+      "SNOW": {
+        "field_disagreements": {
+          "high": 1,
+          "volume": 288
+        },
+        "fields_agree_within_one_cent": {
+          "close": 292,
+          "high": 291,
+          "low": 292,
+          "open": 292,
+          "volume": 4
+        },
+        "overlap_sessions": 292,
+        "secondary_sessions": 296
+      },
+      "SQ": {
+        "field_disagreements": {
+          "high": 1,
+          "volume": 287
+        },
+        "fields_agree_within_one_cent": {
+          "close": 292,
+          "high": 291,
+          "low": 292,
+          "open": 292,
+          "volume": 5
+        },
+        "overlap_sessions": 292,
+        "secondary_sessions": 296
+      },
+      "TWLO": {
+        "field_disagreements": {
+          "high": 1,
+          "volume": 289
+        },
+        "fields_agree_within_one_cent": {
+          "close": 292,
+          "high": 291,
+          "low": 292,
+          "open": 292,
+          "volume": 3
+        },
+        "overlap_sessions": 292,
+        "secondary_sessions": 296
+      },
+      "UBER": {
+        "field_disagreements": {
+          "high": 1,
+          "volume": 288
+        },
+        "fields_agree_within_one_cent": {
+          "close": 292,
+          "high": 291,
+          "low": 292,
+          "open": 292,
+          "volume": 4
+        },
+        "overlap_sessions": 292,
+        "secondary_sessions": 296
+      }
+    },
+    "price_disagreements": [
+      {
+        "fields": [
+          "high"
+        ],
+        "session": "2021-05-05",
+        "symbol": "CRM"
+      },
+      {
+        "fields": [
+          "high",
+          "low"
+        ],
+        "session": "2021-05-05",
+        "symbol": "NOW"
+      },
+      {
+        "fields": [
+          "high"
+        ],
+        "session": "2021-05-05",
+        "symbol": "SQ"
+      },
+      {
+        "fields": [
+          "high"
+        ],
+        "session": "2021-05-05",
+        "symbol": "SNOW"
+      },
+      {
+        "fields": [
+          "high"
+        ],
+        "session": "2021-05-05",
+        "symbol": "UBER"
+      },
+      {
+        "fields": [
+          "high"
+        ],
+        "session": "2021-05-05",
+        "symbol": "PINS"
+      },
+      {
+        "fields": [
+          "high"
+        ],
+        "session": "2021-05-05",
+        "symbol": "CHWY"
+      },
+      {
+        "fields": [
+          "high"
+        ],
+        "session": "2021-05-05",
+        "symbol": "TWLO"
+      },
+      {
+        "fields": [
+          "high"
+        ],
+        "session": "2021-05-05",
+        "symbol": "PLTR"
+      },
+      {
+        "fields": [
+          "high"
+        ],
+        "session": "2021-05-05",
+        "symbol": "NET"
+      },
+      {
+        "fields": [
+          "high"
+        ],
+        "session": "2021-05-05",
+        "symbol": "FSLY"
+      }
+    ],
+    "secondary_expected_cells": 3552,
+    "secondary_invalid_cells": [],
+    "secondary_missing_cells": [],
+    "secondary_observed_cells": 3552,
+    "volume_absolute_difference_bands": {
+      "equal": 36,
+      "nonzero_within_100_shares": 2978,
+      "over_100_shares": 490
+    },
+    "volume_difference_over_one_percent": [
+      {
+        "absolute_difference_divided_by_larger_volume": "0.02465722557049825844567924236",
+        "session": "2020-12-01",
+        "symbol": "CRM"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.3635275096295591801797517714",
+        "session": "2021-05-05",
+        "symbol": "CRM"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.3540863787375415282392026578",
+        "session": "2021-05-05",
+        "symbol": "NOW"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.4305853475454136015613271281",
+        "session": "2021-05-05",
+        "symbol": "SQ"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.05580966268445154515365002263",
+        "session": "2021-09-17",
+        "symbol": "SQ"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.1982425426561827899560373305",
+        "session": "2021-03-15",
+        "symbol": "SNOW"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.02868270120259019426456984274",
+        "session": "2021-04-16",
+        "symbol": "SNOW"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.2534371222743315766571580525",
+        "session": "2021-05-05",
+        "symbol": "SNOW"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.01956470467596390484003281378",
+        "session": "2021-08-02",
+        "symbol": "SNOW"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.01319480147552203016557494587",
+        "session": "2021-12-01",
+        "symbol": "SNOW"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.3579209469985558499448493877",
+        "session": "2021-05-05",
+        "symbol": "UBER"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.01046711042476255894896883042",
+        "session": "2022-01-03",
+        "symbol": "UBER"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.3879816561571733805826254625",
+        "session": "2021-05-05",
+        "symbol": "PINS"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.02206099368527569755486869460",
+        "session": "2021-09-17",
+        "symbol": "PINS"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.03647516570979557177800590599",
+        "session": "2021-03-15",
+        "symbol": "CHWY"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.2156796449104828859960082219",
+        "session": "2021-05-05",
+        "symbol": "CHWY"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.3306870948733058338243959929",
+        "session": "2021-05-05",
+        "symbol": "TWLO"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.3789749506192713883075633645",
+        "session": "2021-05-05",
+        "symbol": "PLTR"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.01905036953018266268231477477",
+        "session": "2021-03-15",
+        "symbol": "NET"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.1625231069198897617128180131",
+        "session": "2021-05-05",
+        "symbol": "NET"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.01665412810329443462742971115",
+        "session": "2021-05-11",
+        "symbol": "NET"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.2835413442178361571861003438",
+        "session": "2021-05-05",
+        "symbol": "FSLY"
+      },
+      {
+        "absolute_difference_divided_by_larger_volume": "0.2499304192685102586975914362",
+        "session": "2021-05-05",
+        "symbol": "ASAN"
+      }
+    ]
+  },
+  "failed_acquisition_probes": [
+    {
+      "result": "HTTP 404; resolved for source comparison by documented later XYZ alias, preserving historical SQ.",
+      "source": "Yahoo chart SQ"
+    },
+    {
+      "fromdate_format": "MM/DD/YYYY",
+      "result": "rCode 400; invalid parameter. Retried with ISO dates.",
+      "source": "Nasdaq public historical FSLY"
+    },
+    {
+      "fromdate_format": "YYYY-MM-DD",
+      "result": "rCode 200, totalRecords 0 for May 3-14, 2021; no corroborating prices obtained.",
+      "source": "Nasdaq public historical FSLY"
+    }
+  ],
+  "original_data_modified": false,
+  "primary_action_sources": [
+    {
+      "bytes": 2131309,
+      "name": "NOW-later-split",
+      "path": "NOW-later-split.htm",
+      "received_at_upper_bound": "2026-11-18T23:48:21.945988+00:00",
+      "sha256": "51882324eb21f064752a82e2156d41b62e07fec0470a2980577f000fb56e100f",
+      "url": "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000007/now-20251231.htm"
+    },
+    {
+      "bytes": 24061,
+      "name": "SQ-later-ticker",
+      "path": "SQ-later-ticker.htm",
+      "received_at_upper_bound": "2026-11-18T23:48:26.915936+00:00",
+      "sha256": "55eeba0a9deb7982da91ce68cb4ab5d03fea1b32e3049c45556beb9706fe1553",
+      "url": "https://www.sec.gov/Archives/edgar/data/1512673/000162828025007376/exhibit43blockinc2024.htm"
+    },
+    {
+      "bytes": 9740,
+      "name": "SQ-afterpay",
+      "path": "SQ-afterpay.htm",
+      "received_at_upper_bound": "2026-11-18T23:48:31.192315+00:00",
+      "sha256": "a8a8c52d7dc91fae285aa615b8e6c4fcc2780506c61d535a0cf373ffb7a754b2",
+      "url": "https://www.sec.gov/Archives/edgar/data/1512673/000119312522023529/d261416dex991.htm"
+    },
+    {
+      "bytes": 185536,
+      "name": "SQ-name",
+      "path": "SQ-name.htm",
+      "received_at_upper_bound": "2026-11-18T23:48:35.600594+00:00",
+      "sha256": "e48e4039d81b7f97e9c2d28059ac588c45e09c9d5da803d211834a5648cf4278",
+      "url": "https://squareup.com/gb/en/press/square-changes-name-to-block?country_redirection=true"
+    }
+  ],
+  "primary_method_sources": [
+    {
+      "finding": "Yahoo identifies CSI as US equity historical-data provider, restricts redistribution and describes data as informational. Dolt upstream remains unknown.",
+      "url": "https://help.yahoo.com/kb/SLN2310.html"
+    },
+    {
+      "finding": "Adjusted close includes splits and dividends. Do not substitute current adjusted close for raw fills or assume a pre-decision total-return series.",
+      "url": "https://help.yahoo.com/kb/SLN28256.html"
+    }
+  ],
+  "runner_ready": false,
+  "schema": "nyse_price_reconciliation_v1",
+  "scope": {
+    "audit_id": "nyse-market-manifest-2026-11-18-v1",
+    "evaluation_end": "2022-01-31",
+    "evaluation_start": "2022-01-03",
+    "history_start": "2020-12-01",
+    "investment_trials": 0,
+    "original_3170_universe": "Scope is this declared twelve-name diagnostic, not the full NYSE archive.",
+    "purpose": "Fixed diagnostic data audit before any ranking or portfolio-return evaluation",
+    "raw_data_revision": "uuk0i93qvs5rrk9k8geq250699j4l71c",
+    "selection": "Twelve named NYSE software/consumer-platform common-stock candidates chosen to scope the manifest audit. Historical identity, corporate actions and history adequacy remain audit questions. Retain every named candidate regardless of coverage. No investment outcome used for selection.",
+    "settlement_calendar_through": "2022-02-02",
+    "universe": [
+      "CRM",
+      "NOW",
+      "SQ",
+      "SNOW",
+      "UBER",
+      "PINS",
+      "CHWY",
+      "TWLO",
+      "PLTR",
+      "NET",
+      "FSLY",
+      "ASAN"
+    ]
+  },
+  "scope_limit": "No returns, rankings, predictions, holding-period trades or strategy metrics were computed. The same twelve historical names and calendar were retained.",
+  "source_inventory": [
+    {
+      "bytes": 32475,
+      "events_in_requested_interval": {},
+      "historical_ticker": "CRM",
+      "path": "yahoo-CRM.json",
+      "provider_request_symbol": "CRM",
+      "publication_cutoff_proved": false,
+      "sha256": "d03527ca2f56ac06b86a2f4cd0205d053a4efe6c64062d1a31fed44f3f19205c",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/CRM?period1=1606780800&period2=1643846400&interval=1d&events=div%2Csplits&includeAdjustedClose=true"
+    },
+    {
+      "bytes": 33264,
+      "events_in_requested_interval": {},
+      "historical_ticker": "NOW",
+      "path": "yahoo-NOW.json",
+      "provider_request_symbol": "NOW",
+      "publication_cutoff_proved": false,
+      "sha256": "09357c132d90f9cdefede5ab71bf4a39b230eb1d9e675227d62cdbf3533610c8",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/NOW?period1=1606780800&period2=1643846400&interval=1d&events=div%2Csplits&includeAdjustedClose=true"
+    },
+    {
+      "bytes": 32309,
+      "events_in_requested_interval": {},
+      "historical_ticker": "SQ",
+      "path": "yahoo-XYZ.json",
+      "provider_request_symbol": "XYZ",
+      "publication_cutoff_proved": false,
+      "sha256": "6f18eb03b5d389eaffd5d78519b5f01b404fe9b6be4533442484e1986be5b852",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/XYZ?period1=1606780800&period2=1643846400&interval=1d&events=div%2Csplits&includeAdjustedClose=true"
+    },
+    {
+      "bytes": 30708,
+      "events_in_requested_interval": {},
+      "historical_ticker": "SNOW",
+      "path": "yahoo-SNOW.json",
+      "provider_request_symbol": "SNOW",
+      "publication_cutoff_proved": false,
+      "sha256": "f3c8ca8248dd89058002cea9ed41d08e0ba74ee6934cdc85fcec56fde43fb615",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/SNOW?period1=1606780800&period2=1643846400&interval=1d&events=div%2Csplits&includeAdjustedClose=true"
+    },
+    {
+      "bytes": 32785,
+      "events_in_requested_interval": {},
+      "historical_ticker": "UBER",
+      "path": "yahoo-UBER.json",
+      "provider_request_symbol": "UBER",
+      "publication_cutoff_proved": false,
+      "sha256": "526cc88bacb9a74e7d0cd2b4a3c6af91f04acfdad37c2b8c2a2e4eac8d257035",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/UBER?period1=1606780800&period2=1643846400&interval=1d&events=div%2Csplits&includeAdjustedClose=true"
+    },
+    {
+      "bytes": 32594,
+      "events_in_requested_interval": {},
+      "historical_ticker": "PINS",
+      "path": "yahoo-PINS.json",
+      "provider_request_symbol": "PINS",
+      "publication_cutoff_proved": false,
+      "sha256": "900d7c663e2affd0595a1408f717b6382385eee6e0809bfd42b9b0f6ee3188cc",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/PINS?period1=1606780800&period2=1643846400&interval=1d&events=div%2Csplits&includeAdjustedClose=true"
+    },
+    {
+      "bytes": 31925,
+      "events_in_requested_interval": {},
+      "historical_ticker": "CHWY",
+      "path": "yahoo-CHWY.json",
+      "provider_request_symbol": "CHWY",
+      "publication_cutoff_proved": false,
+      "sha256": "235eda4446dd098e58e29746e88258b4fab4632d427d44c6a7790dd62dc085a9",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/CHWY?period1=1606780800&period2=1643846400&interval=1d&events=div%2Csplits&includeAdjustedClose=true"
+    },
+    {
+      "bytes": 31013,
+      "events_in_requested_interval": {},
+      "historical_ticker": "TWLO",
+      "path": "yahoo-TWLO.json",
+      "provider_request_symbol": "TWLO",
+      "publication_cutoff_proved": false,
+      "sha256": "fde09afdad5474943cb8c57d5c484261cbceb70a75fcd2e9c275ca6666d27d61",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/TWLO?period1=1606780800&period2=1643846400&interval=1d&events=div%2Csplits&includeAdjustedClose=true"
+    },
+    {
+      "bytes": 33419,
+      "events_in_requested_interval": {},
+      "historical_ticker": "PLTR",
+      "path": "yahoo-PLTR.json",
+      "provider_request_symbol": "PLTR",
+      "publication_cutoff_proved": false,
+      "sha256": "bb2b10298fdf36d3e8cfddb0a701f2b1e8213dccb63ae5157ebff47986cb4147",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/PLTR?period1=1606780800&period2=1643846400&interval=1d&events=div%2Csplits&includeAdjustedClose=true"
+    },
+    {
+      "bytes": 32138,
+      "events_in_requested_interval": {},
+      "historical_ticker": "NET",
+      "path": "yahoo-NET.json",
+      "provider_request_symbol": "NET",
+      "publication_cutoff_proved": false,
+      "sha256": "b263db09cf44d302f185820a61c57bcaf1f64ca007b1d4eebdeed38cdc089f4b",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/NET?period1=1606780800&period2=1643846400&interval=1d&events=div%2Csplits&includeAdjustedClose=true"
+    },
+    {
+      "bytes": 32406,
+      "events_in_requested_interval": {},
+      "historical_ticker": "FSLY",
+      "path": "yahoo-FSLY.json",
+      "provider_request_symbol": "FSLY",
+      "publication_cutoff_proved": false,
+      "sha256": "6c96dd1390f1cc183d91004d3a65b600929cfea84fc9500a505763dfde00fbc1",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/FSLY?period1=1606780800&period2=1643846400&interval=1d&events=div%2Csplits&includeAdjustedClose=true"
+    },
+    {
+      "bytes": 32074,
+      "events_in_requested_interval": {},
+      "historical_ticker": "ASAN",
+      "path": "yahoo-ASAN.json",
+      "provider_request_symbol": "ASAN",
+      "publication_cutoff_proved": false,
+      "sha256": "a18ac80ff05036823c2791c04f0b9779ed076bdb51abd77fcd493a2e89081d3f",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/ASAN?period1=1606780800&period2=1643846400&interval=1d&events=div%2Csplits&includeAdjustedClose=true"
+    }
+  ],
+  "status": "crosscheck_complete_not_authorized_runner_input",
+  "strategy_metrics": null,
+  "strategy_trials": 0,
+  "timing_gap_resolved": false,
+  "timing_resolution": {
+    "decision": "Reject these retrieved responses as causal January 2022 runner inputs. Retrospective price/source validation remains useful.",
+    "decision_period": "2022-01-03 through 2022-01-31",
+    "finding": "Neither response establishes original per-row availability before historical decisions. Even interpreting a commit clock does not prove when a revision was pushed/publicly available. No historical available_at values were generated.",
+    "original_snapshot": "2022-02-03 10:00:05.161, timezone unspecified",
+    "secondary_observed_on": "2026-11-18",
+    "status": "not_recoverable_from_retrieved_responses"
+  }
+}
