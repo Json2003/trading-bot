@@ -1,0 +1,3511 @@
+{
+  "audit": "January 2022 NYSE ranking data coverage",
+  "research_date_pacific": "2026-11-17",
+  "compiled_utc": "2026-11-18T02:49:47.877746+00:00",
+  "prior_research_commit": "4214b44f9d8ac01a690fa7b71b9c9042f80b5a77",
+  "historical_window": {
+    "start": "2022-01-03",
+    "end": "2022-01-31",
+    "session_calendar": "https://ir.theice.com/press/news-details/2021/NYSE-Group-Announces-2022-2023-and-2024-Holiday-and-Early-Closings-Calendar/default.aspx",
+    "expected_sessions": 20,
+    "starting_snapshot_cutoff_utc": "2022-01-01T00:11:00Z",
+    "date_basis": "Use only a listing commit at/before each opening cut. First named daily price revisions, retrospective event checks and later backfill checks are separate evidence."
+  },
+  "exact_join_crosscheck": {
+    "scope": "Exact join to fixed 3,170 starting strings. All instrument types and the 462 unmatched filer strings retained. The reported day bar is available only retrospectively.",
+    "cell_counts": {
+      "listed_and_bar": 53495,
+      "bar_only": 24,
+      "listed_only": 9660,
+      "neither": 221,
+      "unresolved_with_bar": 132
+    },
+    "days": [
+      {
+        "session": "2022-01-03",
+        "listed_and_bar": 2696,
+        "bar_only": 0,
+        "listed_only": 474,
+        "neither": 0,
+        "unresolved_with_bar": 6,
+        "present_bar_quality": {
+          "basic_checks_pass": 2684,
+          "null": 12
+        }
+      },
+      {
+        "session": "2022-01-04",
+        "listed_and_bar": 2685,
+        "bar_only": 1,
+        "listed_only": 479,
+        "neither": 5,
+        "unresolved_with_bar": 7,
+        "present_bar_quality": {
+          "basic_checks_pass": 2673,
+          "null": 13
+        }
+      },
+      {
+        "session": "2022-01-05",
+        "listed_and_bar": 2677,
+        "bar_only": 2,
+        "listed_only": 485,
+        "neither": 6,
+        "unresolved_with_bar": 6,
+        "present_bar_quality": {
+          "basic_checks_pass": 2679
+        }
+      },
+      {
+        "session": "2022-01-06",
+        "listed_and_bar": 2667,
+        "bar_only": 1,
+        "listed_only": 497,
+        "neither": 5,
+        "unresolved_with_bar": 6,
+        "present_bar_quality": {
+          "basic_checks_pass": 2668
+        }
+      },
+      {
+        "session": "2022-01-07",
+        "listed_and_bar": 2672,
+        "bar_only": 1,
+        "listed_only": 487,
+        "neither": 10,
+        "unresolved_with_bar": 6,
+        "present_bar_quality": {
+          "basic_checks_pass": 2662,
+          "null": 11
+        }
+      },
+      {
+        "session": "2022-01-10",
+        "listed_and_bar": 2671,
+        "bar_only": 2,
+        "listed_only": 486,
+        "neither": 11,
+        "unresolved_with_bar": 6,
+        "present_bar_quality": {
+          "basic_checks_pass": 2673
+        }
+      },
+      {
+        "session": "2022-01-11",
+        "listed_and_bar": 2672,
+        "bar_only": 2,
+        "listed_only": 489,
+        "neither": 7,
+        "unresolved_with_bar": 7,
+        "present_bar_quality": {
+          "basic_checks_pass": 2662,
+          "null": 12
+        }
+      },
+      {
+        "session": "2022-01-12",
+        "listed_and_bar": 2668,
+        "bar_only": 1,
+        "listed_only": 492,
+        "neither": 9,
+        "unresolved_with_bar": 5,
+        "present_bar_quality": {
+          "basic_checks_pass": 2657,
+          "null": 12
+        }
+      },
+      {
+        "session": "2022-01-13",
+        "listed_and_bar": 2676,
+        "bar_only": 2,
+        "listed_only": 481,
+        "neither": 11,
+        "unresolved_with_bar": 8,
+        "present_bar_quality": {
+          "basic_checks_pass": 2666,
+          "null": 12
+        }
+      },
+      {
+        "session": "2022-01-14",
+        "listed_and_bar": 2654,
+        "bar_only": 3,
+        "listed_only": 502,
+        "neither": 11,
+        "unresolved_with_bar": 8,
+        "present_bar_quality": {
+          "basic_checks_pass": 2652,
+          "null": 5
+        }
+      },
+      {
+        "session": "2022-01-18",
+        "listed_and_bar": 2675,
+        "bar_only": 1,
+        "listed_only": 483,
+        "neither": 11,
+        "unresolved_with_bar": 7,
+        "present_bar_quality": {
+          "basic_checks_pass": 2671,
+          "null": 5
+        }
+      },
+      {
+        "session": "2022-01-19",
+        "listed_and_bar": 2679,
+        "bar_only": 0,
+        "listed_only": 477,
+        "neither": 14,
+        "unresolved_with_bar": 6,
+        "present_bar_quality": {
+          "basic_checks_pass": 2672,
+          "null": 7
+        }
+      },
+      {
+        "session": "2022-01-20",
+        "listed_and_bar": 2676,
+        "bar_only": 0,
+        "listed_only": 480,
+        "neither": 14,
+        "unresolved_with_bar": 8,
+        "present_bar_quality": {
+          "basic_checks_pass": 2668,
+          "null": 8
+        }
+      },
+      {
+        "session": "2022-01-21",
+        "listed_and_bar": 2674,
+        "bar_only": 2,
+        "listed_only": 481,
+        "neither": 13,
+        "unresolved_with_bar": 6,
+        "present_bar_quality": {
+          "basic_checks_pass": 2671,
+          "null": 5
+        }
+      },
+      {
+        "session": "2022-01-24",
+        "listed_and_bar": 2677,
+        "bar_only": 1,
+        "listed_only": 479,
+        "neither": 13,
+        "unresolved_with_bar": 6,
+        "present_bar_quality": {
+          "basic_checks_pass": 2678
+        }
+      },
+      {
+        "session": "2022-01-25",
+        "listed_and_bar": 2680,
+        "bar_only": 0,
+        "listed_only": 474,
+        "neither": 16,
+        "unresolved_with_bar": 6,
+        "present_bar_quality": {
+          "basic_checks_pass": 2672,
+          "null": 8
+        }
+      },
+      {
+        "session": "2022-01-26",
+        "listed_and_bar": 2672,
+        "bar_only": 2,
+        "listed_only": 480,
+        "neither": 16,
+        "unresolved_with_bar": 8,
+        "present_bar_quality": {
+          "basic_checks_pass": 2666,
+          "null": 7,
+          "inconsistent_ohlc": 1
+        }
+      },
+      {
+        "session": "2022-01-27",
+        "listed_and_bar": 2692,
+        "bar_only": 2,
+        "listed_only": 461,
+        "neither": 15,
+        "unresolved_with_bar": 7,
+        "present_bar_quality": {
+          "basic_checks_pass": 2683,
+          "null": 11
+        }
+      },
+      {
+        "session": "2022-01-28",
+        "listed_and_bar": 2661,
+        "bar_only": 1,
+        "listed_only": 493,
+        "neither": 15,
+        "unresolved_with_bar": 6,
+        "present_bar_quality": {
+          "basic_checks_pass": 2658,
+          "null": 4
+        }
+      },
+      {
+        "session": "2022-01-31",
+        "listed_and_bar": 2671,
+        "bar_only": 0,
+        "listed_only": 480,
+        "neither": 19,
+        "unresolved_with_bar": 7,
+        "present_bar_quality": {
+          "basic_checks_pass": 2661,
+          "null": 10
+        }
+      }
+    ],
+    "baseline_symbol_number_of_days_with_bar": {
+      "0": 456,
+      "1": 1,
+      "4": 2,
+      "6": 3,
+      "7": 1,
+      "8": 2,
+      "9": 5,
+      "10": 4,
+      "11": 4,
+      "12": 9,
+      "13": 9,
+      "14": 12,
+      "15": 14,
+      "16": 13,
+      "17": 27,
+      "18": 27,
+      "19": 36,
+      "20": 2545
+    },
+    "simple_bar_checks": {
+      "basic_checks_pass": 53376,
+      "null": 142,
+      "inconsistent_ohlc": 1
+    },
+    "observed_bar_dates_for_event_checks": {
+      "CSPR": [
+        "2022-01-03",
+        "2022-01-04",
+        "2022-01-05",
+        "2022-01-06",
+        "2022-01-07",
+        "2022-01-10",
+        "2022-01-11",
+        "2022-01-12",
+        "2022-01-13",
+        "2022-01-14",
+        "2022-01-18",
+        "2022-01-19",
+        "2022-01-20",
+        "2022-01-21",
+        "2022-01-24"
+      ],
+      "CIT": [
+        "2022-01-03"
+      ],
+      "CRY": [
+        "2022-01-03",
+        "2022-01-04",
+        "2022-01-05",
+        "2022-01-06",
+        "2022-01-07",
+        "2022-01-10",
+        "2022-01-11",
+        "2022-01-12",
+        "2022-01-13",
+        "2022-01-14",
+        "2022-01-18",
+        "2022-01-19",
+        "2022-01-20",
+        "2022-01-21"
+      ],
+      "AORT": [
+        "2022-01-24",
+        "2022-01-25",
+        "2022-01-26",
+        "2022-01-27",
+        "2022-01-28",
+        "2022-01-31"
+      ],
+      "SLG": [
+        "2022-01-03",
+        "2022-01-04",
+        "2022-01-05",
+        "2022-01-06",
+        "2022-01-07",
+        "2022-01-10",
+        "2022-01-11",
+        "2022-01-12",
+        "2022-01-13",
+        "2022-01-14",
+        "2022-01-18",
+        "2022-01-19",
+        "2022-01-20",
+        "2022-01-21",
+        "2022-01-24",
+        "2022-01-25",
+        "2022-01-26",
+        "2022-01-27",
+        "2022-01-28",
+        "2022-01-31"
+      ],
+      "DDS": [
+        "2022-01-03",
+        "2022-01-04",
+        "2022-01-05",
+        "2022-01-06",
+        "2022-01-07",
+        "2022-01-10",
+        "2022-01-11",
+        "2022-01-12",
+        "2022-01-13",
+        "2022-01-14",
+        "2022-01-18",
+        "2022-01-19",
+        "2022-01-20",
+        "2022-01-21",
+        "2022-01-24",
+        "2022-01-25",
+        "2022-01-26",
+        "2022-01-27",
+        "2022-01-28",
+        "2022-01-31"
+      ],
+      "BDX": [
+        "2022-01-03",
+        "2022-01-04",
+        "2022-01-05",
+        "2022-01-06",
+        "2022-01-07",
+        "2022-01-10",
+        "2022-01-11",
+        "2022-01-12",
+        "2022-01-13",
+        "2022-01-14",
+        "2022-01-18",
+        "2022-01-19",
+        "2022-01-20",
+        "2022-01-21",
+        "2022-01-24",
+        "2022-01-25",
+        "2022-01-26",
+        "2022-01-27",
+        "2022-01-28",
+        "2022-01-31"
+      ],
+      "UNM": [
+        "2022-01-03",
+        "2022-01-04",
+        "2022-01-05",
+        "2022-01-06",
+        "2022-01-07",
+        "2022-01-10",
+        "2022-01-11",
+        "2022-01-12",
+        "2022-01-13",
+        "2022-01-14",
+        "2022-01-18",
+        "2022-01-19",
+        "2022-01-20",
+        "2022-01-21",
+        "2022-01-24",
+        "2022-01-25",
+        "2022-01-26",
+        "2022-01-27",
+        "2022-01-28",
+        "2022-01-31"
+      ]
+    }
+  },
+  "listings": {
+    "kind": "exact_symbol_listing_coverage",
+    "discovery": "https://api.github.com/repos/rreichel3/US-Stock-Symbols/commits?path=nyse/nyse_full_tickers.json&since=2022-01-01T00:00:00Z&until=2022-02-02T00:00:00Z&per_page=100",
+    "listing_path": "nyse/nyse_tickers.json",
+    "session_policy": "Prior or equal committer timestamp at each 14:30 UTC core open, expected weekdays except January 17. Commit time is a proxy for public availability, not source capture or exchange effective time. February 1 excluded from every January open.",
+    "baseline": {
+      "symbols": 3170,
+      "previously_unmatched": 462,
+      "full_file_raw_sha256": "b06e1cfb2b83bea023f29ea08a0846a33a0b0d53d304a857aa731b4589920450",
+      "references": [
+        {
+          "kind": "nyse",
+          "commit": "b02d9d7ace317f861f8a6f59e2cfa88e207f3ce9",
+          "published_at": "2022-01-01T00:11:00Z",
+          "blob": "d1702b3b2b4877a4dc8573381377eb278efdfd1c",
+          "url": "https://raw.githubusercontent.com/rreichel3/US-Stock-Symbols/b02d9d7ace317f861f8a6f59e2cfa88e207f3ce9/nyse/nyse_full_tickers.json",
+          "bytes": 1232760,
+          "sha256": "b06e1cfb2b83bea023f29ea08a0846a33a0b0d53d304a857aa731b4589920450",
+          "git_blob_sha1": "d1702b3b2b4877a4dc8573381377eb278efdfd1c"
+        },
+        {
+          "kind": "sec_mapper",
+          "commit": "b74d1efd3e005df08da0a38a4eedfcbdf2a02283",
+          "published_at": "2021-12-31T00:03:08Z",
+          "blob": "67c4998ed75ccc392264e57c6db99b46ea15a44b",
+          "url": "https://raw.githubusercontent.com/jadchaar/sec-cik-mapper/b74d1efd3e005df08da0a38a4eedfcbdf2a02283/mappings/stocks/mappings.csv",
+          "bytes": 612779,
+          "sha256": "127573f817be335dba3a90d03e74db5a771d13c10fa6bfc94badbc8d111b14c4",
+          "git_blob_sha1": "67c4998ed75ccc392264e57c6db99b46ea15a44b"
+        }
+      ],
+      "instrument_type_eligibility": "All baseline strings are retained as a coverage denominator. Presence does not establish common-stock eligibility."
+    },
+    "sources": [
+      {
+        "sha": "b02d9d7ace317f861f8a6f59e2cfa88e207f3ce9",
+        "committer_utc": "2022-01-01T00:11:00Z",
+        "raw_sha256": "a0a57dc76782cf075e183408b7d8e222d6a0505f7ebf1a6a546e33c2fadbfdbd",
+        "bytes": 30154,
+        "git_blob_sha1": "25b234677ecab928a64e09e1118a256455cef0e7",
+        "listing_count": 3170,
+        "duplicate_symbols": 0
+      },
+      {
+        "sha": "32ee3cbb2671621bc9bbe123f3f3bc6a62d25525",
+        "committer_utc": "2022-01-04T00:10:40Z",
+        "raw_sha256": "02d4220dd14706d3cbfc26ad68011f2cb4b22f5e97da33a05ee32766cae18283",
+        "bytes": 30207,
+        "git_blob_sha1": "70730a38033aec0a15b935b4b1b68ab20c52e07d",
+        "listing_count": 3175,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "APN",
+          "APO^A",
+          "APO^B",
+          "ATH",
+          "BSAQ",
+          "PYT"
+        ],
+        "added_since_previous": [
+          "AAM^A",
+          "AAM^B",
+          "AGM^C",
+          "AMPI",
+          "GBLI",
+          "GBLL",
+          "GJT",
+          "IBER",
+          "IRRX",
+          "KNSL",
+          "PHYT"
+        ]
+      },
+      {
+        "sha": "d4268bbeebe61b06780353663cbe0ec4352cc4f3",
+        "committer_utc": "2022-01-05T00:11:38Z",
+        "raw_sha256": "1887d44a4472d077da4516d48dda26ebf21269e5595938d23b7de132b183fe00",
+        "bytes": 30204,
+        "git_blob_sha1": "8cb9d36c8042347c6346411138036bb4d971a5d1",
+        "listing_count": 3175,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "CIT",
+          "CIT^B",
+          "CTA^A"
+        ],
+        "added_since_previous": [
+          "GJO",
+          "PYT",
+          "YSAC"
+        ]
+      },
+      {
+        "sha": "39a6ebe26bc1100bd3ede2ed880556d3540917bf",
+        "committer_utc": "2022-01-06T00:11:51Z",
+        "raw_sha256": "9dba16da46abd4d9637d5cd025b18c32ce952bd3079d31bb22816430bbcf9f50",
+        "bytes": 30224,
+        "git_blob_sha1": "dadc3dc09b1f7ecdcf351f2e505aef42cf477b24",
+        "listing_count": 3177,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "HWKZ"
+        ],
+        "added_since_previous": [
+          "APN",
+          "BSAQ",
+          "CTA^A"
+        ]
+      },
+      {
+        "sha": "3c4f2d5b5ab26c9045ede6b48355a32155fb2f45",
+        "committer_utc": "2022-01-07T00:11:18Z",
+        "raw_sha256": "c3709b7df88df75ca0dd4b2521f7823db7f6feeca553ebe16409fed23296fa76",
+        "bytes": 30172,
+        "git_blob_sha1": "a7053083da24fa80c60831c3539dfcea668e2fb0",
+        "listing_count": 3172,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "ACAQ",
+          "GDL^C",
+          "GJO",
+          "HTFB",
+          "NMK^C",
+          "NM^G",
+          "VPCC"
+        ],
+        "added_since_previous": [
+          "HWKZ",
+          "ONE"
+        ]
+      },
+      {
+        "sha": "3994d4836011f69a54f826ec2d1ddd9b21921746",
+        "committer_utc": "2022-01-08T00:10:48Z",
+        "raw_sha256": "100179f1c3f8b4b4d5d0998d4642ae7e0bf443e62b7fb5889ef16a519effbeab",
+        "bytes": 30166,
+        "git_blob_sha1": "8398a24645f6a66d2c12a194f8dec0681ab77bd8",
+        "listing_count": 3171,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "AXH",
+          "EQHA",
+          "GJP",
+          "GJR",
+          "MBSC"
+        ],
+        "added_since_previous": [
+          "GDL^C",
+          "GJO",
+          "NMK^C",
+          "NM^G"
+        ]
+      },
+      {
+        "sha": "8517219b2931c8d3b0e9dab0abb13526f70c7015",
+        "committer_utc": "2022-01-11T00:11:18Z",
+        "raw_sha256": "3b11921dd86dbfdfb17ca740c68d57a41812a62c273cd4d7bdbe004711567cd6",
+        "bytes": 30234,
+        "git_blob_sha1": "b0420112ad80c7838edbf8400c6fe2f61630ab74",
+        "listing_count": 3178,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "CNDB",
+          "IBER"
+        ],
+        "added_since_previous": [
+          "ACAQ",
+          "AXH",
+          "GJP",
+          "HTFB",
+          "IFIN",
+          "MBSC",
+          "NETC",
+          "NFNT",
+          "SUAC"
+        ]
+      },
+      {
+        "sha": "0ca6d4d472a798badfc4280475d0f49c8b0cc67a",
+        "committer_utc": "2022-01-12T00:11:39Z",
+        "raw_sha256": "89bf2994a06fa16eabc3f67537cfd8ca98a2d46a4ed1c486203b673ba10d01de",
+        "bytes": 30223,
+        "git_blob_sha1": "8baf48caf0dd01d181c4d9e850fc752def7076d9",
+        "listing_count": 3177,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "GJH",
+          "HL^B",
+          "PRIF^D"
+        ],
+        "added_since_previous": [
+          "CNDB",
+          "EQHA"
+        ]
+      },
+      {
+        "sha": "ecdbf432b0f7318678a7fd9ae36a818d68015179",
+        "committer_utc": "2022-01-13T00:11:50Z",
+        "raw_sha256": "35da45dfe40ce45e9d9feac6e7c546d0027fd45f607d9233257cef7754288508",
+        "bytes": 30201,
+        "git_blob_sha1": "fd8e95143ab86a779221ddf704072176c706a42d",
+        "listing_count": 3175,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "DSAQ",
+          "FLYA",
+          "HWKZ",
+          "NMK^B",
+          "PRIF^G"
+        ],
+        "added_since_previous": [
+          "GJH",
+          "IBER",
+          "PRIF^D"
+        ]
+      },
+      {
+        "sha": "64be7033825cdfd813dd07a0f35b2baade5b2609",
+        "committer_utc": "2022-01-14T00:11:19Z",
+        "raw_sha256": "36204390dc5573f8e6d01000ff49c6f525214fc67cdcb9b2575fd16d420c0bd6",
+        "bytes": 30201,
+        "git_blob_sha1": "9d7d6123b03e24aa440f2e098512bfa536ccfaac",
+        "listing_count": 3175,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "DS^D",
+          "GJP",
+          "INAQ",
+          "TGP"
+        ],
+        "added_since_previous": [
+          "DMA",
+          "FLYA",
+          "GJR",
+          "HL^B"
+        ]
+      },
+      {
+        "sha": "17b07f6e0246037357cd781d6a523db5976f9baf",
+        "committer_utc": "2022-01-15T00:10:44Z",
+        "raw_sha256": "722e5da1d143253ae2cddfe34bf3c522ab31d49e8fa47abef3fbe684af9749ac",
+        "bytes": 30250,
+        "git_blob_sha1": "d7cddc330e3017a4ea7d848f67ef93564b1480dc",
+        "listing_count": 3180,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "CPSR",
+          "GJO",
+          "RY^T",
+          "WAVC"
+        ],
+        "added_since_previous": [
+          "BOMN",
+          "BRD",
+          "DSAQ",
+          "DS^D",
+          "GJP",
+          "GLS",
+          "INAQ",
+          "MNTN",
+          "NMK^B"
+        ]
+      },
+      {
+        "sha": "2b1e3d3070c47a919cd9a46431fcd386a82be7b4",
+        "committer_utc": "2022-01-19T00:10:21Z",
+        "raw_sha256": "6dd862dc8fa5752444d1ff753327229e24e036f3c5bcc305885807c377b3f61f",
+        "bytes": 30258,
+        "git_blob_sha1": "4aa94835be8830e07002655ae5602d4d53a1a547",
+        "listing_count": 3181,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "BSA",
+          "CFXA",
+          "ENR^A",
+          "GDL^C",
+          "GNT^A",
+          "USB^M"
+        ],
+        "added_since_previous": [
+          "GJO",
+          "HWKZ",
+          "PRIF^G",
+          "PSA^S",
+          "RY^T",
+          "WAVC",
+          "WEL"
+        ]
+      },
+      {
+        "sha": "6ca72be50caa401c103ade949661e34bb163ad4a",
+        "committer_utc": "2022-01-20T00:11:31Z",
+        "raw_sha256": "494b9e6c2b3dca2013cef2ba5c19b14d58ea00ecdd98544e6414c77829cfcb57",
+        "bytes": 30258,
+        "git_blob_sha1": "d0157b9759a6c4559d21f44a8d288921abac6562",
+        "listing_count": 3181,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "GGZ^A",
+          "NMK^B"
+        ],
+        "added_since_previous": [
+          "GDL^C",
+          "GNT^A"
+        ]
+      },
+      {
+        "sha": "7345361b1ef0304198991b0aeb5d8920d0503d56",
+        "committer_utc": "2022-01-21T00:10:09Z",
+        "raw_sha256": "b618a8dafc5f1ac391349ddcfb1baa2a276a3f4f98e9f6e2b4476d85460bd968",
+        "bytes": 30251,
+        "git_blob_sha1": "77ec10b0ebc1ed80944126f1d2183dc9d36d7e3b",
+        "listing_count": 3180,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "HTFB",
+          "JBK",
+          "RCFA"
+        ],
+        "added_since_previous": [
+          "GGZ^A",
+          "NMK^B"
+        ]
+      },
+      {
+        "sha": "2a3eaeeb99169eaf3087f96760c0fbdc178972e5",
+        "committer_utc": "2022-01-22T00:09:54Z",
+        "raw_sha256": "881bf9933c77d0b77ae7bfdbbd92a5618c5bf7ad0cfa8de53d392199363436b5",
+        "bytes": 30270,
+        "git_blob_sha1": "8e2599b403cd9b0007abe1d258781cbd3b606a70",
+        "listing_count": 3182,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "DSAQ"
+        ],
+        "added_since_previous": [
+          "HTFB",
+          "JBK",
+          "PACI"
+        ]
+      },
+      {
+        "sha": "76e2e2bce1a22025d2e7b4f9a7f03a230e8522cc",
+        "committer_utc": "2022-01-25T00:10:58Z",
+        "raw_sha256": "ab4a4a5fb03dee9c4eea901b8231773067ed2e0f1f6ea441b58a1d9f6964611f",
+        "bytes": 30273,
+        "git_blob_sha1": "d502113605b0bf38e331bbb3b25a027570bf30dc",
+        "listing_count": 3182,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "CRY",
+          "GJR",
+          "HWKZ",
+          "PYT"
+        ],
+        "added_since_previous": [
+          "AORT",
+          "DSAQ",
+          "RCFA",
+          "STET"
+        ]
+      },
+      {
+        "sha": "ec8194b042371c3c04e63bf40548c55abe90efc2",
+        "committer_utc": "2022-01-26T00:11:20Z",
+        "raw_sha256": "6f5861fc9fb83af56798f3421e928d616e5195790a28ec084f749c912c957620",
+        "bytes": 30252,
+        "git_blob_sha1": "795010e9912427a2f174c93bb2290ea45f5565c6",
+        "listing_count": 3180,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "CSPR",
+          "NMK^B"
+        ],
+        "added_since_previous": []
+      },
+      {
+        "sha": "89f64636b31f74b542d473d7d4efb83f78f6582e",
+        "committer_utc": "2022-01-27T00:10:37Z",
+        "raw_sha256": "6664a83c9c59ceb7a71fb7bcc20f19d11db78f656f31d3c19fbb449521f18538",
+        "bytes": 30270,
+        "git_blob_sha1": "fc114298865a768d284fad09d8d52c139bb7a3a1",
+        "listing_count": 3182,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "AHT^I",
+          "WAVC",
+          "YSAC"
+        ],
+        "added_since_previous": [
+          "BIPI",
+          "ECCV",
+          "GJR",
+          "NMK^B",
+          "PYT"
+        ]
+      },
+      {
+        "sha": "4e5bd7c02d332aa5adad813dcd6e7fb8ad64eb1b",
+        "committer_utc": "2022-01-28T00:11:07Z",
+        "raw_sha256": "0c7ba6ce7d0b5bafd4821dc88161aa4c211d253f673245177d4db6eb90597cc6",
+        "bytes": 30314,
+        "git_blob_sha1": "96b3026e738f669ae9a15db164f33601a604c189",
+        "listing_count": 3186,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "GJH",
+          "NFH"
+        ],
+        "added_since_previous": [
+          "AHT^I",
+          "HWKZ",
+          "MTVC",
+          "PAXS",
+          "SPE^C",
+          "WAVC"
+        ]
+      },
+      {
+        "sha": "e129ace2c2fe5e08e09a4e32b6371c4917bbaf30",
+        "committer_utc": "2022-01-29T00:09:19Z",
+        "raw_sha256": "6acd4bec63f0180eb6245e5da68da706d337b2431295dcd265e8dfbc6b947b81",
+        "bytes": 30312,
+        "git_blob_sha1": "87de6b34b48cb8bb4b4277c60763b9d6358901da",
+        "listing_count": 3186,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "GJR",
+          "NMK^B",
+          "SEAH",
+          "TREB"
+        ],
+        "added_since_previous": [
+          "ATEK",
+          "GJH",
+          "SGHC",
+          "SST"
+        ]
+      },
+      {
+        "sha": "72eacac1417464f8d4285129354ad9be68e69aa7",
+        "committer_utc": "2022-02-01T00:12:07Z",
+        "raw_sha256": "88be8708c784d14809dced30421646f16d4377b886cc42104a02c47838bead1d",
+        "bytes": 30241,
+        "git_blob_sha1": "a77075354087da468a196fbf082934f4ece75c00",
+        "listing_count": 3179,
+        "duplicate_symbols": 0,
+        "removed_since_previous": [
+          "BBL",
+          "GAB^J",
+          "GDV^G",
+          "GJP",
+          "GUT^A",
+          "HKIB",
+          "INSW^A",
+          "PHYT",
+          "RDS/B",
+          "SC",
+          "STET",
+          "WBK"
+        ],
+        "added_since_previous": [
+          "AMTD",
+          "PORT",
+          "RJAC",
+          "SCUA",
+          "TCOA"
+        ]
+      }
+    ],
+    "sessions": [
+      {
+        "session": "2022-01-03",
+        "open_utc": "2022-01-03T14:30:00Z",
+        "latest_source_commit": "b02d9d7ace317f861f8a6f59e2cfa88e207f3ce9",
+        "committer_utc": "2022-01-01T00:11:00Z",
+        "age_at_open_hours": 62.317,
+        "snapshot_symbols": 3170,
+        "baseline_present": 3170,
+        "baseline_absent": 0,
+        "nonbaseline_present": 0,
+        "prior_unmatched_present": 462,
+        "prior_unmatched_absent": 0
+      },
+      {
+        "session": "2022-01-04",
+        "open_utc": "2022-01-04T14:30:00Z",
+        "latest_source_commit": "32ee3cbb2671621bc9bbe123f3f3bc6a62d25525",
+        "committer_utc": "2022-01-04T00:10:40Z",
+        "age_at_open_hours": 14.322,
+        "snapshot_symbols": 3175,
+        "baseline_present": 3164,
+        "baseline_absent": 6,
+        "nonbaseline_present": 11,
+        "prior_unmatched_present": 459,
+        "prior_unmatched_absent": 3
+      },
+      {
+        "session": "2022-01-05",
+        "open_utc": "2022-01-05T14:30:00Z",
+        "latest_source_commit": "d4268bbeebe61b06780353663cbe0ec4352cc4f3",
+        "committer_utc": "2022-01-05T00:11:38Z",
+        "age_at_open_hours": 14.306,
+        "snapshot_symbols": 3175,
+        "baseline_present": 3162,
+        "baseline_absent": 8,
+        "nonbaseline_present": 13,
+        "prior_unmatched_present": 458,
+        "prior_unmatched_absent": 4
+      },
+      {
+        "session": "2022-01-06",
+        "open_utc": "2022-01-06T14:30:00Z",
+        "latest_source_commit": "39a6ebe26bc1100bd3ede2ed880556d3540917bf",
+        "committer_utc": "2022-01-06T00:11:51Z",
+        "age_at_open_hours": 14.303,
+        "snapshot_symbols": 3177,
+        "baseline_present": 3164,
+        "baseline_absent": 6,
+        "nonbaseline_present": 13,
+        "prior_unmatched_present": 459,
+        "prior_unmatched_absent": 3
+      },
+      {
+        "session": "2022-01-07",
+        "open_utc": "2022-01-07T14:30:00Z",
+        "latest_source_commit": "3c4f2d5b5ab26c9045ede6b48355a32155fb2f45",
+        "committer_utc": "2022-01-07T00:11:18Z",
+        "age_at_open_hours": 14.312,
+        "snapshot_symbols": 3172,
+        "baseline_present": 3159,
+        "baseline_absent": 11,
+        "nonbaseline_present": 13,
+        "prior_unmatched_present": 456,
+        "prior_unmatched_absent": 6
+      },
+      {
+        "session": "2022-01-10",
+        "open_utc": "2022-01-10T14:30:00Z",
+        "latest_source_commit": "3994d4836011f69a54f826ec2d1ddd9b21921746",
+        "committer_utc": "2022-01-08T00:10:48Z",
+        "age_at_open_hours": 62.32,
+        "snapshot_symbols": 3171,
+        "baseline_present": 3157,
+        "baseline_absent": 13,
+        "nonbaseline_present": 14,
+        "prior_unmatched_present": 458,
+        "prior_unmatched_absent": 4
+      },
+      {
+        "session": "2022-01-11",
+        "open_utc": "2022-01-11T14:30:00Z",
+        "latest_source_commit": "8517219b2931c8d3b0e9dab0abb13526f70c7015",
+        "committer_utc": "2022-01-11T00:11:18Z",
+        "age_at_open_hours": 14.312,
+        "snapshot_symbols": 3178,
+        "baseline_present": 3161,
+        "baseline_absent": 9,
+        "nonbaseline_present": 17,
+        "prior_unmatched_present": 458,
+        "prior_unmatched_absent": 4
+      },
+      {
+        "session": "2022-01-12",
+        "open_utc": "2022-01-12T14:30:00Z",
+        "latest_source_commit": "0ca6d4d472a798badfc4280475d0f49c8b0cc67a",
+        "committer_utc": "2022-01-12T00:11:39Z",
+        "age_at_open_hours": 14.306,
+        "snapshot_symbols": 3177,
+        "baseline_present": 3160,
+        "baseline_absent": 10,
+        "nonbaseline_present": 17,
+        "prior_unmatched_present": 456,
+        "prior_unmatched_absent": 6
+      },
+      {
+        "session": "2022-01-13",
+        "open_utc": "2022-01-13T14:30:00Z",
+        "latest_source_commit": "ecdbf432b0f7318678a7fd9ae36a818d68015179",
+        "committer_utc": "2022-01-13T00:11:50Z",
+        "age_at_open_hours": 14.303,
+        "snapshot_symbols": 3175,
+        "baseline_present": 3157,
+        "baseline_absent": 13,
+        "nonbaseline_present": 18,
+        "prior_unmatched_present": 455,
+        "prior_unmatched_absent": 7
+      },
+      {
+        "session": "2022-01-14",
+        "open_utc": "2022-01-14T14:30:00Z",
+        "latest_source_commit": "64be7033825cdfd813dd07a0f35b2baade5b2609",
+        "committer_utc": "2022-01-14T00:11:19Z",
+        "age_at_open_hours": 14.311,
+        "snapshot_symbols": 3175,
+        "baseline_present": 3156,
+        "baseline_absent": 14,
+        "nonbaseline_present": 19,
+        "prior_unmatched_present": 456,
+        "prior_unmatched_absent": 6
+      },
+      {
+        "session": "2022-01-18",
+        "open_utc": "2022-01-18T14:30:00Z",
+        "latest_source_commit": "17b07f6e0246037357cd781d6a523db5976f9baf",
+        "committer_utc": "2022-01-15T00:10:44Z",
+        "age_at_open_hours": 86.321,
+        "snapshot_symbols": 3180,
+        "baseline_present": 3158,
+        "baseline_absent": 12,
+        "nonbaseline_present": 22,
+        "prior_unmatched_present": 457,
+        "prior_unmatched_absent": 5
+      },
+      {
+        "session": "2022-01-19",
+        "open_utc": "2022-01-19T14:30:00Z",
+        "latest_source_commit": "2b1e3d3070c47a919cd9a46431fcd386a82be7b4",
+        "committer_utc": "2022-01-19T00:10:21Z",
+        "age_at_open_hours": 14.328,
+        "snapshot_symbols": 3181,
+        "baseline_present": 3156,
+        "baseline_absent": 14,
+        "nonbaseline_present": 25,
+        "prior_unmatched_present": 455,
+        "prior_unmatched_absent": 7
+      },
+      {
+        "session": "2022-01-20",
+        "open_utc": "2022-01-20T14:30:00Z",
+        "latest_source_commit": "6ca72be50caa401c103ade949661e34bb163ad4a",
+        "committer_utc": "2022-01-20T00:11:31Z",
+        "age_at_open_hours": 14.308,
+        "snapshot_symbols": 3181,
+        "baseline_present": 3156,
+        "baseline_absent": 14,
+        "nonbaseline_present": 25,
+        "prior_unmatched_present": 455,
+        "prior_unmatched_absent": 7
+      },
+      {
+        "session": "2022-01-21",
+        "open_utc": "2022-01-21T14:30:00Z",
+        "latest_source_commit": "7345361b1ef0304198991b0aeb5d8920d0503d56",
+        "committer_utc": "2022-01-21T00:10:09Z",
+        "age_at_open_hours": 14.331,
+        "snapshot_symbols": 3180,
+        "baseline_present": 3155,
+        "baseline_absent": 15,
+        "nonbaseline_present": 25,
+        "prior_unmatched_present": 457,
+        "prior_unmatched_absent": 5
+      },
+      {
+        "session": "2022-01-24",
+        "open_utc": "2022-01-24T14:30:00Z",
+        "latest_source_commit": "2a3eaeeb99169eaf3087f96760c0fbdc178972e5",
+        "committer_utc": "2022-01-22T00:09:54Z",
+        "age_at_open_hours": 62.335,
+        "snapshot_symbols": 3182,
+        "baseline_present": 3156,
+        "baseline_absent": 14,
+        "nonbaseline_present": 26,
+        "prior_unmatched_present": 457,
+        "prior_unmatched_absent": 5
+      },
+      {
+        "session": "2022-01-25",
+        "open_utc": "2022-01-25T14:30:00Z",
+        "latest_source_commit": "76e2e2bce1a22025d2e7b4f9a7f03a230e8522cc",
+        "committer_utc": "2022-01-25T00:10:58Z",
+        "age_at_open_hours": 14.317,
+        "snapshot_symbols": 3182,
+        "baseline_present": 3154,
+        "baseline_absent": 16,
+        "nonbaseline_present": 28,
+        "prior_unmatched_present": 455,
+        "prior_unmatched_absent": 7
+      },
+      {
+        "session": "2022-01-26",
+        "open_utc": "2022-01-26T14:30:00Z",
+        "latest_source_commit": "ec8194b042371c3c04e63bf40548c55abe90efc2",
+        "committer_utc": "2022-01-26T00:11:20Z",
+        "age_at_open_hours": 14.311,
+        "snapshot_symbols": 3180,
+        "baseline_present": 3152,
+        "baseline_absent": 18,
+        "nonbaseline_present": 28,
+        "prior_unmatched_present": 454,
+        "prior_unmatched_absent": 8
+      },
+      {
+        "session": "2022-01-27",
+        "open_utc": "2022-01-27T14:30:00Z",
+        "latest_source_commit": "89f64636b31f74b542d473d7d4efb83f78f6582e",
+        "committer_utc": "2022-01-27T00:10:37Z",
+        "age_at_open_hours": 14.323,
+        "snapshot_symbols": 3182,
+        "baseline_present": 3153,
+        "baseline_absent": 17,
+        "nonbaseline_present": 29,
+        "prior_unmatched_present": 456,
+        "prior_unmatched_absent": 6
+      },
+      {
+        "session": "2022-01-28",
+        "open_utc": "2022-01-28T14:30:00Z",
+        "latest_source_commit": "4e5bd7c02d332aa5adad813dcd6e7fb8ad64eb1b",
+        "committer_utc": "2022-01-28T00:11:07Z",
+        "age_at_open_hours": 14.315,
+        "snapshot_symbols": 3186,
+        "baseline_present": 3154,
+        "baseline_absent": 16,
+        "nonbaseline_present": 32,
+        "prior_unmatched_present": 457,
+        "prior_unmatched_absent": 5
+      },
+      {
+        "session": "2022-01-31",
+        "open_utc": "2022-01-31T14:30:00Z",
+        "latest_source_commit": "e129ace2c2fe5e08e09a4e32b6371c4917bbaf30",
+        "committer_utc": "2022-01-29T00:09:19Z",
+        "age_at_open_hours": 62.345,
+        "snapshot_symbols": 3186,
+        "baseline_present": 3151,
+        "baseline_absent": 19,
+        "nonbaseline_present": 35,
+        "prior_unmatched_present": 455,
+        "prior_unmatched_absent": 7
+      }
+    ],
+    "symbol_transitions_at_observed_opens": {
+      "AAM^A": [
+        [
+          "2022-01-04",
+          "present"
+        ]
+      ],
+      "AAM^B": [
+        [
+          "2022-01-04",
+          "present"
+        ]
+      ],
+      "ACAQ": [
+        [
+          "2022-01-07",
+          "absent"
+        ],
+        [
+          "2022-01-11",
+          "present"
+        ]
+      ],
+      "AGM^C": [
+        [
+          "2022-01-04",
+          "present"
+        ]
+      ],
+      "AHT^I": [
+        [
+          "2022-01-27",
+          "absent"
+        ],
+        [
+          "2022-01-28",
+          "present"
+        ]
+      ],
+      "AMPI": [
+        [
+          "2022-01-04",
+          "present"
+        ]
+      ],
+      "AORT": [
+        [
+          "2022-01-25",
+          "present"
+        ]
+      ],
+      "APN": [
+        [
+          "2022-01-04",
+          "absent"
+        ],
+        [
+          "2022-01-06",
+          "present"
+        ]
+      ],
+      "APO^A": [
+        [
+          "2022-01-04",
+          "absent"
+        ]
+      ],
+      "APO^B": [
+        [
+          "2022-01-04",
+          "absent"
+        ]
+      ],
+      "ATEK": [
+        [
+          "2022-01-31",
+          "present"
+        ]
+      ],
+      "ATH": [
+        [
+          "2022-01-04",
+          "absent"
+        ]
+      ],
+      "AXH": [
+        [
+          "2022-01-10",
+          "absent"
+        ],
+        [
+          "2022-01-11",
+          "present"
+        ]
+      ],
+      "BIPI": [
+        [
+          "2022-01-27",
+          "present"
+        ]
+      ],
+      "BOMN": [
+        [
+          "2022-01-18",
+          "present"
+        ]
+      ],
+      "BRD": [
+        [
+          "2022-01-18",
+          "present"
+        ]
+      ],
+      "BSA": [
+        [
+          "2022-01-19",
+          "absent"
+        ]
+      ],
+      "BSAQ": [
+        [
+          "2022-01-04",
+          "absent"
+        ],
+        [
+          "2022-01-06",
+          "present"
+        ]
+      ],
+      "CFXA": [
+        [
+          "2022-01-19",
+          "absent"
+        ]
+      ],
+      "CIT": [
+        [
+          "2022-01-05",
+          "absent"
+        ]
+      ],
+      "CIT^B": [
+        [
+          "2022-01-05",
+          "absent"
+        ]
+      ],
+      "CNDB": [
+        [
+          "2022-01-11",
+          "absent"
+        ],
+        [
+          "2022-01-12",
+          "present"
+        ]
+      ],
+      "CPSR": [
+        [
+          "2022-01-18",
+          "absent"
+        ]
+      ],
+      "CRY": [
+        [
+          "2022-01-25",
+          "absent"
+        ]
+      ],
+      "CSPR": [
+        [
+          "2022-01-26",
+          "absent"
+        ]
+      ],
+      "CTA^A": [
+        [
+          "2022-01-05",
+          "absent"
+        ],
+        [
+          "2022-01-06",
+          "present"
+        ]
+      ],
+      "DMA": [
+        [
+          "2022-01-14",
+          "present"
+        ]
+      ],
+      "DSAQ": [
+        [
+          "2022-01-13",
+          "absent"
+        ],
+        [
+          "2022-01-18",
+          "present"
+        ],
+        [
+          "2022-01-24",
+          "absent"
+        ],
+        [
+          "2022-01-25",
+          "present"
+        ]
+      ],
+      "DS^D": [
+        [
+          "2022-01-14",
+          "absent"
+        ],
+        [
+          "2022-01-18",
+          "present"
+        ]
+      ],
+      "ECCV": [
+        [
+          "2022-01-27",
+          "present"
+        ]
+      ],
+      "ENR^A": [
+        [
+          "2022-01-19",
+          "absent"
+        ]
+      ],
+      "EQHA": [
+        [
+          "2022-01-10",
+          "absent"
+        ],
+        [
+          "2022-01-12",
+          "present"
+        ]
+      ],
+      "FLYA": [
+        [
+          "2022-01-13",
+          "absent"
+        ],
+        [
+          "2022-01-14",
+          "present"
+        ]
+      ],
+      "GBLI": [
+        [
+          "2022-01-04",
+          "present"
+        ]
+      ],
+      "GBLL": [
+        [
+          "2022-01-04",
+          "present"
+        ]
+      ],
+      "GDL^C": [
+        [
+          "2022-01-07",
+          "absent"
+        ],
+        [
+          "2022-01-10",
+          "present"
+        ],
+        [
+          "2022-01-19",
+          "absent"
+        ],
+        [
+          "2022-01-20",
+          "present"
+        ]
+      ],
+      "GGZ^A": [
+        [
+          "2022-01-20",
+          "absent"
+        ],
+        [
+          "2022-01-21",
+          "present"
+        ]
+      ],
+      "GJH": [
+        [
+          "2022-01-12",
+          "absent"
+        ],
+        [
+          "2022-01-13",
+          "present"
+        ],
+        [
+          "2022-01-28",
+          "absent"
+        ],
+        [
+          "2022-01-31",
+          "present"
+        ]
+      ],
+      "GJO": [
+        [
+          "2022-01-05",
+          "present"
+        ],
+        [
+          "2022-01-07",
+          "absent"
+        ],
+        [
+          "2022-01-10",
+          "present"
+        ],
+        [
+          "2022-01-18",
+          "absent"
+        ],
+        [
+          "2022-01-19",
+          "present"
+        ]
+      ],
+      "GJP": [
+        [
+          "2022-01-10",
+          "absent"
+        ],
+        [
+          "2022-01-11",
+          "present"
+        ],
+        [
+          "2022-01-14",
+          "absent"
+        ],
+        [
+          "2022-01-18",
+          "present"
+        ]
+      ],
+      "GJR": [
+        [
+          "2022-01-10",
+          "absent"
+        ],
+        [
+          "2022-01-14",
+          "present"
+        ],
+        [
+          "2022-01-25",
+          "absent"
+        ],
+        [
+          "2022-01-27",
+          "present"
+        ],
+        [
+          "2022-01-31",
+          "absent"
+        ]
+      ],
+      "GJT": [
+        [
+          "2022-01-04",
+          "present"
+        ]
+      ],
+      "GLS": [
+        [
+          "2022-01-18",
+          "present"
+        ]
+      ],
+      "GNT^A": [
+        [
+          "2022-01-19",
+          "absent"
+        ],
+        [
+          "2022-01-20",
+          "present"
+        ]
+      ],
+      "HL^B": [
+        [
+          "2022-01-12",
+          "absent"
+        ],
+        [
+          "2022-01-14",
+          "present"
+        ]
+      ],
+      "HTFB": [
+        [
+          "2022-01-07",
+          "absent"
+        ],
+        [
+          "2022-01-11",
+          "present"
+        ],
+        [
+          "2022-01-21",
+          "absent"
+        ],
+        [
+          "2022-01-24",
+          "present"
+        ]
+      ],
+      "HWKZ": [
+        [
+          "2022-01-06",
+          "absent"
+        ],
+        [
+          "2022-01-07",
+          "present"
+        ],
+        [
+          "2022-01-13",
+          "absent"
+        ],
+        [
+          "2022-01-19",
+          "present"
+        ],
+        [
+          "2022-01-25",
+          "absent"
+        ],
+        [
+          "2022-01-28",
+          "present"
+        ]
+      ],
+      "IBER": [
+        [
+          "2022-01-04",
+          "present"
+        ],
+        [
+          "2022-01-11",
+          "absent"
+        ],
+        [
+          "2022-01-13",
+          "present"
+        ]
+      ],
+      "IFIN": [
+        [
+          "2022-01-11",
+          "present"
+        ]
+      ],
+      "INAQ": [
+        [
+          "2022-01-14",
+          "absent"
+        ],
+        [
+          "2022-01-18",
+          "present"
+        ]
+      ],
+      "IRRX": [
+        [
+          "2022-01-04",
+          "present"
+        ]
+      ],
+      "JBK": [
+        [
+          "2022-01-21",
+          "absent"
+        ],
+        [
+          "2022-01-24",
+          "present"
+        ]
+      ],
+      "KNSL": [
+        [
+          "2022-01-04",
+          "present"
+        ]
+      ],
+      "MBSC": [
+        [
+          "2022-01-10",
+          "absent"
+        ],
+        [
+          "2022-01-11",
+          "present"
+        ]
+      ],
+      "MNTN": [
+        [
+          "2022-01-18",
+          "present"
+        ]
+      ],
+      "MTVC": [
+        [
+          "2022-01-28",
+          "present"
+        ]
+      ],
+      "NETC": [
+        [
+          "2022-01-11",
+          "present"
+        ]
+      ],
+      "NFH": [
+        [
+          "2022-01-28",
+          "absent"
+        ]
+      ],
+      "NFNT": [
+        [
+          "2022-01-11",
+          "present"
+        ]
+      ],
+      "NMK^B": [
+        [
+          "2022-01-13",
+          "absent"
+        ],
+        [
+          "2022-01-18",
+          "present"
+        ],
+        [
+          "2022-01-20",
+          "absent"
+        ],
+        [
+          "2022-01-21",
+          "present"
+        ],
+        [
+          "2022-01-26",
+          "absent"
+        ],
+        [
+          "2022-01-27",
+          "present"
+        ],
+        [
+          "2022-01-31",
+          "absent"
+        ]
+      ],
+      "NMK^C": [
+        [
+          "2022-01-07",
+          "absent"
+        ],
+        [
+          "2022-01-10",
+          "present"
+        ]
+      ],
+      "NM^G": [
+        [
+          "2022-01-07",
+          "absent"
+        ],
+        [
+          "2022-01-10",
+          "present"
+        ]
+      ],
+      "ONE": [
+        [
+          "2022-01-07",
+          "present"
+        ]
+      ],
+      "PACI": [
+        [
+          "2022-01-24",
+          "present"
+        ]
+      ],
+      "PAXS": [
+        [
+          "2022-01-28",
+          "present"
+        ]
+      ],
+      "PHYT": [
+        [
+          "2022-01-04",
+          "present"
+        ]
+      ],
+      "PRIF^D": [
+        [
+          "2022-01-12",
+          "absent"
+        ],
+        [
+          "2022-01-13",
+          "present"
+        ]
+      ],
+      "PRIF^G": [
+        [
+          "2022-01-13",
+          "absent"
+        ],
+        [
+          "2022-01-19",
+          "present"
+        ]
+      ],
+      "PSA^S": [
+        [
+          "2022-01-19",
+          "present"
+        ]
+      ],
+      "PYT": [
+        [
+          "2022-01-04",
+          "absent"
+        ],
+        [
+          "2022-01-05",
+          "present"
+        ],
+        [
+          "2022-01-25",
+          "absent"
+        ],
+        [
+          "2022-01-27",
+          "present"
+        ]
+      ],
+      "RCFA": [
+        [
+          "2022-01-21",
+          "absent"
+        ],
+        [
+          "2022-01-25",
+          "present"
+        ]
+      ],
+      "RY^T": [
+        [
+          "2022-01-18",
+          "absent"
+        ],
+        [
+          "2022-01-19",
+          "present"
+        ]
+      ],
+      "SEAH": [
+        [
+          "2022-01-31",
+          "absent"
+        ]
+      ],
+      "SGHC": [
+        [
+          "2022-01-31",
+          "present"
+        ]
+      ],
+      "SPE^C": [
+        [
+          "2022-01-28",
+          "present"
+        ]
+      ],
+      "SST": [
+        [
+          "2022-01-31",
+          "present"
+        ]
+      ],
+      "STET": [
+        [
+          "2022-01-25",
+          "present"
+        ]
+      ],
+      "SUAC": [
+        [
+          "2022-01-11",
+          "present"
+        ]
+      ],
+      "TGP": [
+        [
+          "2022-01-14",
+          "absent"
+        ]
+      ],
+      "TREB": [
+        [
+          "2022-01-31",
+          "absent"
+        ]
+      ],
+      "USB^M": [
+        [
+          "2022-01-19",
+          "absent"
+        ]
+      ],
+      "VPCC": [
+        [
+          "2022-01-07",
+          "absent"
+        ]
+      ],
+      "WAVC": [
+        [
+          "2022-01-18",
+          "absent"
+        ],
+        [
+          "2022-01-19",
+          "present"
+        ],
+        [
+          "2022-01-27",
+          "absent"
+        ],
+        [
+          "2022-01-28",
+          "present"
+        ]
+      ],
+      "WEL": [
+        [
+          "2022-01-19",
+          "present"
+        ]
+      ],
+      "YSAC": [
+        [
+          "2022-01-05",
+          "present"
+        ],
+        [
+          "2022-01-27",
+          "absent"
+        ]
+      ]
+    },
+    "in_period": {
+      "unique_observed_at_opens": 3206,
+      "present_at_all_opens": 3121,
+      "baseline_ever_absent": 49,
+      "baseline_absent_jan31_open": 19,
+      "baseline_present_at_all_opens": 3121,
+      "baseline_absent_earlier_present_jan31_open": 30,
+      "new_ever_observed": 36,
+      "new_at_jan31_open": 35,
+      "baseline_symbol_session_cells_present": 63155,
+      "baseline_symbol_session_cells_absent": 245,
+      "unmatched_baseline_symbol_session_cells_present": 9135,
+      "unmatched_baseline_symbol_session_cells_absent": 105,
+      "prior_unmatched_ever_absent": 20,
+      "baseline_absent_jan31_symbols": [
+        "APO^A",
+        "APO^B",
+        "ATH",
+        "BSA",
+        "CFXA",
+        "CIT",
+        "CIT^B",
+        "CPSR",
+        "CRY",
+        "CSPR",
+        "ENR^A",
+        "GJR",
+        "NFH",
+        "NMK^B",
+        "SEAH",
+        "TGP",
+        "TREB",
+        "USB^M",
+        "VPCC"
+      ],
+      "baseline_reappeared_by_jan31": [
+        "ACAQ",
+        "AHT^I",
+        "APN",
+        "AXH",
+        "BSAQ",
+        "CNDB",
+        "CTA^A",
+        "DSAQ",
+        "DS^D",
+        "EQHA",
+        "FLYA",
+        "GDL^C",
+        "GGZ^A",
+        "GJH",
+        "GJP",
+        "GNT^A",
+        "HL^B",
+        "HTFB",
+        "HWKZ",
+        "INAQ",
+        "JBK",
+        "MBSC",
+        "NMK^C",
+        "NM^G",
+        "PRIF^D",
+        "PRIF^G",
+        "PYT",
+        "RCFA",
+        "RY^T",
+        "WAVC"
+      ]
+    },
+    "post_window_only": {
+      "commit": "72eacac1417464f8d4285129354ad9be68e69aa7",
+      "published": "2022-02-01T00:12:07Z",
+      "reason": "Published after Jan 31 close. Excluded from period arithmetic.",
+      "previously_present_missing": [
+        "BBL",
+        "GAB^J",
+        "GDV^G",
+        "GJP",
+        "GUT^A",
+        "HKIB",
+        "INSW^A",
+        "PHYT",
+        "RDS/B",
+        "SC",
+        "STET",
+        "WBK"
+      ],
+      "new_vs_prior": [
+        "AMTD",
+        "PORT",
+        "RJAC",
+        "SCUA",
+        "TCOA"
+      ]
+    },
+    "discovery_crosschecks": {
+      "identical_queries_results": [
+        "https://api.github.com/repos/rreichel3/US-Stock-Symbols/commits?path=nyse/nyse_full_tickers.json&since=2022-01-01T00:00:00Z&until=2022-02-02T00:00:00Z&per_page=100",
+        "https://api.github.com/repos/rreichel3/US-Stock-Symbols/commits?path=nyse/nyse_tickers.json&since=2022-01-01T00:00:00Z&until=2022-02-02T00:00:00Z&per_page=100",
+        "https://api.github.com/repos/rreichel3/US-Stock-Symbols/commits?since=2022-01-01T00:00:00Z&until=2022-02-02T00:00:00Z&per_page=100"
+      ],
+      "ordered_commit_timestamp_pairs": 21,
+      "calendar": "https://ir.theice.com/press/news-details/2020/NYSE-Group-Announces-2021-2022-and-2023-Holiday-and-Early-Closings-Calendar/default.aspx",
+      "min_age_at_open_hours": 14.303,
+      "max_age_at_open_hours": 86.321
+    },
+    "retrospective_event_crosschecks": [
+      {
+        "old_symbol": "CRY",
+        "new_symbol": "AORT",
+        "kind": "ticker change",
+        "effective_open": "2022-01-24",
+        "first_open_new_symbol_in_archive": "2022-01-25",
+        "issuer_announcement_date": "2022-01-18",
+        "primary_url": "https://www.sec.gov/Archives/edgar/data/784199/000078419922000014/cry-20220118xex99_1.htm"
+      },
+      {
+        "old_symbol": "CSPR",
+        "kind": "cash merger for ordinary eligible public shares",
+        "exchange_suspension_date": "2022-01-25",
+        "first_open_absent_in_archive": "2022-01-26",
+        "gross_cash_consideration_per_share_usd": "6.90",
+        "settlement_receipt": null,
+        "issuer_url": "https://www.sec.gov/Archives/edgar/data/1598674/000114036122002541/brhc10033043_8k.htm",
+        "exchange_url": "https://www.sec.gov/Archives/edgar/data/1598674/000087666122000084/ruleprovisionnotice.htm"
+      },
+      {
+        "old_symbol": "CIT",
+        "kind": "stock merger, cash in lieu of fractional shares",
+        "effective_time_new_york": "2022-01-03T23:59:00-05:00",
+        "issuer_requested_withdrawal_before_open": "2022-01-04",
+        "first_open_absent_in_archive": "2022-01-05",
+        "first_citizens_class_a_shares_per_eligible_common_share": "0.06200",
+        "settlement_receipt": null,
+        "issuer_url": "https://www.sec.gov/Archives/edgar/data/1171825/000114036122000350/brhc10032348_8k.htm"
+      }
+    ],
+    "raw_url_template": "https://raw.githubusercontent.com/rreichel3/US-Stock-Symbols/{sha}/nyse/nyse_tickers.json"
+  },
+  "daily_ohlcv": {
+    "dataset": "https://www.dolthub.com/repositories/post-no-preference/stocks",
+    "source_author": "post-no-preference",
+    "host": "DoltHub",
+    "publisher_interview_url": "https://www.dolthub.com/blog/2024-09-27-dolt-post-no-preference/",
+    "source_docs_and_reuse": {
+      "current_dataset_license": "CC BY-SA 4.0 as recorded in LICENSE.md in the 2026 revision; upstream feed rights and historical license at the 2022 vintages unverified. Underlying data omitted.",
+      "license_response": {
+        "sha256": "9576e760a3428a74afd26d72b177d65b93e1ccaf31b3a2b3abf0cf1fde9a1ab9",
+        "bytes": 21014,
+        "sql": "SELECT doc_name,doc_text FROM dolt_docs AS OF 'a920rg5v62oo9g91m78c57vvgp149k4u' WHERE doc_name='LICENSE.md'"
+      },
+      "upstream_price_vendor_and_adjustment_convention": "Unverified for this historical vintage. Treat open as the reported daily bar field. Its raw, unadjusted status, opening auction/regular session rules, exchange venue and exact time of the print were not established."
+    },
+    "request_policy": {
+      "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master",
+      "method": "GET",
+      "parameter": "q",
+      "per_session_query_template": "SELECT LEFT(act_symbol,1) AS initial, COUNT(*) AS n, JSON_ARRAYAGG(JSON_ARRAY(act_symbol,open,high,low,close,volume)) AS bars FROM ohlcv AS OF '{dolt_commit}' WHERE date = '{session}' GROUP BY LEFT(act_symbol,1) ORDER BY initial",
+      "checks": "Successful response required. Unpack each JSON group, require count to equal the number of bar rows, and verify unique symbol keys. Use exact source spelling without rewriting punctuation. Coherent OHLC means all four positive, finite prices and both open and close within the inclusive low-high range, with strictly positive integer volume for the valid-bar count."
+    },
+    "histories": {
+      "starting_membership": "2022-01-01T00:11:00Z",
+      "session_wise_vintages": "Named OHLCV update for each target session. All 20 commit timestamps fall on the next calendar date. Database commit times and source data arrival at the exchange are distinct. No dissemination or receipt timestamp was inferred.",
+      "symbol_sample": "All 3,170 starting listing strings include unknown and non-common instruments. Pure row coverage, including all previously unmatched."
+    },
+    "coverage": {
+      "baseline_symbols": 3170,
+      "sessions": 20,
+      "possible_cells": 63400,
+      "all_us_bars": 188077,
+      "presence": {
+        "all_20": 2545,
+        "some_1_19": 169,
+        "none": 456,
+        "observed_symbol_sessions": 53519
+      },
+      "missing": 9881,
+      "valid_bars": {
+        "all_20": 2543,
+        "some_1_19": 159,
+        "none": 468,
+        "observed_symbol_sessions": 53376
+      },
+      "present_but_invalid": 143,
+      "exclusive_failures_volume_first": {
+        "bad_volume": 142,
+        "remaining_bad_ohlc": 1
+      },
+      "overlapping_reason_counts": {
+        "nonpositive_or_noninteger_volume": 142,
+        "incoherent_high_low": 19,
+        "nonpositive_or_nonfinite_ohlc": 6
+      },
+      "previous_462_issuer_unmatched_presence": {
+        "all_20": 5,
+        "some_1_19": 3,
+        "none": 454,
+        "observed_symbol_sessions": 132
+      }
+    },
+    "fingerprint_rule": "Each session materializes ohlcv AS OF its dated initial update commit. Raw SHA-256 identifies returned JSON; semantic SHA-256 hashes sorted [symbol,open,high,low,close,volume] rows encoded by Python json.dumps with compact separators. Raw wrapper/group order can vary.",
+    "sessions": [
+      {
+        "session": "2022-01-03",
+        "dolt_commit": "punvqeso4n8lvnn2am353cbvkijo0ve0",
+        "commit_time_as_returned": "2022-01-04 09:46:25.212",
+        "all_market_rows": 9461,
+        "baseline_present": 2696,
+        "valid_ohlcv": 2684,
+        "missing_from_starting_cohort": 474,
+        "rows_semantic_sha256": "c3b64868deb7d240ad5b8265d4ef1e7311dd0bafae459068550650262154c202",
+        "response_sha256": "a2087b58384d654107e9f9d3f17de7711fb447989854c26d2efa4b87186ebeb6",
+        "bytes": 440836
+      },
+      {
+        "session": "2022-01-04",
+        "dolt_commit": "t83ar6che04llbnt88es8rn21iqfipi2",
+        "commit_time_as_returned": "2022-01-05 09:46:23.926",
+        "all_market_rows": 9412,
+        "baseline_present": 2686,
+        "valid_ohlcv": 2673,
+        "missing_from_starting_cohort": 484,
+        "rows_semantic_sha256": "3e2c33ef10a46017017079f877e27e7f3bc3cee0e320b0ced3e39ccabed20e79",
+        "response_sha256": "f36288a65f9f6fa85028ed7bd7fa10531e5fb9b5071ff255bb03461db53e3150",
+        "bytes": 438609
+      },
+      {
+        "session": "2022-01-05",
+        "dolt_commit": "d23ars7d0i5boqvg468ioa4btkjkr2j5",
+        "commit_time_as_returned": "2022-01-06 09:46:23.596",
+        "all_market_rows": 9358,
+        "baseline_present": 2679,
+        "valid_ohlcv": 2679,
+        "missing_from_starting_cohort": 491,
+        "rows_semantic_sha256": "e6d3d9d8cfde4031a7db76003785ea32ca4b1ee2005652faf40236674192dca3",
+        "response_sha256": "a48fdc2d4ac80725101aa0779b5364f3f935c1a31e1d516c7a0c93aa46287ab4",
+        "bytes": 436388
+      },
+      {
+        "session": "2022-01-06",
+        "dolt_commit": "64848kgvqmomseplg010topum07ug18c",
+        "commit_time_as_returned": "2022-01-07 09:46:24.326",
+        "all_market_rows": 9332,
+        "baseline_present": 2668,
+        "valid_ohlcv": 2668,
+        "missing_from_starting_cohort": 502,
+        "rows_semantic_sha256": "96ddc36fb80832c5a4bcf41846f4a42c61496f1f3fd5bcbf644a816ddd70d713",
+        "response_sha256": "8baeade3769f6665b46f9d053249f3365b72195ff8e39d1a04ebc5e573cbc411",
+        "bytes": 434517
+      },
+      {
+        "session": "2022-01-07",
+        "dolt_commit": "4h30nv3vuhpg3187pt3l8k1n27qef8nd",
+        "commit_time_as_returned": "2022-01-08 09:46:23.812",
+        "all_market_rows": 9414,
+        "baseline_present": 2673,
+        "valid_ohlcv": 2662,
+        "missing_from_starting_cohort": 497,
+        "rows_semantic_sha256": "5043e93a279da2a56e035da1eca5a503b12fa239855a86efb2dd465fa2ab15f5",
+        "response_sha256": "4b47a765a867a2311366855b5fefb588ac54abc9c33634d41775f6d3332fdfb0",
+        "bytes": 437633
+      },
+      {
+        "session": "2022-01-10",
+        "dolt_commit": "6rii5fjo1pde3c4q239obfrh5e91u8t8",
+        "commit_time_as_returned": "2022-01-11 09:46:24.182",
+        "all_market_rows": 9362,
+        "baseline_present": 2673,
+        "valid_ohlcv": 2673,
+        "missing_from_starting_cohort": 497,
+        "rows_semantic_sha256": "21e14cb52f2fac89015b8e80098d6daa2fbed0eeb4ac69bcb5258af95c7222ab",
+        "response_sha256": "85be7873e2ec54914d36bea933922951b0acd0c3cf111187c2a7c5691542d15f",
+        "bytes": 436046
+      },
+      {
+        "session": "2022-01-11",
+        "dolt_commit": "dn86fd0eubi42jhofis4uje70k0nutvo",
+        "commit_time_as_returned": "2022-01-12 09:46:23.667",
+        "all_market_rows": 9404,
+        "baseline_present": 2674,
+        "valid_ohlcv": 2662,
+        "missing_from_starting_cohort": 496,
+        "rows_semantic_sha256": "8c9aaeca145b1fb005ab57cc482c57200db4665c3da01d5b62ea64bbab6a8c24",
+        "response_sha256": "9e105c3d21ebc0d30d17c2ee9d40fd8be6efee7b89ae8e2263078d3db89df4d7",
+        "bytes": 437548
+      },
+      {
+        "session": "2022-01-12",
+        "dolt_commit": "6pj50sgvgiqo6fmvtl9ccq0gr0t6l539",
+        "commit_time_as_returned": "2022-01-13 09:46:24.929",
+        "all_market_rows": 9404,
+        "baseline_present": 2669,
+        "valid_ohlcv": 2657,
+        "missing_from_starting_cohort": 501,
+        "rows_semantic_sha256": "9e152c02fcddbc33e5310ada216d054608605a9d44334cfefef66fc46819e42b",
+        "response_sha256": "6618416b4b0b8c0e11ed7e2f7852f1a0a8320fb0b7aa62dd4754ea1472d5dd1c",
+        "bytes": 437481
+      },
+      {
+        "session": "2022-01-13",
+        "dolt_commit": "a9onac8i7omhes5v20qqne0bdrlpnd2m",
+        "commit_time_as_returned": "2022-01-14 09:46:24.252",
+        "all_market_rows": 9427,
+        "baseline_present": 2678,
+        "valid_ohlcv": 2666,
+        "missing_from_starting_cohort": 492,
+        "rows_semantic_sha256": "98566085dbb458436291d5144106b9a1e8ca30806fbff3784dace01132339ad4",
+        "response_sha256": "79a9535a50dfe3f6eabd241b11894902fb954174fc4edba36a90bc9de36885f1",
+        "bytes": 438348
+      },
+      {
+        "session": "2022-01-14",
+        "dolt_commit": "b56dh48popj0of4gqj1e07qfn6shbi11",
+        "commit_time_as_returned": "2022-01-15 09:46:24.027",
+        "all_market_rows": 9299,
+        "baseline_present": 2657,
+        "valid_ohlcv": 2652,
+        "missing_from_starting_cohort": 513,
+        "rows_semantic_sha256": "64b90f34f312d7a194d6158e366899c722b09dd60abde8182ab564ea93b48aa1",
+        "response_sha256": "35b5058c257de67a373075a6c3f979d63736469df9ef6786a4d25e474f3ad223",
+        "bytes": 432717
+      },
+      {
+        "session": "2022-01-18",
+        "dolt_commit": "mkdd2k84re0nb5eboj5gujk3e3pc7o09",
+        "commit_time_as_returned": "2022-01-19 09:46:24.717",
+        "all_market_rows": 9371,
+        "baseline_present": 2676,
+        "valid_ohlcv": 2671,
+        "missing_from_starting_cohort": 494,
+        "rows_semantic_sha256": "bf21b7c5004520ff50e82f6cd4d4e6545892b9db8961c3d4a3308d511c04058b",
+        "response_sha256": "d4b9af2770ef49f02f25b27a4d789f45e048a146de1f2130809848cd51fede1f",
+        "bytes": 436444
+      },
+      {
+        "session": "2022-01-19",
+        "dolt_commit": "43adj0g31et0ceq1thhkmi9jaekn3323",
+        "commit_time_as_returned": "2022-01-20 09:46:23.872",
+        "all_market_rows": 9400,
+        "baseline_present": 2679,
+        "valid_ohlcv": 2672,
+        "missing_from_starting_cohort": 491,
+        "rows_semantic_sha256": "78dab57a69ba9e547348fe448c2cbb8102abb2ad261fca29a14f87b258b6d38f",
+        "response_sha256": "c48451cd8f73afd9734706b5f63a2c9649703f6e191b73cc1c887041568a490e",
+        "bytes": 437197
+      },
+      {
+        "session": "2022-01-20",
+        "dolt_commit": "1barvsceolkru7tvm8oh4sv7kmjjv1j4",
+        "commit_time_as_returned": "2022-01-21 09:46:18.789",
+        "all_market_rows": 9388,
+        "baseline_present": 2676,
+        "valid_ohlcv": 2668,
+        "missing_from_starting_cohort": 494,
+        "rows_semantic_sha256": "88544a3c416a9a0214c1ec59d3814ddde1e61dc745b1124bbc7af3f7b233879d",
+        "response_sha256": "2134b1646ad91017b53d51488ecfccb609a578a0fd86453d809d58f5d67dfe6c",
+        "bytes": 436807
+      },
+      {
+        "session": "2022-01-21",
+        "dolt_commit": "7n4q2ug9r8oo4fs9t5jfdkk171akil30",
+        "commit_time_as_returned": "2022-01-22 09:46:23.428",
+        "all_market_rows": 9407,
+        "baseline_present": 2676,
+        "valid_ohlcv": 2671,
+        "missing_from_starting_cohort": 494,
+        "rows_semantic_sha256": "965adde86623754b06a44380aa2c3cf6bd48d8643292af26c636d3113bb1fe00",
+        "response_sha256": "a14852c5ddb4e74af6fb952292d7f887c6020d500cdfce8721ff4ca56995ea9b",
+        "bytes": 438346
+      },
+      {
+        "session": "2022-01-24",
+        "dolt_commit": "mr35vg7sdqgjnuefqpfh5plsmjh7kgbo",
+        "commit_time_as_returned": "2022-01-25 09:46:35.386",
+        "all_market_rows": 9470,
+        "baseline_present": 2678,
+        "valid_ohlcv": 2678,
+        "missing_from_starting_cohort": 492,
+        "rows_semantic_sha256": "b27f1323859b3b1f33bcfe72b9d72ffcbb71d0684daf77bf0e74327d79bb6346",
+        "response_sha256": "9e63db46d1efa52adce5b63b8151e9b3bc2ca9f8f2703ceff6619224a2d9c716",
+        "bytes": 442030
+      },
+      {
+        "session": "2022-01-25",
+        "dolt_commit": "cntdsitnmdaqvmhde7i90hd8vmq0ambs",
+        "commit_time_as_returned": "2022-01-26 09:46:34.140",
+        "all_market_rows": 9434,
+        "baseline_present": 2680,
+        "valid_ohlcv": 2672,
+        "missing_from_starting_cohort": 490,
+        "rows_semantic_sha256": "bfc4a6661afd0b2d8f988ca6c3f7d98030799d86b4ae1ac01f1fedd3213dd23d",
+        "response_sha256": "8a2dbc3673db653fe2a38638ec14eae63b900d50ab072deba56e60a1bec3e937",
+        "bytes": 438695
+      },
+      {
+        "session": "2022-01-26",
+        "dolt_commit": "8pk3gggl6nu5eqfhca50g8fko5irvec2",
+        "commit_time_as_returned": "2022-01-27 09:46:34.990",
+        "all_market_rows": 9415,
+        "baseline_present": 2674,
+        "valid_ohlcv": 2666,
+        "missing_from_starting_cohort": 496,
+        "rows_semantic_sha256": "c2c7ebbc01fc022bbf6609d67fcec5b7e39469d4f5ce84a6c444bed20ed3c390",
+        "response_sha256": "0bd354fb8704d09992357d051f40e2db59805a2f5c8217544087eff22e3a9ada",
+        "bytes": 438086
+      },
+      {
+        "session": "2022-01-27",
+        "dolt_commit": "mm82hcmbboirssioamof0q1ofvk8p2om",
+        "commit_time_as_returned": "2022-01-28 09:46:34.131",
+        "all_market_rows": 9496,
+        "baseline_present": 2694,
+        "valid_ohlcv": 2683,
+        "missing_from_starting_cohort": 476,
+        "rows_semantic_sha256": "5113f6a689f096150a0ad7bd984d595c998659fc182e35e2f34fe37eee22275e",
+        "response_sha256": "ca7875cb820a0d6552e3c7e851048ff27629ecfe8d353b14f9aa977ee74649dc",
+        "bytes": 440958
+      },
+      {
+        "session": "2022-01-28",
+        "dolt_commit": "ucnlbjtm99r99rffelje5bs3ha8ghki9",
+        "commit_time_as_returned": "2022-01-29 09:46:33.954",
+        "all_market_rows": 9367,
+        "baseline_present": 2662,
+        "valid_ohlcv": 2658,
+        "missing_from_starting_cohort": 508,
+        "rows_semantic_sha256": "ddcb9c147268f0b5ea6975959a63a169a7b85477936add7bed63882ab4e8e9d0",
+        "response_sha256": "f82114da079f0e55a1c7e0863f33bfa272a63abb5eaa116463912d34ee4f703e",
+        "bytes": 435019
+      },
+      {
+        "session": "2022-01-31",
+        "dolt_commit": "ecm66ebn0s1660dptra9jphkk2lmpbn7",
+        "commit_time_as_returned": "2022-02-01 09:46:35.271",
+        "all_market_rows": 9456,
+        "baseline_present": 2671,
+        "valid_ohlcv": 2661,
+        "missing_from_starting_cohort": 499,
+        "rows_semantic_sha256": "826bb37979ddaee6745ab44a6f2153379a56f56e2ab9f45d9435cdb9fe49a625",
+        "response_sha256": "57cc26749dd51c4adfecf81b0d2976069501e77759b1c7e0a1364938c0b84bb8",
+        "bytes": 439433
+      }
+    ],
+    "selected_fixtures": {
+      "UNM": {
+        "sessions_present": 20,
+        "first": "2022-01-03",
+        "last": "2022-01-31"
+      },
+      "BDX": {
+        "sessions_present": 20,
+        "first": "2022-01-03",
+        "last": "2022-01-31"
+      },
+      "DDS": {
+        "sessions_present": 20,
+        "first": "2022-01-03",
+        "last": "2022-01-31"
+      },
+      "CSPR": {
+        "sessions_present": 15,
+        "first": "2022-01-03",
+        "last": "2022-01-24"
+      },
+      "CIT": {
+        "sessions_present": 1,
+        "first": "2022-01-03",
+        "last": "2022-01-03"
+      },
+      "SLG": {
+        "sessions_present": 20,
+        "first": "2022-01-03",
+        "last": "2022-01-31"
+      }
+    },
+    "corporate_actions": {
+      "before_feb2_dividend_update": {
+        "commit": "i7jf5okja91vf2r11hmb3ru5uvokt5g0",
+        "dividends": {
+          "records_all": 0,
+          "records_for_starting_symbols": 0,
+          "distinct_starting_symbols": 0,
+          "retrieved_response": {
+            "sha256": "97863eb44618f5a19b3671508f6dff5bdc7033d492ad86d51ee377b45cb9dd5b",
+            "bytes": 529
+          }
+        },
+        "log_time_as_returned": "2022-02-01 10:46:14.744"
+      },
+      "after_feb2_dividend_update": {
+        "commit": "uuk0i93qvs5rrk9k8geq250699j4l71c",
+        "dividends": {
+          "records_all": 928,
+          "records_for_starting_symbols": 497,
+          "distinct_starting_symbols": 494,
+          "retrieved_response": {
+            "sha256": "4e8f3031ead9074fe49e099e66f5d0844d53be11feea427f831f5dbf36153a7f",
+            "bytes": 10207
+          }
+        },
+        "log_time_as_returned": "2022-02-03 10:00:05.161"
+      },
+      "later_revision": {
+        "commit": "a920rg5v62oo9g91m78c57vvgp149k4u",
+        "dividends": {
+          "records_all": 928,
+          "records_for_starting_symbols": 497,
+          "distinct_starting_symbols": 494,
+          "retrieved_response": {
+            "sha256": "76f12de91da96f90b511bc160e81fff7fee140bbaecaacf207745c595477d1b5",
+            "bytes": 10207
+          }
+        },
+        "log_time_as_returned": "2026-11-17 05:30:38.233"
+      },
+      "historical_and_later_DDS_dividend_rows_Nov_Dec_2021": {
+        "dds_feb3": [
+          {
+            "act_symbol": "DDS",
+            "ex_date": "2021-12-30",
+            "amount": "0.20000"
+          }
+        ],
+        "dds_later": [
+          {
+            "act_symbol": "DDS",
+            "ex_date": "2021-12-30",
+            "amount": "0.20000"
+          }
+        ]
+      },
+      "splits_as_of_feb1": {
+        "commit": "i7jf5okja91vf2r11hmb3ru5uvokt5g0",
+        "all_rows": 28,
+        "cohort_rows": [
+          {
+            "act_symbol": "NEW",
+            "ex_date": "2022-01-31",
+            "to_factor": "1.00000",
+            "for_factor": "10.00000"
+          },
+          {
+            "act_symbol": "SLG",
+            "ex_date": "2022-01-24",
+            "to_factor": "1.00000",
+            "for_factor": "1.03060"
+          },
+          {
+            "act_symbol": "WEI",
+            "ex_date": "2022-01-26",
+            "to_factor": "1.00000",
+            "for_factor": "5.00000"
+          }
+        ],
+        "response": {
+          "sha256": "c4f1bcce2750c80b4c6941e2fde1d790bcd9603d0177417fea5a8a9ba5e3ec10",
+          "bytes": 3050
+        }
+      }
+    },
+    "action_visibility_checks": {
+      "SLG_split": "Absent on both Jan-25 and Feb-1 OHLCV commits, present at the split update on Feb-1. The ex-date was Jan 24. Do not backdate the source record to the ex-date.",
+      "DDS_special": "Absent in both November–December 2021 symbol-specific dividend queries (Feb 2022 and Nov 2026 revisions). Only the December 30 $0.20 record appeared.",
+      "dividend_coverage": "0 January ex-date rows at Feb 1 split-update revision, 928 at Feb 3 dividend-update revision; of the latter, 497 are exact starting-symbol matches. The absence of an ex-date record does not demonstrate no dividend. These timestamps are source commits only."
+    },
+    "supplementary_queries": {
+      "slg_jan25": {
+        "sha256": "692bf31b6cc1a3989f96849540ec0e0811d8a5d832e5ff4c53a54326537439af",
+        "bytes": 514,
+        "sql": "SELECT * FROM split AS OF 'mr35vg7sdqgjnuefqpfh5plsmjh7kgbo' WHERE act_symbol='SLG' AND ex_date='2022-01-24'"
+      },
+      "slg_jan31": {
+        "sha256": "a00f71e9254c2c744a1b1796ea7dabbf014bdee5384eb777207dd2e1b6cd3ce4",
+        "bytes": 514,
+        "sql": "SELECT * FROM split AS OF 'ecm66ebn0s1660dptra9jphkk2lmpbn7' WHERE act_symbol='SLG' AND ex_date='2022-01-24'"
+      },
+      "splits": {
+        "sha256": "c4f1bcce2750c80b4c6941e2fde1d790bcd9603d0177417fea5a8a9ba5e3ec10",
+        "bytes": 3050,
+        "sql": "SELECT * FROM split AS OF 'i7jf5okja91vf2r11hmb3ru5uvokt5g0' WHERE ex_date BETWEEN '2022-01-01' AND '2022-01-31' ORDER BY act_symbol,ex_date"
+      },
+      "divcounts": {
+        "sha256": "97863eb44618f5a19b3671508f6dff5bdc7033d492ad86d51ee377b45cb9dd5b",
+        "bytes": 529,
+        "sql": "SELECT ex_date, COUNT(*) AS n, JSON_ARRAYAGG(act_symbol) AS symbols FROM dividend AS OF 'i7jf5okja91vf2r11hmb3ru5uvokt5g0' WHERE ex_date BETWEEN '2022-01-01' AND '2022-01-31' GROUP BY ex_date ORDER BY ex_date"
+      },
+      "divcounts_feb3": {
+        "sha256": "4e8f3031ead9074fe49e099e66f5d0844d53be11feea427f831f5dbf36153a7f",
+        "bytes": 10207,
+        "sql": "SELECT ex_date,COUNT(*) AS n,JSON_ARRAYAGG(act_symbol) AS symbols FROM dividend AS OF 'uuk0i93qvs5rrk9k8geq250699j4l71c' WHERE ex_date BETWEEN '2022-01-01' AND '2022-01-31' GROUP BY ex_date ORDER BY ex_date"
+      },
+      "divcounts_later": {
+        "sha256": "76f12de91da96f90b511bc160e81fff7fee140bbaecaacf207745c595477d1b5",
+        "bytes": 10207,
+        "sql": "SELECT ex_date,COUNT(*) AS n,JSON_ARRAYAGG(act_symbol) AS symbols FROM dividend AS OF 'a920rg5v62oo9g91m78c57vvgp149k4u' WHERE ex_date BETWEEN '2022-01-01' AND '2022-01-31' GROUP BY ex_date ORDER BY ex_date"
+      },
+      "dds_feb3": {
+        "sha256": "651b7f7a354c500223ddef92565b58511965a1c95d53234c5fd5bd139b8422e2",
+        "bytes": 561,
+        "sql": "SELECT * FROM dividend AS OF 'uuk0i93qvs5rrk9k8geq250699j4l71c' WHERE act_symbol='DDS' AND ex_date BETWEEN '2021-11-01' AND '2021-12-31' ORDER BY ex_date"
+      },
+      "dds_later": {
+        "sha256": "944993fabbc56c74b0788286add92812b39ae1ba06449e09d773836e7f61d1c7",
+        "bytes": 558,
+        "sql": "SELECT * FROM dividend AS OF 'a920rg5v62oo9g91m78c57vvgp149k4u' WHERE act_symbol='DDS' AND ex_date BETWEEN '2021-11-01' AND '2021-12-31' ORDER BY ex_date"
+      },
+      "vintage_before": {
+        "sha256": "977f907a2344c2869fd21e52db61284acf89d9866d42ead80b522cadaf3e50ba",
+        "bytes": 357,
+        "sql": "SELECT COUNT(*) AS n FROM ohlcv AS OF 'punvqeso4n8lvnn2am353cbvkijo0ve0' WHERE date='2022-01-31' AND act_symbol='DDS'"
+      },
+      "vintage_after": {
+        "sha256": "6ebb5d245b887f9a153cef2b00992cb5e2184a88b7f3250d89540fb90d6efb02",
+        "bytes": 357,
+        "sql": "SELECT COUNT(*) AS n FROM ohlcv AS OF 'ecm66ebn0s1660dptra9jphkk2lmpbn7' WHERE date='2022-01-31' AND act_symbol='DDS'"
+      }
+    },
+    "date_gate_witness": {
+      "before": {
+        "n": "0"
+      },
+      "after": {
+        "n": "1"
+      }
+    },
+    "archive_covers_neither_nbbo_nor_terminal_proceeds": true,
+    "investment_trials": 0,
+    "training_runs": 0,
+    "retrieval_cutoff_utc": "2026-11-18T02:48:50.381016+00:00",
+    "presence_exceptions": {
+      "zero_of_twenty": [
+        "AAIC^B",
+        "AAIC^C",
+        "ABR^D",
+        "ABR^E",
+        "ABR^F",
+        "ACP^A",
+        "ACR^C",
+        "ACR^D",
+        "ADC^A",
+        "AEL^A",
+        "AEL^B",
+        "AGM^D",
+        "AGM^E",
+        "AGM^F",
+        "AGM^G",
+        "AHH^A",
+        "AHL^C",
+        "AHL^D",
+        "AHL^E",
+        "AHT^D",
+        "AHT^F",
+        "AHT^G",
+        "AHT^H",
+        "AHT^I",
+        "AIG^A",
+        "AKO/A",
+        "AKO/B",
+        "ALIN^A",
+        "ALIN^B",
+        "ALIN^E",
+        "ALL^B",
+        "ALL^G",
+        "ALL^H",
+        "ALL^I",
+        "ALP^Q",
+        "ALTG^A",
+        "AL^A",
+        "AMH^F",
+        "AMH^G",
+        "AMH^H",
+        "APO^A",
+        "APO^B",
+        "APTV^A",
+        "ARGO^A",
+        "ARR^C",
+        "ASB^E",
+        "ASB^F",
+        "ATCO^D",
+        "ATCO^H",
+        "ATCO^I",
+        "ATH",
+        "ATH^A",
+        "ATH^B",
+        "ATH^C",
+        "ATH^D",
+        "AVTR^A",
+        "AXS^E",
+        "BAC^B",
+        "BAC^E",
+        "BAC^K",
+        "BAC^L",
+        "BAC^M",
+        "BAC^N",
+        "BAC^O",
+        "BAC^P",
+        "BAC^Q",
+        "BANC^E",
+        "BC^A",
+        "BC^B",
+        "BC^C",
+        "BEP^A",
+        "BF/A",
+        "BF/B",
+        "BFS^D",
+        "BFS^E",
+        "BHR^B",
+        "BHR^D",
+        "BIO/B",
+        "BIP^A",
+        "BIP^B",
+        "BML^G",
+        "BML^H",
+        "BML^J",
+        "BML^L",
+        "BOH^A",
+        "BRK/A",
+        "BRK/B",
+        "BSX^A",
+        "BW^A",
+        "CADE^A",
+        "CDR^B",
+        "CDR^C",
+        "CEQP^",
+        "CFG^D",
+        "CFG^E",
+        "CFR^B",
+        "CHMI^A",
+        "CHMI^B",
+        "CIM^A",
+        "CIM^B",
+        "CIM^C",
+        "CIM^D",
+        "CIO^A",
+        "CIT^B",
+        "CLDT^A",
+        "CLVT^A",
+        "CMRE^B",
+        "CMRE^C",
+        "CMRE^D",
+        "CMRE^E",
+        "CMS^B",
+        "CMS^C",
+        "CNO^A",
+        "CODI^A",
+        "CODI^B",
+        "CODI^C",
+        "COF^I",
+        "COF^J",
+        "COF^K",
+        "COF^L",
+        "COF^N",
+        "CORR^A",
+        "CRD/A",
+        "CRD/B",
+        "CSR^C",
+        "CTA^A",
+        "CTA^B",
+        "CTO^A",
+        "CUBI^E",
+        "CUBI^F",
+        "C^J",
+        "C^K",
+        "C^N",
+        "DBRG^H",
+        "DBRG^I",
+        "DBRG^J",
+        "DCP^B",
+        "DCP^C",
+        "DHR^A",
+        "DHR^B",
+        "DLNG^A",
+        "DLNG^B",
+        "DLR^J",
+        "DLR^K",
+        "DLR^L",
+        "DRH^A",
+        "DSX^B",
+        "DS^B",
+        "DS^C",
+        "DS^D",
+        "DTLA^",
+        "DUK^A",
+        "DX^C",
+        "ECC           ",
+        "ECC^D",
+        "ECOM          ",
+        "EFC^A",
+        "EFC^B",
+        "ENR^A",
+        "EPR^C",
+        "EPR^E",
+        "EPR^G",
+        "EP^C",
+        "EQC^D",
+        "EQH^A",
+        "EQH^C",
+        "ETI^",
+        "ETX           ",
+        "ET^C",
+        "ET^D",
+        "ET^E",
+        "FBRT^E",
+        "FEI           ",
+        "FHN^B",
+        "FHN^C",
+        "FHN^D",
+        "FHN^E",
+        "FHN^F",
+        "FNB^E",
+        "FRC^H",
+        "FRC^I",
+        "FRC^J",
+        "FRC^K",
+        "FRC^L",
+        "FRC^M",
+        "FRC^N",
+        "FRT^C",
+        "FTAI^A",
+        "FTAI^B",
+        "FTAI^C",
+        "F^B",
+        "F^C",
+        "GAB^G",
+        "GAB^H",
+        "GAB^J",
+        "GAB^K",
+        "GAM^B",
+        "GDL^C",
+        "GDV^G",
+        "GDV^H",
+        "GDV^K",
+        "GGT^E",
+        "GGT^G",
+        "GGZ^A",
+        "GLOG^A",
+        "GLOP^A",
+        "GLOP^B",
+        "GLOP^C",
+        "GLP^A",
+        "GLP^B",
+        "GL^D",
+        "GMRE^A",
+        "GNE^A",
+        "GNL^A",
+        "GNL^B",
+        "GNT^A",
+        "GPMT^A",
+        "GRBK^A",
+        "GSL^B",
+        "GS^A",
+        "GS^C",
+        "GS^D",
+        "GS^J",
+        "GS^K",
+        "GUT^A",
+        "GUT^C",
+        "HEI/A",
+        "HFRO^A",
+        "HIG^G",
+        "HL^B",
+        "HMLP^A",
+        "HPP^C",
+        "HT^C",
+        "HT^D",
+        "HT^E",
+        "HVT/A",
+        "ICR^A",
+        "IIPR^A",
+        "INN^E",
+        "INN^F",
+        "INSW^A",
+        "IVR^B",
+        "IVR^C",
+        "JPM^C",
+        "JPM^D",
+        "JPM^J",
+        "JPM^K",
+        "JPM^L",
+        "JPM^M",
+        "JW/A",
+        "JW/B",
+        "KEY^I",
+        "KEY^J",
+        "KEY^K",
+        "KIM^L",
+        "KIM^M",
+        "KKR^C",
+        "KREF^A",
+        "LFT^A",
+        "LXP^C",
+        "MAA^I",
+        "MER^K",
+        "MET^A",
+        "MET^E",
+        "MET^F",
+        "MFA^B",
+        "MFA^C",
+        "MH^A",
+        "MH^C",
+        "MH^D",
+        "MITT^A",
+        "MITT^B",
+        "MITT^C",
+        "MNR^C",
+        "MS^A",
+        "MS^E",
+        "MS^F",
+        "MS^I",
+        "MS^K",
+        "MS^L",
+        "MS^O",
+        "MTL^",
+        "NCV^A",
+        "NCZ^A",
+        "NEE^N",
+        "NEE^O",
+        "NEE^P",
+        "NEE^Q",
+        "NGL^B",
+        "NGL^C",
+        "NI^B",
+        "NLY^F",
+        "NLY^G",
+        "NLY^I",
+        "NMK^B",
+        "NMK^C",
+        "NM^G",
+        "NM^H",
+        "NREF^A",
+        "NRZ^A",
+        "NRZ^B",
+        "NRZ^C",
+        "NRZ^D",
+        "NSA^A",
+        "NS^A",
+        "NS^B",
+        "NS^C",
+        "NYCB^A",
+        "NYCB^U",
+        "OAK^A",
+        "OAK^B",
+        "OPP^A",
+        "OPP^B",
+        "PBI^B",
+        "PEB^E",
+        "PEB^F",
+        "PEB^G",
+        "PEB^H",
+        "PEI^B",
+        "PEI^C",
+        "PEI^D",
+        "PMT^A",
+        "PMT^B",
+        "PMT^C",
+        "PNC^P",
+        "PRE^J",
+        "PRIF^D",
+        "PRIF^F",
+        "PRIF^G",
+        "PRIF^H",
+        "PRIF^I",
+        "PRIF^J",
+        "PRIF^K",
+        "PSA^F",
+        "PSA^G",
+        "PSA^H",
+        "PSA^I",
+        "PSA^J",
+        "PSA^K",
+        "PSA^L",
+        "PSA^M",
+        "PSA^N",
+        "PSA^O",
+        "PSA^P",
+        "PSA^Q",
+        "PSA^R",
+        "PSB^X",
+        "PSB^Y",
+        "PSB^Z",
+        "PSEC^A",
+        "RCB",
+        "RC^C",
+        "RC^E",
+        "RDS/B",
+        "REXR^B",
+        "REXR^C",
+        "RF^B",
+        "RF^C",
+        "RF^E",
+        "RLJ^A",
+        "RMPL^",
+        "RNR^F",
+        "RNR^G",
+        "RPT^D",
+        "RY^T",
+        "SAND          ",
+        "SB^C",
+        "SB^D",
+        "SCE^G",
+        "SCE^H",
+        "SCE^J",
+        "SCE^K",
+        "SCE^L",
+        "SCHW^D",
+        "SCHW^J",
+        "SF^B",
+        "SF^C",
+        "SF^D",
+        "SHO^H",
+        "SHO^I",
+        "SITC^A",
+        "SI^A",
+        "SLG^I",
+        "SNV^D",
+        "SNV^E",
+        "SPG^J",
+        "SPLP^A",
+        "SPNT^B",
+        "SRC^A",
+        "SRG^A",
+        "SR^A",
+        "STAR          ",
+        "STAR^D",
+        "STAR^G",
+        "STAR^I",
+        "STL^A",
+        "STT^D",
+        "STT^G",
+        "STZ/B",
+        "SYF^A",
+        "TDS^U",
+        "TDS^V",
+        "TFC^I",
+        "TFC^O",
+        "TFC^R",
+        "TGH^A",
+        "TGH^B",
+        "TGP^A",
+        "TGP^B",
+        "TNP^D",
+        "TNP^E",
+        "TNP^F",
+        "TRTN^A",
+        "TRTN^B",
+        "TRTN^C",
+        "TRTN^D",
+        "TRTN^E",
+        "TRTX^C",
+        "TWO^A",
+        "TWO^B",
+        "TWO^C",
+        "TY^",
+        "T^A",
+        "T^C",
+        "UBP^H",
+        "UBP^K",
+        "UMH^C",
+        "UMH^D",
+        "USB^A",
+        "USB^H",
+        "USB^M",
+        "USB^P",
+        "USB^Q",
+        "USB^R",
+        "VNO^L",
+        "VNO^M",
+        "VNO^N",
+        "VNO^O",
+        "VOYA^B",
+        "WAL^A",
+        "WBS^F",
+        "WCC^A",
+        "WFC^A",
+        "WFC^C",
+        "WFC^D",
+        "WFC^L",
+        "WFC^Q",
+        "WFC^R",
+        "WFC^Y",
+        "WFC^Z",
+        "WRB^E",
+        "WRB^F",
+        "WRB^G",
+        "WRB^H",
+        "WSO/B",
+        "XFLT^A"
+      ],
+      "partial_mask_by_exact_symbol": {
+        "ACAQ": "11000111111111111111",
+        "ACDI": "11101100101001110101",
+        "ACRO": "01100001101111110111",
+        "AFGE": "10111111101111111111",
+        "AGAC": "11111111001111111111",
+        "AIC": "11110101110111111111",
+        "AJXA": "11111111111110111111",
+        "ALCC": "11111110101111111111",
+        "ANAC": "11111101111111111111",
+        "APN": "00101101101111111101",
+        "AQNU": "11001011101111001101",
+        "ARL": "11111111001001111111",
+        "ASAQ": "11111111000111111111",
+        "ATA": "11111100011011111110",
+        "ATAQ": "11110000100011110101",
+        "AXH": "11100000111110111111",
+        "BACA": "11111111111111111110",
+        "BBL": "11111111111111111110",
+        "BGSX": "11111100111101111111",
+        "BHV": "11111111111011111111",
+        "BITE": "11011111101111111111",
+        "BLUA": "11111110101111101111",
+        "BMAC": "11110110000001111101",
+        "BSA": "11111111110000000000",
+        "BSAQ": "00111111001000100110",
+        "CAS": "11111110011111111111",
+        "CFXA": "01111111110000000000",
+        "CHAA": "11011100111111111111",
+        "CIT": "10000000000000000000",
+        "CLAA": "11110111101111111111",
+        "CLAS": "11111111111101111111",
+        "CLBR": "11111001111111111111",
+        "CLIM": "11111010111111110111",
+        "CNDA": "11111101111111110110",
+        "CNDB": "11110011111111011110",
+        "CORS": "10111101110111101111",
+        "CPSR": "11111111100000000000",
+        "CPTK": "11111111111111111101",
+        "CRY": "11111111111111000000",
+        "CSPR": "11111111111111100000",
+        "CSTA": "10110010111111110110",
+        "CTDD": "11001011100011001101",
+        "CUBB": "11111101111011111111",
+        "DNZ": "11100111100011111111",
+        "DSAQ": "11111100011100011111",
+        "DWIN": "11100111101111111111",
+        "ECCW": "11100111110110101111",
+        "ECCY": "11000011100100000000",
+        "EGGF": "11011101111101101111",
+        "EICA": "11111110111111111111",
+        "EOCW": "11011111011111111111",
+        "EPWR": "10110101010101101110",
+        "EQHA": "11100011010111110100",
+        "ESM": "11100111101111111111",
+        "FACT": "11111110111011111111",
+        "FCRX": "11111111111110101111",
+        "FERG": "11001011111111011111",
+        "FLAG": "01111111101111011101",
+        "FLYA": "00111100100001010101",
+        "FRXB": "11011111111111111111",
+        "FTEV": "11111101111111111110",
+        "FVIV": "11110111111111111111",
+        "FZT": "11110111110100111111",
+        "GAPA": "11011101111111110111",
+        "GFLU": "11001011110000011101",
+        "GFOR": "10011010101101110111",
+        "GFX": "11111111011111111111",
+        "GIA": "11101111111111111111",
+        "GJH": "01100001101101110010",
+        "GJP": "11100110010111101100",
+        "GJR": "00000000110010001000",
+        "GJS": "11111110101111111101",
+        "GOAC": "11111110111111111111",
+        "GOGN": "11111111111101111100",
+        "GSQB": "11001111001110110101",
+        "HCXY": "11111011101111110101",
+        "HHLA": "11100110111111111111",
+        "HIGA": "11111111011111111111",
+        "HKIB": "11111111111111111110",
+        "HPX": "11110110011111111111",
+        "HTAQ": "10011111111111011111",
+        "HTFB": "11000011111001110000",
+        "HWKZ": "10011000001010000110",
+        "IACC": "01000011001111111101",
+        "ICNC": "11111100001111111110",
+        "INAQ": "11111010011110111111",
+        "IPVF": "11111110111111101011",
+        "JATT": "01110011111111110110",
+        "JBK": "10100010100001001000",
+        "JHAA": "11111110111111111111",
+        "JUN": "11111111101111111111",
+        "KCGI": "10111111111111111111",
+        "KTH": "11111111101111111101",
+        "KTN": "11111111111111111011",
+        "KWAC": "10111000011110111111",
+        "LCW": "11100101110111111011",
+        "LHC": "11111111101111111100",
+        "LOCC": "11111111100111111111",
+        "LOKM": "11010110111111111101",
+        "MACC": "11111111111111011111",
+        "MBAC": "11011111111111111111",
+        "MBSC": "10100000000110110101",
+        "MDH": "11110011111111111111",
+        "MGR": "11001011111110011111",
+        "MGRB": "11001011111111010101",
+        "MHLA": "11111111101111111111",
+        "MIT": "11111111001111111111",
+        "MSC": "11111111111111101111",
+        "MTAL": "01101110111110111100",
+        "NFH": "11111111111111111000",
+        "NFYS": "10111111111100111100",
+        "NGC": "10111101111100111111",
+        "NMS": "11111111101111111111",
+        "NOM": "11111101110101111111",
+        "NSTC": "11111111101101111111",
+        "NSTD": "11011111110100011111",
+        "NXN": "11111111111111110111",
+        "OPA": "10111111111111111111",
+        "OSI": "11111111111011101111",
+        "PCPC": "11111101111111110111",
+        "PDOT": "11101110111111111101",
+        "PGSS": "11111111011110001111",
+        "PIAI": "11111110111111111111",
+        "PICC": "10110110101011111101",
+        "PMVC": "11101110011111101111",
+        "POND": "01111111110111111111",
+        "PRS": "11001011100000000000",
+        "PYS": "11101110111111111101",
+        "PYT": "01010010111010001111",
+        "QFTA": "11111111011111111111",
+        "RCFA": "11111101010000111111",
+        "RKTA": "11001011001111101111",
+        "RRAC": "11110001101111110010",
+        "SBII": "10011101100011110111",
+        "SC": "11111111111111111110",
+        "SEAH": "11111111111111111100",
+        "SEDA": "11110111000110011111",
+        "SFUN": "11110111111111111111",
+        "SJIJ": "11001011100000010101",
+        "SLAC": "11111111111111111110",
+        "SOJD": "11001011100110011111",
+        "SOJE": "11001011110110010101",
+        "SPGS": "11111110111111111111",
+        "STRE": "11101111101111101111",
+        "TACA": "00111111111111111111",
+        "TCI": "11111111111111111100",
+        "TFSA": "11100111101001101101",
+        "TGP": "11111111000000000000",
+        "TLGA": "11111111011111111111",
+        "TMAC": "10111001111100010101",
+        "TPTA": "01111111011001110111",
+        "TRAQ": "11110111011110111111",
+        "TRCA": "00111000111111010101",
+        "TREB": "11111111111111100000",
+        "TRIS": "11111111111111011110",
+        "TRTL": "11101111111011111111",
+        "TSPQ": "11111101111111111101",
+        "TWNI": "11110011111111111111",
+        "UGIC": "10101111101111111111",
+        "UZF": "11001011101011011101",
+        "VIAO": "11111111111111111110",
+        "VPCC": "11101000000000000000",
+        "WARR": "11011100111100111111",
+        "WAVC": "10111111000000000101",
+        "WBK": "11111111111111111110",
+        "WPCA": "01010111111111111111",
+        "WQGA": "11101111110101111111",
+        "WRAC": "10111111111111111111",
+        "YTPG": "00101100111111111111"
+      },
+      "ordered_dates": [
+        "2022-01-03",
+        "2022-01-04",
+        "2022-01-05",
+        "2022-01-06",
+        "2022-01-07",
+        "2022-01-10",
+        "2022-01-11",
+        "2022-01-12",
+        "2022-01-13",
+        "2022-01-14",
+        "2022-01-18",
+        "2022-01-19",
+        "2022-01-20",
+        "2022-01-21",
+        "2022-01-24",
+        "2022-01-25",
+        "2022-01-26",
+        "2022-01-27",
+        "2022-01-28",
+        "2022-01-31"
+      ],
+      "encoding": "1 means a row exists in the returned vintage, regardless of bar quality. No exceptions removed from counts."
+    }
+  },
+  "selected_exit_and_split_checks": {
+    "audit": "Retrospective issuer/exchange event terms in the fixed January window",
+    "selected_cases_rule": "Two diagnostic examples deliberately selected from January Form 25 notices in the SEC quarterly index: one cash deal and one common-stock conversion. No estimate of coverage across all January exits.",
+    "index_discovery_only": {
+      "url": "https://www.sec.gov/Archives/edgar/full-index/2022/QTR1/master.idx",
+      "raw_sha256": "85b8047bc724f19f9d074e4407e4decdbc66167478045bb021ed2e55ba4c9bd1",
+      "bytes": 32055792
+    },
+    "starting_listing_rows": 3170,
+    "events": {
+      "CIT": {
+        "target_cik": "0001171825",
+        "exact_january_snapshot_match": true,
+        "pre_snapshot_class": "NYSE common stock",
+        "class_cover_accession": "0001193125-21-288062",
+        "issuer_closing_filing": "0001140361-22-000350",
+        "exchange_common_stock_notice": "0000876661-22-000019",
+        "investor_cash_receipt_date": null,
+        "investor_settled_cash_amount_usd": null,
+        "merger_effective_new_york": "2022-01-03T23:59:00-05:00",
+        "first_suspended_session": "2022-01-04",
+        "formal_removal_date_stated_by_exchange": "2022-01-17",
+        "successor": "First Citizens BancShares Class A",
+        "successor_symbol": "FCNCA",
+        "shares_per_common_share": "0.06200",
+        "fraction_treatment": "cash_in_lieu",
+        "negative_control_preferred_accession": "0000876661-22-000021"
+      },
+      "CSPR": {
+        "target_cik": "0001598674",
+        "exact_january_snapshot_match": true,
+        "pre_snapshot_class": "NYSE common stock",
+        "class_cover_accession": "0001104659-21-139302",
+        "issuer_closing_filing": "0001140361-22-002541",
+        "exchange_common_stock_notice": "0000876661-22-000084",
+        "investor_cash_receipt_date": null,
+        "investor_settled_cash_amount_usd": null,
+        "event_date": "2022-01-25",
+        "first_suspended_session": "2022-01-25",
+        "formal_removal_date_stated_by_exchange": "2022-02-07",
+        "cash_entitlement_usd_per_eligible_common_share": "6.90",
+        "terms": "gross, without interest, subject to withholding; exemptions in the issuer filing"
+      }
+    },
+    "source_documents": [
+      {
+        "cik": "0001171825",
+        "accession": "0001140361-22-000350",
+        "filing_raw_url": "https://www.sec.gov/Archives/edgar/data/1171825/000114036122000350/0001140361-22-000350.txt",
+        "raw_sha256": "e17b31d88cc90454561f4c6cb586700ff0053826f42732c33ccfc1fa0fac08bd",
+        "bytes": 231758,
+        "filing_accepted_utc": "2022-01-04T12:08:08Z",
+        "docs": [
+          {
+            "type": "8-K",
+            "url": "https://www.sec.gov/Archives/edgar/data/1171825/000114036122000350/brhc10032348_8k.htm"
+          }
+        ]
+      },
+      {
+        "cik": "0001171825",
+        "accession": "0000876661-22-000019",
+        "filing_raw_url": "https://www.sec.gov/Archives/edgar/data/1171825/000087666122000019/0000876661-22-000019.txt",
+        "raw_sha256": "5b0bd5aa265d36e11919b6435cc731fbf5f1011c4ccfd4f0fec93966c0208e6a",
+        "bytes": 4001,
+        "filing_accepted_utc": "2022-01-04T16:06:03Z",
+        "docs": [
+          {
+            "type": "25-NSE",
+            "url": "https://www.sec.gov/Archives/edgar/data/1171825/000087666122000019/primary_doc.xml"
+          },
+          {
+            "type": "EX-99.25",
+            "url": "https://www.sec.gov/Archives/edgar/data/1171825/000087666122000019/ruleprovisionnotice.htm"
+          }
+        ]
+      },
+      {
+        "cik": "0001171825",
+        "accession": "0000876661-22-000021",
+        "filing_raw_url": "https://www.sec.gov/Archives/edgar/data/1171825/000087666122000021/0000876661-22-000021.txt",
+        "raw_sha256": "6e75de439a8687098b8e79d03109b836a6a855f75028f3ebca72ab643dbade7b",
+        "bytes": 4124,
+        "filing_accepted_utc": "2022-01-04T16:11:06Z",
+        "docs": [
+          {
+            "type": "25-NSE",
+            "url": "https://www.sec.gov/Archives/edgar/data/1171825/000087666122000021/primary_doc.xml"
+          },
+          {
+            "type": "EX-99.25",
+            "url": "https://www.sec.gov/Archives/edgar/data/1171825/000087666122000021/ruleprovisionnotice.htm"
+          }
+        ]
+      },
+      {
+        "cik": "0001598674",
+        "accession": "0001140361-22-002541",
+        "filing_raw_url": "https://www.sec.gov/Archives/edgar/data/1598674/000114036122002541/0001140361-22-002541.txt",
+        "raw_sha256": "1f641f17ba8cc1bde0a270f9c5428bdfe02f66dbdbb4aa44c99ee7227d6401b1",
+        "bytes": 384849,
+        "filing_accepted_utc": "2022-01-25T14:25:03Z",
+        "docs": [
+          {
+            "type": "8-K",
+            "url": "https://www.sec.gov/Archives/edgar/data/1598674/000114036122002541/brhc10033043_8k.htm"
+          }
+        ]
+      },
+      {
+        "cik": "0001598674",
+        "accession": "0000876661-22-000084",
+        "filing_raw_url": "https://www.sec.gov/Archives/edgar/data/1598674/000087666122000084/0000876661-22-000084.txt",
+        "raw_sha256": "da7c35b3087db23360b8cd31f14e5b4765bb3c3a9973c19116d184600a83c5b2",
+        "bytes": 4147,
+        "filing_accepted_utc": "2022-01-25T14:29:44Z",
+        "docs": [
+          {
+            "type": "25-NSE",
+            "url": "https://www.sec.gov/Archives/edgar/data/1598674/000087666122000084/primary_doc.xml"
+          },
+          {
+            "type": "EX-99.25",
+            "url": "https://www.sec.gov/Archives/edgar/data/1598674/000087666122000084/ruleprovisionnotice.htm"
+          }
+        ]
+      },
+      {
+        "cik": "0001171825",
+        "accession": "0001193125-21-288062",
+        "filing_raw_url": "https://www.sec.gov/Archives/edgar/data/1171825/000119312521288062/0001193125-21-288062.txt",
+        "raw_sha256": "ff44b14a04b5ff352665ed14407c0baed1ec90930a16f4a6a2b2d9442a5b0a0c",
+        "bytes": 237219,
+        "filing_accepted_utc": "2021-09-30T20:55:05Z",
+        "docs": [
+          {
+            "type": "8-K",
+            "url": "https://www.sec.gov/Archives/edgar/data/1171825/000119312521288062/d169513d8k.htm"
+          }
+        ]
+      },
+      {
+        "cik": "0001598674",
+        "accession": "0001104659-21-139302",
+        "filing_raw_url": "https://www.sec.gov/Archives/edgar/data/1598674/000110465921139302/0001104659-21-139302.txt",
+        "raw_sha256": "799ad17d8de9d8a9491ea3075e75728c13ec4e81453cfb579bb4e0802c1ee8cb",
+        "bytes": 1255596,
+        "filing_accepted_utc": "2021-11-15T22:02:07Z",
+        "docs": [
+          {
+            "type": "8-K/A",
+            "url": "https://www.sec.gov/Archives/edgar/data/1598674/000110465921139302/tm2132922d3_8k.htm"
+          }
+        ]
+      }
+    ],
+    "research_checked_utc": "2026-11-18T02:45:14Z",
+    "note": "No filing was made available at the January 1 snapshot as evidence of a later closing. The two class cover filings preceded that snapshot. January issuer filings establish completion and NYSE notices confirm suspension. These are accounting checks, not trades, terminal execution prices, or evidence of settled cash. Settlement unavailable for both.",
+    "slg": {
+      "symbol": "SLG",
+      "kind": "reverse split",
+      "old_shares_per_one_new": "1.03060",
+      "post_split_first_session": "2022-01-24",
+      "effective": "after close 2022-01-21",
+      "fraction_treatment": "cash in lieu",
+      "filings": [
+        {
+          "status": "announced",
+          "url": "https://www.sec.gov/Archives/edgar/data/1040971/000110465922003152/tm222480d1_8k.htm",
+          "accession": "0001104659-22-003152",
+          "accepted_utc": "2022-01-11T21:05:41+00:00",
+          "full_submission_url": "https://www.sec.gov/Archives/edgar/data/1040971/000110465922003152/0001104659-22-003152.txt",
+          "bytes": 254755,
+          "sha256": "75055a012ecd47cb493cdd48b80f7571ac3e258f07f869cf24daca228aa728ad"
+        },
+        {
+          "status": "completed",
+          "url": "https://www.sec.gov/Archives/edgar/data/1040971/000110465922006456/tm224122d1_8k.htm",
+          "accession": "0001104659-22-006456",
+          "accepted_utc": "2022-01-21T21:05:55+00:00",
+          "full_submission_url": "https://www.sec.gov/Archives/edgar/data/1040971/000110465922006456/0001104659-22-006456.txt",
+          "bytes": 283643,
+          "sha256": "028c0810756105d9f9430b42a1ac8323247061bcb3b756903b68a7e377edd902"
+        }
+      ]
+    }
+  },
+  "quotes": {
+    "observed_utc": "2026-11-18T02:45:44.669414+00:00",
+    "url": "https://www.nasdaqtrader.com/content/MarketRegulation/BX/eqreport/bxeqreport_202201recalc.zip",
+    "zip_bytes": 2798108,
+    "zip_sha256": "a7c38a2374d230ecdb03b67dc70478b6252bfff54797eef687c92991f34ad5d2",
+    "member": "nsbx202201.dat",
+    "uncompressed_bytes": 9863360,
+    "uncompressed_sha256": "f7d8d7e27fbfb79fd5892cd074c942f84d68adb1ec581127dfcb99b94ad1d11d",
+    "rows": 135018,
+    "months": {
+      "202201": 135018
+    },
+    "symbols": 11956,
+    "exact_symbol_matches_to_snapshot": 2715,
+    "target_symbol_rows": {
+      "UNM": 15,
+      "BDX": 13,
+      "DDS": 11,
+      "UNMA": 8,
+      "BDXB": 13,
+      "DDT": 9
+    },
+    "columns": {
+      "26": 135018
+    },
+    "size_bin_counts": {
+      "24": 18293,
+      "21": 47196,
+      "22": 40563,
+      "23": 28966
+    },
+    "derived_quote_session_count": 0,
+    "hf_tree_sha256": "bdb6b84aa67de896d6a7a0fa6effc4b606820b1d961796089760879fb2ee8f4e",
+    "hf": {
+      "repo": "gandush/nyse-market-microstructure-32",
+      "sha": "0850c88a914df4311524dad2d905145fe0c0af94",
+      "revision_last_modified": "2026-10-31T17:54:45Z",
+      "card_sha256": "bc280f9a2bdf2af0db4f2069e7200320fed0b278be84136dda3c8d015944027a",
+      "card_bytes": 11208,
+      "metadata_sha256": "3f819aa4333feabe24151382a69a322127f497402122f95e26e5bded624c798e",
+      "metadata_bytes": 56151,
+      "bars_dirs": 48,
+      "date_directory_sha256": "bdb6b84aa67de896d6a7a0fa6effc4b606820b1d961796089760879fb2ee8f4e",
+      "date_directory_bytes": 5137,
+      "first_date": "2016-01-04",
+      "last_date": "2016-03-11",
+      "next_page_link_absent": true,
+      "checked_january_directory_http": {
+        "2022-01-03": 404,
+        "2022-01-04": 404,
+        "2022-01-31": 404
+      },
+      "sample_path": "bars_1m/2016-01-04/CAT.csv.gz",
+      "sample_compressed_bytes": 4646,
+      "sample_sha256": "598478e6f1549cd6d968d6e876e2f60de6e3e9c942ab996c857bcd4c38e2df34",
+      "sample_rows": 408,
+      "sample_csv_header": [
+        "timestamp",
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume"
+      ],
+      "card_license_label": "mit",
+      "underlying_market_data_redistribution_rights": "not verified",
+      "pinned_card_url": "https://huggingface.co/datasets/gandush/nyse-market-microstructure-32/blob/0850c88a914df4311524dad2d905145fe0c0af94/README.md",
+      "pinned_tree_url": "https://huggingface.co/api/datasets/gandush/nyse-market-microstructure-32/tree/0850c88a914df4311524dad2d905145fe0c0af94/bars_1m?limit=1000"
+    },
+    "nyse_taq_public_sample_index": {
+      "url": "https://ftp.nyse.com/Historical%20Data%20Samples/DAILY%20TAQ/",
+      "raw_bytes": 9736,
+      "sha256": "c10f81fe5c233bc2249daf3c55d0576204bafa042e5fb195d16bdcb5feba292e",
+      "jan_2022_filename_hits": 0
+    },
+    "nasdaq_http_last_modified": "2026-09-21T08:18:06Z",
+    "compiled_utc": "2026-11-18T02:46:49.792757+00:00",
+    "nasdaq_documentation": [
+      "https://www.nasdaqtrader.com/Trader.aspx?id=SECRule605Reportrecalc",
+      "https://www.nasdaqtrader.com/content/MarketRegulation/SECRule605/appendixa1.pdf"
+    ],
+    "massive_catalog": {
+      "url": "https://massive.com/docs/flat-files/stocks/quotes/2022/01",
+      "session_file_entries": 20,
+      "data_downloaded": false,
+      "access": "Historical quote files require an entitled account. Only public catalog entries were verified."
+    },
+    "interpretation": "No January session-level opening bid/ask and size verified from these sources. Unknown underlying market coverage. Monthly Nasdaq BX reports contain no order-time quotes."
+  },
+  "strategy": {
+    "hypothesis": "nyse_momentum_retention_buffer_v1",
+    "arms": [
+      "naive top five",
+      "top five with retention through rank ten"
+    ],
+    "starting_cash_usd": 5000,
+    "position_cap_usd": 1000,
+    "whole_shares": true,
+    "stress_bps_per_traded_side": 43,
+    "new_coverage_diagnostics": 1,
+    "new_investment_trials": 0,
+    "training_runs": 0,
+    "unseen_confirmations": 0,
+    "market_return_evaluation": "SKIPPED_DATA_INCOMPLETE",
+    "metrics": {
+      "net_return": null,
+      "drawdown": null,
+      "sharpe": null,
+      "profit_factor": null,
+      "trades": null,
+      "costs": null,
+      "turnover": null
+    }
+  },
+  "next_action": "Reconstruct and fingerprint the 252-session signal history and class-specific actions available at the January 31 development decision. Freeze both order lists before checking next-session quotes. Keep unresolved rows, missing quotes and unfilled orders visible."
+}
