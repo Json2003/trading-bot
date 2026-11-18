@@ -18,8 +18,9 @@ from datetime import datetime, timezone
 from decimal import DecimalException
 
 ROOT = Path(__file__).resolve().parents[1]
-# The runner uses the standard library and avoids repository third-party shims.
-sys.path = [str(ROOT)] + [p for p in sys.path if p != str(ROOT)]
+# Append the project path so unrelated imports retain their existing precedence.
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
 
 from research.engine import research_safety_flags  # noqa: E402
 from research.nyse_offline import evaluate, load_dataset, read_json, validate_spec  # noqa: E402
