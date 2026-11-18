@@ -98,3 +98,14 @@ New evidence: Microsoft's MIT-licensed Qlib replacement cap and minimum holding 
 Two original NYSE listing snapshots were independently parsed: 3,170 and 2,717 unique symbols; 2,094 in common. Both raw Git blob hashes matched repository metadata and four integrity assertion groups passed. The snapshots omit permanent IDs, explicit instrument types and row availability times; names include non-common instruments. Symbol-string changes do not establish delistings. Two snapshots do not establish complete historical coverage.
 
 Profitability status unchanged: zero investment trials; no returns/costs measured and no model trained. Next action is a fixed-interval identity/type and delisting-price coverage audit before implementing or evaluating the momentum/buffer comparison. Both earlier draft PRs had no owner comments when checked. Keep PR #292 draft; no merge or runtime/configuration change.
+
+
+## Identity continuation — 2026-11-17
+
+[Historical issuer audit](../strategy_sources/2026-11-17-historical-issuer-identity-audit.md) and [JSON evidence](2026-11-17-nyse-issuer-join-audit.json) extend the next-action data work.
+
+One actual historical exact-ticker join matched 2,708 of 3,170 NYSE listing strings to CIKs using a mapping published before the listing snapshot. Of those matches, 2,699 report NYSE and nine have an empty exchange. The remaining 462 listing strings stay unresolved. Seven integrity assertion groups passed, including both raw Git blob identities and count reconciliations.
+
+There are 60 shared-CIK groups covering 150 matched listing rows; CIK identifies a filer rather than each individual security. Do not deduplicate share-class histories on CIK alone or discard unmatched symbols. The archived mapper's 2025 head is not a current-2026 security master. No security type, delisting-price coverage or executable quotes were established.
+
+Investment trials remain zero. No returns, drawdown, Sharpe, profit factor or trade costs were measured; market-data investment evaluation was skipped and no model was trained. Next bounded action: audit historical security-registration tables, available before the same cutoff, for the three demonstrated shared-CIK pairs; then assess fixed-interval price/corporate-action/delisting coverage before evaluating the unchanged naive-top-five versus retain-through-top-ten proposal. PRs #290/#292 remain drafts with no owner comments observed; the crypto pause and runtime/configuration boundaries remain intact.
