@@ -153,7 +153,11 @@ def prepare(plan: dict, plan_hash: str, captures: Path, review_path: Path, outpu
                 "evidence_role": "development_diagnostic", "signal_price_basis": spec["signal_price_basis"],
                 "universe_selection": plan["universe_selection"], "universe": [r["security_id"] for r in securities],
                 "blocks": [block], "corporate_actions_complete_through": covered,
-                "membership_complete_through": membership, "files": {}}
+                "membership_complete_through": membership,
+                "source_evidence": {"capture_plan_sha256": plan_hash,
+                                    "input_review_sha256": digest(review_raw),
+                                    "capture_receipts": provenance},
+                "files": {}}
     source_names = {"calendar": " | ".join(plan["calendar_sources"]), "prices": DOLT_API,
                     "securities": "SEC and reviewed listing records", "actions": "Reviewed issuer and ex-date records"}
     for name, records in inputs.items():

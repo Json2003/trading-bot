@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from decimal import Decimal
@@ -107,6 +108,30 @@ def load_dataset(manifest_path: Path, spec: dict, *, manifest_raw: bytes | None 
         raise DataGap("signal price basis must be an as-of total-return index")
     if not manifest.get("dataset_id") or not manifest.get("universe_selection"):
         raise DataGap("dataset identity and prior universe selection rationale are required")
+    if manifest["data_kind"] == "market":
+        evidence = manifest.get("source_evidence")
+        sha256 = re.compile(r"[0-9a-f]{64}").fullmatch
+        if (not isinstance(evidence, dict)
+                or not sha256(str(evidence.get("capture_plan_sha256", "")))
+                or not sha256(str(evidence.get("input_review_sha256", "")))):
+            raise DataGap("market manifest needs hash-linked capture plan and input review evidence")
+        receipts = evidence.get("capture_receipts")
+        if not isinstance(receipts, list) or not receipts:
+            raise DataGap("market manifest needs at least one hash-linked capture receipt")
+        for receipt in receipts:
+            if (not isinstance(receipt, dict) or not sha256(str(receipt.get("sha256", "")))
+                    or not receipt.get("revision") or not receipt.get("from") or not receipt.get("through")
+                    or receipt["from"] > receipt["through"]):
+                raise DataGap("market capture receipt evidence is incomplete")
+            partitions = receipt.get("partitions")
+            if not isinstance(partitions, list) or not partitions:
+                raise DataGap("market capture receipt needs partition provenance")
+            for partition in partitions:
+                if (not isinstance(partition, dict) or not partition.get("url")
+                        or not sha256(str(partition.get("sha256", "")))):
+                    raise DataGap("market capture partition evidence is incomplete")
+                if timestamp(partition.get("received_at")) > datetime.now(timezone.utc):
+                    raise DataGap("market capture partition receipt is in the future")
     blocks = manifest.get("blocks", [])
     if not blocks:
         raise DataGap("manifest must freeze evaluation blocks")

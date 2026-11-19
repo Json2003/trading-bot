@@ -32,6 +32,18 @@ The manifest uses this shape. The hashes below are placeholders to replace with 
   "blocks": [{"name": "development", "start": "2026-01-02", "end": "2026-01-30"}],
   "corporate_actions_complete_through": "2026-01-30",
   "membership_complete_through": "2026-01-30",
+  "source_evidence": {
+    "capture_plan_sha256": "REPLACE",
+    "input_review_sha256": "REPLACE",
+    "capture_receipts": [{
+      "file": "capture.json",
+      "sha256": "REPLACE",
+      "revision": "PINNED_SOURCE_REVISION",
+      "from": "2025-01-02",
+      "through": "2026-01-30",
+      "partitions": [{"url": "SOURCE_QUERY", "received_at": "2026-01-31T00:00:00Z", "sha256": "REPLACE"}]
+    }]
+  },
   "files": {
     "calendar": {"path": "calendar.json", "sha256": "REPLACE", "source": "SOURCE", "revision": "VERSION", "received_at": "2026-11-18T00:00:00Z"},
     "securities": {"path": "securities.json", "sha256": "REPLACE", "source": "SOURCE", "revision": "VERSION", "received_at": "2026-11-18T00:00:00Z"},
@@ -41,7 +53,7 @@ The manifest uses this shape. The hashes below are placeholders to replace with 
 }
 ```
 
-Each input is a JSON array. File paths resolve relative to the manifest. Receipt time records acquisition of the file. Row available_at records when the information became usable for the historical decision. A newly retrieved historical file cannot establish its original availability without further evidence. Source completeness declarations require a documented independent coverage audit. A permanent security ID must represent one security class. A filer CIK alone may join several instruments.
+Each input is a JSON array. File paths resolve relative to the manifest. Receipt time records acquisition of the file. Row available_at records when the information became usable for the historical decision. For market inputs, source_evidence makes the frozen plan, reviewed membership/action packet and raw capture receipts part of the immutable manifest identity. A newly retrieved historical file cannot establish its original availability without further evidence. Source completeness declarations require a documented independent coverage audit. A permanent security ID must represent one security class. A filer CIK alone may join several instruments.
 
 | File | Required row fields | Conventions |
 | --- | --- | --- |

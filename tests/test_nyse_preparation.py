@@ -65,11 +65,21 @@ class MarketPreparationTests(unittest.TestCase):
             output = Path(directory)
             review_path = output / "review.json"
             review_path.write_bytes(encode(review))
-            with patch("research.nyse_preparation.captured_bars", return_value=(bars, [])):
+            provenance = [{"file": "capture.json", "sha256": "a" * 64, "revision": "revision-1",
+                           "from": "2024-12-02", "through": "2026-01-06",
+                           "partitions": [{"url": "https://example.invalid/source", "received_at": "2026-01-07T00:00:00Z",
+                                           "sha256": "b" * 64}]}]
+            with patch("research.nyse_preparation.captured_bars", return_value=(bars, provenance)):
                 result = prepare(plan, plan_hash, output / "receipts", review_path, output, spec)
                 self.assertEqual(result["status"], "ready_for_offline_replay")
                 self.assertEqual(result["strategy_trials"], 0)
                 self.assertEqual(len(load_dataset(Path(result["manifest"]), spec).prices), len(bars))
+                manifest = json.loads(Path(result["manifest"]).read_text())
+                self.assertEqual(manifest["source_evidence"]["capture_plan_sha256"], plan_hash)
+                self.assertEqual(manifest["source_evidence"]["capture_receipts"], provenance)
+                manifest.pop("source_evidence")
+                with self.assertRaisesRegex(DataGap, "hash-linked capture plan"):
+                    load_dataset(Path(result["manifest"]), spec, manifest_raw=encode(manifest))
                 bars["ABC", "2025-12-30"]["available_at"] = datetime(2026, 1, 2, tzinfo=timezone.utc).isoformat()
                 with self.assertRaisesRegex(DataGap, "was unavailable"):
                     prepare(plan, plan_hash, output / "receipts", review_path, output, spec)
