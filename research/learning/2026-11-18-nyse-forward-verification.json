@@ -1,0 +1,160 @@
+{
+  "capture_sha256": "cd32b96cda5d3b8c1a18990ee838c8b0a6e8409b3def9218ecbc733e190be673",
+  "historical_vintage_probes": [
+    {
+      "incoherent_open_count": 7,
+      "name": "start",
+      "received_at": "2026-11-19T02:05:01.110883+00:00",
+      "revision": "q34mpdpo3gdoq7cl91010vr8hgk4ef05",
+      "rows": {
+        "2021-05-05": 12
+      },
+      "sha256": "f1a8c89472a8e00fd217d9096f3ffbc0bf79be18820dc3f694beecdd53edb6e2",
+      "status": "Success",
+      "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27q34mpdpo3gdoq7cl91010vr8hgk4ef05%27+WHERE+date+IN+%28%272021-05-03%27%2C%272021-05-05%27%2C%272021-05-14%27%2C%272021-07-07%27%2C%272021-07-08%27%29+AND+act_symbol+IN+%28%27CRM%27%2C%27NOW%27%2C%27SQ%27%2C%27SNOW%27%2C%27UBER%27%2C%27PINS%27%2C%27CHWY%27%2C%27TWLO%27%2C%27PLTR%27%2C%27NET%27%2C%27FSLY%27%2C%27ASAN%27%29+ORDER+BY+date%2Cact_symbol"
+    },
+    {
+      "incoherent_open_count": 7,
+      "name": "end",
+      "received_at": "2026-11-19T02:05:01.228976+00:00",
+      "revision": "ecm66ebn0s1660dptra9jphkk2lmpbn7",
+      "rows": {
+        "2021-05-05": 12
+      },
+      "sha256": "44ce0f9e1df5346ba7d12537cbf7946f2296372a3accf4e5c8321429afc75d23",
+      "status": "Success",
+      "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27ecm66ebn0s1660dptra9jphkk2lmpbn7%27+WHERE+date+IN+%28%272021-05-03%27%2C%272021-05-05%27%2C%272021-05-14%27%2C%272021-07-07%27%2C%272021-07-08%27%29+AND+act_symbol+IN+%28%27CRM%27%2C%27NOW%27%2C%27SQ%27%2C%27SNOW%27%2C%27UBER%27%2C%27PINS%27%2C%27CHWY%27%2C%27TWLO%27%2C%27PLTR%27%2C%27NET%27%2C%27FSLY%27%2C%27ASAN%27%29+ORDER+BY+date%2Cact_symbol"
+    },
+    {
+      "incoherent_open_count": 7,
+      "name": "today",
+      "received_at": "2026-11-19T02:04:58.964151+00:00",
+      "revision": "f5psmujj89khlc43g5kicsclpd0orhok",
+      "rows": {
+        "2021-05-03": 12,
+        "2021-05-05": 12,
+        "2021-05-14": 12,
+        "2021-07-07": 12,
+        "2021-07-08": 12
+      },
+      "sha256": "de910c12f8634b65589d8eff52fc97fd8c6ceb25a23d53b8d0120a6ca0d92d5f",
+      "status": "Success",
+      "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272021-05-03%27%2C%272021-05-05%27%2C%272021-05-14%27%2C%272021-07-07%27%2C%272021-07-08%27%29+AND+act_symbol+IN+%28%27CRM%27%2C%27NOW%27%2C%27SQ%27%2C%27SNOW%27%2C%27UBER%27%2C%27PINS%27%2C%27CHWY%27%2C%27TWLO%27%2C%27PLTR%27%2C%27NET%27%2C%27FSLY%27%2C%27ASAN%27%29+ORDER+BY+date%2Cact_symbol"
+    }
+  ],
+  "market_strategy_trials": 0,
+  "metrics": {
+    "drawdown": null,
+    "execution_costs": null,
+    "expected_profit": null,
+    "net_return": null,
+    "operating_expenses": null,
+    "profit_factor": null,
+    "sharpe": null,
+    "trade_count": null,
+    "turnover": null
+  },
+  "model_training_runs": 0,
+  "november_18_initial_capture_index_sha256": "c4cff5152458bcff15e269b56c815aaff20d2de34a21ba479efd06e281d0930a",
+  "november_18_initial_capture_observed_rows": 0,
+  "report_on_real_data": {
+    "action_review_through": "2026-11-17",
+    "captured_bars": 3144,
+    "completed_sessions_checked": 262,
+    "dataset_id": "nyse-prospective-2026-12",
+    "eligible_bars_checked": 2620,
+    "eligible_tickers_at_start": [
+      "ASAN",
+      "CHWY",
+      "CRM",
+      "NET",
+      "NOW",
+      "PINS",
+      "SNOW",
+      "TWLO",
+      "UBER",
+      "XYZ"
+    ],
+    "excluded_tickers": {
+      "FSLY": "outside_nyse_common_stock_mandate",
+      "PLTR": "outside_nyse_common_stock_mandate"
+    },
+    "expected_block": {
+      "end": "2027-01-29",
+      "name": "december_january_development",
+      "start": "2026-12-01"
+    },
+    "expected_profit": null,
+    "first_decision_at": "2026-12-01T09:00:00-05:00",
+    "first_missing": [
+      [
+        "ASAN",
+        "2026-11-18"
+      ],
+      [
+        "CHWY",
+        "2026-11-18"
+      ],
+      [
+        "CRM",
+        "2026-11-18"
+      ],
+      [
+        "NET",
+        "2026-11-18"
+      ],
+      [
+        "NOW",
+        "2026-11-18"
+      ],
+      [
+        "PINS",
+        "2026-11-18"
+      ],
+      [
+        "SNOW",
+        "2026-11-18"
+      ],
+      [
+        "TWLO",
+        "2026-11-18"
+      ],
+      [
+        "UBER",
+        "2026-11-18"
+      ],
+      [
+        "XYZ",
+        "2026-11-18"
+      ]
+    ],
+    "issues": [
+      "completed_session_bars_missing",
+      "forward_window_incomplete",
+      "corporate_action_review_incomplete",
+      "membership_review_incomplete"
+    ],
+    "last_contiguous_session": "2026-11-17",
+    "membership_review_through": "2026-11-17",
+    "missing_count": 10,
+    "plan_sha256": "57f0c2d493931460459f85cd9063a14f5818221e5b8331852cd5bda02171ee0d",
+    "prepared_signal_rows": 2620,
+    "review_sha256": "471d8ff053237d91f63837383e7a980354c9a1ca06165734b1bf5f0dcdfb4b17",
+    "status": "awaiting_market_data",
+    "strategy_trials": 0
+  },
+  "report_sha256": "25bedf0a37cc3cec7081569fd377d53d842149150baafec0c43f9bcf93fd57bc",
+  "restored_partition_count": 38,
+  "software_fixture_tests_passed": 32,
+  "source_bytes_restored_from_pins": true,
+  "source_sha256": {
+    "research/experiments/nyse_momentum_retention_v1.json": "be9e802eb0a755b078a09862270e2b6941dbffe4b0c0a1c1930597bf3f825741",
+    "research/nyse_capture.py": "a01ce94476db7b4cdebd3f66cde2d4afa407c8f7fee07ac7ae843f82b63d4351",
+    "research/nyse_offline.py": "dbc5ea5daeee1d69a712543217e4278627341df9ab7c62c711fbdeae6e0a2cdb",
+    "research/nyse_preparation.py": "7c0e12492021e75a5ccce51eb6b911e248593f8ae6216152ef45bc9450a41b23",
+    "scripts/prepare_nyse_market_data.py": "de806bffd3c6e4ec8145eb31871026d9c8360e34ed887be751ac01c6ee1a8233",
+    "scripts/run_nyse_offline_research.py": "1eb8a1d06648ad28e00a77fda942e4aa1740416c4f0ef1f1adcee8684db193b7"
+  },
+  "unseen_confirmations": 0,
+  "verified_at_utc": "2026-11-19T02:21:42.623848+00:00"
+}

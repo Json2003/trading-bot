@@ -35,7 +35,9 @@ def owner_summary(report: dict) -> str:
              "Research cash is $5,000, with whole shares, a $1,000 entry cap and 43 bps per traded side.", ""]
     if report.get("data_kind") == "synthetic":
         lines.extend(["This run uses synthetic inputs to verify software behavior.", ""])
-    if not report["results"]:
+    if report["status"] == "inputs_validated":
+        lines.extend(["Dataset validation passed. Strategy evaluation was skipped.", ""])
+    elif not report["results"]:
         lines.extend(["Market evaluation is blocked. Performance metrics are unmeasured.", ""])
     else:
         lines.extend(["| Block and arm | Net return | Drawdown | Stress costs | Independent observations |",
@@ -62,7 +64,7 @@ def owner_summary(report: dict) -> str:
     return "\n".join(lines)
 
 
-def run(manifest_path: Path, spec_path: Path, output_dir: Path) -> tuple[Path, dict]:
+def run(manifest_path: Path, spec_path: Path, output_dir: Path, *, check_inputs: bool = False) -> tuple[Path, dict]:
     input_bytes = {}
     report = {"schema_version": 1, **research_safety_flags(), "status": "blocked_market_data",
               "investment_trials": 0, "model_training_runs": 0, "checkpoint_advanced": False,
@@ -77,19 +79,24 @@ def run(manifest_path: Path, spec_path: Path, output_dir: Path) -> tuple[Path, d
         validate_spec(spec)
         data = load_dataset(manifest_path, spec, manifest_raw=input_bytes["manifest.json"])
         input_hashes.update(data.fingerprints)
-        evaluation = evaluate(data, spec)
         input_paths = {name: str((manifest_path.parent / data.manifest["files"][name]["path"]).resolve())
                        for name in data.fingerprints}
-        report.update(evaluation)
+        if check_inputs:
+            report.update(status="inputs_validated", dataset_id=data.manifest["dataset_id"],
+                          data_kind=data.manifest["data_kind"], failure_reasons=[])
+        else:
+            report.update(evaluate(data, spec))
+            report.pop("metrics")
         report["input_manifest_path"] = str(manifest_path.resolve())
         report["input_file_paths"] = input_paths
-        report.pop("metrics")
     except (OSError, ValueError, KeyError, TypeError, IndexError, DecimalException, OverflowError) as exc:
         report["failure_reasons"] = [f"{type(exc).__name__}: {exc}"]
     sources = [Path(__file__), ROOT / "research/nyse_accounting.py", ROOT / "research/nyse_offline.py",
                ROOT / "research/engine.py"]
     code_hashes = {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in sources}
     identity = {"inputs": input_hashes, "code": code_hashes}
+    if check_inputs:
+        identity["mode"] = "check_inputs"
     if len(input_bytes) != 2:
         identity["missing_input_paths"] = [str(manifest_path.resolve()), str(spec_path.resolve())]
     run_id = hashlib.sha256(encoded(identity)).hexdigest()
@@ -133,8 +140,9 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--spec", type=Path, default=ROOT / "research/experiments/nyse_momentum_retention_v1.json")
     parser.add_argument("--output-dir", type=Path, default=ROOT / "artifacts/nyse-offline")
+    parser.add_argument("--check-inputs", action="store_true", help="Validate a completed dataset without running either arm.")
     args = parser.parse_args()
-    directory, report = run(args.manifest, args.spec, args.output_dir)
+    directory, report = run(args.manifest, args.spec, args.output_dir, check_inputs=args.check_inputs)
     print(json.dumps({"status": report["status"], "run_id": report["run_id"],
                       "report": str(directory / "report.json"), "summary": str(directory / "summary.json"),
                       "review": str(directory / "summary.md"),

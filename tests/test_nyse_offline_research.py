@@ -199,6 +199,48 @@ class OfflineResearchTests(unittest.TestCase):
         with self.assertRaisesRegex(DataGap, "settlement sessions"):
             self.data()
 
+    def test_missing_bar_blocks_cash_only_window_before_either_arm_runs(self):
+        self.manifest["blocks"][0].update(start="2026-01-06", end="2026-01-09")
+        self.inputs["prices"] = [
+            r for r in self.inputs["prices"]
+            if (r["security_id"], r["session"]) != ("SEC12", "2026-01-07")
+        ]
+        write_inputs(self.directory, self.manifest, self.inputs)
+        with patch.object(runner, "evaluate", side_effect=AssertionError("ran either arm")):
+            _, report = runner.run(self.manifest_path, SPEC_PATH, self.directory / "runs")
+        self.assertEqual(report["status"], "blocked_market_data")
+        self.assertIn("missing price for SEC12 on 2026-01-07", report["failure_reasons"][0])
+
+    def test_future_window_with_no_eligible_candidates_needs_completed_receipt(self):
+        for security in self.inputs["securities"]:
+            security["exchange"] = "XNAS"
+        self.inputs["prices"] = []
+        self.manifest["blocks"][0].update(start="2026-01-06", end="2026-01-09")
+        write_inputs(self.directory, self.manifest, self.inputs)
+        self.manifest["files"]["prices"]["received_at"] = "2026-01-06T22:00:00Z"
+        self.manifest_path.write_text(json.dumps(self.manifest))
+        with self.assertRaisesRegex(DataGap, "no completed price receipt through 2026-01-09"):
+            load_dataset(self.manifest_path, self.spec)
+
+    def test_check_inputs_validates_completed_files_without_scoring_strategies(self):
+        with patch.object(runner, "evaluate", side_effect=AssertionError("ran either arm")):
+            checked, report = runner.run(self.manifest_path, SPEC_PATH, self.directory / "runs", check_inputs=True)
+        self.assertEqual(report["status"], "inputs_validated")
+        self.assertEqual(report["results"], [])
+        self.assertIsNone(report["metrics"]["net_return"])
+        replayed, _ = runner.run(self.manifest_path, SPEC_PATH, self.directory / "runs")
+        self.assertNotEqual(checked, replayed)
+
+    def test_membership_end_between_signal_and_fill_prevents_entry(self):
+        self.inputs["securities"][0]["eligible_until"] = "2026-01-02"
+        self.inputs["prices"] = [
+            r for r in self.inputs["prices"]
+            if r["security_id"] != "SEC01" or r["session"] < "2026-01-02"
+        ]
+        arm = evaluate(self.data(), self.spec)["results"][0]
+        self.assertTrue(any(r.get("reason") == "security_ineligible_at_open" for r in arm["ledger"]))
+        self.assertFalse(any(r["kind"] == "buy" and r["security_id"] == "SEC01" for r in arm["ledger"]))
+
     def test_unknown_class_blocks_and_explicit_noncommon_is_reported(self):
         self.inputs["securities"][-1]["instrument_type"] = "UNKNOWN"
         with self.assertRaisesRegex(DataGap, "unresolved exchange or instrument"):

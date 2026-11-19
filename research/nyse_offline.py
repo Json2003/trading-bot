@@ -9,7 +9,7 @@ import hashlib
 import json
 import math
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 from statistics import mean, median, stdev
@@ -115,7 +115,9 @@ def load_dataset(manifest_path: Path, spec: dict, *, manifest_raw: bytes | None 
         descriptor = manifest.get("files", {}).get(name, {})
         if not all(descriptor.get(k) for k in ("path", "sha256", "source", "revision", "received_at")):
             raise DataGap(f"{name} needs path, sha256, source, revision and received_at")
-        timestamp(descriptor["received_at"])
+        receipt = timestamp(descriptor["received_at"])
+        if manifest["data_kind"] == "market" and receipt > datetime.now(timezone.utc):
+            raise DataGap(f"{name} receipt is in the future")
         raw = (manifest_path.parent / descriptor["path"]).read_bytes()
         digest = hashlib.sha256(raw).hexdigest()
         if descriptor["sha256"] != digest:
@@ -148,7 +150,9 @@ def load_dataset(manifest_path: Path, spec: dict, *, manifest_raw: bytes | None 
         if block["name"] in names or (previous_end and start <= previous_end) or start > end:
             raise DataGap("blocks must have unique names and nonoverlapping chronological dates")
         names.add(block["name"])
-        if start not in dates or end not in dates or dates.index(start) < 254 or dates.index(end) + 2 >= len(dates):
+        if (start not in dates or end not in dates
+                or dates.index(start) < spec["lookback_sessions"] + 1
+                or dates.index(end) + 2 >= len(dates)):
             raise DataGap("blocks need 253 prior observations and two following settlement sessions")
         previous_end = end
         for field in ("corporate_actions_complete_through", "membership_complete_through"):
@@ -184,8 +188,11 @@ def load_dataset(manifest_path: Path, spec: dict, *, manifest_raw: bytes | None 
         volume = positive(row["volume"], f"{key} volume")
         if volume != whole(volume):
             raise DataGap(f"noninteger volume {key}")
-        if timestamp(row["available_at"]) < timestamp(calendar[dates.index(key[1])]["close_at"]):
+        availability = timestamp(row["available_at"])
+        if availability < timestamp(calendar[dates.index(key[1])]["close_at"]):
             raise DataGap(f"completed OHLC cannot precede its session close {key}")
+        if availability > timestamp(manifest["files"]["prices"]["received_at"]):
+            raise DataGap(f"price availability is later than the file receipt {key}")
         prices[key] = row
     actions = {}
     ids = set()
@@ -217,7 +224,51 @@ def load_dataset(manifest_path: Path, spec: dict, *, manifest_raw: bytes | None 
         ids.add(action_id)
         actions.setdefault(session, []).append(row)
     # File order is the explicit precedence for simultaneous actions.
-    return Dataset(manifest, calendar, securities, prices, actions, fingerprints)
+    data = Dataset(manifest, calendar, securities, prices, actions, fingerprints)
+    for block in blocks:
+        validate_block_coverage(data, spec, block)
+    return data
+
+
+def entry_exclusion(security: dict, day: str) -> str | None:
+    if not (security["eligible_from"] <= day
+            and (security.get("eligible_until") is None or day < security["eligible_until"])):
+        return "outside_membership_interval"
+    if security.get("exchange") in {None, "", "UNKNOWN"} or security.get("instrument_type") in {None, "", "UNKNOWN"}:
+        raise DataGap(f"unresolved exchange or instrument class for {security['security_id']}")
+    if security["exchange"] != "XNYS" or security["instrument_type"] != "COMMON_STOCK":
+        return "outside_nyse_common_stock_mandate"
+    return None
+
+
+def validate_block_coverage(data: Dataset, spec: dict, block: dict) -> None:
+    """Require completed observation coverage even when a portfolio stays in cash."""
+    sessions = data.sessions
+    start, end = sessions.index(block["start"]), sessions.index(block["end"])
+    price_receipt = timestamp(data.manifest["files"]["prices"]["received_at"])
+    if timestamp(data.calendar[end]["close_at"]) > price_receipt:
+        raise DataGap(f"block {block['name']} has no completed price receipt through {block['end']}")
+    exits = {}
+    for session, actions in data.actions.items():
+        for action in actions:
+            if action["kind"] in {"cash_merger", "stock_merger"}:
+                sid = action["security_id"]
+                exits[sid] = min(exits.get(sid, session), session)
+    for i in range(start - 1, end + 1):
+        row = data.calendar[i]
+        day, cutoff = row["session"], row["decision_at"]
+        month_end = day[:7] != sessions[i + 1][:7]
+        if i < start and not month_end:
+            continue
+        for sid in data.manifest["universe"]:
+            security = data.securities[sid]
+            known(security, cutoff, f"metadata {sid}")
+            if (sid in exits and day >= exits[sid]) or entry_exclusion(security, day):
+                continue
+            first = i - spec["lookback_sessions"] if month_end else i
+            for session in sessions[first:i + 1]:
+                known(data.price(sid, session), cutoff, f"price {sid}/{session}")
+            positive(data.price(sid, day).get("atr14"), f"ATR for {sid}/{day}")
 
 
 def rank_stocks(data: Dataset, decision_index: int, spec: dict, *, audit: list | None = None) -> list[dict]:
@@ -237,15 +288,10 @@ def rank_stocks(data: Dataset, decision_index: int, spec: dict, *, audit: list |
                 audit.append({"security_id": sid, "eligible": False, "reason": "dated_merger_exit"})
             continue
         day = current["session"]
-        if not (security["eligible_from"] <= day and (security.get("eligible_until") is None or day < security["eligible_until"])):
+        exclusion = entry_exclusion(security, day)
+        if exclusion:
             if audit is not None:
-                audit.append({"security_id": sid, "eligible": False, "reason": "outside_membership_interval"})
-            continue
-        if security.get("exchange") in {None, "", "UNKNOWN"} or security.get("instrument_type") in {None, "", "UNKNOWN"}:
-            raise DataGap(f"unresolved exchange or instrument class for {sid}")
-        if security.get("exchange") != "XNYS" or security.get("instrument_type") != "COMMON_STOCK":
-            if audit is not None:
-                audit.append({"security_id": sid, "eligible": False, "reason": "outside_nyse_common_stock_mandate"})
+                audit.append({"security_id": sid, "eligible": False, "reason": exclusion})
             continue
         needed = calendar[decision_index - spec["lookback_sessions"]:decision_index + 1]
         if len(needed) != 253:
@@ -345,10 +391,14 @@ def replay(data: Dataset, spec: dict, block: dict, buffered: bool) -> dict:
                 if action["kind"] in {"stock_merger", "cash_merger"}:
                     # Mandatory shares may leave the NYSE mandate and are queued for exit below.
                     targets = [s for s in targets if s != action["security_id"]]
+            targets = [s for s in targets if not entry_exclusion(data.securities[s], day)]
             for order in pending:
                 sid = order["security_id"]
                 if sid in transformed:
                     ledger.log("rejected_order", order=order, reason="corporate_action_requires_fresh_quantity")
+                    continue
+                if order["side"] == "buy" and entry_exclusion(data.securities[sid], day):
+                    ledger.log("rejected_order", order=order, reason="security_ineligible_at_open")
                     continue
                 bar = data.price(sid, day)
                 known(bar, data.calendar[i]["decision_at"], f"execution bar {sid}/{day}")

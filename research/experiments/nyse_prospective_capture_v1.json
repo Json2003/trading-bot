@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "dataset_id": "nyse-prospective-2026-12",
+  "universe_selection": "Carry the original twelve issuer classes into a separate forward research window. Map the same class SQ to XYZ and apply current exchange eligibility before ranking. The historical January 2022 definition stays archived.",
+  "symbols": ["ASAN", "CHWY", "CRM", "FSLY", "NET", "NOW", "PINS", "PLTR", "SNOW", "TWLO", "UBER", "XYZ"],
+  "history_start": "2025-11-03",
+  "block": {"name": "december_january_development", "start": "2026-12-01", "end": "2027-01-29"},
+  "calendar_through": "2027-02-03",
+  "calendar_sources": [
+    "https://ir.theice.com/press/news-details/2024/NYSE-Group-Announces-2025-2026-and-2027-Holiday-and-Early-Closings-Calendar/default.aspx",
+    "https://ir.theice.com/press/news-details/2025/NYSE-Group-Announces-2026-2027-and-2028-Holiday-and-Early-Closings-Calendar/default.aspx"
+  ],
+  "closed_sessions": ["2025-11-27", "2025-12-25", "2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03", "2026-05-25", "2026-06-19", "2026-07-03", "2026-09-07", "2026-11-26", "2026-12-25", "2027-01-01", "2027-01-18"],
+  "early_closes": ["2025-11-28", "2025-12-24", "2026-11-27", "2026-12-24"],
+  "decision_time_next_session_et": "09:00"
+}
