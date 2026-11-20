@@ -4,14 +4,19 @@ from __future__ import annotations
 
 import hmac
 import os
+from pathlib import Path
+from typing import Literal
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
-from fastapi.responses import JSONResponse
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from .operator_service import TradingOperatorService
-from .strategy_candidates import StrategyCandidateRegistry
 from .paper_lab_automation import LabRunSpec, PaperLabAutomationService
+from .strategy_candidates import StrategyCandidateRegistry
+from .tws_workstation import TwsAccountReader
+
+WORKSTATION_ASSETS = Path(__file__).resolve().parents[1] / "dashboard" / "electron-app" / "renderer"
 
 
 class LabRunRequest(BaseModel):
@@ -42,6 +47,7 @@ def create_operator_app(
     operator_token: str | None = None,
     research_service: PaperLabAutomationService | None = None,
     candidate_registry: StrategyCandidateRegistry | None = None,
+    tws_reader: TwsAccountReader | None = None,
 ) -> FastAPI:
     """Create the local paper-only operator and research API.
 
@@ -118,6 +124,41 @@ def create_operator_app(
     @app.get("/operator/status")
     def operator_status(_: None = Depends(authorize)) -> dict[str, object]:
         return service.snapshot()
+
+    @app.get("/operator/tws-settings")
+    def tws_settings(_: None = Depends(authorize)) -> dict[str, object]:
+        if tws_reader is None:
+            raise RuntimeError("TWS account reader is not configured")
+        return tws_reader.settings()
+
+    @app.get("/operator/tws/{mode}/{symbol}")
+    async def tws_snapshot(
+        mode: Literal["paper", "live"],
+        symbol: Literal["IBM", "JPM", "KO"],
+        _: None = Depends(authorize),
+    ) -> dict[str, object]:
+        if tws_reader is None:
+            raise RuntimeError("TWS account reader is not configured")
+        return await tws_reader.check(mode, symbol)
+
+    @app.get("/workstation", response_class=HTMLResponse)
+    def workstation() -> HTMLResponse:
+        page = WORKSTATION_ASSETS / "operator.html"
+        if not page.is_file():
+            raise HTTPException(status_code=404, detail="Workstation files are unavailable in this install")
+        body = page.read_text(encoding="utf-8").replace("connect-src 'none'", "connect-src 'self'")
+        body = body.replace('href="operator.css"', 'href="/workstation-assets/operator.css"')
+        body = body.replace('src="operator.js"', 'src="/workstation-assets/operator.js"')
+        browser_bridge = '<script src="/workstation-assets/browser-bridge.js" defer></script>'
+        body = body.replace("</head>", f"{browser_bridge}\n</head>")
+        return HTMLResponse(body)
+
+    @app.get("/workstation-assets/{asset}")
+    def workstation_asset(asset: Literal["operator.css", "operator.js", "browser-bridge.js"]) -> FileResponse:
+        file = WORKSTATION_ASSETS / asset
+        if not file.is_file():
+            raise HTTPException(status_code=404, detail="Workstation asset is unavailable")
+        return FileResponse(file, media_type="text/css" if asset.endswith(".css") else "text/javascript")
 
     @app.get("/operator/orders")
     def orders(_: None = Depends(authorize)) -> dict[str, object]:

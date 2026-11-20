@@ -252,11 +252,15 @@ class TradingOperatorService:
         status_snapshot = asdict(self.status())
         status_snapshot["open_orders"] = len(orders)
         status_snapshot["open_positions"] = len(positions)
-        return {
+        result: dict[str, Any] = {
             "status": status_snapshot,
             "orders": [self._serialize(item) for item in orders],
             "positions": [self._serialize(item) for item in positions],
         }
+        workstation_snapshot = getattr(self._orchestrator, "workstation_snapshot", None)
+        if callable(workstation_snapshot):
+            result["workspace"] = workstation_snapshot()
+        return result
 
     def _run_loop(self) -> None:
         while not self._stop_event.is_set():
