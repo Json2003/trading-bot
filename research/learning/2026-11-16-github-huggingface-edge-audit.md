@@ -173,3 +173,9 @@ One recoverable implementation gap was fixed before any replay manifest can be a
 All 32 focused NYSE software tests passed after the change, including generation and loading of a complete fixture plus rejection of the same manifest with its source evidence removed. Synthetic fixtures remain software checks only. Market strategy trials, independent observations, model-training runs and unseen confirmations remain zero. Profit, costs, return, drawdown, Sharpe, profit factor, turnover and fills remain unmeasured. Expected profit is unestimated.
 
 Next executable action: capture the first newly published November 18 session without backdating its receipt, continue through the November 30 signal close, extend membership and corporate-action reviews through the evaluated window, then run the input-only check before either frozen strategy arm.
+
+## November 18 bars recovered on November 19, 2026
+
+The new pinned revision supplied 12 November 18 bars. All 48 OHLC comparisons agree within $0.0101 against the separately retrieved history. The scoped review of listings and corporate actions now reaches November 18 and preparation validated 2,630 eligible signal inputs. Both price packets reproduced byte for byte. The latest closed NYSE session was November 19. Its bars were still pending in the pinned source at the afternoon check. [Source audit](../strategy_sources/2026-11-19-nyse-forward-session-reconciliation.md) · [Verification record](2026-11-19-nyse-forward-verification.json)
+
+The daily research task moves to 5 a.m. Pacific beginning November 20. The first decision cutoff remains December 1 at 6 a.m. Pacific. Seven more session captures are needed through the November 30 signal close. Market evaluation skipped, with zero investment trials and zero independent investment observations. The new bars improve data coverage. Expected profit remains unestimated.
