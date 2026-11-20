@@ -211,11 +211,12 @@ function renderChart(raw, simulation, snapshot) {
   const graph = $('chart');
   graph.replaceChildren();
   $('chartEmpty').hidden = focusBars.length > 0;
-  graph.hidden = !focusBars.length;
+  graph.toggleAttribute('hidden', !focusBars.length);
   chartLayer = null;
   chartTransform = null;
   plotted = focusBars;
   if (!focusBars.length) {
+    graph.setAttribute('aria-label', 'No price bars available');
     const msg = simulation ? 'Start the local NYSE demo to generate bars.' :
       session.twsBusy ? 'Checking Trader Workstation…' :
         session.brokerErrors[session.mode] || (snapshot?.chart?.symbol === session.symbol ? snapshot.chart.message : null) ||
