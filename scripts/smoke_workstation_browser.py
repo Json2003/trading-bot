@@ -1,4 +1,5 @@
 import os
+import re
 import socket
 import sys
 import tempfile
@@ -84,11 +85,14 @@ def test_workstation(url):
         expect(page.locator("#startButton")).to_be_disabled()
         page.get_by_role("button", name="Research Lab", exact=True).click()
         expect(page.locator("#labStartButton")).to_be_enabled()
+        page.locator("#labDataset").select_option("sample_ohlcv.csv")
         page.locator("#labGenerations").fill("1")
         page.locator("#labAccounts").fill("4")
         page.locator("#labStartButton").click()
-        expect(page.locator("#labJobState")).to_have_text("completed", timeout=25000)
-        assert page.locator("#labLeaderboardBody > tr").count() > 0
+        state = page.locator("#labJobState")
+        expect(state).to_have_text(re.compile(r"^(completed|failed|cancelled|interrupted)$"), timeout=25000)
+        assert state.text_content() == "completed", page.locator("#labLeaderboardEmpty").text_content()
+        expect(page.locator("#labLeaderboardBody > tr")).to_have_count(1)
         page.get_by_role("button", name="Overview", exact=True).click()
         page.set_viewport_size({"width": 390, "height": 844})
         assert page.evaluate("document.documentElement.scrollWidth === window.innerWidth")

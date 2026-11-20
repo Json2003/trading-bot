@@ -62,8 +62,8 @@ function validateResearchSpec(payload) {
     throw new Error('Select a valid local research dataset');
   }
   const holdout = Number(payload.finalHoldoutFraction);
-  if (!Number.isFinite(holdout) || holdout < 0.20 || holdout > 0.40) {
-    throw new Error('Final holdout must be between 20% and 40%');
+  if (!Number.isFinite(holdout) || holdout < 0.20 || holdout > 0.30) {
+    throw new Error('Final holdout must be between 20% and 30%');
   }
   return {
     dataset_id: datasetId,

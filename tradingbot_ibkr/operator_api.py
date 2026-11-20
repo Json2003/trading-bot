@@ -27,7 +27,7 @@ class LabRunRequest(BaseModel):
     dataset_id: str = Field(min_length=1, max_length=240)
     generations: int = Field(default=3, ge=1, le=6)
     accounts_per_generation: int = Field(default=12, ge=4, le=24)
-    final_holdout_fraction: float = Field(default=0.25, ge=0.20, le=0.40)
+    final_holdout_fraction: float = Field(default=0.25, ge=0.20, le=0.30)
     seed: int = Field(default=7, ge=0, le=2_147_483_647)
 
 
