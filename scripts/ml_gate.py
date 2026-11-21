@@ -9,7 +9,8 @@ Usage:
 
 Behavior:
     - Extracts raw numeric values (no scaling client-side).
-    - Falls back to allow=True on any failure so trading isn’t blocked.
+    - Denies on inference failure, invalid probabilities, or model-tag mismatch.
+    - A denied failure returns (False, 0.0, None); no model scored that request.
 """
 
 import json
@@ -28,18 +29,27 @@ def infer_gate(
 ) -> Tuple[bool, float, Optional[str]]:
     try:
         X = np.asarray(seq_df.values, dtype=float)
-        if X.ndim != 2:
-            raise ValueError("seq_df must be 2D")
+        if X.ndim != 2 or not X.size or not np.isfinite(X).all():
+            raise ValueError("seq_df must be a nonempty finite matrix")
+        if not np.isfinite(threshold) or not 0 <= threshold <= 1:
+            raise ValueError("threshold must be finite and between zero and one")
         payload = {"features": X.tolist(), "threshold": float(threshold)}
         if tag:
             payload["tag"] = tag
         r = requests.post(f"{url.rstrip('/')}/infer", json=payload, timeout=timeout)
         r.raise_for_status()
         out = r.json()
-        return bool(out.get("allow", True)), float(out.get("p_up", 0.0)), out.get("tag")
+        probability = float(out["p_up"])
+        response_tag = out.get("tag")
+        if not np.isfinite(probability) or not 0 <= probability <= 1:
+            raise ValueError("invalid inference probability")
+        if not isinstance(out.get("allow"), bool) or not isinstance(response_tag, str) or not response_tag:
+            raise ValueError("missing inference decision or model provenance")
+        if tag and tag != response_tag:
+            raise ValueError("inference model tag mismatch")
+        return out["allow"] and probability >= threshold, probability, response_tag
     except Exception:
-        # Fail-open
-        return True, 0.5, tag
+        return False, 0.0, None
 
 
 __all__ = ["infer_gate"]
