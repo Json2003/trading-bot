@@ -1,0 +1,46 @@
+{
+  "base_commit": "4788f1ea61edc94191ed12c20cf0b34ee4e09a29",
+  "captured_market_bars": 3144,
+  "eligible_market_bars": 2620,
+  "expected_profit": null,
+  "independent_observations": 0,
+  "latest_completed_session": "2026-11-17",
+  "market_evaluation": "skipped_incomplete_forward_window",
+  "market_strategy_trials": 0,
+  "metrics": {
+    "drawdown": null,
+    "execution_costs": null,
+    "fills": null,
+    "net_return": null,
+    "operating_expenses": null,
+    "profit_factor": null,
+    "sharpe": null,
+    "turnover": null
+  },
+  "missing_eligible_bars_for_2026_11_18": 10,
+  "model_training_runs": 0,
+  "provider_head": {
+    "commit_hash": "f5psmujj89khlc43g5kicsclpd0orhok",
+    "message": "ohlcv 2026-11-17 update",
+    "received_at": "2026-11-19T02:44:20.216103+00:00",
+    "receipt_sha256": "23a2ad07c25679a1cc682c5f4b709901be589696cc360b22b962ff0de7726f7e"
+  },
+  "real_input_check_record_sha256": "a260e2a7f445efdf372d948a7d863f60e7467e58a0034b61f7169c43ba1db6df",
+  "receipt_chain_change": {
+    "generated_market_manifest_links_capture_plan_hash": true,
+    "generated_market_manifest_links_capture_receipts": true,
+    "generated_market_manifest_links_input_review_hash": true,
+    "loader_rejects_missing_or_malformed_market_evidence": true
+  },
+  "schema_version": 1,
+  "software_tests_passed": 32,
+  "source_sha256": {
+    "research/learning/2026-11-16-github-huggingface-edge-audit.md": "9851c27cfa9a489e5b8ea2dfd1e05f399bad77960c8cc88ce9734bcb874d6e4a",
+    "research/learning/nyse-offline-runner.md": "b55f11cd23dd5484bde58d5fd1ccf7633d88e3b5d7bda9aee30dfc76505ff2f2",
+    "research/nyse_offline.py": "750cee276784c92e9847857306a0dd8bb46223d276334cab90868d3e1558a592",
+    "research/nyse_preparation.py": "eacab9d9eccd3b05c3d1b859f32dc8e95f21b99e0c7f3c009f32ff5751ed976e",
+    "tests/test_nyse_preparation.py": "cc401d5474f9eefde4a901757a8517e92592e685eb86ab777b30b6e53f6a926f"
+  },
+  "unseen_confirmations": 0,
+  "verified_at_utc": "2026-11-19T02:44:06Z"
+}

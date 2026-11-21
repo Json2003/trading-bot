@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "source_code_revision": "e58b4f7cc4ce5319e1c689d49b0383493621003a",
+  "main_reviewed_revision": "d5d11ea405d7d37df47624e738aefff39820490c",
+  "experiment_sha256": "be9e802eb0a755b078a09862270e2b6941dbffe4b0c0a1c1930597bf3f825741",
+  "last_completed_nyse_session": "2026-11-19",
+  "provider_revision": "9g85ej800q0ri65prt1vjni71opl5dsg",
+  "price_receipt_at_utc": "2026-11-20T12:57:41.250070+00:00",
+  "verified_byte_exact_restore": true,
+  "capture_index": {
+    "path": "manifests/2026-11-20-nyse-forward-receipt-index.json",
+    "sha256": "53026681978edd5ed308f69e380eb911c993bfdd8c25bb7851cb41bceafaede3",
+    "packet_sha256": "9df21f6264e413e3f3e4f505998dd0ff6cf769763c79398554b9ea7677c9f8f0"
+  },
+  "review": {
+    "path": "manifests/2026-11-20-nyse-forward-input-review.json",
+    "sha256": "91f04ad8a3f3331b352fb0756b826f6e1834f305b5e818adcf2b6943a211029a"
+  },
+  "preparation": {
+    "exit_code": 2,
+    "report_sha256": "b3611b9558cea39ad77c488979c6d213f8b3683bd3878621c7cced412f5d5be3",
+    "action_review_through": "2026-11-19",
+    "captured_bars": 3168,
+    "completed_sessions_checked": 264,
+    "dataset_id": "nyse-prospective-2026-12",
+    "eligible_bars_checked": 2640,
+    "eligible_tickers_at_start": [
+      "ASAN",
+      "CHWY",
+      "CRM",
+      "NET",
+      "NOW",
+      "PINS",
+      "SNOW",
+      "TWLO",
+      "UBER",
+      "XYZ"
+    ],
+    "excluded_tickers": {
+      "FSLY": "outside_nyse_common_stock_mandate",
+      "PLTR": "outside_nyse_common_stock_mandate"
+    },
+    "expected_block": {
+      "end": "2027-01-29",
+      "name": "december_january_development",
+      "start": "2026-12-01"
+    },
+    "expected_profit": null,
+    "first_decision_at": "2026-12-01T09:00:00-05:00",
+    "first_missing": [],
+    "issues": [
+      "forward_window_incomplete",
+      "corporate_action_review_incomplete",
+      "membership_review_incomplete"
+    ],
+    "last_contiguous_session": "2026-11-19",
+    "membership_review_through": "2026-11-19",
+    "missing_count": 0,
+    "plan_sha256": "57f0c2d493931460459f85cd9063a14f5818221e5b8331852cd5bda02171ee0d",
+    "prepared_signal_rows": 2640,
+    "review_sha256": "91f04ad8a3f3331b352fb0756b826f6e1834f305b5e818adcf2b6943a211029a",
+    "status": "awaiting_market_data",
+    "strategy_trials": 0
+  },
+  "market_evaluation": "skipped_incomplete_forward_window",
+  "market_strategy_trials": 0,
+  "new_independent_investment_observations": 0,
+  "model_training_runs": 0,
+  "unseen_confirmations": 0,
+  "metrics": {
+    "expected_net_profit": null,
+    "gross_pnl": null,
+    "net_return": null,
+    "drawdown": null,
+    "sharpe": null,
+    "profit_factor": null,
+    "fills": null,
+    "turnover": null,
+    "trading_expenses": null,
+    "operating_expenses": null
+  },
+  "next_action": "Capture and validate the November 20 session after publication. Continue through the November 30 signal close and preserve receipt before the December 1 06:00 Pacific cutoff."
+}

@@ -1,0 +1,549 @@
+{
+  "schema_version": 1,
+  "plan_sha256": "57f0c2d493931460459f85cd9063a14f5818221e5b8331852cd5bda02171ee0d",
+  "actions": [
+    {
+      "action_id": "CRM-div-2025-12-18",
+      "amount": "0.41600",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "dividend",
+      "payable_date": "2026-01-08",
+      "security_id": "sec:0001108524:common",
+      "session": "2025-12-18",
+      "source": "https://investor.salesforce.com/news/news-details/2025/Salesforce-Announces-Quarterly-Dividend-ce77ce2bd/default.aspx"
+    },
+    {
+      "action_id": "NOW-5-for-1-2025-12-18",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "split",
+      "new_shares": "5",
+      "old_shares": "1",
+      "security_id": "sec:0001373715:common",
+      "session": "2025-12-18",
+      "source": "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000007/now-20251231.htm"
+    },
+    {
+      "action_id": "CRM-div-2026-04-09",
+      "amount": "0.44000",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "dividend",
+      "payable_date": "2026-04-23",
+      "security_id": "sec:0001108524:common",
+      "session": "2026-04-09",
+      "source": "https://investor.salesforce.com/financials/quarterly-results/default.aspx"
+    },
+    {
+      "action_id": "CRM-div-2026-06-11",
+      "amount": "0.44000",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "dividend",
+      "payable_date": "2026-07-02",
+      "security_id": "sec:0001108524:common",
+      "session": "2026-06-11",
+      "source": "https://investor.salesforce.com/news/news-details/2026/Salesforce-Announces-Quarterly-Dividend/default.aspx"
+    },
+    {
+      "action_id": "CRM-div-2026-09-17",
+      "amount": "0.44000",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "dividend",
+      "payable_date": "2026-10-08",
+      "security_id": "sec:0001108524:common",
+      "session": "2026-09-17",
+      "source": "https://investor.salesforce.com/news/news-details/2026/Salesforce-Announces-Quarterly-Dividend-96de7d58a/default.aspx"
+    }
+  ],
+  "securities": [
+    {
+      "available_at": "2026-11-19T02:10:10.830448+00:00",
+      "class_title": "Class A Common Stock, $0.00001 par value per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000060/asan-20260731.htm",
+      "security_id": "sec:0001477720:class-a-common",
+      "ticker": "ASAN"
+    },
+    {
+      "available_at": "2026-11-19T02:10:03.100295+00:00",
+      "class_title": "Class A Common Stock, par value $0.01 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1766502/000162828026061018/chwy-20260802.htm",
+      "security_id": "sec:0001766502:class-a-common",
+      "ticker": "CHWY"
+    },
+    {
+      "available_at": "2026-11-19T02:09:45.897807+00:00",
+      "class_title": "Common Stock, par value $0.001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000190/crm-20260731.htm",
+      "security_id": "sec:0001108524:common",
+      "ticker": "CRM"
+    },
+    {
+      "available_at": "2026-11-19T02:10:10.791909+00:00",
+      "class_title": "Class A Common Stock, $0.00002 par value",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNAS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1517413/000151741326000345/fsly-20260930.htm",
+      "security_id": "sec:0001517413:class-a-common",
+      "ticker": "FSLY"
+    },
+    {
+      "available_at": "2026-11-19T02:10:10.872319+00:00",
+      "class_title": "Class A Common Stock, $0.001 par value",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1477333/000147733326000061/cloud-20260930.htm",
+      "security_id": "sec:0001477333:class-a-common",
+      "ticker": "NET"
+    },
+    {
+      "available_at": "2026-11-19T02:09:45.569356+00:00",
+      "class_title": "Common stock, par value $0.001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000096/now-20260930.htm",
+      "security_id": "sec:0001373715:common",
+      "ticker": "NOW"
+    },
+    {
+      "available_at": "2026-11-19T02:09:54.923453+00:00",
+      "class_title": "Class A Common Stock, $0.00001 par value",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1506293/000150629326000153/pins-20260930.htm",
+      "security_id": "sec:0001506293:class-a-common",
+      "ticker": "PINS"
+    },
+    {
+      "available_at": "2026-11-19T02:10:02.911957+00:00",
+      "class_title": "Class A Common Stock, par value $0.001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNAS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1321655/000132165526000048/pltr-20260930.htm",
+      "security_id": "sec:0001321655:class-a-common",
+      "ticker": "PLTR"
+    },
+    {
+      "available_at": "2026-11-19T02:09:54.852638+00:00",
+      "class_title": "Common Stock, $0.0001 par value",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1640147/000164014726000037/snow-20260731.htm",
+      "security_id": "sec:0001640147:common",
+      "ticker": "SNOW"
+    },
+    {
+      "available_at": "2026-11-19T02:10:03.100411+00:00",
+      "class_title": "Class A Common Stock, par value $0.001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1447669/000144766926000110/twlo-20260930.htm",
+      "security_id": "sec:0001447669:class-a-common",
+      "ticker": "TWLO"
+    },
+    {
+      "available_at": "2026-11-19T02:09:54.923805+00:00",
+      "class_title": "Common Stock, par value $0.00001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1543151/000154315126000041/uber-20260930.htm",
+      "security_id": "sec:0001543151:common",
+      "ticker": "UBER"
+    },
+    {
+      "available_at": "2026-11-19T02:09:45.800135+00:00",
+      "class_title": "Class A common stock, $0.0000001 par value per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1512673/000162828026069524/xyz-20260930.htm",
+      "security_id": "sec:0001512673:class-a-common",
+      "ticker": "XYZ"
+    }
+  ],
+  "price_basis": "nominal_ohlc",
+  "reviewed_at": "2026-11-20T00:08:34.515997+00:00",
+  "corporate_actions_complete_through": "2026-11-18",
+  "membership_complete_through": "2026-11-18",
+  "coverage_scope": "Retain five reviewed warmup actions and twelve class identities. This continuation covers the ten eligible NYSE classes through November 18. Matched current directories, 12 SEC issuer catalogs and two dividend and split histories support the review.",
+  "price_basis_evidence": {
+    "field_check_through": "2026-11-18",
+    "method": "Compare independently retrieved Yahoo daily OHLC with nominal Dolt OHLC. No split scaling applies to the November 18 bars. Compare unrounded values using a $0.0101 tolerance.",
+    "matched_ohlc_fields": 48,
+    "eligible_matched_ohlc_fields": 40,
+    "volume_rows_differing_over_one_percent": 0
+  },
+  "evidence": {
+    "prior_review": {
+      "path": "2026-11-18-nyse-forward-input-review.json",
+      "sha256": "471d8ff053237d91f63837383e7a980354c9a1ca06165734b1bf5f0dcdfb4b17"
+    },
+    "capture_index": "2026-11-19-nyse-forward-receipt-index.json",
+    "capture_packet_sha256": "fe1a0c6238933a3c7158131b9498e9d923e32c584a6f25c39825168a0ac7638a",
+    "pinned_price_revision": "jrtfcc7u3u15ufcqd6b8tl6hjojn8i19",
+    "source_receipts": {
+      "dolt-dividend": {
+        "bytes": 586,
+        "received_at": "2026-11-20T00:07:31.305796+00:00",
+        "sha256": "5e91c0e39e6b0cb282e040dbf4adcc9fdf8a300ca676aacc169bcbc3579df87d",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+%2A+FROM+dividend+AS+OF+%27jrtfcc7u3u15ufcqd6b8tl6hjojn8i19%27+WHERE+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+AND+ex_date+BETWEEN+%272026-11-18%27+AND+%272026-11-19%27+ORDER+BY+act_symbol%2Cex_date"
+      },
+      "dolt-split": {
+        "bytes": 643,
+        "received_at": "2026-11-20T00:07:31.460275+00:00",
+        "sha256": "0641d070b6d074de3aa6c5cf42c6ed57e050c3263d44b1bf771e55052af66809",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+%2A+FROM+split+AS+OF+%27jrtfcc7u3u15ufcqd6b8tl6hjojn8i19%27+WHERE+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+AND+ex_date+BETWEEN+%272026-11-18%27+AND+%272026-11-19%27+ORDER+BY+act_symbol%2Cex_date"
+      },
+      "nasdaq-listed": {
+        "bytes": 348493,
+        "received_at": "2026-11-20T00:07:32.385186+00:00",
+        "sha256": "ee9f279035a7873042a3ac096d2b8d0b0c8aa9a1e398910a0819c67a08656a86",
+        "url": "https://www.nasdaqtrader.com/dynamic/symdir/nasdaqlisted.txt"
+      },
+      "nasdaq-other-listed": {
+        "bytes": 544575,
+        "received_at": "2026-11-20T00:07:32.169299+00:00",
+        "sha256": "65cbe31af73aa9896f78dbff48e67d49abda3d47919b80e6d7f050496bf73380",
+        "url": "https://www.nasdaqtrader.com/dynamic/symdir/otherlisted.txt"
+      },
+      "nyse-mapping": {
+        "bytes": 458148,
+        "received_at": "2026-11-20T00:08:34.414741+00:00",
+        "sha256": "01e5cb299e00cafeadcd291a8bd858708a430ee195fd606e6887ffd4b42b8764",
+        "url": "https://ftp.nyse.com/NYSESymbolMapping/NYSESymbolMapping_20261119.txt"
+      },
+      "nyse-mef": {
+        "bytes": 14180,
+        "received_at": "2026-11-20T00:08:33.778211+00:00",
+        "sha256": "cba0be6a4bc961a82eaa128e54f6128425c8a1645303ef25c49797e7a1e5947a",
+        "url": "https://ftp.nyse.com/MEF_Public/mef_public.json"
+      },
+      "sec-ASAN": {
+        "bytes": 116249,
+        "received_at": "2026-11-20T00:07:21.395555+00:00",
+        "sha256": "a6b67643a1cfdefe1d36bd3777d15e7b03be8fcb53b001fbca6f5c01e0ea5ab2",
+        "url": "https://data.sec.gov/submissions/CIK0001477720.json"
+      },
+      "sec-CHWY": {
+        "bytes": 118884,
+        "received_at": "2026-11-20T00:07:21.354018+00:00",
+        "sha256": "124109f522645daf462da61a8bff7f224f1fa41bdb76427adbe05bf1b4153a36",
+        "url": "https://data.sec.gov/submissions/CIK0001766502.json"
+      },
+      "sec-CRM": {
+        "bytes": 156956,
+        "received_at": "2026-11-20T00:07:21.273386+00:00",
+        "sha256": "92897c3ece78bcd7c42b1b94dcff01c701e8017118f491f83267b3baa4aac31b",
+        "url": "https://data.sec.gov/submissions/CIK0001108524.json"
+      },
+      "sec-FSLY": {
+        "bytes": 162260,
+        "received_at": "2026-11-20T00:07:21.385689+00:00",
+        "sha256": "8b822840dcbcab52e445321eb0be85235da013857d9a03c6ab59ad7015ff01bb",
+        "url": "https://data.sec.gov/submissions/CIK0001517413.json"
+      },
+      "sec-NET": {
+        "bytes": 158565,
+        "received_at": "2026-11-20T00:07:21.200886+00:00",
+        "sha256": "32b9bcbbf2f05ad9c814486759514dacab079d9980a2a9eb2add1eec713220ef",
+        "url": "https://data.sec.gov/submissions/CIK0001477333.json"
+      },
+      "sec-NOW": {
+        "bytes": 160852,
+        "received_at": "2026-11-20T00:07:24.809522+00:00",
+        "sha256": "658efef3e8a78ab1ef9cbf984e6a750d4ef1fc20370350c05c30aefc421d0904",
+        "url": "https://data.sec.gov/submissions/CIK0001373715.json"
+      },
+      "sec-PINS": {
+        "bytes": 160846,
+        "received_at": "2026-11-20T00:07:24.837626+00:00",
+        "sha256": "36443c168104c86569ff0964a06febe8d31f93a8c63df9b4dff0b94c4e9aab4b",
+        "url": "https://data.sec.gov/submissions/CIK0001506293.json"
+      },
+      "sec-PLTR": {
+        "bytes": 159417,
+        "received_at": "2026-11-20T00:07:24.839104+00:00",
+        "sha256": "df55c5a9863011cbb13a0e7c9f4d4a1114b71f01bd2a6a06f692db2a456c0127",
+        "url": "https://data.sec.gov/submissions/CIK0001321655.json"
+      },
+      "sec-SNOW": {
+        "bytes": 158590,
+        "received_at": "2026-11-20T00:07:25.035957+00:00",
+        "sha256": "715eb29008ba4a13a65aca37ef563fa9169a772c3b82b4c0aa9350544124a3de",
+        "url": "https://data.sec.gov/submissions/CIK0001640147.json"
+      },
+      "sec-TWLO": {
+        "bytes": 161393,
+        "received_at": "2026-11-20T00:07:25.005508+00:00",
+        "sha256": "43b7f0cd2378973828b581f24bc585736b6f6f20efb56ffffae704680aaa3f10",
+        "url": "https://data.sec.gov/submissions/CIK0001447669.json"
+      },
+      "sec-UBER": {
+        "bytes": 164728,
+        "received_at": "2026-11-20T00:07:28.029462+00:00",
+        "sha256": "a4f66a9703261bfdb061c39834040b5faac0a2c9894ca824fd639739a517b883",
+        "url": "https://data.sec.gov/submissions/CIK0001543151.json"
+      },
+      "sec-XYZ": {
+        "bytes": 157445,
+        "received_at": "2026-11-20T00:07:28.118012+00:00",
+        "sha256": "b94ca92319d55615138000e97417fd23f27c2933a5e2e73a9b5353e78d6282f8",
+        "url": "https://data.sec.gov/submissions/CIK0001512673.json"
+      },
+      "sec-listings": {
+        "bytes": 521781,
+        "received_at": "2026-11-20T00:07:28.702638+00:00",
+        "sha256": "8e93e877216836e3e246ce8bc1163b2465a20fa359b4dd0c0ed6a7ea20121b6f",
+        "url": "https://www.sec.gov/files/company_tickers_exchange.json"
+      },
+      "yahoo-ASAN": {
+        "bytes": 1389,
+        "received_at": "2026-11-20T00:07:11.849416+00:00",
+        "sha256": "79db151b8fd4cd98b3693b3659fb0b9fdd0073be25a6cdfa99113a9caa5c6f87",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/ASAN?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+      },
+      "yahoo-CHWY": {
+        "bytes": 1395,
+        "received_at": "2026-11-20T00:07:11.853843+00:00",
+        "sha256": "2a4610e3ff7dad9cfcfca560e50b3ace62fa957c0333346fb524e9ea18c67e5a",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/CHWY?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+      },
+      "yahoo-CRM": {
+        "bytes": 1408,
+        "received_at": "2026-11-20T00:07:11.854863+00:00",
+        "sha256": "904db70f4e5b8db8379ebd8ecedd180890acc23e790c7d666b8e9bfcc7513993",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/CRM?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+      },
+      "yahoo-FSLY": {
+        "bytes": 1396,
+        "received_at": "2026-11-20T00:07:11.851240+00:00",
+        "sha256": "56e5ebf8d8529476fe159845214ead765396caa31f7c4cbb6a650a40dddfb3ad",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/FSLY?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+      },
+      "yahoo-NET": {
+        "bytes": 1399,
+        "received_at": "2026-11-20T00:07:11.846878+00:00",
+        "sha256": "a6ef4477c44f9ebe49af64072bb7011548984d8c1c8535c9fd257ca92a979b59",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/NET?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+      },
+      "yahoo-NOW": {
+        "bytes": 1379,
+        "received_at": "2026-11-20T00:07:16.422306+00:00",
+        "sha256": "21eb0d820df3d987fc70268843189df2f79872da7f89e2571baf75f42e66f92a",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/NOW?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+      },
+      "yahoo-PINS": {
+        "bytes": 1413,
+        "received_at": "2026-11-20T00:07:16.409281+00:00",
+        "sha256": "5810a8e9eb546010d346ee4df05a6889168360ba53d82f18f0d6b4b56f390648",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/PINS?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+      },
+      "yahoo-PLTR": {
+        "bytes": 1431,
+        "received_at": "2026-11-20T00:07:16.442315+00:00",
+        "sha256": "abd67df80dad9eb50a26e5f31223d166bcf28f9323811f9a490ef09cf2fd9d7f",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/PLTR?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+      },
+      "yahoo-SNOW": {
+        "bytes": 1385,
+        "received_at": "2026-11-20T00:07:16.438729+00:00",
+        "sha256": "c52a855e9382696fe79b088f852af5a1777d4dd4bcf6cc7c07460c877bc94c5b",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/SNOW?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+      },
+      "yahoo-TWLO": {
+        "bytes": 1411,
+        "received_at": "2026-11-20T00:07:16.465025+00:00",
+        "sha256": "b91f2c686a8fc1023867c21855d10097d1ef64613a7df1318c68f0cc38c3797d",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/TWLO?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+      },
+      "yahoo-UBER": {
+        "bytes": 1421,
+        "received_at": "2026-11-20T00:07:20.375778+00:00",
+        "sha256": "a33693bb341ba9ae020e3aa11e96803957c5d4a805d8a7d1685abc5606bc3e10",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/UBER?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+      },
+      "yahoo-XYZ": {
+        "bytes": 1391,
+        "received_at": "2026-11-20T00:07:20.371355+00:00",
+        "sha256": "ee28e10d54c98617dcf86cc8b46553e6e50063f8e05e83206e279b450a32bc2a",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/XYZ?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+      }
+    },
+    "pinned_dividend_and_split_rows": {
+      "dividend": [],
+      "split": []
+    },
+    "separate_dividend_and_split_events": [],
+    "sec_issuer_submission_window": {
+      "filing_date_start": "2026-11-17",
+      "filing_date_end": "2026-11-19",
+      "issuers_checked": 12,
+      "forms_by_ticker": {
+        "ASAN": {},
+        "CHWY": {},
+        "CRM": {},
+        "FSLY": {
+          "4": 4,
+          "144": 3
+        },
+        "NET": {
+          "4": 6,
+          "144": 3
+        },
+        "NOW": {
+          "4": 12,
+          "144": 1
+        },
+        "PINS": {
+          "4": 1,
+          "144": 2
+        },
+        "PLTR": {
+          "4": 1,
+          "144": 1
+        },
+        "SNOW": {
+          "144": 3
+        },
+        "TWLO": {
+          "4": 1
+        },
+        "UBER": {
+          "4": 5
+        },
+        "XYZ": {}
+      },
+      "scope": "Only Forms 4 and 144 appeared in the scanned catalog interval. Earlier class filings and action evidence are preserved in the prior review."
+    },
+    "sec_ticker_exchanges": {
+      "ASAN": {
+        "cik": 1477720,
+        "exchange": "NYSE"
+      },
+      "CHWY": {
+        "cik": 1766502,
+        "exchange": "NYSE"
+      },
+      "CRM": {
+        "cik": 1108524,
+        "exchange": "NYSE"
+      },
+      "FSLY": {
+        "cik": 1517413,
+        "exchange": "Nasdaq"
+      },
+      "NET": {
+        "cik": 1477333,
+        "exchange": "NYSE"
+      },
+      "NOW": {
+        "cik": 1373715,
+        "exchange": "NYSE"
+      },
+      "PINS": {
+        "cik": 1506293,
+        "exchange": "NYSE"
+      },
+      "PLTR": {
+        "cik": 1321655,
+        "exchange": "Nasdaq"
+      },
+      "SNOW": {
+        "cik": 1640147,
+        "exchange": "NYSE"
+      },
+      "TWLO": {
+        "cik": 1447669,
+        "exchange": "NYSE"
+      },
+      "UBER": {
+        "cik": 1543151,
+        "exchange": "NYSE"
+      },
+      "XYZ": {
+        "cik": 1512673,
+        "exchange": "NYSE"
+      }
+    },
+    "nasdaq_trader_file_creation_times": {
+      "nasdaq-listed": "File Creation Time: 1119202618:01",
+      "nasdaq-other-listed": "File Creation Time: 1119202618:01"
+    },
+    "nasdaq_trader_nyse_tickers": [
+      "ASAN",
+      "CHWY",
+      "CRM",
+      "NET",
+      "NOW",
+      "PINS",
+      "SNOW",
+      "TWLO",
+      "UBER",
+      "XYZ"
+    ],
+    "nasdaq_trader_nasdaq_tickers": [
+      "FSLY",
+      "PLTR"
+    ],
+    "nyse_symbol_mapping_listed_market_codes": {
+      "ASAN": "N",
+      "CHWY": "N",
+      "CRM": "N",
+      "FSLY": "Q",
+      "NET": "N",
+      "NOW": "N",
+      "PINS": "N",
+      "PLTR": "Q",
+      "SNOW": "N",
+      "TWLO": "N",
+      "UBER": "N",
+      "XYZ": "N"
+    },
+    "nyse_public_event_snapshot": {
+      "events": 19,
+      "published_max": "2026-11-19T16:29:49.159154-05:00",
+      "published_min": "2026-11-19T08:11:03.489959-05:00",
+      "scope": "Current exchange snapshot only",
+      "target_events": []
+    },
+    "limitations": "Listing and event checks extend the review for this fixed cohort. The public NYSE event snapshot covers current notices. Dolt's upstream vendor and volume convention remain unverified. Raw vendor prices remain outside Git."
+  }
+}

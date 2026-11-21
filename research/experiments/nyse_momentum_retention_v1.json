@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "experiment_id": "nyse_momentum_retention_v1",
+  "research_only": true,
+  "initial_cash": "5000",
+  "max_position_notional": "1000",
+  "cost_bps_per_side": "43",
+  "top_k": 5,
+  "retain_rank": 10,
+  "lookback_sessions": 252,
+  "skip_sessions": 21,
+  "liquidity_sessions": 20,
+  "minimum_price": "5",
+  "minimum_median_dollar_volume": "20000000",
+  "signal_price_basis": "asof_total_return_index",
+  "risk_fraction": "0.005",
+  "stop_atr_multiple": "2",
+  "drawdown_latch_fraction": "0.02",
+  "prior_volume_participation": "0.001",
+  "minimum_independent_observations": 20,
+  "promotion_allowed": false,
+  "notes": [
+    "Monthly close ranking from the same admissible score vector for both arms, with permanent ID tie breaks.",
+    "Holdings retain their quantities except exits, corporate actions and a cap trim planned after a close above the cap.",
+    "A close-planned whole-share order executes at the next raw open. An opening gap violating settled cash or the position cap rejects the order.",
+    "Missing settlement cash can delay vacancies. Retry quantities are planned at a later close against the existing monthly targets.",
+    "Two-ATR entry stops, 0.5-percent equity risk per entry, prior-volume participation and a two-percent close-observed latch use the NYSE diagnostic risk settings from PR 290.",
+    "Monthly selection supplies the holding rule for this new experiment. The prior SMA diagnostic's twelve-session time exit is strategy-specific.",
+    "Daily-bar opening and adverse stop prices are execution assumptions. Quote size, halt coverage and broker fills remain unverified.",
+    "Each chronological block begins with fresh diagnostic capital. End-of-block holdings and receivables remain marked, without an invented terminal liquidation.",
+    "Positive or negative returns in synthetic fixtures verify software only. Market inputs remain development diagnostics."
+  ]
+}

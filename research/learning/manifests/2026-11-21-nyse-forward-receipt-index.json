@@ -1,0 +1,23 @@
+{
+  "packet": {
+    "from": "2026-11-20",
+    "head": {
+      "body": "{\"query_execution_status\":\"Success\",\"query_execution_message\":\"\",\"repository_owner\":\"post-no-preference\",\"repository_name\":\"stocks\",\"commit_ref\":\"master\",\"sql_query\":\"SELECT commit_hash,date,message FROM dolt_log LIMIT 1\",\"schema\":[{\"columnName\":\"commit_hash\",\"columnType\":\"text\"},{\"columnName\":\"date\",\"columnType\":\"datetime(3)\"},{\"columnName\":\"message\",\"columnType\":\"text\"}],\"rows\":[{\"commit_hash\":\"aef7n6a07m0r9tn7nrr0gfsjpstfdhr3\",\"date\":\"2026-11-21 05:30:37.901\",\"message\":\"ohlcv 2026-11-20 update\"}]}",
+      "received_at": "2026-11-21T12:57:09.592286+00:00",
+      "sha256": "50a2a9e6883850254cabc294261747b83bd3883d15124265ec48157d92fcf6a3",
+      "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+commit_hash%2Cdate%2Cmessage+FROM+dolt_log+LIMIT+1"
+    },
+    "partitions": [
+      {
+        "received_at": "2026-11-21T12:57:13.596624+00:00",
+        "sha256": "b6572e3834adea51b6645dc7a0088e6becce298156c9eabfd5063183883c226c",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27aef7n6a07m0r9tn7nrr0gfsjpstfdhr3%27+WHERE+date+IN+%28%272026-11-20%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      }
+    ],
+    "plan_sha256": "57f0c2d493931460459f85cd9063a14f5818221e5b8331852cd5bda02171ee0d",
+    "revision": "aef7n6a07m0r9tn7nrr0gfsjpstfdhr3",
+    "schema_version": 1,
+    "through": "2026-11-20"
+  },
+  "packet_sha256": "6c0f928998c68b25a7770fb11942c53b9eefae8dd75b856a925860232cb3be16"
+}

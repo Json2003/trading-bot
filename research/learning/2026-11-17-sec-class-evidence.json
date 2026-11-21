@@ -1,0 +1,268 @@
+{
+  "question": "Which of the six symbols fixed in the prior shared-filer audit pass the common-stock type screen at the listing snapshot?",
+  "as_of_snapshot_utc": "2022-01-01T00:11:00Z",
+  "research_date_pacific": "2026-11-17",
+  "research_evidence_compiled_utc": "2026-11-18T02:29:07Z",
+  "prior_join_revision": "7aa467de46f611262564c4a048f778469baaec84",
+  "sources": {
+    "unum": {
+      "url": "https://www.sec.gov/Archives/edgar/data/5513/000000551321000151/unm-20210930.htm",
+      "bytes": 5896643,
+      "sha256": "c9f575679dd0fe929cebbe7e0179111e4c9fb52ea4cbaab280873c6f27b624f2",
+      "accession": "0000005513-21-000151",
+      "timing_source": "unum_header"
+    },
+    "unum_header": {
+      "url": "https://www.sec.gov/Archives/edgar/data/5513/000000551321000151/0000005513-21-000151-index-headers.html",
+      "bytes": 23520,
+      "sha256": "1c4f3135f491d48eacba6d9bf1979c3bfc1e05f67ffbf7d8805218d01e83cc94"
+    },
+    "bd": {
+      "url": "https://www.sec.gov/Archives/edgar/data/10795/000001079521000091/bdx-20210930.htm",
+      "bytes": 3798561,
+      "sha256": "bd32267349a33c718940c913189035a865a11befe5a867aec1e31dd2ec3b86b5",
+      "accession": "0000010795-21-000091",
+      "timing_source": "bd_header"
+    },
+    "bd_header": {
+      "url": "https://www.sec.gov/Archives/edgar/data/10795/000001079521000091/0000010795-21-000091-index-headers.html",
+      "bytes": 27875,
+      "sha256": "e262f40dde11c920978bc7184d06259bc42ae61bb11d4e51819119d8e247d978"
+    },
+    "dillards_q": {
+      "url": "https://www.sec.gov/Archives/edgar/data/28917/000002891721000246/dds-20211030.htm",
+      "bytes": 1516433,
+      "sha256": "ff7b983ce74e0d7c69052c1a5996c9f481f85e08a6e3d83ace46009dc406deb6",
+      "accession": "0000028917-21-000246",
+      "timing_source": "dillards_q_header"
+    },
+    "dillards_q_header": {
+      "url": "https://www.sec.gov/Archives/edgar/data/28917/000002891721000246/0000028917-21-000246-index-headers.html",
+      "bytes": 17156,
+      "sha256": "2ae79065572a38eb97c1d9c35c71637e3892dc24a37ba6ce132c2e584df82bff"
+    },
+    "dillards_k": {
+      "url": "https://www.sec.gov/Archives/edgar/data/28917/000002891721000066/dds-20210130.htm",
+      "bytes": 2135454,
+      "sha256": "37817263f7d6b019963ec8dd81a19df8bb95c491c235e386fc0d05c5b1939ccb",
+      "accession": "0000028917-21-000066",
+      "timing_source": "dillards_k_header"
+    },
+    "dillards_k_header": {
+      "url": "https://www.sec.gov/Archives/edgar/data/28917/000002891721000066/0000028917-21-000066-index-headers.html",
+      "bytes": 19194,
+      "sha256": "539def7455ce038400d055d42e8c45c7d46a495357c9cddfbd65b6075de7bbe2"
+    },
+    "ownership": {
+      "url": "https://www.sec.gov/Archives/edgar/data/28917/000002891708000049/0000028917-08-000049.txt",
+      "bytes": 9429,
+      "sha256": "6a9ec7ad30556c11ca8df18ef0ae9e5910f51fe40fbc70fbbd7d01a61b761497",
+      "accession": "0000028917-08-000049",
+      "timing_source": "ownership"
+    },
+    "trust": {
+      "url": "https://www.sec.gov/Archives/edgar/data/1066225/0000930661-98-001661.txt",
+      "bytes": 308497,
+      "sha256": "dc00c7425e69796290a893bb0c6601a8f54e0d0189d343ec862306259da1b765",
+      "accession": "0000930661-98-001661"
+    },
+    "nyse": {
+      "url": "https://raw.githubusercontent.com/rreichel3/US-Stock-Symbols/b02d9d7ace317f861f8a6f59e2cfa88e207f3ce9/nyse/nyse_full_tickers.json",
+      "bytes": 1232760,
+      "sha256": "b06e1cfb2b83bea023f29ea08a0846a33a0b0d53d304a857aa731b4589920450",
+      "published_at": "2022-01-01T00:11:00Z",
+      "commit": "b02d9d7ace317f861f8a6f59e2cfa88e207f3ce9",
+      "git_blob_sha1": "d1702b3b2b4877a4dc8573381377eb278efdfd1c"
+    },
+    "sec_mapper": {
+      "url": "https://raw.githubusercontent.com/jadchaar/sec-cik-mapper/b74d1efd3e005df08da0a38a4eedfcbdf2a02283/mappings/stocks/mappings.csv",
+      "bytes": 612779,
+      "sha256": "127573f817be335dba3a90d03e74db5a771d13c10fa6bfc94badbc8d111b14c4",
+      "published_at": "2021-12-31T00:03:08Z",
+      "commit": "b74d1efd3e005df08da0a38a4eedfcbdf2a02283",
+      "git_blob_sha1": "67c4998ed75ccc392264e57c6db99b46ea15a44b"
+    },
+    "occ_memo": {
+      "url": "https://infomemo.theocc.com/infomemos?number=49621",
+      "fingerprinted_copy_url": "https://www.miaxglobal.com/sites/default/files/alert-files/DDS_Dividend_49621.pdf",
+      "bytes": 1071786,
+      "sha256": "318bfe289b4a22ae4025c33f66dca5b445b9da8e8d47812df36b50a5ce59b6c8",
+      "memo": 49621,
+      "dated": "2021-11-19",
+      "precision": "Memo date only. Local byte hash identifies the exchange-hosted copy."
+    }
+  },
+  "filing_times": {
+    "unum": {
+      "accepted_new_york": "2021-11-03T16:17:15-04:00",
+      "accepted_utc": "2021-11-03T20:17:15Z"
+    },
+    "bd": {
+      "accepted_new_york": "2021-11-24T14:57:19-05:00",
+      "accepted_utc": "2021-11-24T19:57:19Z"
+    },
+    "dillards_q": {
+      "accepted_new_york": "2021-12-03T16:30:15-05:00",
+      "accepted_utc": "2021-12-03T21:30:15Z"
+    },
+    "dillards_k": {
+      "accepted_new_york": "2021-03-29T17:14:08-04:00",
+      "accepted_utc": "2021-03-29T21:14:08Z"
+    },
+    "ownership": {
+      "accepted_new_york": "2008-10-27T10:10:48-04:00",
+      "accepted_utc": "2008-10-27T14:10:48Z"
+    },
+    "trust": {
+      "filed_date": "1998-08-10",
+      "accepted_utc": null,
+      "precision": "Historical SGML header gives a filing date only. No verified intraday time used."
+    }
+  },
+  "cover_row_counts_all_symbols": {
+    "unum": 2,
+    "bd": 11,
+    "dillards_q": 1
+  },
+  "cover_rows_semantic_sha256": {
+    "unum": "acdd46eec7f1beb6283183c4c67db6f38f52d4727fdb60eeef5e0dba0d36cfc6",
+    "bd": "69783a7c1ffb759919564ef987a42a733c8e181b902ed333189e112f9ef26b62",
+    "dillards_q": "6bee4d50499fb8d05cb00882f2899639f33988d95b29e27774a23f63e309ecd9"
+  },
+  "class_findings": [
+    {
+      "symbol": "UNM",
+      "mapped_cik": "0000005513",
+      "class_source_filer_cik": "0000005513",
+      "class": "common_stock",
+      "passes_common_stock_type_only": true,
+      "evidence_inputs": [
+        "unum"
+      ],
+      "cover_fact": {
+        "context": "i1c8856d79fa44a12812f0de12ec1d8f5_D20210101-20210930",
+        "title": "Common stock, $0.10 par value",
+        "symbol": "UNM",
+        "exchange": "New York Stock Exchange"
+      }
+    },
+    {
+      "symbol": "UNMA",
+      "mapped_cik": "0000005513",
+      "class_source_filer_cik": "0000005513",
+      "class": "junior_subordinated_note",
+      "passes_common_stock_type_only": false,
+      "evidence_inputs": [
+        "unum"
+      ],
+      "cover_fact": {
+        "context": "i60006893d8ef497ab7d445574773e457_D20210101-20210930",
+        "title": "6.250% Junior Subordinated Notes due 2058",
+        "symbol": "UNMA",
+        "exchange": "New York Stock Exchange"
+      }
+    },
+    {
+      "symbol": "BDX",
+      "mapped_cik": "0000010795",
+      "class_source_filer_cik": "0000010795",
+      "class": "common_stock",
+      "passes_common_stock_type_only": true,
+      "evidence_inputs": [
+        "bd"
+      ],
+      "cover_fact": {
+        "context": "i1ac92d4cedf648468515713813687705_D20201001-20210930",
+        "title": "Common stock, par value $1.00",
+        "symbol": "BDX",
+        "exchange": "New York Stock Exchange"
+      }
+    },
+    {
+      "symbol": "BDXB",
+      "mapped_cik": "0000010795",
+      "class_source_filer_cik": "0000010795",
+      "class": "depositary_interest_in_convertible_preferred",
+      "passes_common_stock_type_only": false,
+      "evidence_inputs": [
+        "bd"
+      ],
+      "cover_fact": {
+        "context": "i2026f2856dd74aa290091cab6a2536e1_D20201001-20210930",
+        "title": "Depositary Shares, each representing a 1/20th interest in a share of 6.00% Mandatory Convertible Preferred Stock, Series B",
+        "symbol": "BDXB",
+        "exchange": "New York Stock Exchange"
+      }
+    },
+    {
+      "symbol": "DDS",
+      "mapped_cik": "0000028917",
+      "class_source_filer_cik": "0000028917",
+      "class": "class_a_common_stock",
+      "passes_common_stock_type_only": true,
+      "evidence_inputs": [
+        "dillards_q"
+      ],
+      "cover_fact": {
+        "context": "i0804b7f4283b47c19d4aab823ac2b7a2_D20210131-20211030",
+        "title": "Class A Common Stock",
+        "symbol": "DDS",
+        "exchange": "New York Stock Exchange"
+      }
+    },
+    {
+      "symbol": "DDT",
+      "mapped_cik": "0000028917",
+      "class_source_filer_cik": "0001066225",
+      "class": "trust_capital_security",
+      "passes_common_stock_type_only": false,
+      "evidence_inputs": [
+        "trust",
+        "ownership",
+        "dillards_k",
+        "nyse",
+        "sec_mapper"
+      ],
+      "ownership_security_title": "Dillard's Capital Trust I 7.5% Capital Securities DDT",
+      "same_period_parent_cover_row": null
+    }
+  ],
+  "action_crosscheck": {
+    "ticker": "DDS",
+    "scope": "Class A and Class B common stock",
+    "declared_per_share_usd": 15,
+    "announced": "2021-11-18",
+    "record_date": "2021-11-29",
+    "stated_payable_date": "2021-12-15",
+    "verified_ex_date": "2021-11-26",
+    "ex_date_source": "occ_memo",
+    "source": "dillards_q",
+    "observed_payment": null
+  },
+  "checks_passed": [
+    "two_pinned_snapshot_fingerprints_and_six_exact_mapping_rows",
+    "all_dated_sources_precede_or_equal_snapshot",
+    "source_context_title_symbol_exchange_for_five_cover_matches",
+    "ddt_trust_issuer_ownership_ticker_parent_annual_note_and_snapshot",
+    "three_class_passes_three_exclusions",
+    "dividend_class_amount_and_dates_reconciled_across_issuer_and_occ",
+    "cross_context_negative_control_rejected"
+  ],
+  "successor_and_effective_intervals": "Unresolved. Visible conversion terms for BDXB do not establish a realized successor, price, ratio or payment at the snapshot.",
+  "trials": {
+    "security_class_audits": 1,
+    "strategy_trials": 0,
+    "training_runs": 0,
+    "unseen_confirmations": 0
+  },
+  "market_evaluation": "SKIPPED_INCOMPLETE_HISTORICAL_INPUTS",
+  "portfolio_metrics": {
+    "net_return": null,
+    "max_drawdown": null,
+    "sharpe": null,
+    "profit_factor": null,
+    "trades": null,
+    "turnover": null,
+    "realized_costs": null
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "audit_kind": "two_snapshot_listing_schema_check",
+  "market_backtests": 0,
+  "snapshots": [
+    {
+      "label": "old",
+      "commit": "b02d9d7ace317f861f8a6f59e2cfa88e207f3ce9",
+      "commit_time_utc": "2022-01-01T00:11:00Z",
+      "url": "https://raw.githubusercontent.com/rreichel3/US-Stock-Symbols/b02d9d7ace317f861f8a6f59e2cfa88e207f3ce9/nyse/nyse_full_tickers.json",
+      "bytes": 1232760,
+      "sha256": "b06e1cfb2b83bea023f29ea08a0846a33a0b0d53d304a857aa731b4589920450",
+      "git_blob_sha1": "d1702b3b2b4877a4dc8573381377eb278efdfd1c",
+      "rows": 3170,
+      "unique_nonempty_symbols": 3170,
+      "empty_symbols": 0,
+      "duplicate_symbol_rows": 0,
+      "fields": [
+        "country",
+        "industry",
+        "ipoyear",
+        "lastsale",
+        "marketCap",
+        "name",
+        "netchange",
+        "pctchange",
+        "sector",
+        "symbol",
+        "url",
+        "volume"
+      ],
+      "name_keyword_noncommon_candidates": 586,
+      "has_explicit_security_type": false,
+      "has_permanent_id": false,
+      "has_row_event_or_receive_time": false
+    },
+    {
+      "label": "new",
+      "commit": "4cf8c5b8ffa1da595ac4da28645a1b5d58d5e658",
+      "commit_time_utc": "2026-11-17T00:23:27Z",
+      "url": "https://raw.githubusercontent.com/rreichel3/US-Stock-Symbols/4cf8c5b8ffa1da595ac4da28645a1b5d58d5e658/nyse/nyse_full_tickers.json",
+      "bytes": 1074676,
+      "sha256": "9f45efc1ffc1e730d36d70fe5667626fd20da7d1fcd0669327faceb65a1b6199",
+      "git_blob_sha1": "9ec448fb14ba0ed32ba1f5578e3b0403b716c87a",
+      "rows": 2717,
+      "unique_nonempty_symbols": 2717,
+      "empty_symbols": 0,
+      "duplicate_symbol_rows": 0,
+      "fields": [
+        "country",
+        "industry",
+        "ipoyear",
+        "lastsale",
+        "marketCap",
+        "name",
+        "netchange",
+        "pctchange",
+        "sector",
+        "symbol",
+        "url",
+        "volume"
+      ],
+      "name_keyword_noncommon_candidates": 525,
+      "has_explicit_security_type": false,
+      "has_permanent_id": false,
+      "has_row_event_or_receive_time": false
+    }
+  ],
+  "intersection_count": 2094,
+  "old_only_symbol_strings": 1076,
+  "new_only_symbol_strings": 623,
+  "interpretation": "String differences are not confirmed delistings: renames, transfers, security types and vendor changes remain unresolved. Keyword counts are a screening heuristic, not instrument classifications. Commit times are conservative repository publication timestamps, not source event times.",
+  "source_selection_cutoff_utc": "2026-11-17T02:59:46Z",
+  "validation": {
+    "raw_git_blob_ids_match_connector": true,
+    "counts_reconcile": true,
+    "unique_nonempty_symbols": true,
+    "critical_schema_absence_confirmed": true
+  }
+}

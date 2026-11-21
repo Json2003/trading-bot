@@ -1,0 +1,62 @@
+{
+  "verified_at_utc": "2026-11-18T22:53:35.725180+00:00",
+  "research_parent_commit": "c5ee21aa5be0789f8140f928aaaf112d5d0c7e3b",
+  "implementation_status": "offline_development_diagnostic_implemented",
+  "tests": {
+    "command": "python -m unittest discover -s tests -p 'test_nyse_*.py' -q",
+    "passed": 26,
+    "failures": 0,
+    "existing_research_contract_functions_passed": 6,
+    "existing_contract_method": "Imported test_research_contract.py functions and supplied a real TemporaryDirectory for tmp_path. Pytest is unavailable in this local environment."
+  },
+  "software_example": {
+    "data_kind": "synthetic",
+    "status": "software_fixture_complete",
+    "run_id": "4a53168d0839fd237820b7d6b5ce3d5b9d9c914d9f8fa7d3a106cc1b332aed49",
+    "input_sha256": {
+      "manifest.json": "30034c5d641211b743d5cfcbbdb40f96a7bd74488f0156e00656bfbcf1eca691",
+      "spec.json": "be9e802eb0a755b078a09862270e2b6941dbffe4b0c0a1c1930597bf3f825741",
+      "calendar": "7fb7b3c5a14085e0ed2babaeb2056562dbc797f758c2d1a7269af047003d8874",
+      "securities": "8f9310ef577eeb44dd536eb530ff091bab89a4dda852b7d43804fded5a461ab0",
+      "prices": "607c3e999c5da2c3887578a09ffcdbac0791a9e26778fd420a7ad4613aeb3795",
+      "actions": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "report_sha256": "c84e67a64ddf4ddf4ba92388f681c3903950579043aad07fc95f41a934afe450",
+    "summary_sha256": "7d49dd2ade2eb938b0a52b7b583d76fb9188892802ca9ec599ef3ecc09041826",
+    "scope": "Engineered first-party ranks and constant raw prices. Software verification only. Audited corporate-action terms are tested with assumed fixture prices and receipts."
+  },
+  "file_sha256": {
+    "research/nyse_accounting.py": "4fc0735f01b54506ade1371e93a113395c257f58e7b3b8f04e9f02d39e626723",
+    "research/nyse_offline.py": "519ce88838709da08c7d43c9a056de19b46a0c67a72eb0a82c3f2777078173e0",
+    "research/result_adapter.py": "174edbb69ea847dafab0029ca910d41f166f24f09a3c00074013ca2bb35f029b",
+    "scripts/run_nyse_offline_research.py": "2c6e75d3881ee860f64305982ce6df07ae918f069be5c85600e288b07972d0a7",
+    "research/experiments/nyse_momentum_retention_v1.json": "be9e802eb0a755b078a09862270e2b6941dbffe4b0c0a1c1930597bf3f825741",
+    "tests/test_nyse_accounting.py": "8cace552bbc18085df5be2a77db22201a0d37e4c802ae542ce0485929bd222e5",
+    "tests/test_nyse_offline_research.py": "a6169fa5b266607d87f41ab1f2f9f88d040a5a4d9ed1613bcf85660b17e885fc"
+  },
+  "choices": {
+    "entrypoint": "Separate offline CLI reusing research safety flags, the NYSE nonoverlap method, risk parameters and governed result schema.",
+    "risk_budget": "0.5 percent of equity divided by gross stop distance before stress fees, matching the prior NYSE diagnostic sizing convention.",
+    "holding_rule": "The monthly retention experiment uses monthly targets. The SMA diagnostic twelve-session time exit is strategy-specific.",
+    "execution": "Previous-close whole-share intentions, following raw open, adverse daily stop proxies, gap rejection and later-close vacancy retries.",
+    "settlement": "Historical standard T+2/T+1 on the supplied calendar. Corporate receipts use supplied payable-date assumptions. Unknown dates stay unavailable."
+  },
+  "market_evaluation": "SKIPPED_DATA_INCOMPLETE",
+  "market_metrics": {
+    "net_return": null,
+    "drawdown": null,
+    "sharpe": null,
+    "profit_factor": null,
+    "trade_count": null,
+    "execution_costs": null
+  },
+  "investment_trials": 0,
+  "model_training_runs": 0,
+  "unseen_confirmations": 0,
+  "remaining_data_requirements": [
+    "Frozen universe with admissible 253-session signal history",
+    "Reconciled as-of total-return and corporate-action inputs",
+    "Order-time quote prices, size and halt coverage for executable evidence"
+  ],
+  "next_action": "Prepare the first contract-complete development manifest from audited market inputs, then run the frozen comparison without retuning."
+}
