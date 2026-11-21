@@ -41,7 +41,9 @@ class PaperBroker(BrokerBase):
             self._orders[key] = stored
             return stored
 
-    def fill_order(self, order_id: str, *, filled_quantity: float | None = None) -> Order:
+    def fill_order(
+        self, order_id: str, *, filled_quantity: float | None = None, fill_price: float | None = None
+    ) -> Order:
         """Apply a cumulative fill quantity and update the position by its delta."""
 
         with self._lock:
@@ -53,7 +55,10 @@ class PaperBroker(BrokerBase):
             )
             fill_delta = max(cumulative_qty - order.filled_quantity, 0.0)
             status = "filled" if cumulative_qty >= order.quantity else "partially_filled"
-            updated = replace(order, filled_quantity=cumulative_qty, status=status)
+            updated = replace(
+                order, filled_quantity=cumulative_qty, status=status,
+                price=order.price if fill_price is None else fill_price,
+            )
             self._orders[order_id] = updated
             if fill_delta > 0:
                 self._update_position(updated, fill_delta=fill_delta)

@@ -144,8 +144,9 @@ class PaperStrategyTournament:
         assumptions: ExecutionAssumptions | None = None,
         holdout_fraction: float = 0.30,
     ) -> None:
-        if len(profiles) < 2:
-            raise ValueError("at least two strategy profiles are required")
+        # The final confirmation stage evaluates the one locked finalist.
+        if not profiles:
+            raise ValueError("at least one strategy profile is required")
         account_ids = [profile.account_id for profile in profiles]
         if len(account_ids) != len(set(account_ids)):
             raise ValueError("account_id values must be unique")

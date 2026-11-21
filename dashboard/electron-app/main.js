@@ -1,13 +1,17 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const { pathToFileURL } = require('node:url');
 
 const DEFAULT_OPERATOR_URL = 'http://127.0.0.1:8765';
 const JOB_ID_PATTERN = /^[a-f0-9]{32}$/;
+const OPERATOR_PAGE = path.join(__dirname, 'renderer', 'operator.html');
 
 const OPERATIONS = Object.freeze({
   status: { method: 'GET', path: '/operator/status' },
   orders: { method: 'GET', path: '/operator/orders' },
   positions: { method: 'GET', path: '/operator/positions' },
+  twsSettings: { method: 'GET', path: '/operator/tws-settings' },
+  checkTws: { method: 'GET', path: twsPath, timeout: 18_000 },
   startPaper: { method: 'POST', path: '/operator/start-paper' },
   pause: { method: 'POST', path: '/operator/pause' },
   stop: { method: 'POST', path: '/operator/stop' },
@@ -22,11 +26,20 @@ const OPERATIONS = Object.freeze({
   }
 });
 
+function twsPath(payload) {
+  const { mode, symbol } = payload || {};
+  if (!['paper', 'live'].includes(mode) || !['IBM', 'JPM', 'KO'].includes(symbol)) {
+    throw new Error('Select a TWS workspace and a supported NYSE symbol');
+  }
+  return `/operator/tws/${mode}/${symbol}`;
+}
+
 function operatorBaseUrl() {
   const configured = process.env.TRADING_OPERATOR_URL || DEFAULT_OPERATOR_URL;
   const url = new URL(configured);
   const loopbackHosts = new Set(['127.0.0.1', 'localhost', '::1', '[::1]']);
-  if (url.protocol !== 'http:' || !loopbackHosts.has(url.hostname)) {
+  if (url.protocol !== 'http:' || !loopbackHosts.has(url.hostname) ||
+      url.username || url.password || url.search || url.hash || url.pathname !== '/') {
     throw new Error('TRADING_OPERATOR_URL must use HTTP on a loopback address');
   }
   return url.toString().replace(/\/$/, '');
@@ -49,8 +62,8 @@ function validateResearchSpec(payload) {
     throw new Error('Select a valid local research dataset');
   }
   const holdout = Number(payload.finalHoldoutFraction);
-  if (!Number.isFinite(holdout) || holdout < 0.20 || holdout > 0.40) {
-    throw new Error('Final holdout must be between 20% and 40%');
+  if (!Number.isFinite(holdout) || holdout < 0.20 || holdout > 0.30) {
+    throw new Error('Final holdout must be between 20% and 30%');
   }
   return {
     dataset_id: datasetId,
@@ -75,7 +88,7 @@ function validateJobId(value) {
 }
 
 async function invokeOperator(operation, payload = null) {
-  const route = OPERATIONS[operation];
+  const route = Object.hasOwn(OPERATIONS, operation) ? OPERATIONS[operation] : null;
   if (!route) {
     throw new Error('Unsupported operator action');
   }
@@ -97,7 +110,9 @@ async function invokeOperator(operation, payload = null) {
     method: route.method,
     headers,
     body: requestBody ? JSON.stringify(requestBody) : undefined,
-    cache: 'no-store'
+    cache: 'no-store',
+    redirect: 'error',
+    signal: AbortSignal.timeout(route.timeout || 12_000)
   });
 
   let body = {};
@@ -119,6 +134,12 @@ async function invokeOperator(operation, payload = null) {
 function registerOperatorBridge() {
   ipcMain.handle('operator:invoke', async (_event, operation, payload) => {
     try {
+      const frame = _event.senderFrame;
+      const url = new URL(frame?.url || 'file:///');
+      url.hash = '';
+      if (frame !== _event.sender.mainFrame || url.href !== pathToFileURL(OPERATOR_PAGE).href) {
+        throw new Error('Invalid operator window');
+      }
       return { ok: true, data: await invokeOperator(operation, payload) };
     } catch (error) {
       return {
@@ -132,10 +153,12 @@ function registerOperatorBridge() {
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1240,
+    width: 1440,
     height: 880,
-    minWidth: 920,
-    minHeight: 680,
+    minWidth: 760,
+    minHeight: 640,
+    backgroundColor: '#0d1119',
+    title: 'RomanBot Workstation',
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -146,8 +169,9 @@ function createWindow() {
   });
 
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  win.webContents.on('will-navigate', (event) => event.preventDefault());
   win.removeMenu();
-  win.loadFile(path.join(__dirname, 'renderer', 'operator.html'));
+  win.loadFile(OPERATOR_PAGE);
   win.once('ready-to-show', () => win.show());
 
   if (process.env.NODE_ENV === 'development') {

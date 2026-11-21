@@ -5,11 +5,17 @@ on:
     branches: [main]
     paths:
       - 'dashboard/electron-app/**'
+      - 'scripts/smoke_workstation_browser.py'
+      - 'tradingbot_ibkr/operator_api.py'
+      - 'tradingbot_ibkr/tws_workstation.py'
       - '.github/workflows/frontend-ci.yml'
   pull_request:
     branches: [main]
     paths:
       - 'dashboard/electron-app/**'
+      - 'scripts/smoke_workstation_browser.py'
+      - 'tradingbot_ibkr/operator_api.py'
+      - 'tradingbot_ibkr/tws_workstation.py'
       - '.github/workflows/frontend-ci.yml'
   workflow_dispatch:
 
@@ -33,6 +39,25 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm test
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e . "playwright==1.62.0"
+      - run: python -m playwright install --with-deps --only-shell chromium
+      - run: python scripts/smoke_workstation_browser.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workstation-browser-preview
+          path: var/workstation-smoke/*.png
+          if-no-files-found: ignore
+          retention-days: 14
 
   package-windows:
     needs: validate

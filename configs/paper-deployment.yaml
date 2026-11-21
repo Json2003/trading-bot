@@ -7,7 +7,7 @@ allow_live_orders: false
 operator:
   host: 127.0.0.1
   port: 8765
-  runtime: synthetic-smoke
+  runtime: nyse-demo
   cycle_interval_seconds: 1.0
 research:
   dataset_root: backtest/sample_data

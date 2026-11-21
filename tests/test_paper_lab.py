@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import random
+import time
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -10,7 +12,7 @@ from tradingbot_ibkr.paper_lab import (
     StrategyProfile,
     _entry_fill,
 )
-from tradingbot_ibkr.paper_lab_automation import _random_profile
+from tradingbot_ibkr.paper_lab_automation import LabRunSpec, PaperLabAutomationService, _random_profile
 
 
 def test_entry_cost_excludes_fixed_commission_from_unit_cost() -> None:
@@ -43,3 +45,21 @@ def test_seeded_profile_generation_is_reproducible() -> None:
     first = _random_profile(random.Random(7), 1, 2)
     second = _random_profile(random.Random(7), 1, 2)
     assert first == second
+
+
+def test_confirmation_evaluates_only_the_locked_finalist(tmp_path: Path) -> None:
+    dataset_root = Path(__file__).resolve().parents[1] / "backtest" / "sample_data"
+    service = PaperLabAutomationService(dataset_root=dataset_root, artifact_root=tmp_path)
+    try:
+        job = service.start(LabRunSpec(dataset_id="sample_ohlcv.csv", generations=1, accounts_per_generation=4))
+        deadline = time.monotonic() + 10
+        while job["state"] in {"queued", "running"} and time.monotonic() < deadline:
+            time.sleep(0.01)
+            job = service.job(job["job_id"])
+    finally:
+        service.close()
+    assert job["state"] == "completed", job.get("error")
+    assert len(job["selection_leaderboard"]) >= 2
+    assert len(job["final_leaderboard"]) == 1
+    assert job["final_leaderboard"][0]["account_id"] == job["locked_account_id"]
+    assert job["promotion_allowed"] is False

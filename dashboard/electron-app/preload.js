@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('tradingOperator', Object.freeze({
   getStatus: () => invoke('status'),
   getOrders: () => invoke('orders'),
   getPositions: () => invoke('positions'),
+  getTwsSettings: () => invoke('twsSettings'),
+  checkTws: (mode, symbol) => invoke('checkTws', { mode, symbol }),
   startPaper: () => invoke('startPaper'),
   pause: () => invoke('pause'),
   stop: () => invoke('stop'),

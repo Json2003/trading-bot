@@ -2,7 +2,7 @@
   "name": "trading-bot-dashboard",
   "version": "1.0.0",
   "main": "main.js",
-  "description": "Local paper-trading operator console for the rescued trading bot",
+  "description": "NYSE trading workstation with simulation and IBKR TWS account views",
   "author": {
     "name": "Splitstar Development",
     "email": "dev@splitstar.io"
@@ -11,7 +11,7 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "check": "node --check main.js && node --check preload.js && node --check renderer/operator.js",
+    "check": "node --check main.js && node --check preload.js && node --check renderer/operator.js && node --check renderer/browser-bridge.js",
     "test": "node --test test/*.test.js",
     "build": "npm run check && npm test && electron-builder",
     "dist": "npm run check && npm test && electron-builder -p never"
@@ -30,6 +30,7 @@
       "main.js",
       "preload.js",
       "renderer/operator.html",
+      "renderer/operator.css",
       "renderer/operator.js",
       "package.json"
     ],
