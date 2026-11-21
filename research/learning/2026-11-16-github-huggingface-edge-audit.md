@@ -183,3 +183,9 @@ The daily research task moves to 5 a.m. Pacific beginning November 20. The first
 ## November 19 bars verified on November 20, 2026
 
 All twelve November 19 bars arrived before the next-session input cutoff and restored byte for byte. Five price differences and one volume difference in the earlier comparison snapshot cleared after a refresh. Preparation now covers 264 sessions and 2,640 eligible bars through November 19. The scoped action and membership review reaches the same date. Six sessions remain through the November 30 signal close. The strategy evaluation was skipped pending the frozen forward window. Zero trials and zero independent profit observations were added. [Source audit](../strategy_sources/2026-11-20-nyse-forward-session-reconciliation.md) · [Verification record](2026-11-20-nyse-forward-verification.json)
+
+## November 20 inputs and retention audit on November 21, 2026
+
+All 12 November 20 bars matched the separate OHLC retrieval and restored byte for byte. Preparation checked 2,650 eligible bars across 265 sessions with price, action and membership coverage through November 20. The frozen forward window remains incomplete, so market evaluation was skipped and profit remains unestimated.
+
+Three synthetic selection checks confirmed that retaining through rank ten in an at-most-ten-name universe keeps every still-eligible incumbent as a target. The study now has a documented interpretation as a comparison of retaining eligible holdings versus refreshing the top five. The original paper's turnover savings merit this check, while its lower buffered net four-factor alpha underscores the need to measure gross return and costs separately. [Source and code audit](../strategy_sources/2026-11-21-nyse-retention-scope.md) · [Verification record](2026-11-21-nyse-forward-verification.json)

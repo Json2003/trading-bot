@@ -8,7 +8,7 @@ Use Python 3.10 or newer in the research checkout. Keep the data directory priva
 
 ```sh
 DATA_DIR=data/nyse-forward
-REVIEW=research/learning/manifests/2026-11-20-nyse-forward-input-review.json
+REVIEW=research/learning/manifests/2026-11-21-nyse-forward-input-review.json
 for receipt in research/learning/manifests/*-nyse-forward-receipt-index.json; do
   python scripts/prepare_nyse_market_data.py --data-dir "$DATA_DIR" restore --index "$receipt" || exit $?
 done
@@ -22,7 +22,7 @@ The baseline review records the class-level evidence and five reconciled events.
 
 Preparation reports the last contiguous session, eligible price coverage, actionable cutoff, unresolved action or membership dates and any missing bars. The momentum index compounds dividend-inclusive gains in the share units of each session. The raw OHLC fields remain the original nominal inputs. Wilder ATR uses true ranges in the current share units and rescales previous ATR at a split. Output never lets later receipts appear earlier than their recorded times.
 
-The same command returns `ready_for_offline_replay` with the path to its immutable manifest after the block and both reviews are complete. The versioned November 20 review covers sessions through November 19. Supply later reviewed evidence as it becomes available. Use the returned manifest path for both commands below.
+The same command returns `ready_for_offline_replay` with the path to its immutable manifest after the block and both reviews are complete. The versioned November 21 review covers sessions through November 20. Supply later reviewed evidence as it becomes available. Use the returned manifest path for both commands below.
 
 ```sh
 python scripts/run_nyse_offline_research.py --manifest "$MANIFEST" --check-inputs
