@@ -18,6 +18,7 @@ from config.portfolio_loader import load_portfolio_config, load_strategy_params
 from engine.builders import build_multi_strategy_orchestrator, collect_market_instruments
 from execution.adapters.ccxt_executor import CCXTSignalExecutor
 from tradingbot_ibkr.execution.paper_broker import PaperBroker
+from tradingbot_ibkr.execution.reconciler import Reconciler
 
 LOGGER = logging.getLogger(__name__)
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -26,20 +27,37 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 class SyntheticPaperEngine:
     """Replay synthetic data continuously through the existing engine."""
 
-    def __init__(self, orchestrator: Any, data_feed: Any) -> None:
+    def __init__(self, orchestrator: Any, data_feed: Any, broker: Any = None) -> None:
         self._orchestrator = orchestrator
         self._data_feed = data_feed
+        self._reconciler = Reconciler(broker) if broker is not None else None
+        self._reconciliation_failed = False
 
     def step(self) -> Any:
+        if self._reconciliation_failed:
+            raise RuntimeError("Trading stopped after reconciliation mismatch")
+        self._check_reconciliation()
         try:
-            return self._orchestrator.run_cycle()
+            fills = self._orchestrator.run_cycle()
         except StopIteration:
             self._data_feed.reset()
-            return self._orchestrator.run_cycle()
+            fills = self._orchestrator.run_cycle()
+        self._check_reconciliation()
+        return fills
+
+    def _check_reconciliation(self) -> None:
+        if self._reconciler is not None:
+            report = self._orchestrator.reconcile(self._reconciler)
+            if not report.is_clean:
+                self._reconciliation_failed = True
+                raise RuntimeError(f"Trading stopped after reconciliation mismatch: {report}")
+
+    def marked_snapshot(self):
+        return self._orchestrator.marked_snapshot()
 
     @property
     def kill_switch_triggered(self) -> bool:
-        return bool(getattr(self._orchestrator, "kill_switch_triggered", False))
+        return self._reconciliation_failed or bool(getattr(self._orchestrator, "kill_switch_triggered", False))
 
     @property
     def kill_switch_event(self) -> Any:
@@ -101,7 +119,7 @@ def build_synthetic_paper_runtime(
         log=LOGGER,
         data_feed=data_feed,
     )
-    engine = SyntheticPaperEngine(orchestrator, data_feed)
+    engine = SyntheticPaperEngine(orchestrator, data_feed, broker)
     return RescueRuntime(broker=broker, engine=engine, portfolio=portfolio)
 
 

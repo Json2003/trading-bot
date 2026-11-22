@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import uuid
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from engine.portfolio import OrderFill
@@ -23,7 +23,16 @@ class CCXTSignalExecutor:
     fees_bps: float = 0.0
     slippage_bps: float = 0.0
     log: logging.Logger | None = None
-    _signal_keys: dict[int, str] = field(default_factory=dict, init=False, repr=False)
+    _signal_keys: dict[int, tuple[StrategySignal, str]] = field(default_factory=dict, init=False, repr=False)
+
+    _orders: dict[str, Order] = field(default_factory=dict, init=False, repr=False)
+    _accounted: dict[str, float] = field(default_factory=dict, init=False, repr=False)
+
+    @property
+    def open_orders(self) -> dict[str, Order]:
+        return {key: order for key, order in self._orders.items() if order.status not in {"filled", "canceled", "cancelled", "rejected", "expired"}}
+
+    _accounted_notional: dict[str, float] = field(default_factory=dict, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self._log = self.log or logger
@@ -40,23 +49,36 @@ class CCXTSignalExecutor:
         filled_qty = 0.0
         if isinstance(submitted, Order):
             submitted = self._auto_fill(submitted)
+            self._orders[submitted.id] = submitted
             filled_qty = float(submitted.filled_quantity or 0.0)
             if submitted.status == "filled" and filled_qty <= 0:
                 filled_qty = float(submitted.quantity)
         elif isinstance(submitted, OrderStatus):
             filled_qty = float(submitted.filled_qty or 0.0)
+            self._orders[order.id] = replace(order, filled_quantity=filled_qty, status=submitted.status)
         else:  # pragma: no cover - compatibility guard for third-party brokers
             filled_qty = float(getattr(submitted, "filled_quantity", 0.0) or 0.0)
 
+        cumulative_qty = filled_qty
+        filled_qty -= self._accounted.get(order.id, 0.0)
         if filled_qty <= 0:
             return None
 
-        fee = abs(signal.price * filled_qty) * self._fee_rate
+        self._accounted[order.id] = cumulative_qty
+        price = getattr(submitted, "avg_price", None)
+        if price is None:
+            price = getattr(submitted, "price", None)
+        if price is None:
+            price = signal.price
+        cumulative_notional = float(price) * cumulative_qty
+        price = (cumulative_notional - self._accounted_notional.get(order.id, 0.0)) / filled_qty
+        self._accounted_notional[order.id] = cumulative_notional
+        fee = abs(price * filled_qty) * self._fee_rate
         return OrderFill(
             symbol=signal.symbol,
             side=signal.side,
             quantity=filled_qty,
-            price=float(signal.price),
+            price=price,
             fee=fee,
         )
 
@@ -66,7 +88,7 @@ class CCXTSignalExecutor:
         if provided_key:
             key = str(provided_key)
         else:
-            key = self._signal_keys.setdefault(id(signal), uuid.uuid4().hex)
+            key = self._signal_keys.setdefault(id(signal), (signal, uuid.uuid4().hex))[1]
 
         return Order(
             id=key,

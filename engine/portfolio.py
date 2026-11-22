@@ -222,10 +222,21 @@ class Portfolio:
             )
         return PortfolioSnapshot(total_equity=total_equity, states=states)
 
+    def position_quantities(self) -> dict[str, float]:
+        """Independent local quantities, aggregated across strategy allocations."""
+        quantities: dict[str, float] = {}
+        for positions in self._position_tracker.values():
+            for symbol, position in positions.items():
+                quantities[symbol] = quantities.get(symbol, 0.0) + position.quantity
+        return quantities
+
     def available_notional(self, strategy: str) -> float:
         allocation = self._allocations[strategy]
-        limit = allocation.max_position_notional or allocation.capital
-        consumed = allocation.capital - self._cash_balances[strategy]
+        limit = allocation.max_position_notional
+        if limit is None:
+            limit = allocation.capital
+        state = self.snapshot().state_for(strategy)
+        consumed = sum(abs(position.market_value) for position in state.positions)
         return max(limit - consumed, 0.0)
 
 

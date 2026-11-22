@@ -82,6 +82,7 @@ class MultiStrategyOrchestrator:
         fills: list[OrderFill] = []
 
         for binding in self._strategies:
+            snapshot = self.marked_snapshot()
             context = self._build_context(binding, market_data, snapshot, timestamp)
             signals = list(binding.strategy.generate_signals(context))
             if not signals:
@@ -120,6 +121,17 @@ class MultiStrategyOrchestrator:
             self._overlay.after_cycle()
         self._cycle += 1
         return fills
+
+    def marked_snapshot(self) -> PortfolioSnapshot:
+        return self._portfolio.snapshot(mark_prices={
+            data.symbol: data.price for data in (self._last_market_data or {}).values()
+        })
+
+    def reconcile(self, reconciler):
+        return reconciler.reconcile(
+            local_orders=getattr(self._executor, "open_orders", {}),
+            local_positions=self._portfolio.position_quantities(),
+        )
 
     @property
     def last_market_data(self) -> dict[str, MarketData] | None:

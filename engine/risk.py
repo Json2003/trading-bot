@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, Mapping, Sequence
 import logging
+import math
 
 from .portfolio import OrderFill, PortfolioSnapshot, StrategyAllocation
 from strategies.base import StrategySignal
@@ -53,55 +54,49 @@ class RiskManager:
         allocation = self._limits[strategy]
         accepted: list[StrategySignal] = []
         rejected: list[StrategySignal] = []
-        available_notional = allocation.max_position_notional or allocation.capital
+        limit = allocation.max_position_notional
+        if limit is None:
+            limit = allocation.capital
+        exposures = {p.symbol: p.market_value for p in snapshot.state_for(strategy).positions}
+        portfolio_exposures: dict[str, float] = {}
+        for state in snapshot.states.values():
+            for position in state.positions:
+                portfolio_exposures[position.symbol] = portfolio_exposures.get(position.symbol, 0.0) + position.market_value
 
-        if pending_fills:
-            for fill in pending_fills:
-                notional = fill.notional
-                available_notional -= notional
+        def signed_notional(item):
+            return abs(item.notional) * (1 if item.side.lower() == "buy" else -1)
 
-        if available_notional <= 0:
-            self._log.warning("Strategy %s has no remaining notional capacity", strategy)
-            return RiskDecision(accepted=(), rejected=tuple(signals))
+        for fill in pending_fills or ():
+            delta = signed_notional(fill)
+            exposures[fill.symbol] = exposures.get(fill.symbol, 0.0) + delta
+            portfolio_exposures[fill.symbol] = portfolio_exposures.get(fill.symbol, 0.0) + delta
 
         for signal in signals:
-            notional = abs(signal.notional)
-            if notional > available_notional:
-                self._log.info(
-                    "Rejecting %s signal for %s: notional %.2f exceeds remaining capacity %.2f",
-                    strategy,
-                    signal.symbol,
-                    notional,
-                    available_notional,
-                )
+            if (signal.side.lower() not in {"buy", "sell"}
+                or not math.isfinite(signal.quantity) or not math.isfinite(signal.price)
+                or signal.quantity <= 0 or signal.price <= 0):
                 rejected.append(signal)
                 continue
-
-            if self._violates_portfolio_limits(signal, snapshot):
+            current = exposures.get(signal.symbol, 0.0)
+            delta = signed_notional(signal)
+            projected = current + delta
+            gross = sum(abs(value) for value in exposures.values())
+            projected_gross = gross - abs(current) + abs(projected)
+            symbol_current = portfolio_exposures.get(signal.symbol, 0.0)
+            symbol_projected = symbol_current + delta
+            max_symbol = self._portfolio_limits.get("max_symbol_notional")
+            # Allow reductions even when marks have already pushed the book over a limit.
+            if (projected_gross > limit and projected_gross > gross) or (
+                max_symbol is not None and abs(symbol_projected) > max_symbol
+                and abs(symbol_projected) > abs(symbol_current)
+            ):
                 rejected.append(signal)
                 continue
-
             accepted.append(signal)
-            available_notional -= notional
+            exposures[signal.symbol] = projected
+            portfolio_exposures[signal.symbol] = symbol_projected
 
         return RiskDecision(accepted=tuple(accepted), rejected=tuple(rejected))
-
-    def _violates_portfolio_limits(self, signal: StrategySignal, snapshot: PortfolioSnapshot) -> bool:
-        max_symbol = self._portfolio_limits.get("max_symbol_notional")
-        if max_symbol is None:
-            return False
-        state = snapshot.state_for(signal.strategy)
-        current = sum(p.market_value for p in state.positions if p.symbol == signal.symbol)
-        projected = current + signal.notional
-        if abs(projected) > max_symbol:
-            self._log.info(
-                "Rejecting signal for %s: projected exposure %.2f exceeds symbol limit %.2f",
-                signal.symbol,
-                projected,
-                max_symbol,
-            )
-            return True
-        return False
 
 
 __all__ = ["RiskDecision", "RiskManager", "RiskViolation"]

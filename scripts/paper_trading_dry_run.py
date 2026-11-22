@@ -71,15 +71,20 @@ def main() -> None:
     reconciler = Reconciler(broker)
 
     for cycle in range(1, args.cycles + 1):
+        report = orchestrator.reconcile(reconciler)
+        if not report.is_clean:
+            LOGGER.error("Reconciliation issues detected before cycle: %s", report)
+            break
         fills = orchestrator.run_cycle()
-        snapshot = portfolio.snapshot()
+        snapshot = orchestrator.marked_snapshot()
         LOGGER.info("Cycle %s -> fills %d, equity %.2f", cycle, len(fills), snapshot.total_equity)
 
-        report = reconciler.reconcile(local_orders={}, local_positions={})
+        report = orchestrator.reconcile(reconciler)
         if report.is_clean:
             LOGGER.info("Reconciliation clean")
         else:
-            LOGGER.warning("Reconciliation issues detected: %s", report)
+            LOGGER.error("Reconciliation issues detected: %s", report)
+            break
 
         if orchestrator.kill_switch_triggered:
             event = orchestrator.kill_switch_event
