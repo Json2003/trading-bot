@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "kind": "market_data_source_audit",
+  "last_completed_nyse_session": "2026-11-20",
+  "research_revision": "4517b3b4156a504dddcd56ef0607e5eaaaff17b0",
+  "main_reviewed_revision": "edcf750b5be97aa8e42d60ee453dbea6b7226ccd",
+  "spec_sha256": "be9e802eb0a755b078a09862270e2b6941dbffe4b0c0a1c1930597bf3f825741",
+  "official_source": {
+    "url": "https://ftp.nyse.com/cts_summary_files/CTA.Summary.EODSUM.20261120.csv",
+    "file_bytes": 53292739,
+    "last_modified_http_utc": "2026-11-21T03:58:49Z",
+    "acquisition_completed_utc": "2026-11-22T13:04:31Z",
+    "specification_url": "https://www.ctaplan.com/publicdocs/ctaplan/CTS_Pillar_Output_Specification.pdf",
+    "sha256": "a0254fa00de8c213799511a431a1f6d3a63fa4a2c22c3aea61d6a730cdf82b5b"
+  },
+  "reference": {
+    "revision": "aef7n6a07m0r9tn7nrr0gfsjpstfdhr3",
+    "packet_sha256": "6c0f928998c68b25a7770fb11942c53b9eefae8dd75b856a925860232cb3be16",
+    "index": "manifests/2026-11-21-nyse-forward-receipt-index.json",
+    "same_session_recheck": {
+      "revision": "093tu4527bclpgc2dljdulrueht76vha",
+      "observed_at_utc": "2026-11-22T13:04:06.679509+00:00",
+      "packet_sha256": "c1259bad5cdb294a94b59cef0404aeaa807f8c76eeabda423613e2cdea5b2d28",
+      "matching_ohlcv_fields": 60,
+      "matching_symbols": 12
+    }
+  },
+  "inspection": {
+    "preamble": "Fri Nov 20 22:58:28 EDT 2026 prod",
+    "row_counts": {
+      "FractionalConsolidatedEODSummary": 30496,
+      "FractionalParticipantEODSummary": 367345,
+      "total 397841": 1
+    },
+    "official_csv_sha256": "a0254fa00de8c213799511a431a1f6d3a63fa4a2c22c3aea61d6a730cdf82b5b",
+    "provider_packet_sha256": "6c0f928998c68b25a7770fb11942c53b9eefae8dd75b856a925860232cb3be16",
+    "symbols": 10,
+    "participant_opens_within_0_0101": 6,
+    "consolidated_hlc_within_0_0101": 30,
+    "consolidated_volume_rows_diff_over_1pct": 0,
+    "per_symbol": {
+      "ASAN": {
+        "open_delta_nyse_participant_minus_daily_usd": "0",
+        "consolidated_hlc_delta_usd": {
+          "high": "0",
+          "low": "0",
+          "close": "0"
+        },
+        "volume_diff_over_1pct": false,
+        "venue_open_distinct_across_iterations": 1,
+        "participant_summary_time_label": "_20:00:20.102",
+        "consolidated_summary_time_label": "_20:00:20.102"
+      },
+      "CHWY": {
+        "open_delta_nyse_participant_minus_daily_usd": "0",
+        "consolidated_hlc_delta_usd": {
+          "high": "0",
+          "low": "0",
+          "close": "0"
+        },
+        "volume_diff_over_1pct": false,
+        "venue_open_distinct_across_iterations": 1,
+        "participant_summary_time_label": "_20:00:20.46",
+        "consolidated_summary_time_label": "_20:00:20.46"
+      },
+      "CRM": {
+        "open_delta_nyse_participant_minus_daily_usd": "0",
+        "consolidated_hlc_delta_usd": {
+          "high": "0",
+          "low": "0",
+          "close": "0"
+        },
+        "volume_diff_over_1pct": false,
+        "venue_open_distinct_across_iterations": 1,
+        "participant_summary_time_label": "_20:00:20.95",
+        "consolidated_summary_time_label": "_20:00:20.95"
+      },
+      "NET": {
+        "open_delta_nyse_participant_minus_daily_usd": "0",
+        "consolidated_hlc_delta_usd": {
+          "high": "0",
+          "low": "0",
+          "close": "0"
+        },
+        "volume_diff_over_1pct": false,
+        "venue_open_distinct_across_iterations": 1,
+        "participant_summary_time_label": "_20:00:20.91",
+        "consolidated_summary_time_label": "_20:00:20.91"
+      },
+      "NOW": {
+        "open_delta_nyse_participant_minus_daily_usd": "0.425",
+        "consolidated_hlc_delta_usd": {
+          "high": "0",
+          "low": "0",
+          "close": "0"
+        },
+        "volume_diff_over_1pct": false,
+        "venue_open_distinct_across_iterations": 1,
+        "participant_summary_time_label": "_20:00:20.113",
+        "consolidated_summary_time_label": "_20:00:20.113"
+      },
+      "PINS": {
+        "open_delta_nyse_participant_minus_daily_usd": "-0.08",
+        "consolidated_hlc_delta_usd": {
+          "high": "0",
+          "low": "0",
+          "close": "0"
+        },
+        "volume_diff_over_1pct": false,
+        "venue_open_distinct_across_iterations": 1,
+        "participant_summary_time_label": "_20:00:20.92",
+        "consolidated_summary_time_label": "_20:00:20.92"
+      },
+      "SNOW": {
+        "open_delta_nyse_participant_minus_daily_usd": "0",
+        "consolidated_hlc_delta_usd": {
+          "high": "0",
+          "low": "0",
+          "close": "0"
+        },
+        "volume_diff_over_1pct": false,
+        "venue_open_distinct_across_iterations": 1,
+        "participant_summary_time_label": "_20:00:20.131",
+        "consolidated_summary_time_label": "_20:00:20.131"
+      },
+      "TWLO": {
+        "open_delta_nyse_participant_minus_daily_usd": "1.07",
+        "consolidated_hlc_delta_usd": {
+          "high": "0",
+          "low": "0",
+          "close": "0"
+        },
+        "volume_diff_over_1pct": false,
+        "venue_open_distinct_across_iterations": 1,
+        "participant_summary_time_label": "_20:00:20.65",
+        "consolidated_summary_time_label": "_20:00:20.65"
+      },
+      "UBER": {
+        "open_delta_nyse_participant_minus_daily_usd": "0",
+        "consolidated_hlc_delta_usd": {
+          "high": "0",
+          "low": "0",
+          "close": "0"
+        },
+        "volume_diff_over_1pct": false,
+        "venue_open_distinct_across_iterations": 1,
+        "participant_summary_time_label": "_20:00:20.72",
+        "consolidated_summary_time_label": "_20:00:20.72"
+      },
+      "XYZ": {
+        "open_delta_nyse_participant_minus_daily_usd": "-0.2",
+        "consolidated_hlc_delta_usd": {
+          "high": "0",
+          "low": "0",
+          "close": "0"
+        },
+        "volume_diff_over_1pct": false,
+        "venue_open_distinct_across_iterations": 1,
+        "participant_summary_time_label": "_20:00:20.110",
+        "consolidated_summary_time_label": "_20:00:20.110"
+      }
+    }
+  },
+  "nonmatching_open_deltas_bps": {
+    "NOW": "48.66",
+    "PINS": "-47.20",
+    "TWLO": "60.83",
+    "XYZ": "-27.09"
+  },
+  "price_tolerance_usd": "0.0101",
+  "prepared_signal_rows": 2650,
+  "prepared_sessions": 265,
+  "preparation_result": "awaiting_market_data",
+  "preparation_report_sha256": "4444030591727c4039f3745b6f6f1e215ae05aa53c50709301efcdd22b116dbe",
+  "market_evaluation": "skipped_incomplete_forward_window",
+  "strategy_trials": 0,
+  "independent_profit_observations": 0,
+  "model_training_runs": 0,
+  "metrics": {
+    "expected_net_profit": null,
+    "net_return": null,
+    "drawdown": null,
+    "sharpe": null,
+    "profit_factor": null,
+    "fills": null,
+    "turnover": null,
+    "trading_expense": null,
+    "operating_expense": null
+  }
+}
