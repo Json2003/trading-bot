@@ -96,6 +96,17 @@ class OfflineResearchTests(unittest.TestCase):
         self.assertEqual(naive["decisions"][1]["target_ids"], ["SEC02", "SEC03", "SEC04", "SEC05", "SEC06"])
         self.assertEqual(buffered["decisions"][1]["target_ids"], ["SEC02", "SEC03", "SEC04", "SEC05", "SEC01"])
         self.assertGreater(naive["execution_costs"], buffered["execution_costs"])
+        for arm in (naive, buffered):
+            pnl = {key: Decimal(value) for key, value in arm["pnl_usd"].items()}
+            fees = sum(Decimal(row["fee"]) for row in arm["ledger"] if row["kind"] in {"buy", "sell"})
+            self.assertEqual(pnl["stress_expenses"], fees)
+            self.assertEqual(pnl["net_marked"], Decimal(arm["equity_curve"][-1]["equity"]) - Decimal("5000"))
+            self.assertEqual(pnl["net_realized"], sum(Decimal(row["net_pnl"]) for row in arm["realizations"]))
+            self.assertEqual(pnl["net_realized"] + pnl["net_unrealized"], pnl["net_marked"])
+            # Flat prices with no actions isolate the impact of the modeled fees.
+            self.assertEqual(pnl["gross_marked"], Decimal("0"))
+            self.assertEqual(pnl["net_marked"], -fees)
+        self.assertEqual(Decimal(report["comparisons"][0]["gross_marked_pnl_difference_usd"]), 0)
         # A February 2 sale cannot finance its replacement until settlement.
         sec6 = [r for r in naive["ledger"] if r["kind"] == "buy" and r["security_id"] == "SEC06"]
         self.assertEqual(sec6[-1]["session"], "2026-02-04")
@@ -328,6 +339,7 @@ class OfflineResearchTests(unittest.TestCase):
         summary = (destination / "summary.md").read_text()
         self.assertIn("Execution is unverified", summary)
         self.assertIn("Simulated net return after stress", summary)
+        self.assertIn("Simulated pre-tax P&L in USD", summary)
         _, inputs_only = runner.run(self.manifest_path, SPEC_PATH, output, check_inputs=True)
         self.assertEqual(inputs_only["status"], "inputs_validated")
         self.assertFalse(inputs_only["executable_fills_verified"])

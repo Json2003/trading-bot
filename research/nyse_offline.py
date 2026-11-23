@@ -373,6 +373,8 @@ def metrics(ledger: CashLedger, curve: list[dict], initial: Decimal, minimum: in
     profits = [decimal(row["net_pnl"]) for row in ledger.realizations]
     wins = sum((p for p in profits if p > 0), ZERO)
     losses = -sum((p for p in profits if p < 0), ZERO)
+    net_marked = values[-1] - initial
+    net_realized = wins - losses
     observations = independent_count(ledger.realizations)
     decision_dates = [row["session"] for row in decisions]
     closed_cohorts = {max(day for day in decision_dates if day < row["entry_session"])
@@ -385,6 +387,10 @@ def metrics(ledger: CashLedger, curve: list[dict], initial: Decimal, minimum: in
             "trade_count": sum(row["kind"] == "sell" for row in ledger.events),
             "fill_count": sum(row["kind"] in {"buy", "sell"} for row in ledger.events),
             "execution_costs": float(ledger.costs), "turnover": float(ledger.traded_notional / initial),
+            "pnl_usd": {"gross_marked": str(net_marked + ledger.costs),
+                        "stress_expenses": str(ledger.costs),
+                        "net_marked": str(net_marked), "net_realized": str(net_realized),
+                        "net_unrealized": str(net_marked - net_realized)},
             "nonoverlapping_observations": observations,
             "closed_monthly_cohort_dates": sorted(closed_cohorts),
             "independent_observations": independent_observations,
@@ -541,6 +547,8 @@ def evaluate(data: Dataset, spec: dict) -> dict:
                 row["failure_reasons"].append("cash_receipt_dates_unverified")
             row["unavailable_metrics"] = [k for k in ("sharpe", "profit_factor") if row[k] is None]
         comparisons.append({"block": block["name"], "net_return_difference": pair[1]["net_return"] - pair[0]["net_return"],
+                            "gross_marked_pnl_difference_usd": str(decimal(pair[1]["pnl_usd"]["gross_marked"])
+                                                                  - decimal(pair[0]["pnl_usd"]["gross_marked"])),
                             "cost_savings_usd": pair[0]["execution_costs"] - pair[1]["execution_costs"],
                             "turnover_reduction": pair[0]["turnover"] - pair[1]["turnover"]})
         results.extend(pair)

@@ -15,7 +15,7 @@ import shutil
 import sys
 import tempfile
 from datetime import datetime, timezone
-from decimal import DecimalException
+from decimal import Decimal, DecimalException
 
 ROOT = Path(__file__).resolve().parents[1]
 # Append the project path so unrelated imports retain their existing precedence.
@@ -49,6 +49,17 @@ def owner_summary(report: dict) -> str:
             lines.append(f"| {row['block']} / {row['arm']} | {row['net_return']:.2%} | {row['drawdown']:.2%} | "
                          f"${row['execution_costs']:.2f} | {row['independent_observations']} / 20 |")
         lines.append("")
+        lines.extend(["Simulated pre-tax P&L in USD", "",
+                      "| Block and arm | Gross marked | Stress expenses | Net marked | Net realized | Net unrealized |",
+                      "| --- | ---: | ---: | ---: | ---: | ---: |"])
+        for row in report["results"]:
+            pnl = row["pnl_usd"]
+            amounts = " | ".join(f"{Decimal(pnl[key]):,.2f}" for key in
+                                 ("gross_marked", "stress_expenses", "net_marked", "net_realized", "net_unrealized"))
+            lines.append(f"| {row['block']} / {row['arm']} | {amounts} |")
+        lines.extend(["", "Gross marked P&L adds back stress charges on this replay's fills. "
+                      "Realized P&L includes closed economic results whose cash may still be unsettled. "
+                      "Operating expenses are unpriced.", ""])
         for row in report["results"]:
             state = row["equity_curve"][-1]
             holdings = ", ".join(f"{sid} × {pos['quantity']}" for sid, pos in state["positions"].items()) or "cash and claims"
