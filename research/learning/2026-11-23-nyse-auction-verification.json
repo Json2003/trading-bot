@@ -1,0 +1,126 @@
+{
+  "audited_session": "2026-07-01",
+  "auditor_sha256": "9c41a67d818296fa371a8f2250853d629664a36f050c850be28775eb242751f5",
+  "comparison_spec_sha256": "be9e802eb0a755b078a09862270e2b6941dbffe4b0c0a1c1930597bf3f825741",
+  "decision_cutoff": "2026-12-01T09:00:00-05:00",
+  "directory": {
+    "sha256": "c9015f745e543ff835306386c8c0937fe0c32f5055dec12bf01463be7e22a91c",
+    "source_url": "https://ftp.nyse.com/Historical%20Data%20Samples/TAQ%20NYSE%20BBO/"
+  },
+  "evidence_role": "published_source_diagnostic",
+  "expected_net_profit_usd": null,
+  "frozen_requested_tickers_present_in_channel_1": [],
+  "hypothesis": "NYSE trade and official-price rows can be distinguished in the dated sample; measure whether opening trade timestamps equal the scheduled 09:30 Eastern core open.",
+  "last_completed_nyse_session": "2026-11-20",
+  "layout": "https://www.nyse.com/publicdocs/nyse/data/TAQ_XDP_Products_Client_Spec_v2.4a.pdf",
+  "local_preparation": {
+    "eligible_bars_checked": 2640,
+    "issues": [
+      "completed_session_bars_missing",
+      "forward_window_incomplete",
+      "corporate_action_review_incomplete",
+      "membership_review_incomplete"
+    ],
+    "last_contiguous_session": "2026-11-19",
+    "missing_count": 10,
+    "status": "awaiting_market_data"
+  },
+  "main_revision_reviewed": "99360b5a1f4a421d8c2dcc532231ef12644f5dd1",
+  "market_evaluation": "skipped",
+  "market_metrics": null,
+  "new_independent_profit_observations": 0,
+  "november_20_restore": {
+    "first_receipt_at": "2026-11-21T12:57:13.596624+00:00",
+    "index": "manifests/2026-11-21-nyse-forward-receipt-index.json",
+    "index_sha256": "e85aee08872fe57db13f85464351d89f5bccd4d425bd6804423bc86f61419765",
+    "packet_sha256": "6c0f928998c68b25a7770fb11942c53b9eefae8dd75b856a925860232cb3be16",
+    "revision": "aef7n6a07m0r9tn7nrr0gfsjpstfdhr3",
+    "status": "pinned_source_timeout"
+  },
+  "plan_sha256": "57f0c2d493931460459f85cd9063a14f5818221e5b8331852cd5bda02171ee0d",
+  "preparation_check_sha256": "728d00058f6bef72089d2cdf868e6c01c2c1d4c754f2113ee15f2263cb0cd0a3",
+  "recorded_at": "2026-11-23T13:35:30.518596+00:00",
+  "review_sha256": "a0beb639320b7d283cd9b7f67d9f4d3b33af09d4b52203b556cbdbd61bb43a90",
+  "samples": [
+    {
+      "channel": 1,
+      "http_response_at": "2026-11-23T13:31:38+00:00",
+      "last_modified_http": "2026-10-01T04:04:24+00:00",
+      "results": {
+        "execution_verified": false,
+        "file_bytes": 12902199,
+        "first_exact_pair": {
+          "official_open": {
+            "condition_2": " ",
+            "condition_4": "Q",
+            "price_usd": "1.49",
+            "reported_shares": 558,
+            "source_time_et": "09:30:00.732534031",
+            "symbol": "ELME",
+            "trade_id": "0"
+          },
+          "opening_trade": {
+            "condition_2": "O",
+            "condition_4": " ",
+            "price_usd": "1.49",
+            "reported_shares": 558,
+            "source_time_et": "09:30:00.732534031",
+            "symbol": "ELME",
+            "trade_id": "3989"
+          }
+        },
+        "first_opening_trade_time_et": "09:30:00.732534031",
+        "identical_open_and_official_price_time_size_pairs": 194,
+        "last_opening_trade_time_et": "09:38:26.673537493",
+        "message_counts": {
+          "220": 748242,
+          "3": 325,
+          "34": 1319
+        },
+        "nyse_listed_common_stock_mappings": 198,
+        "official_open_messages": 197,
+        "official_open_messages_with_zero_trade_id": 197,
+        "official_open_messages_without_exact_opening_trade_pair": 3,
+        "official_open_stock_count": 197,
+        "opening_stock_count": 194,
+        "opening_trade_messages": 194,
+        "opening_trade_messages_after_0930": 194,
+        "sha256": "78c504f03547506753aed5f0946d6626bba160027f2cc8283fae1e84c3b55bbc"
+      },
+      "source_url": "https://ftp.nyse.com/Historical%20Data%20Samples/TAQ%20NYSE%20BBO/EQY_US_TAQ_NYSE_1_TRADES_20260701.gz"
+    },
+    {
+      "channel": 10,
+      "http_response_at": "2026-11-23T13:30:43+00:00",
+      "last_modified_http": "2026-10-01T04:02:49+00:00",
+      "results": {
+        "execution_verified": false,
+        "file_bytes": 4854743,
+        "first_exact_pair": null,
+        "first_opening_trade_time_et": null,
+        "identical_open_and_official_price_time_size_pairs": 0,
+        "last_opening_trade_time_et": null,
+        "message_counts": {
+          "220": 241839,
+          "3": 2299,
+          "34": 11628
+        },
+        "nyse_listed_common_stock_mappings": 0,
+        "official_open_messages": 0,
+        "official_open_messages_with_zero_trade_id": 0,
+        "official_open_messages_without_exact_opening_trade_pair": 0,
+        "official_open_stock_count": 0,
+        "opening_stock_count": 0,
+        "opening_trade_messages": 0,
+        "opening_trade_messages_after_0930": 0,
+        "sha256": "2bed9e928d616c895d4b5515041f9a203fb4e6fdacd61662b8bc83b47e237ffd"
+      },
+      "source_url": "https://ftp.nyse.com/Historical%20Data%20Samples/TAQ%20NYSE%20BBO/EQY_US_TAQ_NYSE_10_TRADES_20260701.gz"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "July 1 sample channel 1 and channel 10 coverage control; no orders or replay inputs",
+  "source_revision_before_audit": "82f7a8c5da28ca96ea62af20f6d3bffadf4481f2",
+  "strategy_trials": 0,
+  "training_runs": 0
+}
