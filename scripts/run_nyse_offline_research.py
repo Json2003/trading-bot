@@ -23,7 +23,7 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from research.engine import research_safety_flags  # noqa: E402
-from research.nyse_offline import evaluate, load_dataset, read_json, validate_spec  # noqa: E402
+from research.nyse_offline import daily_bar_execution_evidence, evaluate, load_dataset, read_json, validate_spec  # noqa: E402
 
 
 def encoded(value) -> bytes:
@@ -32,7 +32,10 @@ def encoded(value) -> bytes:
 
 def owner_summary(report: dict) -> str:
     lines = [f"**NYSE research run — {report['status']}**", "",
-             "Research cash is $5,000, with whole shares, a $1,000 entry cap and 43 bps per traded side.", ""]
+             "Research cash is $5,000, with whole shares, a $1,000 entry cap and 43 bps per traded side.", "",
+             "Execution is unverified. The simulator uses the vendor's daily open and a daily-range stop proxy. "
+             "Verifying fills requires order-time auction or quote prices and available size. "
+             "Expected profit and actual execution and operating expenses remain unestimated.", ""]
     if report.get("data_kind") == "synthetic":
         lines.extend(["This run uses synthetic inputs to verify software behavior.", ""])
     if report["status"] == "inputs_validated":
@@ -40,7 +43,7 @@ def owner_summary(report: dict) -> str:
     elif not report["results"]:
         lines.extend(["Market evaluation is blocked. Performance metrics are unmeasured.", ""])
     else:
-        lines.extend(["| Block and arm | Net return | Drawdown | Stress costs | Independent observations |",
+        lines.extend(["| Block and arm | Simulated net return after stress | Simulated drawdown | Stress costs | Independent observations |",
                       "| --- | ---: | ---: | ---: | ---: |"])
         for row in report["results"]:
             lines.append(f"| {row['block']} / {row['arm']} | {row['net_return']:.2%} | {row['drawdown']:.2%} | "
@@ -66,7 +69,7 @@ def owner_summary(report: dict) -> str:
 
 def run(manifest_path: Path, spec_path: Path, output_dir: Path, *, check_inputs: bool = False) -> tuple[Path, dict]:
     input_bytes = {}
-    report = {"schema_version": 1, **research_safety_flags(), "status": "blocked_market_data",
+    report = {"schema_version": 1, **research_safety_flags(), **daily_bar_execution_evidence(), "status": "blocked_market_data",
               "investment_trials": 0, "model_training_runs": 0, "checkpoint_advanced": False,
               "forward_confirmation": False, "eligible_for_confirmation": False, "results": [],
               "metrics": {k: None for k in ("net_return", "drawdown", "sharpe", "profit_factor", "trade_count", "execution_costs")}}
@@ -144,6 +147,8 @@ def main() -> int:
     args = parser.parse_args()
     directory, report = run(args.manifest, args.spec, args.output_dir, check_inputs=args.check_inputs)
     print(json.dumps({"status": report["status"], "run_id": report["run_id"],
+                      "executable_fills_verified": report["executable_fills_verified"],
+                      "expected_net_profit_usd": report["expected_net_profit_usd"],
                       "report": str(directory / "report.json"), "summary": str(directory / "summary.json"),
                       "review": str(directory / "summary.md"),
                       "failure_reasons": report.get("failure_reasons", [])}, indent=2))

@@ -43,6 +43,7 @@ def canonicalize_nyse(report: dict[str, Any], *, arm: str, block: str) -> dict[s
     from math import isfinite
 
     from research.engine import research_safety_flags
+    from research.nyse_offline import daily_bar_execution_evidence
 
     if report.get("status") != "historical_diagnostic_complete" or report.get("data_kind") != "market":
         raise ValueError("a completed market diagnostic is required")
@@ -69,4 +70,4 @@ def canonicalize_nyse(report: dict[str, Any], *, arm: str, block: str) -> dict[s
             "minimum_sample_met": row["minimum_sample_met"],
             "eligible_for_confirmation": report["eligible_for_confirmation"],
             "unavailable_metrics": [name for name, value in result.items() if value is None],
-            **research_safety_flags()}
+            **daily_bar_execution_evidence(), **research_safety_flags()}

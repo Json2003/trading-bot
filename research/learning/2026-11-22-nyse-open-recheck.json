@@ -1,0 +1,161 @@
+{
+  "comparisons": [
+    {
+      "cta_summary_sequence": "_7174776",
+      "cta_summary_time_label": "_20:00:20.102",
+      "daily_bar_open_usd": "8.8600",
+      "daily_bar_received_at": "2026-11-21T12:57:13.596624+00:00",
+      "nyse_participant_open_usd": "8.860000",
+      "security_id": "sec:0001477720:class-a-common",
+      "status": "match",
+      "ticker": "ASAN",
+      "venue_minus_daily_bps": "0.00",
+      "venue_minus_daily_usd": "0.000000"
+    },
+    {
+      "cta_summary_sequence": "_4610542",
+      "cta_summary_time_label": "_20:00:20.46",
+      "daily_bar_open_usd": "20.2700",
+      "daily_bar_received_at": "2026-11-21T12:57:13.596624+00:00",
+      "nyse_participant_open_usd": "20.270000",
+      "security_id": "sec:0001766502:class-a-common",
+      "status": "match",
+      "ticker": "CHWY",
+      "venue_minus_daily_bps": "0.00",
+      "venue_minus_daily_usd": "0.000000"
+    },
+    {
+      "cta_summary_sequence": "_4612063",
+      "cta_summary_time_label": "_20:00:20.95",
+      "daily_bar_open_usd": "183.3100",
+      "daily_bar_received_at": "2026-11-21T12:57:13.596624+00:00",
+      "nyse_participant_open_usd": "183.310000",
+      "security_id": "sec:0001108524:common",
+      "status": "match",
+      "ticker": "CRM",
+      "venue_minus_daily_bps": "0.00",
+      "venue_minus_daily_usd": "0.000000"
+    },
+    {
+      "cta_summary_sequence": "_5172453",
+      "cta_summary_time_label": "_20:00:20.91",
+      "daily_bar_open_usd": "300.0000",
+      "daily_bar_received_at": "2026-11-21T12:57:13.596624+00:00",
+      "nyse_participant_open_usd": "300.000000",
+      "security_id": "sec:0001477333:class-a-common",
+      "status": "match",
+      "ticker": "NET",
+      "venue_minus_daily_bps": "0.00",
+      "venue_minus_daily_usd": "0.000000"
+    },
+    {
+      "cta_summary_sequence": "_5173141",
+      "cta_summary_time_label": "_20:00:20.113",
+      "daily_bar_open_usd": "87.3350",
+      "daily_bar_received_at": "2026-11-21T12:57:13.596624+00:00",
+      "nyse_participant_open_usd": "87.760000",
+      "security_id": "sec:0001373715:common",
+      "status": "different",
+      "ticker": "NOW",
+      "venue_minus_daily_bps": "48.66",
+      "venue_minus_daily_usd": "0.425000"
+    },
+    {
+      "cta_summary_sequence": "_5253595",
+      "cta_summary_time_label": "_20:00:20.92",
+      "daily_bar_open_usd": "16.9500",
+      "daily_bar_received_at": "2026-11-21T12:57:13.596624+00:00",
+      "nyse_participant_open_usd": "16.870000",
+      "security_id": "sec:0001506293:class-a-common",
+      "status": "different",
+      "ticker": "PINS",
+      "venue_minus_daily_bps": "-47.20",
+      "venue_minus_daily_usd": "-0.080000"
+    },
+    {
+      "cta_summary_sequence": "_6410938",
+      "cta_summary_time_label": "_20:00:20.131",
+      "daily_bar_open_usd": "265.2400",
+      "daily_bar_received_at": "2026-11-21T12:57:13.596624+00:00",
+      "nyse_participant_open_usd": "265.240000",
+      "security_id": "sec:0001640147:common",
+      "status": "match",
+      "ticker": "SNOW",
+      "venue_minus_daily_bps": "0.00",
+      "venue_minus_daily_usd": "0.000000"
+    },
+    {
+      "cta_summary_sequence": "_5248328",
+      "cta_summary_time_label": "_20:00:20.65",
+      "daily_bar_open_usd": "175.9100",
+      "daily_bar_received_at": "2026-11-21T12:57:13.596624+00:00",
+      "nyse_participant_open_usd": "176.980000",
+      "security_id": "sec:0001447669:class-a-common",
+      "status": "different",
+      "ticker": "TWLO",
+      "venue_minus_daily_bps": "60.83",
+      "venue_minus_daily_usd": "1.070000"
+    },
+    {
+      "cta_summary_sequence": "_5248559",
+      "cta_summary_time_label": "_20:00:20.72",
+      "daily_bar_open_usd": "65.7700",
+      "daily_bar_received_at": "2026-11-21T12:57:13.596624+00:00",
+      "nyse_participant_open_usd": "65.770000",
+      "security_id": "sec:0001543151:common",
+      "status": "match",
+      "ticker": "UBER",
+      "venue_minus_daily_bps": "0.00",
+      "venue_minus_daily_usd": "0.000000"
+    },
+    {
+      "cta_summary_sequence": "_4578722",
+      "cta_summary_time_label": "_20:00:20.110",
+      "daily_bar_open_usd": "73.8400",
+      "daily_bar_received_at": "2026-11-21T12:57:13.596624+00:00",
+      "nyse_participant_open_usd": "73.640000",
+      "security_id": "sec:0001512673:class-a-common",
+      "status": "different",
+      "ticker": "XYZ",
+      "venue_minus_daily_bps": "-27.09",
+      "venue_minus_daily_usd": "-0.200000"
+    }
+  ],
+  "counts": {
+    "different": 4,
+    "match": 6,
+    "missing_open": 0
+  },
+  "cta_summary": {
+    "data_rows": 397841,
+    "file_bytes": 53292739,
+    "sha256": "a0254fa00de8c213799511a431a1f6d3a63fa4a2c22c3aea61d6a730cdf82b5b",
+    "source_url": "https://ftp.nyse.com/cts_summary_files/CTA.Summary.EODSUM.20261120.csv"
+  },
+  "daily_bar_receipts": [
+    {
+      "file": "2026-11-20_2026-11-20_aef7n6a07m0r9tn7nrr0gfsjpstfdhr3.json",
+      "from": "2026-11-20",
+      "partitions": [
+        {
+          "received_at": "2026-11-21T12:57:13.596624+00:00",
+          "sha256": "b6572e3834adea51b6645dc7a0088e6becce298156c9eabfd5063183883c226c",
+          "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27aef7n6a07m0r9tn7nrr0gfsjpstfdhr3%27+WHERE+date+IN+%28%272026-11-20%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+        }
+      ],
+      "revision": "aef7n6a07m0r9tn7nrr0gfsjpstfdhr3",
+      "sha256": "6c0f928998c68b25a7770fb11942c53b9eefae8dd75b856a925860232cb3be16",
+      "through": "2026-11-20"
+    }
+  ],
+  "executable_fills_verified": false,
+  "expected_profit": null,
+  "new_independent_observations": 0,
+  "open_tolerance_usd": "0.0101",
+  "plan_sha256": "57f0c2d493931460459f85cd9063a14f5818221e5b8331852cd5bda02171ee0d",
+  "review_sha256": "a0beb639320b7d283cd9b7f67d9f4d3b33af09d4b52203b556cbdbd61bb43a90",
+  "schema_version": 1,
+  "session": "2026-11-20",
+  "status": "opens_differ",
+  "strategy_trials": 0
+}

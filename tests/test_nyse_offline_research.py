@@ -156,6 +156,8 @@ class OfflineResearchTests(unittest.TestCase):
         stops = [r for r in arm["ledger"] if r["kind"] == "sell"]
         self.assertEqual(len(stops), 5)
         self.assertTrue(all(r["session"] == "2026-01-02" and r["price"] == "98" for r in stops))
+        self.assertTrue(all(r["price_basis"] == "adverse_daily_range_proxy" for r in stops))
+        self.assertTrue(all(r["price_basis"] == "vendor_daily_bar_open" for r in arm["ledger"] if r["kind"] == "buy"))
         self.assertEqual(arm["drawdown_latched_at"], "2026-01-02")
         self.assertEqual(sum(r["kind"] == "buy" for r in arm["ledger"]), 5)
 
@@ -276,6 +278,8 @@ class OfflineResearchTests(unittest.TestCase):
         self.assertEqual(result["metric_units"]["net_return"], "fraction")
         self.assertFalse(result["minimum_sample_met"])
         self.assertFalse(result["promotion_allowed"])
+        self.assertFalse(result["executable_fills_verified"])
+        self.assertIsNone(result["expected_net_profit_usd"])
         report["results"][0]["metric_units"]["drawdown"] = "percent"
         with self.assertRaisesRegex(ValueError, "unit mismatch"):
             canonicalize_nyse(report, arm="top_five", block="software")
@@ -317,7 +321,16 @@ class OfflineResearchTests(unittest.TestCase):
                                   "--manifest", str(self.manifest_path), "--output-dir", str(output)],
                                  cwd=self.directory, capture_output=True, text=True, check=False)
         self.assertEqual(process.returncode, 0, process.stderr)
-        self.assertEqual(json.loads(process.stdout)["run_id"], report["run_id"])
+        reply = json.loads(process.stdout)
+        self.assertEqual(reply["run_id"], report["run_id"])
+        self.assertFalse(reply["executable_fills_verified"])
+        self.assertIsNone(reply["expected_net_profit_usd"])
+        summary = (destination / "summary.md").read_text()
+        self.assertIn("Execution is unverified", summary)
+        self.assertIn("Simulated net return after stress", summary)
+        _, inputs_only = runner.run(self.manifest_path, SPEC_PATH, output, check_inputs=True)
+        self.assertEqual(inputs_only["status"], "inputs_validated")
+        self.assertFalse(inputs_only["executable_fills_verified"])
 
     def test_cli_rejects_bad_input_with_exit_two_and_null_metrics(self):
         (self.directory / "prices.json").write_text("[]")

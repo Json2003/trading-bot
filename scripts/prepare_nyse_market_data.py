@@ -13,6 +13,7 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from research.nyse_capture import calendar, capture, captured_bars, digest, encode, receipt_index, restore_capture, save_new  # noqa: E402
+from research.nyse_open_audit import audit_open_prices  # noqa: E402
 from research.nyse_preparation import prepare  # noqa: E402
 from research.nyse_offline import DataGap, read_json, timestamp  # noqa: E402
 
@@ -33,6 +34,10 @@ def main() -> int:
     check.add_argument("--review", type=Path, required=True)
     recover = commands.add_parser("restore", help="Restore byte-exact raw inputs from a saved receipt index.")
     recover.add_argument("--index", type=Path, required=True)
+    opening = commands.add_parser("audit-opens", help="Compare vendor opens with a local CTA participant summary.")
+    opening.add_argument("--session", required=True, help="Completed NYSE session in YYYY-MM-DD format.")
+    opening.add_argument("--review", type=Path, required=True)
+    opening.add_argument("--cta-file", type=Path, required=True)
     args = parser.parse_args()
     try:
         raw_plan = args.plan.read_bytes()
@@ -70,8 +75,11 @@ def main() -> int:
                           "file": str(path), "receipt_index": str(index), "from": start, "through": through,
                           "missing_count": len(missing), "first_missing": missing[:12]}).decode(), end="")
             return 2 if missing else 0
-        spec = read_json(SPEC_PATH.read_bytes())
-        report = prepare(plan, plan_hash, captures, args.review, args.data_dir, spec)
+        if args.command == "audit-opens":
+            report = audit_open_prices(plan, plan_hash, captures, args.review, args.cta_file, args.session)
+        else:
+            spec = read_json(SPEC_PATH.read_bytes())
+            report = prepare(plan, plan_hash, captures, args.review, args.data_dir, spec)
     except (OSError, ValueError, KeyError, TypeError, IndexError, DecimalException) as exc:
         print(encode({"status": "blocked_market_data", "reason": str(exc),
                       "strategy_trials": 0, "expected_profit": None}).decode(), end="")
@@ -80,7 +88,7 @@ def main() -> int:
     record = args.data_dir / "checks" / (digest(raw) + ".json")
     save_new(record, raw)
     print(encode({**report, "check_record": str(record)}).decode(), end="")
-    return 0 if report["status"] == "ready_for_offline_replay" else 2
+    return 0 if report["status"] in {"ready_for_offline_replay", "opens_differ", "opens_within_tolerance"} else 2
 
 
 if __name__ == "__main__":

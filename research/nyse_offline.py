@@ -20,6 +20,10 @@ from research.engine import research_safety_flags
 from research.nyse_accounting import CashLedger, ZERO, decimal, positive, whole
 
 
+DAILY_OPEN_BASIS = "vendor_daily_bar_open"
+DAILY_STOP_BASIS = "adverse_daily_range_proxy"
+
+
 class DataGap(ValueError):
     """An input cannot support the frozen calculation."""
 
@@ -492,12 +496,30 @@ def replay(data: Dataset, spec: dict, block: dict, buffered: bool) -> dict:
         if i < indices[-1]:
             intentions.append({"decision_session": day, "decision_at": data.calendar[i]["decision_at"],
                                "execution_session": data.sessions[i + 1], "orders": pending})
+    for event in ledger.events:
+        if event["kind"] in {"buy", "sell"}:
+            event["price_basis"] = (DAILY_STOP_BASIS if event.get("reason") == "adverse_daily_stop_proxy"
+                                    else DAILY_OPEN_BASIS)
     result = metrics(ledger, curve, decimal(spec["initial_cash"]), spec["minimum_independent_observations"], decisions)
     return {"block": block["name"], "arm": "buffered" if buffered else "top_five", **result,
             "drawdown_latched_at": latch_at, "decisions": decisions, "intentions": intentions,
             "ledger": ledger.events, "realizations": ledger.realizations, "equity_curve": curve,
             "observation_ids": [f"{spec['experiment_id']}:{day}" for day in result["closed_monthly_cohort_dates"]],
             "undated_receivables": [k for k, v in ledger.receivables.items() if v.due is None]}
+
+
+def daily_bar_execution_evidence() -> dict:
+    return {
+        "executable_fills_verified": False,
+        "expected_net_profit_usd": None,
+        "execution_evidence": {
+            "open_price_basis": DAILY_OPEN_BASIS,
+            "stop_price_basis": DAILY_STOP_BASIS,
+            "actual_execution_expenses_usd": None,
+            "operating_expenses_usd": None,
+            "cost_basis": "stress_cost_per_traded_side",
+        },
+    }
 
 
 def evaluate(data: Dataset, spec: dict) -> dict:
@@ -523,7 +545,7 @@ def evaluate(data: Dataset, spec: dict) -> dict:
                             "turnover_reduction": pair[0]["turnover"] - pair[1]["turnover"]})
         results.extend(pair)
     synthetic = data.manifest["data_kind"] == "synthetic"
-    return {"schema_version": 1, **research_safety_flags(),
+    return {"schema_version": 1, **research_safety_flags(), **daily_bar_execution_evidence(),
             "status": "software_fixture_complete" if synthetic else "historical_diagnostic_complete",
             "dataset_id": data.manifest["dataset_id"], "data_kind": data.manifest["data_kind"],
             "evidence_role": "development_diagnostic", "experiment_id": spec["experiment_id"],
@@ -533,7 +555,7 @@ def evaluate(data: Dataset, spec: dict) -> dict:
             "investment_trials": 0 if synthetic else 1, "model_training_runs": 0,
             "eligible_for_confirmation": False,
             "failure_reasons": ["order_time_quotes_and_size_unverified", "development_diagnostic_only"],
-            "limitations": ["Daily bar stops assume an adverse executable price and sufficient size.",
+            "limitations": ["The daily open and stop prices are simulated proxies without order-time prices or sizes.",
                             "Receipts use supplied payable dates, with undated claims kept unavailable.",
                             "Nonoverlapping holding intervals are a sample safeguard and may remain correlated.",
                             "Input coverage and as-of feature declarations require independent source audit."]}

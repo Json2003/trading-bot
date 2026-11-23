@@ -22,7 +22,16 @@ The baseline review records the class-level evidence and five reconciled events.
 
 Preparation reports the last contiguous session, eligible price coverage, actionable cutoff, unresolved action or membership dates and any missing bars. The momentum index compounds dividend-inclusive gains in the share units of each session. The raw OHLC fields remain the original nominal inputs. Wilder ATR uses true ranges in the current share units and rescales previous ATR at a split. Output never lets later receipts appear earlier than their recorded times.
 
-The same command returns `ready_for_offline_replay` with the path to its immutable manifest after the block and both reviews are complete. The versioned November 21 review covers sessions through November 20. Supply later reviewed evidence as it becomes available. Use the returned manifest path for both commands below.
+Once the session's membership review is available, compare its captured daily opens with a local [CTA end-of-day summary](https://www.ctaplan.com/files).
+
+```sh
+python scripts/prepare_nyse_market_data.py --data-dir "$DATA_DIR" audit-opens \
+  --session 2026-11-20 --review "$REVIEW" --cta-file "$CTA_CSV"
+```
+
+The check records the SHA-256 of the CTA file and the daily-bar receipts, chooses the final NYSE participant snapshot and reports signed price differences per eligible security. The CTA times describe summary dissemination. An incomplete comparison exits with code 2. Both agreement and disagreement are completed source checks. The output records the result and whether any executable fills were verified.
+
+The `prepare` command returns `ready_for_offline_replay` with the path to its immutable manifest after the block and both reviews are complete. The versioned November 21 review covers sessions through November 20. Supply later reviewed evidence as it becomes available. Use the returned manifest path for both commands below.
 
 ```sh
 python scripts/run_nyse_offline_research.py --manifest "$MANIFEST" --check-inputs
