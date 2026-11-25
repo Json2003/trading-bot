@@ -19,7 +19,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SPEC = REPO_ROOT / "tradingbot_ibkr" / "roman_bot.spec"
 DEFAULT_RELEASE_DIR = REPO_ROOT / "release" / "desktop"
@@ -36,7 +35,6 @@ def run_pyinstaller(spec_path: Path, build_dir: Path, dist_dir: Path, clean: boo
         "-m",
         "PyInstaller",
         "--noconfirm",
-        f"--specpath={spec_path.parent}",
         f"--workpath={build_dir}",
         f"--distpath={dist_dir}",
     ]

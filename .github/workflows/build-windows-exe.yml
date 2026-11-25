@@ -7,6 +7,20 @@ on:
     paths:
       - 'tradingbot_ibkr/**'
       - 'scripts/package_desktop.py'
+      - 'tests/test_desktop_packaging.py'
+      - 'requirements.txt'
+      - 'requirements-packaging.txt'
+      - '.github/workflows/build-windows-exe.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tradingbot_ibkr/pyinstaller_hooks/**'
+      - 'tradingbot_ibkr/requirements.txt'
+      - 'tradingbot_ibkr/roman_bot.py'
+      - 'tradingbot_ibkr/roman_bot.spec'
+      - 'tradingbot_ibkr/romanbot_installer.iss'
+      - 'scripts/package_desktop.py'
+      - 'tests/test_desktop_packaging.py'
       - 'requirements.txt'
       - 'requirements-packaging.txt'
       - '.github/workflows/build-windows-exe.yml'
@@ -33,13 +47,17 @@ jobs:
             requirements-packaging.txt
             tradingbot_ibkr/requirements.txt
 
+      - name: Upgrade packaging tools
+        run: python -m pip install --upgrade pip setuptools wheel
+
       - name: Install Python dependencies
-        shell: pwsh
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          if (Test-Path requirements.txt) { pip install -r requirements.txt }
-          if (Test-Path tradingbot_ibkr/requirements.txt) { pip install -r tradingbot_ibkr/requirements.txt }
-          pip install -r requirements-packaging.txt
+        run: python -m pip install -r tradingbot_ibkr/requirements.txt -r requirements-packaging.txt
+
+      - name: Check installed dependencies
+        run: python -m pip check
+
+      - name: Test desktop packaging
+        run: python -m pytest -q tests/test_desktop_packaging.py
 
       - name: Install Inno Setup
         shell: pwsh
@@ -55,15 +73,23 @@ jobs:
         shell: pwsh
         run: python scripts/package_desktop.py --zip --windows-installer
 
-      - name: Verify packaged executable
+      - name: Verify executable, bundled template, ZIP, and installer
         shell: pwsh
         run: |
-          $exe = 'release\desktop\RomanBot\RomanBot.exe'
-          if (-not (Test-Path $exe)) { throw "Missing packaged executable: $exe" }
-          Get-Item $exe | Format-List Name,Length,LastWriteTime
-          Get-ChildItem release\desktop -Recurse | Select-Object FullName,Length
+          $artifacts = @(
+            'release\desktop\RomanBot\RomanBot.exe'
+            'release\desktop\RomanBot\_internal\templates\index.html'
+            'release\desktop\RomanBot.zip'
+            'release\desktop\RomanBotInstaller.exe'
+          )
+          foreach ($artifact in $artifacts) {
+            $file = Get-Item -LiteralPath $artifact -ErrorAction Stop
+            if ($file.PSIsContainer -or $file.Length -eq 0) { throw "Invalid build output: $artifact" }
+            Write-Host "$artifact ($($file.Length) bytes)"
+          }
 
       - name: Upload portable RomanBot package
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: RomanBot-Windows-Portable
@@ -72,17 +98,16 @@ jobs:
           retention-days: 30
 
       - name: Upload Windows installer
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: RomanBot-Windows-Installer
-          path: |
-            release/desktop/*.exe
-            release/desktop/*.msi
+          path: release/desktop/RomanBotInstaller.exe
           if-no-files-found: error
           retention-days: 30
 
       - name: Upload build diagnostics on failure
-        if: failure()
+        if: failure() && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: RomanBot-Build-Diagnostics

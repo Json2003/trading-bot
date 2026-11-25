@@ -48,7 +48,7 @@ def main():
     t.start()
     # wait a short while for server to start
     time.sleep(1.5)
-    window = webview.create_window("Roman Bot", "http://127.0.0.1:5001", icon=str(ICON))
+    webview.create_window("Roman Bot", "http://127.0.0.1:5001")
 
     # create tray icon
     def create_image():
