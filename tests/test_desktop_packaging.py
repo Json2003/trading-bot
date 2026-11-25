@@ -1,6 +1,8 @@
 import os
 import shutil
+import subprocess
 import sys
+from importlib.metadata import version
 from unittest.mock import patch
 from zipfile import ZipFile
 
@@ -33,14 +35,22 @@ def test_pyinstaller_builds_existing_spec(tmp_path, clean):
 
 def test_checked_in_spec_preserves_asset_paths_in_portable_zip(tmp_path, monkeypatch):
     pytest.importorskip("PyInstaller")
-    source = tmp_path / "app sources"
+    checkout = tmp_path / "checkout"
+    source = checkout / "app sources"
     template = source / "templates" / "nested" / "test.html"
     template.parent.mkdir(parents=True)
     template.write_bytes(b"<h1>RomanBot packaging test</h1>")
     spec = source / package_desktop.DEFAULT_SPEC.name
     shutil.copyfile(package_desktop.DEFAULT_SPEC, spec)
     shutil.copytree(package_desktop.DEFAULT_SPEC.parent / "pyinstaller_hooks", source / "pyinstaller_hooks")
-    (source / "roman_bot.py").write_text("print('RomanBot')\n", encoding="utf-8")
+    (checkout / "requests.py").write_text("raise RuntimeError('offline stub')\n", encoding="utf-8")
+    (source / "roman_bot.py").write_text(
+        "import sys\n"
+        "from pathlib import Path\n"
+        "import requests\n"
+        "Path(sys.executable).with_name('requests-version.txt').write_text(requests.__version__)\n",
+        encoding="utf-8",
+    )
     release = tmp_path / "release files"
 
     monkeypatch.chdir(tmp_path)
@@ -66,6 +76,10 @@ def test_checked_in_spec_preserves_asset_paths_in_portable_zip(tmp_path, monkeyp
     with ZipFile(release / "RomanBot.zip") as archive:
         assert executable in archive.namelist()
         assert archive.read("_internal/templates/nested/test.html") == template.read_bytes()
+
+    bundle = release / "RomanBot"
+    subprocess.run([str(bundle / executable)], check=True, timeout=30)
+    assert (bundle / "requests-version.txt").read_text(encoding="utf-8") == version("requests")
 
 
 def test_packaging_dependencies_write_and_read_parquet(tmp_path):

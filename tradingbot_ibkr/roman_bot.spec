@@ -20,7 +20,7 @@ a = Analysis(
     pathex=[str(HERE), str(HERE.parent)],
     binaries=[],
     datas=datas,
-    hiddenimports=["win32timezone", "win32com"],
+    hiddenimports=["win32timezone", "win32com"] if sys.platform == "win32" else [],
     hookspath=[str(HERE / "pyinstaller_hooks")],
     runtime_hooks=[],
     excludes=[],
