@@ -4,19 +4,18 @@ Use this guide to build a desktop-ready version of the Roman Bot launcher and pr
 
 ## 1. Prerequisites
 
-- Python 3.10 or newer.
+- Python 3.11, matching the Windows CI build.
 - Virtual environment activated for the repo (recommended).
 - PyInstaller (install via `pip install -r requirements-packaging.txt`).
-- On Windows (optional, for MSI/EXE installer):
+- On Windows (optional, for the EXE installer):
   - [Inno Setup](https://jrsoftware.org/isinfo.php) installed and `ISCC.exe` available on `PATH`.
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate      # Windows: .venv\Scripts\activate
-pip install --upgrade pip
-pip install -r requirements.txt
-pip install -r tradingbot_ibkr/requirements.txt
-pip install -r requirements-packaging.txt
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r tradingbot_ibkr/requirements.txt -r requirements-packaging.txt
+python -m pip check
 ```
 
 ## 2. Build the desktop bundle
@@ -57,7 +56,7 @@ cd release/desktop/RomanBot
 ./RomanBot  # Windows: RomanBot.exe
 ```
 
-Confirm the embedded FastAPI dashboard starts and the pywebview shell opens.
+Confirm the embedded Flask dashboard starts and the pywebview shell opens.
 
 ## 5. Troubleshooting
 
