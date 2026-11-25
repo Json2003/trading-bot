@@ -3,7 +3,7 @@ name: Build RomanBot Windows EXE
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, 'codex/romanbot-windows-validation']
     paths:
       - 'tradingbot_ibkr/**'
       - 'scripts/package_desktop.py'
