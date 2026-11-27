@@ -1,0 +1,11 @@
+{
+  "candidate_id": "btc_perp_book_churn_zscore_v1",
+  "source_url": "https://research.glassnode.com/book-churn/",
+  "published_at": "2026-11-18T23:59:59+00:00",
+  "measurement": "Causal ten-minute z-score of Binance BTCUSDT USD-M perpetual L2 price-level revision count, relative to the same UTC hour over the preceding 30 calendar days; emit null through warm-up and on defined feed-quality failures.",
+  "formula": "For interval t, U_t is the number of bid and ask price-level tuples in non-snapshot Binance diff-depth events whose exchange event timestamps fall in t. Let x_t=ln(1+U_t). Let R_t contain valid x values from the six ten-minute intervals in the same UTC hour during the prior 30 days, max 180 values and at least 14 distinct days. value=(x_t-mean(R_t))/sample_stdev(R_t). Emit null if U_t=0, sample_stdev(R_t)=0, fewer than 14 days are present, a sequence gap or reconnect affects t, or U_t is below 0.1 times the trailing all-hours mean after at least 84 positive-count intervals.",
+  "data_source": "Locally captured official Binance USD-M Futures BTCUSDT diff-depth WebSocket events, with exchange event time, update sequence IDs, collector receipt time and raw-event SHA-256 manifests; exclude REST bootstrap snapshots and all resync rows from U_t.",
+  "symbol": "BTCUSDT",
+  "venue": "Binance USD-M Futures",
+  "max_age_hours": 0.25
+}
