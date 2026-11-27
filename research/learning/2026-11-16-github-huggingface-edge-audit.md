@@ -227,3 +227,9 @@ Neither arm gained executable profit evidence. Market evaluation was skipped pen
 ## November 25 exchange cross-check on November 26, 2026
 
 The November 25 CTA file and Yahoo charts agreed on all 30 consolidated high, low and last checks for the ten eligible names within $0.0101. NET and SNOW showed differences between the NYSE participant open and the Yahoo daily open. The pinned archive and prior restores timed out, so the independent price evidence was retained without changing the approved replay inputs. Market evaluation was skipped and neither arm gained profit evidence. Retry the pinned capture and archive restores before November 27 at 6 a.m. Pacific. [Source audit](../strategy_sources/2026-11-26-nyse-forward-session-reconciliation.md) · [Verification record](2026-11-26-nyse-forward-verification.json)
+
+## November 25 archive recovered on November 27, 2026
+
+All twelve pinned bars arrived at 5:05 a.m. Pacific before the morning cutoff and restored byte for byte. The November 20, 23 and 24 packets also restored at their recorded hashes. The new packet matched the prior 48 OHLC cross-checks within $0.0101 and all 30 CTA consolidated high, low and last fields exactly. Pinned split and dividend checks completed. Scoped coverage now reaches November 25, with 2,680 eligible bars checked across 268 sessions and zero missing completed rows. [Recovery audit](../strategy_sources/2026-11-27-nyse-forward-archive-recovery.md) · [Verification](2026-11-27-nyse-forward-verification.json)
+
+The recovery improved data availability. It added zero strategy trials, training runs and independent profit observations. The frozen forward evaluation was skipped and expected net profit remains unestimated. Capture November 27 after the early close and preserve the November 30 signal inputs before December 1 at 6 a.m. Pacific.
