@@ -1,0 +1,270 @@
+{
+  "actions": [
+    {
+      "action_id": "CRM-div-2025-12-18",
+      "amount": "0.41600",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "dividend",
+      "payable_date": "2026-01-08",
+      "security_id": "sec:0001108524:common",
+      "session": "2025-12-18",
+      "source": "https://investor.salesforce.com/news/news-details/2025/Salesforce-Announces-Quarterly-Dividend-ce77ce2bd/default.aspx"
+    },
+    {
+      "action_id": "NOW-5-for-1-2025-12-18",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "split",
+      "new_shares": "5",
+      "old_shares": "1",
+      "security_id": "sec:0001373715:common",
+      "session": "2025-12-18",
+      "source": "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000007/now-20251231.htm"
+    },
+    {
+      "action_id": "CRM-div-2026-04-09",
+      "amount": "0.44000",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "dividend",
+      "payable_date": "2026-04-23",
+      "security_id": "sec:0001108524:common",
+      "session": "2026-04-09",
+      "source": "https://investor.salesforce.com/financials/quarterly-results/default.aspx"
+    },
+    {
+      "action_id": "CRM-div-2026-06-11",
+      "amount": "0.44000",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "dividend",
+      "payable_date": "2026-07-02",
+      "security_id": "sec:0001108524:common",
+      "session": "2026-06-11",
+      "source": "https://investor.salesforce.com/news/news-details/2026/Salesforce-Announces-Quarterly-Dividend/default.aspx"
+    },
+    {
+      "action_id": "CRM-div-2026-09-17",
+      "amount": "0.44000",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "dividend",
+      "payable_date": "2026-10-08",
+      "security_id": "sec:0001108524:common",
+      "session": "2026-09-17",
+      "source": "https://investor.salesforce.com/news/news-details/2026/Salesforce-Announces-Quarterly-Dividend-96de7d58a/default.aspx"
+    }
+  ],
+  "corporate_actions_complete_through": "2026-11-27",
+  "coverage_scope": "Twelve frozen security classes through the November 27 early close, using dated mapping retained previously and current SEC, CTA and pinned corporate action checks.",
+  "evidence": [
+    "prior_review",
+    "capture_index",
+    "packet_sha256",
+    "comparison_packet_sha256",
+    "directory",
+    "eligible_tickers",
+    "filing_sources",
+    "nyse_mef_snapshot",
+    "pinned_event_queries",
+    "pit_note",
+    "recorded_at_utc",
+    "requested_tickers",
+    "revision",
+    "row_counts",
+    "sec_current_exchanges",
+    "sec_recent_issuer_filings",
+    "separate_event_rows",
+    "separate_price_rows",
+    "sessions",
+    "sources",
+    "coverage_limits",
+    "https://ftp.nyse.com/cts_summary_files/CTA.Summary.EODSUM.20261123.csv",
+    "https://www.sec.gov/Archives/edgar/data/1506293/000162828026075546/pins-20261118.htm",
+    "https://ftp.nyse.com/NYSESymbolMapping/NYSESymbolMapping_20261124.txt",
+    "https://ftp.nyse.com/cts_summary_files/CTA.Summary.EODSUM.20261124.csv",
+    "https://ftp.nyse.com/NYSESymbolMapping/NYSESymbolMapping_20261125.txt",
+    "https://ftp.nyse.com/cts_summary_files/CTA.Summary.EODSUM.20261125.csv",
+    "https://ftp.nyse.com/NYSESymbolMapping/NYSESymbolMapping_20261127.txt",
+    "https://ftp.nyse.com/cts_summary_files/CTA.Summary.EODSUM.20261127.csv",
+    "https://www.sec.gov/Archives/edgar/data/1512673/000119312526480257/d66844d8k.htm"
+  ],
+  "membership_complete_through": "2026-11-27",
+  "november_23_review": {
+    "prior_review_sha256": "a0beb639320b7d283cd9b7f67d9f4d3b33af09d4b52203b556cbdbd61bb43a90",
+    "receipt_index": "2026-11-24-nyse-forward-receipt-index.json",
+    "verification_record": "../2026-11-24-nyse-forward-verification.json",
+    "verification_sha256": "27447c86ff1376100e185f55dfc973d582450868700ccb5bbaf5ef5e05339614"
+  },
+  "november_24_review": {
+    "prior_review_sha256": "7fbd7f072765251311af1c26f9e5724c139959fc1471a9da54b2fffbedd97c81",
+    "receipt_index": "2026-11-25-nyse-forward-receipt-index.json",
+    "verification_record": "../2026-11-25-nyse-forward-verification.json",
+    "verification_sha256": "b1c52a020786ffbcec3470d4b909984f911491ecae79f0b063afc880848e90ee"
+  },
+  "november_25_review": {
+    "prior_review_sha256": "d6eefb2b3f48d87e4978d38b9861c995fbc12131e815c687c31d04b3ac8bf89f",
+    "receipt_index": "2026-11-27-nyse-forward-receipt-index.json",
+    "verification_record": "../2026-11-27-nyse-forward-verification.json",
+    "verification_sha256": "bca8917b36cea5de45e8edbc978fa513008239486d6623ddef1f078dc7b8b87f"
+  },
+  "november_27_review": {
+    "prior_review_sha256": "a7a0edfc522e024498ba8da0f9707021e2dc4a9477f1d4a3c8bccec288c50529",
+    "receipt_index": "2026-11-28-nyse-forward-receipt-index.json",
+    "verification_record": "../2026-11-28-nyse-forward-verification.json",
+    "verification_sha256": "c61120023f12394d780ba2184700cd36a503bcdad9951838493acec9ed303031"
+  },
+  "plan_sha256": "57f0c2d493931460459f85cd9063a14f5818221e5b8331852cd5bda02171ee0d",
+  "price_basis": "nominal_ohlc",
+  "price_basis_evidence": {
+    "eligible_matched_ohlc_fields": 40,
+    "field_check_through": "2026-11-20",
+    "matched_ohlc_fields": 48,
+    "method": "Compare nominal unrounded Dolt and separately retrieved Yahoo daily OHLC at $0.0101 tolerance. No adjustment is applied to this session.",
+    "volume_rows_differing_over_one_percent": 0
+  },
+  "reviewed_at": "2026-11-28T12:59:10.988073+00:00",
+  "schema_version": 1,
+  "securities": [
+    {
+      "available_at": "2026-11-19T02:10:10.830448+00:00",
+      "class_title": "Class A Common Stock, $0.00001 par value per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000060/asan-20260731.htm",
+      "security_id": "sec:0001477720:class-a-common",
+      "ticker": "ASAN"
+    },
+    {
+      "available_at": "2026-11-19T02:10:03.100295+00:00",
+      "class_title": "Class A Common Stock, par value $0.01 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1766502/000162828026061018/chwy-20260802.htm",
+      "security_id": "sec:0001766502:class-a-common",
+      "ticker": "CHWY"
+    },
+    {
+      "available_at": "2026-11-19T02:09:45.897807+00:00",
+      "class_title": "Common Stock, par value $0.001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000190/crm-20260731.htm",
+      "security_id": "sec:0001108524:common",
+      "ticker": "CRM"
+    },
+    {
+      "available_at": "2026-11-19T02:10:10.791909+00:00",
+      "class_title": "Class A Common Stock, $0.00002 par value",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNAS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1517413/000151741326000345/fsly-20260930.htm",
+      "security_id": "sec:0001517413:class-a-common",
+      "ticker": "FSLY"
+    },
+    {
+      "available_at": "2026-11-19T02:10:10.872319+00:00",
+      "class_title": "Class A Common Stock, $0.001 par value",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1477333/000147733326000061/cloud-20260930.htm",
+      "security_id": "sec:0001477333:class-a-common",
+      "ticker": "NET"
+    },
+    {
+      "available_at": "2026-11-19T02:09:45.569356+00:00",
+      "class_title": "Common stock, par value $0.001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000096/now-20260930.htm",
+      "security_id": "sec:0001373715:common",
+      "ticker": "NOW"
+    },
+    {
+      "available_at": "2026-11-19T02:09:54.923453+00:00",
+      "class_title": "Class A Common Stock, $0.00001 par value",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1506293/000150629326000153/pins-20260930.htm",
+      "security_id": "sec:0001506293:class-a-common",
+      "ticker": "PINS"
+    },
+    {
+      "available_at": "2026-11-19T02:10:02.911957+00:00",
+      "class_title": "Class A Common Stock, par value $0.001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNAS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1321655/000132165526000048/pltr-20260930.htm",
+      "security_id": "sec:0001321655:class-a-common",
+      "ticker": "PLTR"
+    },
+    {
+      "available_at": "2026-11-19T02:09:54.852638+00:00",
+      "class_title": "Common Stock, $0.0001 par value",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1640147/000164014726000037/snow-20260731.htm",
+      "security_id": "sec:0001640147:common",
+      "ticker": "SNOW"
+    },
+    {
+      "available_at": "2026-11-19T02:10:03.100411+00:00",
+      "class_title": "Class A Common Stock, par value $0.001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1447669/000144766926000110/twlo-20260930.htm",
+      "security_id": "sec:0001447669:class-a-common",
+      "ticker": "TWLO"
+    },
+    {
+      "available_at": "2026-11-19T02:09:54.923805+00:00",
+      "class_title": "Common Stock, par value $0.00001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1543151/000154315126000041/uber-20260930.htm",
+      "security_id": "sec:0001543151:common",
+      "ticker": "UBER"
+    },
+    {
+      "available_at": "2026-11-19T02:09:45.800135+00:00",
+      "class_title": "Class A common stock, $0.0000001 par value per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1512673/000162828026069524/xyz-20260930.htm",
+      "security_id": "sec:0001512673:class-a-common",
+      "ticker": "XYZ"
+    }
+  ]
+}

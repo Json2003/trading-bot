@@ -233,3 +233,9 @@ The November 25 CTA file and Yahoo charts agreed on all 30 consolidated high, lo
 All twelve pinned bars arrived at 5:05 a.m. Pacific before the morning cutoff and restored byte for byte. The November 20, 23 and 24 packets also restored at their recorded hashes. The new packet matched the prior 48 OHLC cross-checks within $0.0101 and all 30 CTA consolidated high, low and last fields exactly. Pinned split and dividend checks completed. Scoped coverage now reaches November 25, with 2,680 eligible bars checked across 268 sessions and zero missing completed rows. [Recovery audit](../strategy_sources/2026-11-27-nyse-forward-archive-recovery.md) · [Verification](2026-11-27-nyse-forward-verification.json)
 
 The recovery improved data availability. It added zero strategy trials, training runs and independent profit observations. The frozen forward evaluation was skipped and expected net profit remains unestimated. Capture November 27 after the early close and preserve the November 30 signal inputs before December 1 at 6 a.m. Pacific.
+
+## November 27 early-close bars verified on November 28, 2026
+
+The twelve pinned bars restored byte for byte. The secondary source confirmed 48 OHLC fields within $0.0101. The completed CTA file matched 30 consolidated high, low and last fields exactly and showed four differences between venue and vendor opens. Scoped class and action coverage advanced through November 27, and preparation checked 2,690 eligible bars across 269 sessions with zero missing completed rows. [Source audit](../strategy_sources/2026-11-28-nyse-forward-session-reconciliation.md) · [Verification](2026-11-28-nyse-forward-verification.json)
+
+The forward market evaluation was skipped and neither arm gained profit evidence. Expected profit remains unestimated. Capture November 30 before the December 1 cutoff at 6 a.m. Pacific.
