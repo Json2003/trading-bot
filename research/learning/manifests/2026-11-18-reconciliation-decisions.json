@@ -1,0 +1,44 @@
+{
+  "corporate_action_resolution": {
+    "cash_dividends": "Twelve issuer annual filings after the interval report never paying dividends, supporting a retrospective no-cash-dividend conclusion. This is not pre-decision publication evidence.",
+    "future_transformations": "NOW December 2025 split and SQ January 2025 ticker change are used only to compare present vendor histories in historical units; neither is inserted into the 2021/January 2022 ledger.",
+    "split_and_other_actions": "Secondary event lists are empty within the requested interval; twelve annual texts contain no stock-split or reverse-split phrase. These absence checks are not a complete action register, and no complete-through certificate is issued.",
+    "sq_afterpay": "January 31, 2022 acquisition of Afterpay affects acquisition accounting/new shares; existing SQ holders are not Afterpay conversion recipients. No per-held-SQ-share receipt is inferred.",
+    "sq_name_announcement": "December 1, 2021 issuer notice says SQ ticker and CUSIP would remain unchanged and existing holders need take no action. Do not create a sale, new position or SQ-to-XYZ event in 2021."
+  },
+  "failed_acquisition_probes": [
+    {
+      "result": "HTTP 404; resolved for source comparison by documented later XYZ alias, preserving historical SQ.",
+      "source": "Yahoo chart SQ"
+    },
+    {
+      "fromdate_format": "MM/DD/YYYY",
+      "result": "rCode 400; invalid parameter. Retried with ISO dates.",
+      "source": "Nasdaq public historical FSLY"
+    },
+    {
+      "fromdate_format": "YYYY-MM-DD",
+      "result": "rCode 200, totalRecords 0 for May 3-14, 2021; no corroborating prices obtained.",
+      "source": "Nasdaq public historical FSLY"
+    }
+  ],
+  "primary_method_sources": [
+    {
+      "finding": "Yahoo identifies CSI as US equity historical-data provider, restricts redistribution and describes data as informational. Dolt upstream remains unknown.",
+      "url": "https://help.yahoo.com/kb/SLN2310.html"
+    },
+    {
+      "finding": "Adjusted close includes splits and dividends. Do not substitute current adjusted close for raw fills or assume a pre-decision total-return series.",
+      "url": "https://help.yahoo.com/kb/SLN28256.html"
+    }
+  ],
+  "scope_limit": "No returns, rankings, predictions, holding-period trades or strategy metrics were computed. The same twelve historical names and calendar were retained.",
+  "timing_resolution": {
+    "decision": "Reject these retrieved responses as causal January 2022 runner inputs. Retrospective price/source validation remains useful.",
+    "decision_period": "2022-01-03 through 2022-01-31",
+    "finding": "Neither response establishes original per-row availability before historical decisions. Even interpreting a commit clock does not prove when a revision was pushed/publicly available. No historical available_at values were generated.",
+    "original_snapshot": "2022-02-03 10:00:05.161, timezone unspecified",
+    "secondary_observed_on": "2026-11-18",
+    "status": "not_recoverable_from_retrieved_responses"
+  }
+}

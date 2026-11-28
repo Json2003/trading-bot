@@ -1,0 +1,90 @@
+{
+  "audit_date_local": "2026-11-17",
+  "kind": "exact_historical_nyse_ticker_to_issuer_join",
+  "policy": "Exact symbol string only; no fuzzy/punctuation/name normalization; ambiguous or missing matches remain unresolved; mapping publication must precede listing publication. No returns inspected.",
+  "source_selection_cutoff_utc": "2026-11-18T02:09:16Z",
+  "sources": [
+    {
+      "kind": "nyse",
+      "commit": "b02d9d7ace317f861f8a6f59e2cfa88e207f3ce9",
+      "published_at": "2022-01-01T00:11:00Z",
+      "blob": "d1702b3b2b4877a4dc8573381377eb278efdfd1c",
+      "url": "https://raw.githubusercontent.com/rreichel3/US-Stock-Symbols/b02d9d7ace317f861f8a6f59e2cfa88e207f3ce9/nyse/nyse_full_tickers.json",
+      "bytes": 1232760,
+      "sha256": "b06e1cfb2b83bea023f29ea08a0846a33a0b0d53d304a857aa731b4589920450",
+      "git_blob_sha1": "d1702b3b2b4877a4dc8573381377eb278efdfd1c"
+    },
+    {
+      "kind": "sec_mapper",
+      "commit": "b74d1efd3e005df08da0a38a4eedfcbdf2a02283",
+      "published_at": "2021-12-31T00:03:08Z",
+      "blob": "67c4998ed75ccc392264e57c6db99b46ea15a44b",
+      "url": "https://raw.githubusercontent.com/jadchaar/sec-cik-mapper/b74d1efd3e005df08da0a38a4eedfcbdf2a02283/mappings/stocks/mappings.csv",
+      "bytes": 612779,
+      "sha256": "127573f817be335dba3a90d03e74db5a771d13c10fa6bfc94badbc8d111b14c4",
+      "git_blob_sha1": "67c4998ed75ccc392264e57c6db99b46ea15a44b"
+    }
+  ],
+  "nyse_rows": 3170,
+  "mapping_rows_all_exchanges": 13178,
+  "mapping_columns": [
+    "CIK",
+    "Ticker",
+    "Name",
+    "Exchange"
+  ],
+  "counts": {
+    "unique_ticker_cik_match": 2708,
+    "unmatched": 462,
+    "ambiguous_ticker_rows": 0,
+    "invalid_cik": 0
+  },
+  "matched_exchange_counts": {
+    "NYSE": 2699,
+    "(empty)": 9
+  },
+  "matched_distinct_ciks": 2618,
+  "multiple_matched_tickers_per_cik_groups": 60,
+  "matched_rows_in_shared_cik_groups": 150,
+  "shared_cik_examples": [
+    {
+      "cik": "0000005513",
+      "tickers": [
+        "UNM",
+        "UNMA"
+      ]
+    },
+    {
+      "cik": "0000010795",
+      "tickers": [
+        "BDX",
+        "BDXB"
+      ]
+    },
+    {
+      "cik": "0000028917",
+      "tickers": [
+        "DDS",
+        "DDT"
+      ]
+    }
+  ],
+  "mapping_duplicate_ticker_keys": 0,
+  "all_mapping_multi_ticker_cik_groups": 1997,
+  "availability_lag_hours": 24.13111111111111,
+  "validated_assertion_groups": [
+    "mapping_precedes_listing",
+    "two_raw_blob_identities_match",
+    "nyse_symbols_unique",
+    "join_partition_reconciles",
+    "exchange_partition_reconciles",
+    "issuer_group_counts_reconcile",
+    "multi_ticker_examples_are_actual_shared_issuer_groups"
+  ],
+  "investment_trials": 0,
+  "market_backtest_status": "SKIPPED_DATA_INCOMPLETE",
+  "profitability_metrics": null,
+  "model_training_runs": 0,
+  "interpretation": "CIK is filer-level. Shared CIK groups are legitimate issuer relationships, not necessarily data errors. Unmatched symbols are not automatically ineligible. Exchange agreement is not common-stock classification. Commit publication is not source event timing. These are one-snapshot diagnostic coverage checks, not a complete historical security master.",
+  "data_join_trials": 1
+}

@@ -1,0 +1,871 @@
+{
+  "assessed_at": "2026-11-25T13:05:55.290752+00:00",
+  "assessment_cutoff": "2026-11-25T09:00:00-05:00",
+  "byte_exact_restore": true,
+  "crosscheck_counts": {
+    "cta_consolidated_hlc_exact": 30,
+    "cta_participant_open_differences": 3,
+    "eligible_rows": 10,
+    "ohlc_agreement_within_0_0101": 48,
+    "pinned_rows": 12,
+    "yahoo_volume_outside_one_percent": 0
+  },
+  "cta": {
+    "bytes": 51334636,
+    "http_response_at": "2026-11-25T13:02:36Z",
+    "last_modified_http_utc": "2026-11-25T03:11:17Z",
+    "message_counts": {
+      "FractionalConsolidatedEODSummary": 30544,
+      "FractionalParticipantEODSummary": 353016,
+      "total 383560": 1
+    },
+    "preamble": "Tue Nov 24 22:11:00 EDT 2026 prod",
+    "rows": 383560,
+    "sha256": "ba46d8a037715a96a20bcd9b7db8d6ac3d6861a09772891c23174f4fc2a04784",
+    "url": "https://ftp.nyse.com/cts_summary_files/CTA.Summary.EODSUM.20261124.csv"
+  },
+  "executable_fills_verified": false,
+  "expected_net_profit_usd": null,
+  "first_monthly_decision_at": "2026-12-01T09:00:00-05:00",
+  "hypothesis": "The pinned archive supplies all frozen names by cutoff and its daily OHLC agrees with a separate chart source; compare NYSE participant opens separately.",
+  "main_revision_reviewed": "99360b5a1f4a421d8c2dcc532231ef12644f5dd1",
+  "market_evaluation": "skipped",
+  "model_training_runs": 0,
+  "new_independent_profit_observations": 0,
+  "nyse_mapping_2026_11_25": {
+    "ASAN": [
+      "N",
+      "C"
+    ],
+    "CHWY": [
+      "N",
+      "C"
+    ],
+    "CRM": [
+      "N",
+      "C"
+    ],
+    "FSLY": [
+      "Q",
+      "C"
+    ],
+    "NET": [
+      "N",
+      "C"
+    ],
+    "NOW": [
+      "N",
+      "C"
+    ],
+    "PINS": [
+      "N",
+      "C"
+    ],
+    "PLTR": [
+      "Q",
+      "C"
+    ],
+    "SNOW": [
+      "N",
+      "C"
+    ],
+    "TWLO": [
+      "N",
+      "C"
+    ],
+    "UBER": [
+      "N",
+      "C"
+    ],
+    "XYZ": [
+      "N",
+      "C"
+    ]
+  },
+  "nyse_mef": {
+    "cohort_notices": [],
+    "events": 12
+  },
+  "opening_price_audit_context": {
+    "discrepancies_by_session_bps": {
+      "2026-11-20": {
+        "NOW": "48.66",
+        "PINS": "-47.20",
+        "TWLO": "60.83",
+        "XYZ": "-27.09"
+      },
+      "2026-11-23": {
+        "CHWY": "-45.00",
+        "CRM": "9.82",
+        "NET": "31.10",
+        "SNOW": "-93.53",
+        "TWLO": "169.87",
+        "UBER": "-24.54"
+      },
+      "2026-11-24": {
+        "CHWY": "-7.64",
+        "NET": "16.00",
+        "SNOW": "-16.03"
+      }
+    },
+    "evidence_role": "Price source diagnostic of overlapping tickers; no independent profit observations",
+    "ticker_sessions_checked": 30,
+    "ticker_sessions_outside_0_0101": 13
+  },
+  "parent_revision": "1f3768ba01994751cabb11564396c63aa567975b",
+  "per_symbol": {
+    "ASAN": {
+      "cta_hlc_minus_pinned_usd": {
+        "close": "0.000000",
+        "high": "0.000000",
+        "low": "0.000000"
+      },
+      "cta_participant_minus_pinned_open_bps": "0.00",
+      "cta_participant_minus_pinned_open_usd": "0.000000",
+      "cta_participant_open_usd": "9.190000",
+      "cta_summary_sequence": "_5469858",
+      "cta_summary_time_label": "_20:00:20.101",
+      "cta_volume_minus_pinned_shares": "-0.232128",
+      "pinned_open_usd": "9.1900",
+      "pinned_volume_shares": 3776125,
+      "yahoo_minus_pinned_ohlc_usd": {
+        "close": "-1.5258789E-7",
+        "high": "-4.57763672E-7",
+        "low": "-1.5258789E-7",
+        "open": "-4.196167E-7"
+      },
+      "yahoo_minus_pinned_volume_shares": -25
+    },
+    "CHWY": {
+      "cta_hlc_minus_pinned_usd": {
+        "close": "0.000000",
+        "high": "0.000000",
+        "low": "0.000000"
+      },
+      "cta_participant_minus_pinned_open_bps": "-7.64",
+      "cta_participant_minus_pinned_open_usd": "-0.015000",
+      "cta_participant_open_usd": "19.620000",
+      "cta_summary_sequence": "_3665364",
+      "cta_summary_time_label": "_20:00:20.46",
+      "cta_volume_minus_pinned_shares": "-0.286619",
+      "pinned_open_usd": "19.6350",
+      "pinned_volume_shares": 8453926,
+      "yahoo_minus_pinned_ohlc_usd": {
+        "close": "4.57763672E-7",
+        "high": "4.57763672E-7",
+        "low": "-4.57763672E-7",
+        "open": "2.28881836E-7"
+      },
+      "yahoo_minus_pinned_volume_shares": -426
+    },
+    "CRM": {
+      "cta_hlc_minus_pinned_usd": {
+        "close": "0.000000",
+        "high": "0.000000",
+        "low": "0.000000"
+      },
+      "cta_participant_minus_pinned_open_bps": "0.00",
+      "cta_participant_minus_pinned_open_usd": "0.000000",
+      "cta_participant_open_usd": "183.890000",
+      "cta_summary_sequence": "_3666882",
+      "cta_summary_time_label": "_20:00:20.95",
+      "cta_volume_minus_pinned_shares": "-0.369867",
+      "pinned_open_usd": "183.8900",
+      "pinned_volume_shares": 8342074,
+      "yahoo_minus_pinned_ohlc_usd": {
+        "close": "-0.00000549316406",
+        "high": "-0.0034981689453",
+        "low": "-6.1035156E-7",
+        "open": "-6.1035156E-7"
+      },
+      "yahoo_minus_pinned_volume_shares": -2274
+    },
+    "FSLY": {
+      "pinned_volume_shares": 3750665,
+      "yahoo_minus_pinned_ohlc_usd": {
+        "close": "1.14440918E-7",
+        "high": "3.81469727E-7",
+        "low": "-4.196167E-7",
+        "open": "3.81469727E-7"
+      },
+      "yahoo_minus_pinned_volume_shares": -3865
+    },
+    "NET": {
+      "cta_hlc_minus_pinned_usd": {
+        "close": "0.000000",
+        "high": "0.000000",
+        "low": "0.000000"
+      },
+      "cta_participant_minus_pinned_open_bps": "16.00",
+      "cta_participant_minus_pinned_open_usd": "0.460000",
+      "cta_participant_open_usd": "287.890000",
+      "cta_summary_sequence": "_4186581",
+      "cta_summary_time_label": "_20:00:20.91",
+      "cta_volume_minus_pinned_shares": "-0.016404",
+      "pinned_open_usd": "287.4300",
+      "pinned_volume_shares": 2069497,
+      "yahoo_minus_pinned_ohlc_usd": {
+        "close": "0.0000085449219",
+        "high": "0.00000732421875",
+        "low": "0.0000109863281",
+        "open": "-0.00000732421875"
+      },
+      "yahoo_minus_pinned_volume_shares": -7997
+    },
+    "NOW": {
+      "cta_hlc_minus_pinned_usd": {
+        "close": "0.000000",
+        "high": "0.000000",
+        "low": "0.000000"
+      },
+      "cta_participant_minus_pinned_open_bps": "0.00",
+      "cta_participant_minus_pinned_open_usd": "0.000000",
+      "cta_participant_open_usd": "89.730000",
+      "cta_summary_sequence": "_4187277",
+      "cta_summary_time_label": "_20:00:20.113",
+      "cta_volume_minus_pinned_shares": "-0.064981",
+      "pinned_open_usd": "89.7300",
+      "pinned_volume_shares": 12695882,
+      "yahoo_minus_pinned_ohlc_usd": {
+        "close": "-0.00000213623047",
+        "high": "-0.00000122070312",
+        "low": "0.00000274658203",
+        "open": "0.0000033569336"
+      },
+      "yahoo_minus_pinned_volume_shares": -13182
+    },
+    "PINS": {
+      "cta_hlc_minus_pinned_usd": {
+        "close": "0.000000",
+        "high": "0.000000",
+        "low": "0.000000"
+      },
+      "cta_participant_minus_pinned_open_bps": "0.00",
+      "cta_participant_minus_pinned_open_usd": "0.000000",
+      "cta_participant_open_usd": "17.070000",
+      "cta_summary_sequence": "_4288755",
+      "cta_summary_time_label": "_20:00:20.91",
+      "cta_volume_minus_pinned_shares": "-0.039718",
+      "pinned_open_usd": "17.0700",
+      "pinned_volume_shares": 26301455,
+      "yahoo_minus_pinned_ohlc_usd": {
+        "close": "0.0000",
+        "high": "-2.28881836E-7",
+        "low": "-2.28881836E-7",
+        "open": "-3.0517578E-7"
+      },
+      "yahoo_minus_pinned_volume_shares": -1255
+    },
+    "PLTR": {
+      "pinned_volume_shares": 20703317,
+      "yahoo_minus_pinned_ohlc_usd": {
+        "close": "-0.00000732421875",
+        "high": "0.00000427246094",
+        "low": "-0.0000048828125",
+        "open": "0.0000048828125"
+      },
+      "yahoo_minus_pinned_volume_shares": -44217
+    },
+    "SNOW": {
+      "cta_hlc_minus_pinned_usd": {
+        "close": "0.000000",
+        "high": "0.000000",
+        "low": "0.000000"
+      },
+      "cta_participant_minus_pinned_open_bps": "-16.03",
+      "cta_participant_minus_pinned_open_usd": "-0.435000",
+      "cta_participant_open_usd": "271.000000",
+      "cta_summary_sequence": "_5010893",
+      "cta_summary_time_label": "_20:00:20.131",
+      "cta_volume_minus_pinned_shares": "-0.094316",
+      "pinned_open_usd": "271.4350",
+      "pinned_volume_shares": 3584524,
+      "yahoo_minus_pinned_ohlc_usd": {
+        "close": "-0.0000036621094",
+        "high": "0.0000",
+        "low": "0.000009765625",
+        "open": "-0.00000244140625"
+      },
+      "yahoo_minus_pinned_volume_shares": -6124
+    },
+    "TWLO": {
+      "cta_hlc_minus_pinned_usd": {
+        "close": "0.000000",
+        "high": "0.000000",
+        "low": "0.000000"
+      },
+      "cta_participant_minus_pinned_open_bps": "0.00",
+      "cta_participant_minus_pinned_open_usd": "0.000000",
+      "cta_participant_open_usd": "181.670000",
+      "cta_summary_sequence": "_4034957",
+      "cta_summary_time_label": "_20:00:20.65",
+      "cta_volume_minus_pinned_shares": "-0.348314",
+      "pinned_open_usd": "181.6700",
+      "pinned_volume_shares": 1214912,
+      "yahoo_minus_pinned_ohlc_usd": {
+        "close": "6.1035156E-7",
+        "high": "0.00000610351562",
+        "low": "-0.0000067138672",
+        "open": "-0.0000018310547"
+      },
+      "yahoo_minus_pinned_volume_shares": -12
+    },
+    "UBER": {
+      "cta_hlc_minus_pinned_usd": {
+        "close": "0.000000",
+        "high": "0.000000",
+        "low": "0.000000"
+      },
+      "cta_participant_minus_pinned_open_bps": "0.00",
+      "cta_participant_minus_pinned_open_usd": "0.000000",
+      "cta_participant_open_usd": "63.500000",
+      "cta_summary_sequence": "_4035183",
+      "cta_summary_time_label": "_20:00:20.72",
+      "cta_volume_minus_pinned_shares": "-0.497156",
+      "pinned_open_usd": "63.5000",
+      "pinned_volume_shares": 16243951,
+      "yahoo_minus_pinned_ohlc_usd": {
+        "close": "-0.00000305175781",
+        "high": "0.0000033569336",
+        "low": "3.0517578E-7",
+        "open": "0.0000"
+      },
+      "yahoo_minus_pinned_volume_shares": -6951
+    },
+    "XYZ": {
+      "cta_hlc_minus_pinned_usd": {
+        "close": "0.000000",
+        "high": "0.000000",
+        "low": "0.000000"
+      },
+      "cta_participant_minus_pinned_open_bps": "0.00",
+      "cta_participant_minus_pinned_open_usd": "0.000000",
+      "cta_participant_open_usd": "72.750000",
+      "cta_summary_sequence": "_3686084",
+      "cta_summary_time_label": "_20:00:20.109",
+      "cta_volume_minus_pinned_shares": "0.326306",
+      "pinned_open_usd": "72.7500",
+      "pinned_volume_shares": 5194304,
+      "yahoo_minus_pinned_ohlc_usd": {
+        "close": "0.0000015258789",
+        "high": "0.00000183105469",
+        "low": "-6.1035156E-7",
+        "open": "0.0000"
+      },
+      "yahoo_minus_pinned_volume_shares": -4404
+    }
+  },
+  "pinned_daily_bars": {
+    "file": "2026-11-24_2026-11-24_0l01s49k39ib2qgn6kffqbhrk8r6t4it.json",
+    "from": "2026-11-24",
+    "partitions": [
+      {
+        "received_at": "2026-11-25T13:03:26.392293+00:00",
+        "sha256": "c6eda2e2317a3566237da65f0065013454eed80bafa9a0d9ee3960d2b0da16e6",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%270l01s49k39ib2qgn6kffqbhrk8r6t4it%27+WHERE+date+IN+%28%272026-11-24%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      }
+    ],
+    "revision": "0l01s49k39ib2qgn6kffqbhrk8r6t4it",
+    "sha256": "ca2a41c45d74949e26ee5bd54097c24241dc27121f021c4d6255985c38d5455d",
+    "through": "2026-11-24"
+  },
+  "pinned_events": {
+    "dividend": [],
+    "split": []
+  },
+  "plan_sha256": "57f0c2d493931460459f85cd9063a14f5818221e5b8331852cd5bda02171ee0d",
+  "prior_packet_hashes_restored": {
+    "2026-11-20": "6c0f928998c68b25a7770fb11942c53b9eefae8dd75b856a925860232cb3be16",
+    "2026-11-23": "19ee63923441ceaa6a8e6a721880fd8f95701297700e0f675d4949ff62bc43c0"
+  },
+  "prior_review_sha256": "7fbd7f072765251311af1c26f9e5724c139959fc1471a9da54b2fffbedd97c81",
+  "schema_version": 1,
+  "sec_catalog_filings": {
+    "ASAN": [],
+    "CHWY": [],
+    "CRM": [],
+    "FSLY": [
+      {
+        "acceptanceDateTime": "2026-11-24T22:13:11.000Z",
+        "accessionNumber": "0001993556-26-000011",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795558388.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-24T22:12:39.000Z",
+        "accessionNumber": "0001517413-26-000386",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795558357.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-24T22:10:37.000Z",
+        "accessionNumber": "0001517413-26-000385",
+        "filingDate": "2026-11-24",
+        "form": "144",
+        "primaryDocument": "xsl144X01/primary_doc.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-24T22:10:24.000Z",
+        "accessionNumber": "0001517413-26-000384",
+        "filingDate": "2026-11-24",
+        "form": "144",
+        "primaryDocument": "xsl144X01/primary_doc.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-24T22:10:00.000Z",
+        "accessionNumber": "0001517413-26-000383",
+        "filingDate": "2026-11-24",
+        "form": "144",
+        "primaryDocument": "xsl144X01/primary_doc.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-24T22:09:43.000Z",
+        "accessionNumber": "0001517413-26-000382",
+        "filingDate": "2026-11-24",
+        "form": "144",
+        "primaryDocument": "xsl144X01/primary_doc.xml"
+      }
+    ],
+    "NET": [
+      {
+        "acceptanceDateTime": "2026-11-24T21:17:43.000Z",
+        "accessionNumber": "0001366574-26-000028",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795555061.xml"
+      }
+    ],
+    "NOW": [],
+    "PINS": [
+      {
+        "acceptanceDateTime": "2026-11-24T21:25:20.000Z",
+        "accessionNumber": "0001921094-26-001248",
+        "filingDate": "2026-11-24",
+        "form": "144",
+        "primaryDocument": "xsl144X01/primary_doc.xml"
+      }
+    ],
+    "PLTR": [
+      {
+        "acceptanceDateTime": "2026-11-25T01:43:01.000Z",
+        "accessionNumber": "0001211060-26-000012",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/form4-11252026_011156.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-25T01:06:56.000Z",
+        "accessionNumber": "0001823923-26-000017",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795568813.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-25T01:06:21.000Z",
+        "accessionNumber": "0001824159-26-000021",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795568778.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-25T01:05:45.000Z",
+        "accessionNumber": "0001823951-26-000013",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795568742.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-25T01:04:41.000Z",
+        "accessionNumber": "0001823951-26-000011",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795568677.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-25T01:03:39.000Z",
+        "accessionNumber": "0001823940-26-000014",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795568616.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-25T01:02:19.000Z",
+        "accessionNumber": "0001705189-26-000019",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795568535.xml"
+      }
+    ],
+    "SNOW": [],
+    "TWLO": [],
+    "UBER": [],
+    "XYZ": [
+      {
+        "acceptanceDateTime": "2026-11-25T00:14:53.000Z",
+        "accessionNumber": "0001628280-26-075839",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795565690.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-25T00:07:07.000Z",
+        "accessionNumber": "0001628280-26-075838",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795565224.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-24T22:55:31.000Z",
+        "accessionNumber": "0001628280-26-075820",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795560928.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-24T22:53:55.000Z",
+        "accessionNumber": "0001628280-26-075818",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795560832.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-24T22:52:10.000Z",
+        "accessionNumber": "0001628280-26-075816",
+        "filingDate": "2026-11-24",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795560727.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-24T21:21:10.000Z",
+        "accessionNumber": "0001950047-26-011483",
+        "filingDate": "2026-11-24",
+        "form": "144",
+        "primaryDocument": "xsl144X01/primary_doc.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-24T21:20:39.000Z",
+        "accessionNumber": "0001950047-26-011482",
+        "filingDate": "2026-11-24",
+        "form": "144",
+        "primaryDocument": "xsl144X01/primary_doc.xml"
+      }
+    ]
+  },
+  "sec_listings": {
+    "ASAN": {
+      "cik": 1477720,
+      "exchange": "NYSE",
+      "name": "Asana, Inc.",
+      "ticker": "ASAN"
+    },
+    "CHWY": {
+      "cik": 1766502,
+      "exchange": "NYSE",
+      "name": "Chewy, Inc.",
+      "ticker": "CHWY"
+    },
+    "CRM": {
+      "cik": 1108524,
+      "exchange": "NYSE",
+      "name": "Salesforce, Inc.",
+      "ticker": "CRM"
+    },
+    "FSLY": {
+      "cik": 1517413,
+      "exchange": "Nasdaq",
+      "name": "Fastly, Inc.",
+      "ticker": "FSLY"
+    },
+    "NET": {
+      "cik": 1477333,
+      "exchange": "NYSE",
+      "name": "Cloudflare, Inc.",
+      "ticker": "NET"
+    },
+    "NOW": {
+      "cik": 1373715,
+      "exchange": "NYSE",
+      "name": "ServiceNow, Inc.",
+      "ticker": "NOW"
+    },
+    "PINS": {
+      "cik": 1506293,
+      "exchange": "NYSE",
+      "name": "PINTEREST, INC.",
+      "ticker": "PINS"
+    },
+    "PLTR": {
+      "cik": 1321655,
+      "exchange": "Nasdaq",
+      "name": "Palantir Technologies Inc.",
+      "ticker": "PLTR"
+    },
+    "SNOW": {
+      "cik": 1640147,
+      "exchange": "NYSE",
+      "name": "Snowflake Inc.",
+      "ticker": "SNOW"
+    },
+    "TWLO": {
+      "cik": 1447669,
+      "exchange": "NYSE",
+      "name": "TWILIO INC",
+      "ticker": "TWLO"
+    },
+    "UBER": {
+      "cik": 1543151,
+      "exchange": "NYSE",
+      "name": "Uber Technologies, Inc",
+      "ticker": "UBER"
+    },
+    "XYZ": {
+      "cik": 1512673,
+      "exchange": "NYSE",
+      "name": "Block, Inc.",
+      "ticker": "XYZ"
+    }
+  },
+  "session": "2026-11-24",
+  "source_receipts": {
+    "ASAN": {
+      "bytes": 1270,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:06.503881+00:00",
+      "sha256": "5bb008b159d5437fe40470b32bb5ab867d44e245860c637685515d67b43b6bdd",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/ASAN?period1=1795496400&period2=1795582800&interval=1d&events=div%2Csplits"
+    },
+    "CHWY": {
+      "bytes": 1291,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:06.501169+00:00",
+      "sha256": "0b74c7647969404a66ab1f568e380993d58c94f83a68e00e62ac8e9c9bda57b4",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/CHWY?period1=1795496400&period2=1795582800&interval=1d&events=div%2Csplits"
+    },
+    "CRM": {
+      "bytes": 1307,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:06.505722+00:00",
+      "sha256": "52054bb9b6ccd5ad9582853704d3006e9e79b7c27d5b79abf20ce61c7cb9cb4b",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/CRM?period1=1795496400&period2=1795582800&interval=1d&events=div%2Csplits"
+    },
+    "FSLY": {
+      "bytes": 1297,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:06.487790+00:00",
+      "sha256": "3145b750c610345af825d46747858f12fc30bb4d09f861ca309dd2f27d5ae96e",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/FSLY?period1=1795496400&period2=1795582800&interval=1d&events=div%2Csplits"
+    },
+    "NET": {
+      "bytes": 1306,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:06.508037+00:00",
+      "sha256": "63747e763cbc411a6e18547dad54d433dad6165ad939c03cf73b47e28ea3e85d",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/NET?period1=1795496400&period2=1795582800&interval=1d&events=div%2Csplits"
+    },
+    "NOW": {
+      "bytes": 1298,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:06.510213+00:00",
+      "sha256": "52fdc59df57fcab30ad67bf0fe652eb921896457d810775f3295ffa2e93c523f",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/NOW?period1=1795496400&period2=1795582800&interval=1d&events=div%2Csplits"
+    },
+    "PINS": {
+      "bytes": 1270,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:06.510426+00:00",
+      "sha256": "0e7180900b13cef708eb03ec7f9d88f7b94374265e4a778c18a3889e4b276ec6",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/PINS?period1=1795496400&period2=1795582800&interval=1d&events=div%2Csplits"
+    },
+    "PLTR": {
+      "bytes": 1333,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:13.141587+00:00",
+      "sha256": "98f90d8b59855f1e79e068758de4599b3b2e5430cd4159baee042bbbe404492e",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/PLTR?period1=1795496400&period2=1795582800&interval=1d&events=div%2Csplits"
+    },
+    "SEC-ASAN": {
+      "bytes": 116249,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:10.573350+00:00",
+      "sha256": "a6b67643a1cfdefe1d36bd3777d15e7b03be8fcb53b001fbca6f5c01e0ea5ab2",
+      "url": "https://data.sec.gov/submissions/CIK0001477720.json"
+    },
+    "SEC-CHWY": {
+      "bytes": 118884,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:10.504315+00:00",
+      "sha256": "124109f522645daf462da61a8bff7f224f1fa41bdb76427adbe05bf1b4153a36",
+      "url": "https://data.sec.gov/submissions/CIK0001766502.json"
+    },
+    "SEC-CRM": {
+      "bytes": 158595,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:14.991952+00:00",
+      "sha256": "b032e26585d9b1d73dac80450c49108bcecdd028ee67e51f23ed9ce4515b14ed",
+      "url": "https://data.sec.gov/submissions/CIK0001108524.json"
+    },
+    "SEC-FSLY": {
+      "bytes": 161110,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:14.984781+00:00",
+      "sha256": "dd8e3626d6e3a86ef025ffe3270342b0c81a0bc6840561601e8340f920ab89bb",
+      "url": "https://data.sec.gov/submissions/CIK0001517413.json"
+    },
+    "SEC-NET": {
+      "bytes": 158264,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:14.975917+00:00",
+      "sha256": "09cd7c19cb1fb67ab7547cd4dcc2ad3286997386903ad8113f02868c0cfd7687",
+      "url": "https://data.sec.gov/submissions/CIK0001477333.json"
+    },
+    "SEC-NOW": {
+      "bytes": 159065,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:14.949644+00:00",
+      "sha256": "ee2143e1981a7439b85e71bcb0ed74a1d5e7a9ecad1f7041b1a452b48fbe4f0f",
+      "url": "https://data.sec.gov/submissions/CIK0001373715.json"
+    },
+    "SEC-PINS": {
+      "bytes": 161001,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:15.036159+00:00",
+      "sha256": "3278b1f0eb5d1e629547cdf9407a6b212a028fe7d225d77d462a38d3ddda4873",
+      "url": "https://data.sec.gov/submissions/CIK0001506293.json"
+    },
+    "SEC-PLTR": {
+      "bytes": 159187,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:15.003943+00:00",
+      "sha256": "d630402d4337f55bd5529e0d0509441d4b0235655a635c51fb5ca2b09f038eb8",
+      "url": "https://data.sec.gov/submissions/CIK0001321655.json"
+    },
+    "SEC-SNOW": {
+      "bytes": 158090,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:14.936087+00:00",
+      "sha256": "9c48f2fd33fc74e68578a65a4d2c0f555c01b76d0ded905e56ccb12b4fd0120d",
+      "url": "https://data.sec.gov/submissions/CIK0001640147.json"
+    },
+    "SEC-TWLO": {
+      "bytes": 161223,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:18.776460+00:00",
+      "sha256": "1d6b268f5ca655fb5efa7ab26203f54ba6b1dd615b2a2447efcf493c5d9e9b83",
+      "url": "https://data.sec.gov/submissions/CIK0001447669.json"
+    },
+    "SEC-UBER": {
+      "bytes": 163611,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:18.756460+00:00",
+      "sha256": "d8eb2e1f46f09e7bec22b4a3f9b1430e3dff972438b207afc8a3e80ef6d872cf",
+      "url": "https://data.sec.gov/submissions/CIK0001543151.json"
+    },
+    "SEC-XYZ": {
+      "bytes": 158514,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:18.888293+00:00",
+      "sha256": "1f04dcf347575099f6dd0ba34a69ba0c389974734b61fb29a9229dd3bd54dfde",
+      "url": "https://data.sec.gov/submissions/CIK0001512673.json"
+    },
+    "SNOW": {
+      "bytes": 1287,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:13.088106+00:00",
+      "sha256": "f5fe106623370e28a2aca13f5e463b759e0a79de030cc3175df872e9c4707929",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/SNOW?period1=1795496400&period2=1795582800&interval=1d&events=div%2Csplits"
+    },
+    "TWLO": {
+      "bytes": 1294,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:13.091287+00:00",
+      "sha256": "16f49fb832682d9618fdf754e6d56019c22db3d4b1ca9aa0d52114aec8db089e",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/TWLO?period1=1795496400&period2=1795582800&interval=1d&events=div%2Csplits"
+    },
+    "UBER": {
+      "bytes": 1297,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:13.088453+00:00",
+      "sha256": "271fea15ac00b01223174818421491073344eb79062015f2f97d8f8f8d39d671",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/UBER?period1=1795496400&period2=1795582800&interval=1d&events=div%2Csplits"
+    },
+    "XYZ": {
+      "bytes": 1272,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:13.093115+00:00",
+      "sha256": "0b4a9e6ca6b84780782fb42bbe1ac8edaacb47002540133a04dc5d1fe0a7018a",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/XYZ?period1=1795496400&period2=1795582800&interval=1d&events=div%2Csplits"
+    },
+    "dividend": {
+      "bytes": 574,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:48.579600+00:00",
+      "sha256": "dff6d9d58446996138eba0f2b0aa74ac313cfe42a12a52acb94e2541c348f7a3",
+      "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+%2A+FROM+dividend+AS+OF+%270l01s49k39ib2qgn6kffqbhrk8r6t4it%27+WHERE+act_symbol+IN+%28%27ASAN%27%2C+%27CHWY%27%2C+%27CRM%27%2C+%27FSLY%27%2C+%27NET%27%2C+%27NOW%27%2C+%27PINS%27%2C+%27PLTR%27%2C+%27SNOW%27%2C+%27TWLO%27%2C+%27UBER%27%2C+%27XYZ%27%29+AND+ex_date+%3D+%272026-11-24%27+ORDER+BY+act_symbol%2Cex_date"
+    },
+    "nyse_mapping": {
+      "bytes": 458452,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:19.270262+00:00",
+      "sha256": "6f5bd2ad7142007370ba157ff04c4b46976625cce5ed44697bfc367c3fea5211",
+      "url": "https://ftp.nyse.com/NYSESymbolMapping/NYSESymbolMapping_20261125.txt"
+    },
+    "nyse_mef": {
+      "bytes": 9499,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:19.096007+00:00",
+      "sha256": "d1ac342bd436715041671bf9873afb82794473af821a36d171e88a6403529cc0",
+      "url": "https://ftp.nyse.com/MEF_Public/mef_public.json"
+    },
+    "sec_listings": {
+      "bytes": 521932,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:03:18.884245+00:00",
+      "sha256": "a4549a73d027584e90490c5b8ff207de3e6a607768c7de416144ef52e6474c84",
+      "url": "https://www.sec.gov/files/company_tickers_exchange.json"
+    },
+    "split": {
+      "bytes": 643,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:05:03.132122+00:00",
+      "sha256": "bcd4b73606feeb7f7247ed154c19ec076ac33198bc3db0707c4f1df88c5e051e",
+      "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+%2A+FROM+split+AS+OF+%270l01s49k39ib2qgn6kffqbhrk8r6t4it%27+WHERE+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+AND+ex_date+BETWEEN+%272026-11-24%27+AND+%272026-11-24%27+ORDER+BY+act_symbol%2Cex_date"
+    },
+    "split_date_only": {
+      "error": "curl: (28) Operation timed out after 24001 milliseconds with 0 bytes received",
+      "exit_code": 28,
+      "observed_at": "2026-11-25T13:05:20.579726+00:00",
+      "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+%2A+FROM+split+AS+OF+%270l01s49k39ib2qgn6kffqbhrk8r6t4it%27+WHERE+ex_date+%3D+%272026-11-24%27+ORDER+BY+act_symbol%2Cex_date"
+    },
+    "split_initial": {
+      "error": "curl: (28) Operation timed out after 14001 milliseconds with 0 bytes received\ncurl: (28) Operation timed out after 14002 milliseconds with 0 bytes received",
+      "exit_code": 28,
+      "observed_at": "2026-11-25T13:04:12.860564+00:00",
+      "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+%2A+FROM+split+AS+OF+%270l01s49k39ib2qgn6kffqbhrk8r6t4it%27+WHERE+act_symbol+IN+%28%27ASAN%27%2C+%27CHWY%27%2C+%27CRM%27%2C+%27FSLY%27%2C+%27NET%27%2C+%27NOW%27%2C+%27PINS%27%2C+%27PLTR%27%2C+%27SNOW%27%2C+%27TWLO%27%2C+%27UBER%27%2C+%27XYZ%27%29+AND+ex_date+%3D+%272026-11-24%27+ORDER+BY+act_symbol%2Cex_date"
+    },
+    "split_range": {
+      "bytes": 643,
+      "exit_code": 0,
+      "observed_at": "2026-11-25T13:05:03.132122+00:00",
+      "sha256": "bcd4b73606feeb7f7247ed154c19ec076ac33198bc3db0707c4f1df88c5e051e",
+      "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+%2A+FROM+split+AS+OF+%270l01s49k39ib2qgn6kffqbhrk8r6t4it%27+WHERE+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+AND+ex_date+BETWEEN+%272026-11-24%27+AND+%272026-11-24%27+ORDER+BY+act_symbol%2Cex_date"
+    }
+  },
+  "spec_sha256": "be9e802eb0a755b078a09862270e2b6941dbffe4b0c0a1c1930597bf3f825741",
+  "strategy_trials": 0,
+  "yahoo_events": {
+    "ASAN": [],
+    "CHWY": [],
+    "CRM": [],
+    "FSLY": [],
+    "NET": [],
+    "NOW": [],
+    "PINS": [],
+    "PLTR": [],
+    "SNOW": [],
+    "TWLO": [],
+    "UBER": [],
+    "XYZ": []
+  }
+}

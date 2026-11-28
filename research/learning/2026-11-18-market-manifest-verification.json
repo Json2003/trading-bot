@@ -1,0 +1,25 @@
+{
+  "audit_date": "2026-11-18",
+  "audit_status": "audit_complete_dataset_blocked",
+  "manifest_sha256": "f5a0cbdd84ec7e45d8b56a0c6732b481e3bec70319dc31f9f6fc1915f9a48c0d",
+  "auditor_sha256": "700f2a03348522037eded34597db9a5ee52d1a1c80f1bf3cd933fb5bf882764e",
+  "verification": {
+    "offline_runs": 2,
+    "byte_identical_replay": true,
+    "raw_file_size_and_sha256_checks": true,
+    "original_sec_filing_reparse_count": 12,
+    "successful_weekday_queries": 307,
+    "whole_table_missing_session_controls": 4,
+    "observed_price_rows_inspected": 3504,
+    "count_reconciliation_assertions_passed": true,
+    "source_compilation_passed": true,
+    "git_diff_whitespace_check_passed": true
+  },
+  "strategy_evaluations": 0,
+  "investment_trials": 0,
+  "training_runs": 0,
+  "unseen_confirmations": 0,
+  "pytest_run_for_this_audit": false,
+  "market_evaluation_status": "skipped_blocked_market_data",
+  "note": "Actual public source-data checks, not a profitability test. Raw data remains outside Git."
+}

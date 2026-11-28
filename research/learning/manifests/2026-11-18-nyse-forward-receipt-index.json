@@ -1,0 +1,208 @@
+{
+  "packet": {
+    "from": "2025-11-03",
+    "head": {
+      "body": "{\"query_execution_status\":\"Success\",\"query_execution_message\":\"\",\"repository_owner\":\"post-no-preference\",\"repository_name\":\"stocks\",\"commit_ref\":\"master\",\"sql_query\":\"SELECT commit_hash,date,message FROM dolt_log LIMIT 1\",\"schema\":[{\"columnName\":\"commit_hash\",\"columnType\":\"text\"},{\"columnName\":\"date\",\"columnType\":\"datetime(3)\"},{\"columnName\":\"message\",\"columnType\":\"text\"}],\"rows\":[{\"commit_hash\":\"f5psmujj89khlc43g5kicsclpd0orhok\",\"date\":\"2026-11-18 05:30:37.757\",\"message\":\"ohlcv 2026-11-17 update\"}]}",
+      "received_at": "2026-11-19T02:10:14.427703+00:00",
+      "sha256": "23a2ad07c25679a1cc682c5f4b709901be589696cc360b22b962ff0de7726f7e",
+      "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+commit_hash%2Cdate%2Cmessage+FROM+dolt_log+LIMIT+1"
+    },
+    "partitions": [
+      {
+        "received_at": "2026-11-19T02:10:21.032294+00:00",
+        "sha256": "32aac870af5961d666b532cd059b63f89a0643e7709e9da66c699df4b3f000a4",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272025-11-03%27%2C%272025-11-04%27%2C%272025-11-05%27%2C%272025-11-06%27%2C%272025-11-07%27%2C%272025-11-10%27%2C%272025-11-11%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:23.914417+00:00",
+        "sha256": "780a9774e2ad7c0f1f5805589c8d8c573a04236a20bada7ad9ff839ff761736e",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272025-11-12%27%2C%272025-11-13%27%2C%272025-11-14%27%2C%272025-11-17%27%2C%272025-11-18%27%2C%272025-11-19%27%2C%272025-11-20%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:23.362700+00:00",
+        "sha256": "8c0c9c122f2e63e28db4723e416c930aa3b4249dfc42aed2694af03408ce344b",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272025-11-21%27%2C%272025-11-24%27%2C%272025-11-25%27%2C%272025-11-26%27%2C%272025-11-28%27%2C%272025-12-01%27%2C%272025-12-02%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:27.587900+00:00",
+        "sha256": "0847ac4128e13f990fb8f1b980ddc581ceb0e40f7810a83a272ebafd8473ad4e",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272025-12-03%27%2C%272025-12-04%27%2C%272025-12-05%27%2C%272025-12-08%27%2C%272025-12-09%27%2C%272025-12-10%27%2C%272025-12-11%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:27.067953+00:00",
+        "sha256": "7bebefaf9d29d5302c71f85107085b2b830acab35e7a5cd2b4a5d71e106d2d2f",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272025-12-12%27%2C%272025-12-15%27%2C%272025-12-16%27%2C%272025-12-17%27%2C%272025-12-18%27%2C%272025-12-19%27%2C%272025-12-22%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:26.089471+00:00",
+        "sha256": "1adab84411e72fc7a19bd9b86bd3f52f26e8acfc0c395a05c9203808dec52bd5",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272025-12-23%27%2C%272025-12-24%27%2C%272025-12-26%27%2C%272025-12-29%27%2C%272025-12-30%27%2C%272025-12-31%27%2C%272026-01-02%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:33.908408+00:00",
+        "sha256": "3516a4ad887f65f2e30e5b8b12fbf602f599986c006259853c3212eeb86c1ecf",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-01-05%27%2C%272026-01-06%27%2C%272026-01-07%27%2C%272026-01-08%27%2C%272026-01-09%27%2C%272026-01-12%27%2C%272026-01-13%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:33.544022+00:00",
+        "sha256": "195fc1c4778b2a43723ee640ed22a860dc9180e43d0c62996424feeb63e3ff0a",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-01-14%27%2C%272026-01-15%27%2C%272026-01-16%27%2C%272026-01-20%27%2C%272026-01-21%27%2C%272026-01-22%27%2C%272026-01-23%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:33.109262+00:00",
+        "sha256": "cc3706afe78950a8f40ed052a4761da4fbded9d9abac30ac5af1d1330b0b4668",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-01-26%27%2C%272026-01-27%27%2C%272026-01-28%27%2C%272026-01-29%27%2C%272026-01-30%27%2C%272026-02-02%27%2C%272026-02-03%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:38.575833+00:00",
+        "sha256": "562b9cda83cbd3f395976843494fa089869882272bcf4f3f5a69e3e3d43de995",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-02-04%27%2C%272026-02-05%27%2C%272026-02-06%27%2C%272026-02-09%27%2C%272026-02-10%27%2C%272026-02-11%27%2C%272026-02-12%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:39.839935+00:00",
+        "sha256": "3bb0079bb4de2390b580bcd69083d87fb5628f7a6e52b7918f79673788abca7a",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-02-13%27%2C%272026-02-17%27%2C%272026-02-18%27%2C%272026-02-19%27%2C%272026-02-20%27%2C%272026-02-23%27%2C%272026-02-24%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:39.731824+00:00",
+        "sha256": "b525be80e653c75c42a5059710f5d262552634b8bc0ada1fae950502125c73b6",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-02-25%27%2C%272026-02-26%27%2C%272026-02-27%27%2C%272026-03-02%27%2C%272026-03-03%27%2C%272026-03-04%27%2C%272026-03-05%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:45.063985+00:00",
+        "sha256": "16f104fa0c238b4a791b9426df24a5adb34a1d4502f6365c511985229871f5b3",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-03-06%27%2C%272026-03-09%27%2C%272026-03-10%27%2C%272026-03-11%27%2C%272026-03-12%27%2C%272026-03-13%27%2C%272026-03-16%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:45.007994+00:00",
+        "sha256": "2dbc2b6cd75fcd7693fbb73974e0e7ceb02429b678985bbb4fcddf50c6c78a5f",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-03-17%27%2C%272026-03-18%27%2C%272026-03-19%27%2C%272026-03-20%27%2C%272026-03-23%27%2C%272026-03-24%27%2C%272026-03-25%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:45.216127+00:00",
+        "sha256": "255afb50839ce2f0e0cb7590761656f165afa0a336a6fc4871ad82ed5b0932ab",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-03-26%27%2C%272026-03-27%27%2C%272026-03-30%27%2C%272026-03-31%27%2C%272026-04-01%27%2C%272026-04-02%27%2C%272026-04-06%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:51.899909+00:00",
+        "sha256": "a57aef36dd2461f00a44e2a54ffb0de81659dd893a174c0d9aca00884c91402a",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-04-07%27%2C%272026-04-08%27%2C%272026-04-09%27%2C%272026-04-10%27%2C%272026-04-13%27%2C%272026-04-14%27%2C%272026-04-15%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:52.279952+00:00",
+        "sha256": "0fd526536938a81c1c065de3ba252f559d7f2ea105a02c036374f2328fc5d647",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-04-16%27%2C%272026-04-17%27%2C%272026-04-20%27%2C%272026-04-21%27%2C%272026-04-22%27%2C%272026-04-23%27%2C%272026-04-24%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:52.423896+00:00",
+        "sha256": "60cef39d03b06a6a0e07c04801e4a79ab989f321be875415901b07e0f358bb36",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-04-27%27%2C%272026-04-28%27%2C%272026-04-29%27%2C%272026-04-30%27%2C%272026-05-01%27%2C%272026-05-04%27%2C%272026-05-05%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:10:59.060103+00:00",
+        "sha256": "a0c32bae6832eed519d81de2cf040b5c33f469f7af57338018538612be24405c",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-05-06%27%2C%272026-05-07%27%2C%272026-05-08%27%2C%272026-05-11%27%2C%272026-05-12%27%2C%272026-05-13%27%2C%272026-05-14%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:01.191942+00:00",
+        "sha256": "81db8b88cb1ed797304f11f9b83a69a2e3400c99edce8ee267a9c64beef4a09f",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-05-15%27%2C%272026-05-18%27%2C%272026-05-19%27%2C%272026-05-20%27%2C%272026-05-21%27%2C%272026-05-22%27%2C%272026-05-26%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:00.024019+00:00",
+        "sha256": "4f8964886a4ea3f64e34d20dfc696b1f0023f04bdae8563defa876725c09cd79",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-05-27%27%2C%272026-05-28%27%2C%272026-05-29%27%2C%272026-06-01%27%2C%272026-06-02%27%2C%272026-06-03%27%2C%272026-06-04%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:08.523806+00:00",
+        "sha256": "24ca2fa6fd6762b66d360ddf64ec636fd81d8a92932da35ddd21b6620a9fa734",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-06-05%27%2C%272026-06-08%27%2C%272026-06-09%27%2C%272026-06-10%27%2C%272026-06-11%27%2C%272026-06-12%27%2C%272026-06-15%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:08.600010+00:00",
+        "sha256": "4b74686162cc2bac4dd3b7446471c635773365ab6f4dcbd789126f693be1ca6a",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-06-16%27%2C%272026-06-17%27%2C%272026-06-18%27%2C%272026-06-22%27%2C%272026-06-23%27%2C%272026-06-24%27%2C%272026-06-25%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:07.627917+00:00",
+        "sha256": "39914f82654c90f8fe4c552254ba9e2d4b9b9292ae688cf6861a8073a3184957",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-06-26%27%2C%272026-06-29%27%2C%272026-06-30%27%2C%272026-07-01%27%2C%272026-07-02%27%2C%272026-07-06%27%2C%272026-07-07%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:15.543985+00:00",
+        "sha256": "345423cf67acf789103d38d7450c270df97bc99952f5fc0ce19a11d6dcaaebc3",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-07-08%27%2C%272026-07-09%27%2C%272026-07-10%27%2C%272026-07-13%27%2C%272026-07-14%27%2C%272026-07-15%27%2C%272026-07-16%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:17.328462+00:00",
+        "sha256": "c33835c480d56a4f9055c420d938096d34389c853c2aa47b8c0ddbbba3caa93e",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-07-17%27%2C%272026-07-20%27%2C%272026-07-21%27%2C%272026-07-22%27%2C%272026-07-23%27%2C%272026-07-24%27%2C%272026-07-27%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:16.667969+00:00",
+        "sha256": "dd012d293544433e7f5778484946d9d59ba79aee35521e7edb6a5065fb32745f",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-07-28%27%2C%272026-07-29%27%2C%272026-07-30%27%2C%272026-07-31%27%2C%272026-08-03%27%2C%272026-08-04%27%2C%272026-08-05%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:23.967970+00:00",
+        "sha256": "52e48ca93ba970ca0e8ead7ef1b46a6e8ded9c90a3c487e367ba6f13969a1d60",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-08-06%27%2C%272026-08-07%27%2C%272026-08-10%27%2C%272026-08-11%27%2C%272026-08-12%27%2C%272026-08-13%27%2C%272026-08-14%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:24.535898+00:00",
+        "sha256": "6aba2c6fbec655dfa04482b0282b4235ee5687292511335647d444c8f752b52c",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-08-17%27%2C%272026-08-18%27%2C%272026-08-19%27%2C%272026-08-20%27%2C%272026-08-21%27%2C%272026-08-24%27%2C%272026-08-25%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:24.139777+00:00",
+        "sha256": "e32b6660d8e6047d96f03e537bfe6da8d9a837af24802fafb3e74304a8543bcb",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-08-26%27%2C%272026-08-27%27%2C%272026-08-28%27%2C%272026-08-31%27%2C%272026-09-01%27%2C%272026-09-02%27%2C%272026-09-03%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:30.931943+00:00",
+        "sha256": "a5b90833b70c1979aa8522ad2eafcf97574e9c0c8343d0d1e7ec9881173b3495",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-09-04%27%2C%272026-09-08%27%2C%272026-09-09%27%2C%272026-09-10%27%2C%272026-09-11%27%2C%272026-09-14%27%2C%272026-09-15%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:30.559718+00:00",
+        "sha256": "7497919d78a60db91d37cc9f2cc5ccaa66c893c516b0300295b1fdbcc3325ce0",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-09-16%27%2C%272026-09-17%27%2C%272026-09-18%27%2C%272026-09-21%27%2C%272026-09-22%27%2C%272026-09-23%27%2C%272026-09-24%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:30.531802+00:00",
+        "sha256": "c8698fda2e7fb2438855d4c5c8392148288f3557500592a45ba153be4280b2c7",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-09-25%27%2C%272026-09-28%27%2C%272026-09-29%27%2C%272026-09-30%27%2C%272026-10-01%27%2C%272026-10-02%27%2C%272026-10-05%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:35.147949+00:00",
+        "sha256": "4d451910b9ce76900a1eef22e615af0149695fa188870077ec9db88d79f412d9",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-10-06%27%2C%272026-10-07%27%2C%272026-10-08%27%2C%272026-10-09%27%2C%272026-10-12%27%2C%272026-10-13%27%2C%272026-10-14%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:36.472058+00:00",
+        "sha256": "4b3f5204a4c112cf41aa9144aa17400a7c180b5ae70219ca75f404cafc39fe50",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-10-15%27%2C%272026-10-16%27%2C%272026-10-19%27%2C%272026-10-20%27%2C%272026-10-21%27%2C%272026-10-22%27%2C%272026-10-23%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:34.544001+00:00",
+        "sha256": "0fbade1a18616f80bb0a79c071f18636e1603f8cc4eb7bf501ca553ea3ace706",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-10-26%27%2C%272026-10-27%27%2C%272026-10-28%27%2C%272026-10-29%27%2C%272026-10-30%27%2C%272026-11-02%27%2C%272026-11-03%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:38.340247+00:00",
+        "sha256": "d251ff090c8e10724a1db53f72ded6a2003e96087ed0d3a8ff181e73eb6afe0a",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-11-04%27%2C%272026-11-05%27%2C%272026-11-06%27%2C%272026-11-09%27%2C%272026-11-10%27%2C%272026-11-11%27%2C%272026-11-12%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      },
+      {
+        "received_at": "2026-11-19T02:11:38.295814+00:00",
+        "sha256": "811042bcbfaf030229c8b77649c6c536c2f27cc23646a3c07112105e4f3023e6",
+        "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+act_symbol%2Cdate%2Copen%2Chigh%2Clow%2Cclose%2Cvolume+FROM+ohlcv+AS+OF+%27f5psmujj89khlc43g5kicsclpd0orhok%27+WHERE+date+IN+%28%272026-11-13%27%2C%272026-11-16%27%2C%272026-11-17%27%29+AND+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+ORDER+BY+date%2Cact_symbol"
+      }
+    ],
+    "plan_sha256": "57f0c2d493931460459f85cd9063a14f5818221e5b8331852cd5bda02171ee0d",
+    "revision": "f5psmujj89khlc43g5kicsclpd0orhok",
+    "schema_version": 1,
+    "through": "2026-11-17"
+  },
+  "packet_sha256": "cd32b96cda5d3b8c1a18990ee838c8b0a6e8409b3def9218ecbc733e190be673"
+}

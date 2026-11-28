@@ -1,0 +1,9 @@
+# November 19 forward-session reconciliation
+
+The [pinned November 19 capture](../learning/manifests/2026-11-20-nyse-forward-receipt-index.json) contained all twelve expected daily bars. The actual receipt was November 20 at 04:57:41 Pacific, about 62 minutes ahead of the 06:00 Pacific data cutoff used by the study. November 19 is a warmup session. The first ranking remains December 1. A separate restore matched the original capture byte for byte.
+
+Comparison against the November 19 afternoon Yahoo snapshot found five OHLC differences above $0.0101 and one volume difference above 1%. The OHLC differences were CHWY and PINS highs, SNOW low, and the FSLY and PLTR opens. The NOW volume difference also cleared after requerying the six symbols. All 48 OHLC fields, including 40 for eligible names, now agree within tolerance. Both observed comparison snapshots retain timestamps and hashes. This experiment observed that the secondary history can change after the close. The source of the revisions remains unverified. The pinned archive still supplies the normalized replay bars. [Comparison and reviewed input records](../learning/manifests/2026-11-20-nyse-forward-input-review.json)
+
+The scoped review extends listings and corporate actions through November 19. It rehashed the 17 prior November 19 SEC, exchange and directory responses, and confirmed zero applicable dividend/split rows in the new pinned revision and separate history. The exchange notice snapshot covered recent notices. Earlier class identities and five reviewed warmup events were carried forward.
+
+Preparation checked 264 closed sessions and 2,640 eligible signal rows with zero missing completed-session inputs. The forward comparison window and its action/membership reviews remain incomplete. No strategy trial or profit observation was created. The timing and revision evidence improves readiness for both arms. [Verification record](../learning/2026-11-20-nyse-forward-verification.json)

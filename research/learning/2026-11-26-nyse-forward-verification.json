@@ -1,0 +1,704 @@
+{
+  "assessed_at": "2026-11-26T12:58:43.339073+00:00",
+  "assessment_cutoff": "2026-11-27T09:00:00-05:00",
+  "confirmed_replay_review_through": "2026-11-24",
+  "crosscheck_counts": {
+    "cta_consolidated_hlc_exact": null,
+    "cta_consolidated_hlc_within_0_0101_of_yahoo": 30,
+    "cta_participant_open_differences_from_yahoo": 2,
+    "eligible_rows": 10,
+    "ohlc_agreement_within_0_0101": null,
+    "pinned_rows": 0,
+    "yahoo_volume_outside_one_percent": null
+  },
+  "cta": {
+    "bytes": 51859252,
+    "http_response_at": "2026-11-26T12:56:24Z",
+    "last_modified_http_utc": "2026-11-26T03:45:44Z",
+    "message_counts": {
+      "FractionalConsolidatedEODSummary": 30544,
+      "FractionalParticipantEODSummary": 356816,
+      "total 387360": 1
+    },
+    "preamble": "Wed Nov 25 22:45:21 EDT 2026 prod",
+    "rows": 387360,
+    "sha256": "d979522162bc50413aa4bb95a03e2e0a1faf0c3eb59a9331798211bc455b88ec",
+    "url": "https://ftp.nyse.com/cts_summary_files/CTA.Summary.EODSUM.20261125.csv"
+  },
+  "executable_fills_verified": false,
+  "expected_net_profit_usd": null,
+  "hypothesis": "Pinned daily bars are available by cutoff and OHLC matches a second chart source; compare CTA venue opens separately.",
+  "local_preparation": {
+    "eligible_bars_checked": 2640,
+    "first_decision_at": "2026-12-01T09:00:00-05:00",
+    "issues": [
+      "completed_session_bars_missing",
+      "forward_window_incomplete",
+      "corporate_action_review_incomplete",
+      "membership_review_incomplete"
+    ],
+    "last_contiguous_session": "2026-11-19",
+    "missing_count": 40,
+    "status": "awaiting_market_data"
+  },
+  "local_preparation_sha256": "b80bd0c87e314ce3a0b68d440c4c89c13f99071abcb10ca06f030d74c1d3e77f",
+  "main_revision_reviewed": "8110ef6e6d7998b2eb8ca161c3667ef8c716300a",
+  "market_evaluation": "skipped",
+  "model_training_runs": 0,
+  "new_independent_profit_observations": 0,
+  "nyse_mappings": {
+    "nyse_mapping_27": {
+      "ASAN": [
+        "N",
+        "C"
+      ],
+      "CHWY": [
+        "N",
+        "C"
+      ],
+      "CRM": [
+        "N",
+        "C"
+      ],
+      "FSLY": [
+        "Q",
+        "C"
+      ],
+      "NET": [
+        "N",
+        "C"
+      ],
+      "NOW": [
+        "N",
+        "C"
+      ],
+      "PINS": [
+        "N",
+        "C"
+      ],
+      "PLTR": [
+        "Q",
+        "C"
+      ],
+      "SNOW": [
+        "N",
+        "C"
+      ],
+      "TWLO": [
+        "N",
+        "C"
+      ],
+      "UBER": [
+        "N",
+        "C"
+      ],
+      "XYZ": [
+        "N",
+        "C"
+      ]
+    }
+  },
+  "nyse_mef": {
+    "cohort_notices": [],
+    "events": 12
+  },
+  "per_symbol": {
+    "ASAN": {
+      "cta_hlc_minus_yahoo_usd": {
+        "close": "4.57763672E-7",
+        "high": "-2.28881836E-7",
+        "low": "3.8146973E-8"
+      },
+      "cta_participant_minus_yahoo_open_bps": "-0.00",
+      "cta_participant_minus_yahoo_open_usd": "-2.28881836E-7",
+      "cta_participant_open_usd": "9.260000",
+      "cta_summary_sequence": "_5911718",
+      "cta_summary_time_label": "_20:00:20.102",
+      "cta_volume_minus_yahoo_shares": "1778.322474",
+      "yahoo_ohlc_usd": {
+        "close": "9.729999542236328",
+        "high": "9.885000228881836",
+        "low": "9.039999961853027",
+        "open": "9.260000228881836"
+      },
+      "yahoo_volume_shares": 4234600
+    },
+    "CHWY": {
+      "cta_hlc_minus_yahoo_usd": {
+        "close": "6.86645508E-7",
+        "high": "5.34057617E-7",
+        "low": "0.00040015258789"
+      },
+      "cta_participant_minus_yahoo_open_bps": "0.00",
+      "cta_participant_minus_yahoo_open_usd": "0.000000",
+      "cta_participant_open_usd": "19.500000",
+      "cta_summary_sequence": "_4111017",
+      "cta_summary_time_label": "_20:00:20.46",
+      "cta_volume_minus_yahoo_shares": "2537.513865",
+      "yahoo_ohlc_usd": {
+        "close": "20.469999313354492",
+        "high": "20.559999465942383",
+        "low": "19.15999984741211",
+        "open": "19.5"
+      },
+      "yahoo_volume_shares": 8208200
+    },
+    "CRM": {
+      "cta_hlc_minus_yahoo_usd": {
+        "close": "-0.0000067138672",
+        "high": "-0.0000048828125",
+        "low": "0.0045030517578"
+      },
+      "cta_participant_minus_yahoo_open_bps": "-0.00",
+      "cta_participant_minus_yahoo_open_usd": "-6.1035156E-7",
+      "cta_participant_open_usd": "190.360000",
+      "cta_summary_sequence": "_4112536",
+      "cta_summary_time_label": "_20:00:20.95",
+      "cta_volume_minus_yahoo_shares": "1901.183800",
+      "yahoo_ohlc_usd": {
+        "close": "197.2100067138672",
+        "high": "199.6300048828125",
+        "low": "188.1999969482422",
+        "open": "190.36000061035156"
+      },
+      "yahoo_volume_shares": 6734500
+    },
+    "FSLY": {
+      "yahoo_ohlc_usd": {
+        "close": "15.739999771118164",
+        "high": "15.9399995803833",
+        "low": "14.28499984741211",
+        "open": "14.979999542236328"
+      },
+      "yahoo_volume_shares": 4757800
+    },
+    "NET": {
+      "cta_hlc_minus_yahoo_usd": {
+        "close": "0.00001220703125",
+        "high": "0.000009765625",
+        "low": "0.000009765625"
+      },
+      "cta_participant_minus_yahoo_open_bps": "3.27",
+      "cta_participant_minus_yahoo_open_usd": "0.089990234375",
+      "cta_participant_open_usd": "275.600000",
+      "cta_summary_sequence": "_4312756",
+      "cta_summary_time_label": "_20:00:20.91",
+      "cta_volume_minus_yahoo_shares": "2916.180023",
+      "yahoo_ohlc_usd": {
+        "close": "283.29998779296875",
+        "high": "284.489990234375",
+        "low": "265.739990234375",
+        "open": "275.510009765625"
+      },
+      "yahoo_volume_shares": 2557400
+    },
+    "NOW": {
+      "cta_hlc_minus_yahoo_usd": {
+        "close": "-0.00000366210938",
+        "high": "0.00000244140625",
+        "low": "0.0000015258789"
+      },
+      "cta_participant_minus_yahoo_open_bps": "-0.00",
+      "cta_participant_minus_yahoo_open_usd": "-0.00000244140625",
+      "cta_participant_open_usd": "89.190000",
+      "cta_summary_sequence": "_4313452",
+      "cta_summary_time_label": "_20:00:20.113",
+      "cta_volume_minus_yahoo_shares": "9606.579721",
+      "yahoo_ohlc_usd": {
+        "close": "92.16000366210938",
+        "high": "92.80999755859375",
+        "low": "86.8499984741211",
+        "open": "89.19000244140625"
+      },
+      "yahoo_volume_shares": 15479100
+    },
+    "PINS": {
+      "cta_hlc_minus_yahoo_usd": {
+        "close": "9.15527344E-7",
+        "high": "-1.5258789E-7",
+        "low": "7.62939453E-7"
+      },
+      "cta_participant_minus_yahoo_open_bps": "-0.00",
+      "cta_participant_minus_yahoo_open_usd": "-7.6293945E-8",
+      "cta_participant_open_usd": "18.170000",
+      "cta_summary_sequence": "_4670354",
+      "cta_summary_time_label": "_20:00:20.91",
+      "cta_volume_minus_yahoo_shares": "19120.101784",
+      "yahoo_ohlc_usd": {
+        "close": "19.709999084472656",
+        "high": "19.84000015258789",
+        "low": "18.049999237060547",
+        "open": "18.170000076293945"
+      },
+      "yahoo_volume_shares": 21083200
+    },
+    "PLTR": {
+      "yahoo_ohlc_usd": {
+        "close": "163.58999633789062",
+        "high": "164.75",
+        "low": "151.50999450683594",
+        "open": "154.22000122070312"
+      },
+      "yahoo_volume_shares": 21407000
+    },
+    "SNOW": {
+      "cta_hlc_minus_yahoo_usd": {
+        "close": "-0.0000012207031",
+        "high": "-0.00001220703125",
+        "low": "0.0001981689453"
+      },
+      "cta_participant_minus_yahoo_open_bps": "24.68",
+      "cta_participant_minus_yahoo_open_usd": "0.6400146484375",
+      "cta_participant_open_usd": "260.000000",
+      "cta_summary_sequence": "_5602427",
+      "cta_summary_time_label": "_20:00:20.131",
+      "cta_volume_minus_yahoo_shares": "2591.645015",
+      "yahoo_ohlc_usd": {
+        "close": "267.7200012207031",
+        "high": "268.70001220703125",
+        "low": "251.0800018310547",
+        "open": "259.3599853515625"
+      },
+      "yahoo_volume_shares": 3711100
+    },
+    "TWLO": {
+      "cta_hlc_minus_yahoo_usd": {
+        "close": "0.0000067138672",
+        "high": "0.0000067138672",
+        "low": "0.00000732421875"
+      },
+      "cta_participant_minus_yahoo_open_bps": "-0.00",
+      "cta_participant_minus_yahoo_open_usd": "-0.00000244140625",
+      "cta_participant_open_usd": "173.940000",
+      "cta_summary_sequence": "_4390268",
+      "cta_summary_time_label": "_20:00:20.65",
+      "cta_volume_minus_yahoo_shares": "602.029759",
+      "yahoo_ohlc_usd": {
+        "close": "180.7899932861328",
+        "high": "181.4149932861328",
+        "low": "170.42999267578125",
+        "open": "173.94000244140625"
+      },
+      "yahoo_volume_shares": 1882600
+    },
+    "UBER": {
+      "cta_hlc_minus_yahoo_usd": {
+        "close": "0.0000015258789",
+        "high": "-0.0000033569336",
+        "low": "3.0517578E-7"
+      },
+      "cta_participant_minus_yahoo_open_bps": "0.00",
+      "cta_participant_minus_yahoo_open_usd": "0.000000",
+      "cta_participant_open_usd": "64.000000",
+      "cta_summary_sequence": "_4390501",
+      "cta_summary_time_label": "_20:00:20.72",
+      "cta_volume_minus_yahoo_shares": "10411.120792",
+      "yahoo_ohlc_usd": {
+        "close": "66.3499984741211",
+        "high": "66.9800033569336",
+        "low": "63.56999969482422",
+        "open": "64.0"
+      },
+      "yahoo_volume_shares": 19832100
+    },
+    "XYZ": {
+      "cta_hlc_minus_yahoo_usd": {
+        "close": "0.0000015258789",
+        "high": "6.1035156E-7",
+        "low": "0.0000015258789"
+      },
+      "cta_participant_minus_yahoo_open_bps": "-0.00",
+      "cta_participant_minus_yahoo_open_usd": "-0.0000015258789",
+      "cta_participant_open_usd": "72.900000",
+      "cta_summary_sequence": "_3879887",
+      "cta_summary_time_label": "_20:00:20.109",
+      "cta_volume_minus_yahoo_shares": "4341.803367",
+      "yahoo_ohlc_usd": {
+        "close": "76.0999984741211",
+        "high": "76.63999938964844",
+        "low": "71.3499984741211",
+        "open": "72.9000015258789"
+      },
+      "yahoo_volume_shares": 4734200
+    }
+  },
+  "pinned_daily_bars": null,
+  "pinned_events": {
+    "dividend": null,
+    "split": null
+  },
+  "pinned_source_status": {
+    "archived_restore_timeouts": {
+      "2026-11-20": {
+        "packet_sha256": "6c0f928998c68b25a7770fb11942c53b9eefae8dd75b856a925860232cb3be16",
+        "receipt_index": "manifests/2026-11-21-nyse-forward-receipt-index.json",
+        "revision": "aef7n6a07m0r9tn7nrr0gfsjpstfdhr3",
+        "status": "timeout"
+      },
+      "2026-11-23": {
+        "packet_sha256": "19ee63923441ceaa6a8e6a721880fd8f95701297700e0f675d4949ff62bc43c0",
+        "receipt_index": "manifests/2026-11-24-nyse-forward-receipt-index.json",
+        "revision": "njs8j85h7atjqje4ldfu4c4lillpka3t",
+        "status": "timeout"
+      },
+      "2026-11-24": {
+        "packet_sha256": "ca2a41c45d74949e26ee5bd54097c24241dc27121f021c4d6255985c38d5455d",
+        "receipt_index": "manifests/2026-11-25-nyse-forward-receipt-index.json",
+        "revision": "0l01s49k39ib2qgn6kffqbhrk8r6t4it",
+        "status": "timeout"
+      }
+    },
+    "direct_head_timeout_seconds": 22,
+    "head_url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+commit_hash%2Cdate%2Cmessage+FROM+dolt_log+LIMIT+1",
+    "new_capture_attempts": [
+      {
+        "expected_profit": null,
+        "reason": "The read operation timed out",
+        "status": "blocked_market_data",
+        "strategy_trials": 0
+      },
+      {
+        "expected_profit": null,
+        "reason": "The read operation timed out",
+        "status": "blocked_market_data",
+        "strategy_trials": 0
+      }
+    ]
+  },
+  "plan_sha256": "57f0c2d493931460459f85cd9063a14f5818221e5b8331852cd5bda02171ee0d",
+  "previously_verified_through": "2026-11-24",
+  "prior_review_sha256": "d6eefb2b3f48d87e4978d38b9861c995fbc12131e815c687c31d04b3ac8bf89f",
+  "proposed_trades": null,
+  "research_revision": "de014bc1cf1fc407700b4b4826f30608d2cda717",
+  "schema_version": 1,
+  "sec_catalog_filings": {
+    "ASAN": [],
+    "CHWY": [],
+    "CRM": [],
+    "FSLY": [],
+    "NET": [],
+    "NOW": [],
+    "PINS": [
+      {
+        "acceptanceDateTime": "2026-11-25T21:11:49.000Z",
+        "accessionNumber": "0001921094-26-001251",
+        "filingDate": "2026-11-25",
+        "form": "144",
+        "primaryDocument": "xsl144X01/primary_doc.xml"
+      },
+      {
+        "acceptanceDateTime": "2026-11-25T21:08:08.000Z",
+        "accessionNumber": "0001506293-26-000160",
+        "filingDate": "2026-11-25",
+        "form": "4",
+        "primaryDocument": "xslF345X06/wk-form4_1795640885.xml"
+      }
+    ],
+    "PLTR": [],
+    "SNOW": [],
+    "TWLO": [],
+    "UBER": [],
+    "XYZ": []
+  },
+  "sec_listings": {
+    "ASAN": {
+      "cik": 1477720,
+      "exchange": "NYSE",
+      "name": "Asana, Inc.",
+      "ticker": "ASAN"
+    },
+    "CHWY": {
+      "cik": 1766502,
+      "exchange": "NYSE",
+      "name": "Chewy, Inc.",
+      "ticker": "CHWY"
+    },
+    "CRM": {
+      "cik": 1108524,
+      "exchange": "NYSE",
+      "name": "Salesforce, Inc.",
+      "ticker": "CRM"
+    },
+    "FSLY": {
+      "cik": 1517413,
+      "exchange": "Nasdaq",
+      "name": "Fastly, Inc.",
+      "ticker": "FSLY"
+    },
+    "NET": {
+      "cik": 1477333,
+      "exchange": "NYSE",
+      "name": "Cloudflare, Inc.",
+      "ticker": "NET"
+    },
+    "NOW": {
+      "cik": 1373715,
+      "exchange": "NYSE",
+      "name": "ServiceNow, Inc.",
+      "ticker": "NOW"
+    },
+    "PINS": {
+      "cik": 1506293,
+      "exchange": "NYSE",
+      "name": "PINTEREST, INC.",
+      "ticker": "PINS"
+    },
+    "PLTR": {
+      "cik": 1321655,
+      "exchange": "Nasdaq",
+      "name": "Palantir Technologies Inc.",
+      "ticker": "PLTR"
+    },
+    "SNOW": {
+      "cik": 1640147,
+      "exchange": "NYSE",
+      "name": "Snowflake Inc.",
+      "ticker": "SNOW"
+    },
+    "TWLO": {
+      "cik": 1447669,
+      "exchange": "NYSE",
+      "name": "TWILIO INC",
+      "ticker": "TWLO"
+    },
+    "UBER": {
+      "cik": 1543151,
+      "exchange": "NYSE",
+      "name": "Uber Technologies, Inc",
+      "ticker": "UBER"
+    },
+    "XYZ": {
+      "cik": 1512673,
+      "exchange": "NYSE",
+      "name": "Block, Inc.",
+      "ticker": "XYZ"
+    }
+  },
+  "session": "2026-11-25",
+  "source_receipts": {
+    "ASAN": {
+      "bytes": 1280,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:52.677724+00:00",
+      "sha256": "61285c1b3f7b1f56a736a4b3a7086cba534d9985d610827e80f4ffdc4eee53e8",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/ASAN?period1=1795582800&period2=1795669200&interval=1d&events=div%2Csplits"
+    },
+    "CHWY": {
+      "bytes": 1273,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:52.702190+00:00",
+      "sha256": "31921e9fa3da61d751843e63a4ed54579e5fadce551c9249274f1f9e0bbbef9c",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/CHWY?period1=1795582800&period2=1795669200&interval=1d&events=div%2Csplits"
+    },
+    "CRM": {
+      "bytes": 1302,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:52.708769+00:00",
+      "sha256": "c464df38d53736712b33c94bb0662d87ca0abf69f8f6f9f79bbffd3e2fe095d8",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/CRM?period1=1795582800&period2=1795669200&interval=1d&events=div%2Csplits"
+    },
+    "FSLY": {
+      "bytes": 1292,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:52.701339+00:00",
+      "sha256": "14c49681f68a480ca5d2ace5c35fdb5c7649586fcbec655e911d520507f45421",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/FSLY?period1=1795582800&period2=1795669200&interval=1d&events=div%2Csplits"
+    },
+    "NET": {
+      "bytes": 1298,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:52.701973+00:00",
+      "sha256": "413b59b3a6b25cbc3eba20f98211609887ececa21cf6f7f1fa73a036c349dc59",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/NET?period1=1795582800&period2=1795669200&interval=1d&events=div%2Csplits"
+    },
+    "NOW": {
+      "bytes": 1296,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:52.673872+00:00",
+      "sha256": "b2b238c70e8c167b53960531cb23b84b827069eb978c7b464ab6fdce57e854e3",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/NOW?period1=1795582800&period2=1795669200&interval=1d&events=div%2Csplits"
+    },
+    "PINS": {
+      "bytes": 1297,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:52.698051+00:00",
+      "sha256": "b8648fbbe5cc2bb585c1d9317065b8ea3bf2ccf52fab18daaaeae0cf668a1ff1",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/PINS?period1=1795582800&period2=1795669200&interval=1d&events=div%2Csplits"
+    },
+    "PLTR": {
+      "bytes": 1320,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:52.702737+00:00",
+      "sha256": "75bf1667d06b4a97d3bacafdb28a058c5a2106dca3128858690cf6eebe9b288c",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/PLTR?period1=1795582800&period2=1795669200&interval=1d&events=div%2Csplits"
+    },
+    "SEC-ASAN": {
+      "bytes": 116249,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:56.323644+00:00",
+      "sha256": "a6b67643a1cfdefe1d36bd3777d15e7b03be8fcb53b001fbca6f5c01e0ea5ab2",
+      "url": "https://data.sec.gov/submissions/CIK0001477720.json"
+    },
+    "SEC-CHWY": {
+      "bytes": 118884,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:56.370827+00:00",
+      "sha256": "124109f522645daf462da61a8bff7f224f1fa41bdb76427adbe05bf1b4153a36",
+      "url": "https://data.sec.gov/submissions/CIK0001766502.json"
+    },
+    "SEC-CRM": {
+      "bytes": 158595,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:56.362793+00:00",
+      "sha256": "b032e26585d9b1d73dac80450c49108bcecdd028ee67e51f23ed9ce4515b14ed",
+      "url": "https://data.sec.gov/submissions/CIK0001108524.json"
+    },
+    "SEC-FSLY": {
+      "bytes": 161110,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:56.402410+00:00",
+      "sha256": "dd8e3626d6e3a86ef025ffe3270342b0c81a0bc6840561601e8340f920ab89bb",
+      "url": "https://data.sec.gov/submissions/CIK0001517413.json"
+    },
+    "SEC-NET": {
+      "bytes": 158111,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:57:00.384234+00:00",
+      "sha256": "a31913e1e5dadaefc35cd24893321881c6f835eacb6246870e614cedf66d9aea",
+      "url": "https://data.sec.gov/submissions/CIK0001477333.json"
+    },
+    "SEC-NOW": {
+      "bytes": 159065,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:57:00.436049+00:00",
+      "sha256": "ee2143e1981a7439b85e71bcb0ed74a1d5e7a9ecad1f7041b1a452b48fbe4f0f",
+      "url": "https://data.sec.gov/submissions/CIK0001373715.json"
+    },
+    "SEC-PINS": {
+      "bytes": 161308,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:57:00.439617+00:00",
+      "sha256": "fe9b63bcbddd48655bfe06218ec62557e953a844475e3106f903a2209b402392",
+      "url": "https://data.sec.gov/submissions/CIK0001506293.json"
+    },
+    "SEC-PLTR": {
+      "bytes": 159187,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:57:00.385863+00:00",
+      "sha256": "d630402d4337f55bd5529e0d0509441d4b0235655a635c51fb5ca2b09f038eb8",
+      "url": "https://data.sec.gov/submissions/CIK0001321655.json"
+    },
+    "SEC-SNOW": {
+      "bytes": 158090,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:57:00.431400+00:00",
+      "sha256": "9c48f2fd33fc74e68578a65a4d2c0f555c01b76d0ded905e56ccb12b4fd0120d",
+      "url": "https://data.sec.gov/submissions/CIK0001640147.json"
+    },
+    "SEC-TWLO": {
+      "bytes": 161223,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:57:00.444881+00:00",
+      "sha256": "1d6b268f5ca655fb5efa7ab26203f54ba6b1dd615b2a2447efcf493c5d9e9b83",
+      "url": "https://data.sec.gov/submissions/CIK0001447669.json"
+    },
+    "SEC-UBER": {
+      "bytes": 163611,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:57:00.444626+00:00",
+      "sha256": "d8eb2e1f46f09e7bec22b4a3f9b1430e3dff972438b207afc8a3e80ef6d872cf",
+      "url": "https://data.sec.gov/submissions/CIK0001543151.json"
+    },
+    "SEC-XYZ": {
+      "bytes": 158514,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:57:00.387502+00:00",
+      "sha256": "b411afd15a5c980a3880d9316a8e86b18305ba052d1b2e184f1044798678e47e",
+      "url": "https://data.sec.gov/submissions/CIK0001512673.json"
+    },
+    "SNOW": {
+      "bytes": 1297,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:56.672466+00:00",
+      "sha256": "ec21f6b98238a633110af3bcbf910a2fa934d6ce18f4876f56e6a24b37227760",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/SNOW?period1=1795582800&period2=1795669200&interval=1d&events=div%2Csplits"
+    },
+    "TWLO": {
+      "bytes": 1292,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:56.634607+00:00",
+      "sha256": "1b3ce416c4fe552c6bff4f01741008fdac7a0fd7577af5ac8d49d30066ca8958",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/TWLO?period1=1795582800&period2=1795669200&interval=1d&events=div%2Csplits"
+    },
+    "UBER": {
+      "bytes": 1292,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:56.583564+00:00",
+      "sha256": "d40ba9053b7f745c7565e36a1d9f4c4538f19ac3e8adebae794ba5a37799a352",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/UBER?period1=1795582800&period2=1795669200&interval=1d&events=div%2Csplits"
+    },
+    "XYZ": {
+      "bytes": 1277,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:56:56.633706+00:00",
+      "sha256": "0c415abc9f6455d56e9bc3e1dda94dda2808be235b596af4006280cfa975cb33",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/XYZ?period1=1795582800&period2=1795669200&interval=1d&events=div%2Csplits"
+    },
+    "nasdaq_listed": {
+      "bytes": 348016,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:57:04.651144+00:00",
+      "sha256": "e2fe150f3713d15128e121e52fa7c8827e6e0af3854c7d9af840baf3851cfae7",
+      "url": "https://www.nasdaqtrader.com/dynamic/symdir/nasdaqlisted.txt"
+    },
+    "nyse_mapping_25": {
+      "error": "curl: (22) The requested URL returned error: 404",
+      "exit_code": 22,
+      "observed_at": "2026-11-26T12:57:05.175464+00:00",
+      "url": "https://ftp.nyse.com/NYSESymbolMapping/NYSESymbolMapping_20261125.txt"
+    },
+    "nyse_mapping_26": {
+      "error": "curl: (22) The requested URL returned error: 404",
+      "exit_code": 22,
+      "observed_at": "2026-11-26T12:57:05.011273+00:00",
+      "url": "https://ftp.nyse.com/NYSESymbolMapping/NYSESymbolMapping_20261126.txt"
+    },
+    "nyse_mapping_27": {
+      "bytes": 458419,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:57:05.679418+00:00",
+      "sha256": "d080e545274784884d51bc010b509f4e331460607676cb91e8a6b53d22280856",
+      "url": "https://ftp.nyse.com/NYSESymbolMapping/NYSESymbolMapping_20261127.txt"
+    },
+    "nyse_mef": {
+      "bytes": 9179,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:57:05.042466+00:00",
+      "sha256": "c7ccadcbe300967a02a9302e620a2c29c68bdaec2c9ff93ebf9e9074ce5b001e",
+      "url": "https://ftp.nyse.com/MEF_Public/mef_public.json"
+    },
+    "sec_listings": {
+      "bytes": 521932,
+      "exit_code": 0,
+      "observed_at": "2026-11-26T12:57:04.289868+00:00",
+      "sha256": "a4549a73d027584e90490c5b8ff207de3e6a607768c7de416144ef52e6474c84",
+      "url": "https://www.sec.gov/files/company_tickers_exchange.json"
+    }
+  },
+  "spec_sha256": "be9e802eb0a755b078a09862270e2b6941dbffe4b0c0a1c1930597bf3f825741",
+  "strategy_trials": 0,
+  "yahoo_events": {
+    "ASAN": [],
+    "CHWY": [],
+    "CRM": [],
+    "FSLY": [],
+    "NET": [],
+    "NOW": [],
+    "PINS": [],
+    "PLTR": [],
+    "SNOW": [],
+    "TWLO": [],
+    "UBER": [],
+    "XYZ": []
+  }
+}

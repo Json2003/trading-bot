@@ -32,3 +32,42 @@ def canonicalize_v3(report: dict[str, Any], candidate_id: str) -> dict[str, Any]
         "risk_limits_changed": False,
         "promotion_allowed": False,
     }
+
+
+def canonicalize_nyse(report: dict[str, Any], *, arm: str, block: str) -> dict[str, Any]:
+    """Map a completed market diagnostic with explicit fraction/USD units.
+
+    Synthetic examples and blocked runs cannot advance a market checkpoint.
+    Eligibility for confirmation remains a separate gate in the report.
+    """
+    from math import isfinite
+
+    from research.engine import research_safety_flags
+    from research.nyse_offline import daily_bar_execution_evidence
+
+    if report.get("status") != "historical_diagnostic_complete" or report.get("data_kind") != "market":
+        raise ValueError("a completed market diagnostic is required")
+    for field, expected in research_safety_flags().items():
+        if report.get(field) is not expected:
+            raise ValueError(f"unsafe research report flag {field}")
+    rows = [r for r in report.get("results", []) if r.get("arm") == arm and r.get("block") == block]
+    if len(rows) != 1:
+        raise ValueError("select exactly one NYSE result arm and block")
+    row = rows[0]
+    required_units = {"net_return": "fraction", "drawdown": "negative_fraction", "execution_costs": "USD"}
+    for name, unit in required_units.items():
+        if row.get("metric_units", {}).get(name) != unit:
+            raise ValueError(f"NYSE result unit mismatch for {name}")
+    fields = ("net_return", "drawdown", "sharpe", "profit_factor", "trade_count", "execution_costs")
+    result = {name: row[name] for name in fields}
+    for name, value in result.items():
+        if value is not None and (isinstance(value, bool) or not isfinite(float(value))):
+            raise ValueError(f"invalid NYSE metric {name}")
+    return {"schema_version": 1, "candidate_id": f"{report['experiment_id']}:{arm}:{block}",
+            **result, "metric_units": dict(row["metric_units"]),
+            "metrics_source": "run_nyse_offline_research", "run_id": report.get("run_id"),
+            "observation_ids": list(row["observation_ids"]),
+            "minimum_sample_met": row["minimum_sample_met"],
+            "eligible_for_confirmation": report["eligible_for_confirmation"],
+            "unavailable_metrics": [name for name, value in result.items() if value is None],
+            **daily_bar_execution_evidence(), **research_safety_flags()}

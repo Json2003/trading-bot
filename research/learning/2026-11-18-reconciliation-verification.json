@@ -1,0 +1,22 @@
+{
+  "audit_date": "2026-11-18",
+  "reconciliation_sha256": "f7841853a33ae5062affc58a99b3b906d2f0c1e1089d988781c314090a1d078c",
+  "source_sha256": "18800dce01211b994c3c4c13a783a583e00c6576d404afffee3c2a2f348f8a61",
+  "decision_metadata_sha256": "148d389fe768d9f5020ed26b7f279dc7e3f420bb575af84cde2745e075564943",
+  "verification": {
+    "final_source_offline_replays": 2,
+    "byte_identical_to_published_result": true,
+    "original_manifest_unchanged": true,
+    "original_raw_responses_hash_checked": 307,
+    "annual_filings_quote_and_hash_checked": 12,
+    "primary_action_record_hash_checks": 4,
+    "count_exception_evidence_status_assertions_passed": true,
+    "source_compilation_passed": true,
+    "diff_whitespace_check_passed": true
+  },
+  "strategy_trials": 0,
+  "neural_training_runs": 0,
+  "unseen_confirmations": 0,
+  "pytest_run_for_this_source_audit": false,
+  "status": "market_evaluation_skipped_historical_availability_unproved"
+}

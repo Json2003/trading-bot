@@ -1,0 +1,498 @@
+{
+  "schema_version": 1,
+  "plan_sha256": "57f0c2d493931460459f85cd9063a14f5818221e5b8331852cd5bda02171ee0d",
+  "actions": [
+    {
+      "action_id": "CRM-div-2025-12-18",
+      "amount": "0.41600",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "dividend",
+      "payable_date": "2026-01-08",
+      "security_id": "sec:0001108524:common",
+      "session": "2025-12-18",
+      "source": "https://investor.salesforce.com/news/news-details/2025/Salesforce-Announces-Quarterly-Dividend-ce77ce2bd/default.aspx"
+    },
+    {
+      "action_id": "NOW-5-for-1-2025-12-18",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "split",
+      "new_shares": "5",
+      "old_shares": "1",
+      "security_id": "sec:0001373715:common",
+      "session": "2025-12-18",
+      "source": "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000007/now-20251231.htm"
+    },
+    {
+      "action_id": "CRM-div-2026-04-09",
+      "amount": "0.44000",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "dividend",
+      "payable_date": "2026-04-23",
+      "security_id": "sec:0001108524:common",
+      "session": "2026-04-09",
+      "source": "https://investor.salesforce.com/financials/quarterly-results/default.aspx"
+    },
+    {
+      "action_id": "CRM-div-2026-06-11",
+      "amount": "0.44000",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "dividend",
+      "payable_date": "2026-07-02",
+      "security_id": "sec:0001108524:common",
+      "session": "2026-06-11",
+      "source": "https://investor.salesforce.com/news/news-details/2026/Salesforce-Announces-Quarterly-Dividend/default.aspx"
+    },
+    {
+      "action_id": "CRM-div-2026-09-17",
+      "amount": "0.44000",
+      "available_at": "2026-11-19T02:15:37.716664+00:00",
+      "kind": "dividend",
+      "payable_date": "2026-10-08",
+      "security_id": "sec:0001108524:common",
+      "session": "2026-09-17",
+      "source": "https://investor.salesforce.com/news/news-details/2026/Salesforce-Announces-Quarterly-Dividend-96de7d58a/default.aspx"
+    }
+  ],
+  "securities": [
+    {
+      "available_at": "2026-11-19T02:10:10.830448+00:00",
+      "class_title": "Class A Common Stock, $0.00001 par value per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1477720/000147772026000060/asan-20260731.htm",
+      "security_id": "sec:0001477720:class-a-common",
+      "ticker": "ASAN"
+    },
+    {
+      "available_at": "2026-11-19T02:10:03.100295+00:00",
+      "class_title": "Class A Common Stock, par value $0.01 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1766502/000162828026061018/chwy-20260802.htm",
+      "security_id": "sec:0001766502:class-a-common",
+      "ticker": "CHWY"
+    },
+    {
+      "available_at": "2026-11-19T02:09:45.897807+00:00",
+      "class_title": "Common Stock, par value $0.001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000190/crm-20260731.htm",
+      "security_id": "sec:0001108524:common",
+      "ticker": "CRM"
+    },
+    {
+      "available_at": "2026-11-19T02:10:10.791909+00:00",
+      "class_title": "Class A Common Stock, $0.00002 par value",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNAS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1517413/000151741326000345/fsly-20260930.htm",
+      "security_id": "sec:0001517413:class-a-common",
+      "ticker": "FSLY"
+    },
+    {
+      "available_at": "2026-11-19T02:10:10.872319+00:00",
+      "class_title": "Class A Common Stock, $0.001 par value",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1477333/000147733326000061/cloud-20260930.htm",
+      "security_id": "sec:0001477333:class-a-common",
+      "ticker": "NET"
+    },
+    {
+      "available_at": "2026-11-19T02:09:45.569356+00:00",
+      "class_title": "Common stock, par value $0.001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000096/now-20260930.htm",
+      "security_id": "sec:0001373715:common",
+      "ticker": "NOW"
+    },
+    {
+      "available_at": "2026-11-19T02:09:54.923453+00:00",
+      "class_title": "Class A Common Stock, $0.00001 par value",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1506293/000150629326000153/pins-20260930.htm",
+      "security_id": "sec:0001506293:class-a-common",
+      "ticker": "PINS"
+    },
+    {
+      "available_at": "2026-11-19T02:10:02.911957+00:00",
+      "class_title": "Class A Common Stock, par value $0.001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNAS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1321655/000132165526000048/pltr-20260930.htm",
+      "security_id": "sec:0001321655:class-a-common",
+      "ticker": "PLTR"
+    },
+    {
+      "available_at": "2026-11-19T02:09:54.852638+00:00",
+      "class_title": "Common Stock, $0.0001 par value",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1640147/000164014726000037/snow-20260731.htm",
+      "security_id": "sec:0001640147:common",
+      "ticker": "SNOW"
+    },
+    {
+      "available_at": "2026-11-19T02:10:03.100411+00:00",
+      "class_title": "Class A Common Stock, par value $0.001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1447669/000144766926000110/twlo-20260930.htm",
+      "security_id": "sec:0001447669:class-a-common",
+      "ticker": "TWLO"
+    },
+    {
+      "available_at": "2026-11-19T02:09:54.923805+00:00",
+      "class_title": "Common Stock, par value $0.00001 per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1543151/000154315126000041/uber-20260930.htm",
+      "security_id": "sec:0001543151:common",
+      "ticker": "UBER"
+    },
+    {
+      "available_at": "2026-11-19T02:09:45.800135+00:00",
+      "class_title": "Class A common stock, $0.0000001 par value per share",
+      "currency": "USD",
+      "eligible_from": "2026-11-18",
+      "eligible_until": null,
+      "exchange": "XNYS",
+      "instrument_type": "COMMON_STOCK",
+      "primary_source": "https://www.sec.gov/Archives/edgar/data/1512673/000162828026069524/xyz-20260930.htm",
+      "security_id": "sec:0001512673:class-a-common",
+      "ticker": "XYZ"
+    }
+  ],
+  "price_basis": "nominal_ohlc",
+  "reviewed_at": "2026-11-20T12:58:53.388349+00:00",
+  "corporate_actions_complete_through": "2026-11-19",
+  "membership_complete_through": "2026-11-19",
+  "coverage_scope": "The ten eligible NYSE classes through November 19. The previous packet retains November 19 issuer filings, public notices and listing-directory receipts. This continuation rechecked those byte hashes and reconciled November 19 prices and dividend/split records.",
+  "price_basis_evidence": {
+    "field_check_through": "2026-11-19",
+    "method": "Compare unrounded nominal daily OHLC against the separately retrieved daily history, requery discrepant names, retain both receipts, and keep the pinned archive as the replay source.",
+    "matched_ohlc_fields": 48,
+    "eligible_matched_ohlc_fields": 40,
+    "volume_rows_differing_over_one_percent": 0
+  },
+  "evidence": {
+    "prior_review": {
+      "path": "2026-11-19-nyse-forward-input-review.json",
+      "sha256": "c51198a7feb1820c4325a49ed9cc7063a7a8345d5ca92f79129ea6ba77372481"
+    },
+    "capture_index": "2026-11-20-nyse-forward-receipt-index.json",
+    "packet_sha256": "9df21f6264e413e3f3e4f505998dd0ff6cf769763c79398554b9ea7677c9f8f0",
+    "comparison_packet_sha256": "cae62a33cbb9ebdbe578f8ff427cd4254ac06196869cb520394687151d6c71f8",
+    "bars_received_at": [
+      "2026-11-20T12:57:41.250070+00:00"
+    ],
+    "pinned_action_queries": {
+      "dividend": {
+        "records": [],
+        "source": {
+          "bytes": 561,
+          "received_at": "2026-11-20T12:58:45.963144+00:00",
+          "sha256": "37151b5428e4f0cbf64566712bb171f2e3869b566561f759ec3889263acd1e25",
+          "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+%2A+FROM+dividend+AS+OF+%279g85ej800q0ri65prt1vjni71opl5dsg%27+WHERE+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+AND+ex_date%3D%272026-11-19%27+ORDER+BY+act_symbol%2Cex_date"
+        }
+      },
+      "split": {
+        "records": [],
+        "source": {
+          "bytes": 618,
+          "received_at": "2026-11-20T12:58:45.869880+00:00",
+          "sha256": "4ebb26cfd7a3a70324197d448f3c05143c575b07c47f413b485efd6d2ab65219",
+          "url": "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks/master?q=SELECT+%2A+FROM+split+AS+OF+%279g85ej800q0ri65prt1vjni71opl5dsg%27+WHERE+act_symbol+IN+%28%27ASAN%27%2C%27CHWY%27%2C%27CRM%27%2C%27FSLY%27%2C%27NET%27%2C%27NOW%27%2C%27PINS%27%2C%27PLTR%27%2C%27SNOW%27%2C%27TWLO%27%2C%27UBER%27%2C%27XYZ%27%29+AND+ex_date%3D%272026-11-19%27+ORDER+BY+act_symbol%2Cex_date"
+        }
+      }
+    },
+    "price_checks": {
+      "ASAN": {
+        "action_kinds": [],
+        "eligible": true,
+        "fields_outside_tolerance": [],
+        "source": {
+          "bytes": 1389,
+          "received_at": "2026-11-20T00:07:11.849416+00:00",
+          "sha256": "79db151b8fd4cd98b3693b3659fb0b9fdd0073be25a6cdfa99113a9caa5c6f87",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/ASAN?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+        },
+        "volume_over_one_percent": false
+      },
+      "CHWY": {
+        "action_kinds": [],
+        "eligible": true,
+        "fields_outside_tolerance": [],
+        "previous_check": {
+          "action_kinds": [],
+          "eligible": true,
+          "fields_outside_tolerance": [
+            "high"
+          ],
+          "source": {
+            "bytes": 1395,
+            "received_at": "2026-11-20T00:07:11.853843+00:00",
+            "sha256": "2a4610e3ff7dad9cfcfca560e50b3ace62fa957c0333346fb524e9ea18c67e5a",
+            "url": "https://query1.finance.yahoo.com/v8/finance/chart/CHWY?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+          },
+          "volume_over_one_percent": false
+        },
+        "source": {
+          "bytes": 1394,
+          "received_at": "2026-11-20T12:58:50.474424+00:00",
+          "sha256": "3b02ecae085c92e02df03b86c8e84b8854cd3beb2a79a572e16543226b73f57e",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/CHWY?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+        },
+        "volume_over_one_percent": false
+      },
+      "CRM": {
+        "action_kinds": [],
+        "eligible": true,
+        "fields_outside_tolerance": [],
+        "source": {
+          "bytes": 1408,
+          "received_at": "2026-11-20T00:07:11.854863+00:00",
+          "sha256": "904db70f4e5b8db8379ebd8ecedd180890acc23e790c7d666b8e9bfcc7513993",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/CRM?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+        },
+        "volume_over_one_percent": false
+      },
+      "FSLY": {
+        "action_kinds": [],
+        "eligible": false,
+        "fields_outside_tolerance": [],
+        "previous_check": {
+          "action_kinds": [],
+          "eligible": false,
+          "fields_outside_tolerance": [
+            "open"
+          ],
+          "source": {
+            "bytes": 1396,
+            "received_at": "2026-11-20T00:07:11.851240+00:00",
+            "sha256": "56e5ebf8d8529476fe159845214ead765396caa31f7c4cbb6a650a40dddfb3ad",
+            "url": "https://query1.finance.yahoo.com/v8/finance/chart/FSLY?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+          },
+          "volume_over_one_percent": false
+        },
+        "source": {
+          "bytes": 1395,
+          "received_at": "2026-11-20T12:58:50.478568+00:00",
+          "sha256": "11e1735619546564bb02006bb34cbecd9c04d9e4f4b0d4f5f2573812b26625de",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/FSLY?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+        },
+        "volume_over_one_percent": false
+      },
+      "NET": {
+        "action_kinds": [],
+        "eligible": true,
+        "fields_outside_tolerance": [],
+        "source": {
+          "bytes": 1399,
+          "received_at": "2026-11-20T00:07:11.846878+00:00",
+          "sha256": "a6ef4477c44f9ebe49af64072bb7011548984d8c1c8535c9fd257ca92a979b59",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/NET?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+        },
+        "volume_over_one_percent": false
+      },
+      "NOW": {
+        "action_kinds": [],
+        "eligible": true,
+        "fields_outside_tolerance": [],
+        "previous_check": {
+          "action_kinds": [],
+          "eligible": true,
+          "fields_outside_tolerance": [],
+          "source": {
+            "bytes": 1379,
+            "received_at": "2026-11-20T00:07:16.422306+00:00",
+            "sha256": "21eb0d820df3d987fc70268843189df2f79872da7f89e2571baf75f42e66f92a",
+            "url": "https://query1.finance.yahoo.com/v8/finance/chart/NOW?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+          },
+          "volume_over_one_percent": true
+        },
+        "source": {
+          "bytes": 1380,
+          "received_at": "2026-11-20T12:58:50.517372+00:00",
+          "sha256": "73ebe06a8d07c9934e50f8f5eaef20586b880f53a8e5356b6b57d4864ef9b69f",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/NOW?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+        },
+        "volume_over_one_percent": false
+      },
+      "PINS": {
+        "action_kinds": [],
+        "eligible": true,
+        "fields_outside_tolerance": [],
+        "previous_check": {
+          "action_kinds": [],
+          "eligible": true,
+          "fields_outside_tolerance": [
+            "high"
+          ],
+          "source": {
+            "bytes": 1413,
+            "received_at": "2026-11-20T00:07:16.409281+00:00",
+            "sha256": "5810a8e9eb546010d346ee4df05a6889168360ba53d82f18f0d6b4b56f390648",
+            "url": "https://query1.finance.yahoo.com/v8/finance/chart/PINS?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+          },
+          "volume_over_one_percent": false
+        },
+        "source": {
+          "bytes": 1402,
+          "received_at": "2026-11-20T12:58:50.477759+00:00",
+          "sha256": "ebcc734b0616455be354e000c8a4d9b0db381d054c44a2843f7ee4c55baffe0e",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/PINS?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+        },
+        "volume_over_one_percent": false
+      },
+      "PLTR": {
+        "action_kinds": [],
+        "eligible": false,
+        "fields_outside_tolerance": [],
+        "previous_check": {
+          "action_kinds": [],
+          "eligible": false,
+          "fields_outside_tolerance": [
+            "open"
+          ],
+          "source": {
+            "bytes": 1431,
+            "received_at": "2026-11-20T00:07:16.442315+00:00",
+            "sha256": "abd67df80dad9eb50a26e5f31223d166bcf28f9323811f9a490ef09cf2fd9d7f",
+            "url": "https://query1.finance.yahoo.com/v8/finance/chart/PLTR?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+          },
+          "volume_over_one_percent": false
+        },
+        "source": {
+          "bytes": 1432,
+          "received_at": "2026-11-20T12:58:50.517661+00:00",
+          "sha256": "77e124004fa4e2b14dff907db42099425b9a87404f6ec2a6bbc3ab17263aaa5f",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/PLTR?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+        },
+        "volume_over_one_percent": false
+      },
+      "SNOW": {
+        "action_kinds": [],
+        "eligible": true,
+        "fields_outside_tolerance": [],
+        "previous_check": {
+          "action_kinds": [],
+          "eligible": true,
+          "fields_outside_tolerance": [
+            "low"
+          ],
+          "source": {
+            "bytes": 1385,
+            "received_at": "2026-11-20T00:07:16.438729+00:00",
+            "sha256": "c52a855e9382696fe79b088f852af5a1777d4dd4bcf6cc7c07460c877bc94c5b",
+            "url": "https://query1.finance.yahoo.com/v8/finance/chart/SNOW?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+          },
+          "volume_over_one_percent": false
+        },
+        "source": {
+          "bytes": 1385,
+          "received_at": "2026-11-20T12:58:53.371544+00:00",
+          "sha256": "673236c54d43f7861bba76459ae66883195ca9fdddc210426900eb670acff5c3",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/SNOW?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+        },
+        "volume_over_one_percent": false
+      },
+      "TWLO": {
+        "action_kinds": [],
+        "eligible": true,
+        "fields_outside_tolerance": [],
+        "source": {
+          "bytes": 1411,
+          "received_at": "2026-11-20T00:07:16.465025+00:00",
+          "sha256": "b91f2c686a8fc1023867c21855d10097d1ef64613a7df1318c68f0cc38c3797d",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/TWLO?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+        },
+        "volume_over_one_percent": false
+      },
+      "UBER": {
+        "action_kinds": [],
+        "eligible": true,
+        "fields_outside_tolerance": [],
+        "source": {
+          "bytes": 1421,
+          "received_at": "2026-11-20T00:07:20.375778+00:00",
+          "sha256": "a33693bb341ba9ae020e3aa11e96803957c5d4a805d8a7d1685abc5606bc3e10",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/UBER?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+        },
+        "volume_over_one_percent": false
+      },
+      "XYZ": {
+        "action_kinds": [],
+        "eligible": true,
+        "fields_outside_tolerance": [],
+        "source": {
+          "bytes": 1391,
+          "received_at": "2026-11-20T00:07:20.371355+00:00",
+          "sha256": "ee28e10d54c98617dcf86cc8b46553e6e50063f8e05e83206e279b450a32bc2a",
+          "url": "https://query1.finance.yahoo.com/v8/finance/chart/XYZ?period1=1794978000&period2=1795150800&interval=1d&events=div%2Csplits"
+        },
+        "volume_over_one_percent": false
+      }
+    },
+    "prior_check_sha256": "c2a0ccc0115a6fb001b4fa71e9ac7ce6fa2c66fe858c7d3bbdff8e5993e6f24e",
+    "prior_membership_and_issuer_receipts_rehashed": [
+      "nasdaq-listed",
+      "nasdaq-other-listed",
+      "nyse-mapping",
+      "nyse-mef",
+      "sec-ASAN",
+      "sec-CHWY",
+      "sec-CRM",
+      "sec-FSLY",
+      "sec-NET",
+      "sec-NOW",
+      "sec-PINS",
+      "sec-PLTR",
+      "sec-SNOW",
+      "sec-TWLO",
+      "sec-UBER",
+      "sec-XYZ",
+      "sec-listings"
+    ],
+    "recorded_at": "2026-11-20T12:58:53.388349+00:00",
+    "revision": "9g85ej800q0ri65prt1vjni71opl5dsg",
+    "session": "2026-11-19",
+    "coverage_limits": "The prior membership and issuer receipts were collected after the November 19 close and rehashed here. This scoped review uses sampled directory and issuer evidence together with the two dividend/split sources. The public event snapshot has limited coverage."
+  }
+}

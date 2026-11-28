@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "source_code_revision": "8558844f710e8d6699fe19264f4738e8dc70dfd9",
+  "experiment_sha256": "be9e802eb0a755b078a09862270e2b6941dbffe4b0c0a1c1930597bf3f825741",
+  "last_completed_nyse_session": "2026-11-19",
+  "latest_captured_and_reviewed_session": "2026-11-18",
+  "provider_revision": "jrtfcc7u3u15ufcqd6b8tl6hjojn8i19",
+  "new_price_packet_received_at_utc": "2026-11-20T00:05:20.729870+00:00",
+  "pinned_session_rows": {
+    "2026-11-18": 12,
+    "2026-11-19": 0
+  },
+  "original_packet_sha256": "cd32b96cda5d3b8c1a18990ee838c8b0a6e8409b3def9218ecbc733e190be673",
+  "new_packet_sha256": "fe1a0c6238933a3c7158131b9498e9d923e32c584a6f25c39825168a0ac7638a",
+  "capture_index": {
+    "path": "manifests/2026-11-19-nyse-forward-receipt-index.json",
+    "sha256": "23856fde7063033fc7aa9af5f842b8d1ba800b05c8426e95a4755670e1d12757"
+  },
+  "review": {
+    "path": "manifests/2026-11-19-nyse-forward-input-review.json",
+    "sha256": "c51198a7feb1820c4325a49ed9cc7063a7a8345d5ca92f79129ea6ba77372481"
+  },
+  "verified_byte_exact_restore": {
+    "original_packet": true,
+    "new_packet": true
+  },
+  "price_comparison": {
+    "session": "2026-11-18",
+    "matched_ohlc_fields": 48,
+    "eligible_matched_ohlc_fields": 40,
+    "price_tolerance_usd": 0.0101,
+    "volume_rows_differing_over_one_percent": 0
+  },
+  "preparation": {
+    "exit_code": 2,
+    "report_sha256": "3f8d482c2417cb8a4ba392f8ea52d4e8e261fa09cba9967ec41930c93d89cb06",
+    "action_review_through": "2026-11-18",
+    "captured_bars": 3156,
+    "completed_sessions_checked": 263,
+    "dataset_id": "nyse-prospective-2026-12",
+    "eligible_bars_checked": 2630,
+    "eligible_tickers_at_start": [
+      "ASAN",
+      "CHWY",
+      "CRM",
+      "NET",
+      "NOW",
+      "PINS",
+      "SNOW",
+      "TWLO",
+      "UBER",
+      "XYZ"
+    ],
+    "excluded_tickers": {
+      "FSLY": "outside_nyse_common_stock_mandate",
+      "PLTR": "outside_nyse_common_stock_mandate"
+    },
+    "expected_block": {
+      "end": "2027-01-29",
+      "name": "december_january_development",
+      "start": "2026-12-01"
+    },
+    "expected_profit": null,
+    "first_decision_at": "2026-12-01T09:00:00-05:00",
+    "first_missing": [
+      [
+        "ASAN",
+        "2026-11-19"
+      ],
+      [
+        "CHWY",
+        "2026-11-19"
+      ],
+      [
+        "CRM",
+        "2026-11-19"
+      ],
+      [
+        "NET",
+        "2026-11-19"
+      ],
+      [
+        "NOW",
+        "2026-11-19"
+      ],
+      [
+        "PINS",
+        "2026-11-19"
+      ],
+      [
+        "SNOW",
+        "2026-11-19"
+      ],
+      [
+        "TWLO",
+        "2026-11-19"
+      ],
+      [
+        "UBER",
+        "2026-11-19"
+      ],
+      [
+        "XYZ",
+        "2026-11-19"
+      ]
+    ],
+    "issues": [
+      "completed_session_bars_missing",
+      "forward_window_incomplete",
+      "corporate_action_review_incomplete",
+      "membership_review_incomplete"
+    ],
+    "last_contiguous_session": "2026-11-18",
+    "membership_review_through": "2026-11-18",
+    "missing_count": 10,
+    "plan_sha256": "57f0c2d493931460459f85cd9063a14f5818221e5b8331852cd5bda02171ee0d",
+    "prepared_signal_rows": 2630,
+    "review_sha256": "c51198a7feb1820c4325a49ed9cc7063a7a8345d5ca92f79129ea6ba77372481",
+    "status": "awaiting_market_data",
+    "strategy_trials": 0
+  },
+  "earliest_signal_prerequisite_sessions": [
+    "2026-11-19",
+    "2026-11-20",
+    "2026-11-23",
+    "2026-11-24",
+    "2026-11-25",
+    "2026-11-27",
+    "2026-11-30"
+  ],
+  "market_evaluation": "skipped_incomplete_forward_window",
+  "market_strategy_trials": 0,
+  "new_independent_investment_observations": 0,
+  "model_training_runs": 0,
+  "unseen_confirmations": 0,
+  "metrics": {
+    "expected_net_profit": null,
+    "gross_pnl": null,
+    "marked_pnl": null,
+    "realized_pnl": null,
+    "net_pnl": null,
+    "net_return": null,
+    "drawdown": null,
+    "sharpe": null,
+    "profit_factor": null,
+    "turnover": null,
+    "fills": null,
+    "trading_expenses": null,
+    "operating_expenses": null
+  },
+  "next_action": "Capture the November 19 revision on the next pre-open check and continue through the November 30 signal close. Preserve original receipt times and update each scope review before input-only validation."
+}
