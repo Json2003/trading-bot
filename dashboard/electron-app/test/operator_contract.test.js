@@ -12,6 +12,8 @@ test('packaged renderer is the restricted operator console', () => {
 
   assert.ok(packagedFiles.includes('renderer/operator.html'));
   assert.ok(packagedFiles.includes('renderer/operator.js'));
+  assert.ok(packagedFiles.includes('renderer/operator.css'));
+  assert.ok(!packagedFiles.includes('renderer/browser-bridge.js'));
   assert.ok(!packagedFiles.includes('renderer/index.html'));
 });
 
@@ -35,6 +37,8 @@ test('preload exposes only approved trading and bounded research actions', () =>
     'getStatus',
     'getOrders',
     'getPositions',
+    'getTwsSettings',
+    'checkTws',
     'startPaper',
     'pause',
     'stop',
@@ -51,6 +55,17 @@ test('preload exposes only approved trading and bounded research actions', () =>
   }
   assert.doesNotMatch(preload, /submitOrder|placeOrder|resetKillSwitch|setRisk/);
   assert.doesNotMatch(preload, /startLive|enableLive|promoteLive|activateLive/);
+});
+
+test('workspaces do not switch the operator to broker execution', () => {
+  const html = read('renderer/operator.html');
+  const browserBridge = read('renderer/browser-bridge.js');
+  assert.match(html, /data-mode="sim"/);
+  assert.match(html, /data-mode="paper"/);
+  assert.match(html, /data-mode="live"/);
+  assert.match(browserBridge, /\/operator\/tws\//);
+  assert.match(browserBridge, /redirect: 'error'/);
+  assert.doesNotMatch(browserBridge, /localStorage|sessionStorage|document\.cookie|startLive|placeOrder/);
 });
 
 test('main process enforces loopback, fixed routes, and bounded lab inputs', () => {

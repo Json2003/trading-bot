@@ -36,8 +36,8 @@ def validate(config_path: Path, env_file: Path | None, require_token: bool) -> l
 
     if (values.get("TRADING_OPERATOR_MODE") or "paper").lower() != "paper":
         errors.append("TRADING_OPERATOR_MODE must be paper")
-    if (values.get("TRADING_OPERATOR_RUNTIME") or "synthetic-smoke").lower() not in {"synthetic-smoke", "synthetic", "none", "disabled"}:
-        errors.append("TRADING_OPERATOR_RUNTIME must be synthetic-smoke, synthetic, none, or disabled")
+    if (values.get("TRADING_OPERATOR_RUNTIME") or "nyse-demo").lower() not in {"nyse-demo", "synthetic-smoke", "synthetic", "none", "disabled"}:
+        errors.append("TRADING_OPERATOR_RUNTIME must be nyse-demo, synthetic-smoke, synthetic, none, or disabled")
     if (values.get("TRADING_OPERATOR_HOST") or "127.0.0.1") not in LOOPBACK_HOSTS:
         errors.append("TRADING_OPERATOR_HOST must remain loopback-only")
 

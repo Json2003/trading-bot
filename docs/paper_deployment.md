@@ -1,13 +1,13 @@
 # Safe Paper Deployment
 
-This procedure deploys the local Electron operator with the synthetic paper runtime. It does not connect to an exchange, use API keys, or place live orders.
+This procedure deploys the local Electron operator with the synthetic paper runtime. It does not place broker orders. Optional read-only TWS account checks are documented in the [workstation guide](../dashboard/README.md).
 
 ## Safety boundary
 
 The deployment must remain:
 
 - TRADING_OPERATOR_MODE=paper
-- TRADING_OPERATOR_RUNTIME=synthetic-smoke or none
+- TRADING_OPERATOR_RUNTIME=nyse-demo, synthetic-smoke, or none
 - bound to 127.0.0.1, localhost, or ::1
 - credential-free
 - protected by a locally generated operator token
@@ -31,7 +31,7 @@ py -3.11 -m venv .venv
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 $env:TRADING_OPERATOR_MODE = "paper"
-$env:TRADING_OPERATOR_RUNTIME = "synthetic-smoke"
+$env:TRADING_OPERATOR_RUNTIME = "nyse-demo"
 $env:TRADING_OPERATOR_HOST = "127.0.0.1"
 $env:TRADING_OPERATOR_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(32))"
 python scripts/validate_paper_deployment.py --require-token
@@ -65,7 +65,7 @@ The Windows installer is a paper-testing artifact. It is not a signed production
 ## Manual acceptance checks
 
 1. The API health endpoint reports mode: paper and kill_switch_latched: false.
-2. The operator UI reports synthetic-smoke or no engine.
+2. The Simulator workspace reports a synthetic engine or no engine.
 3. No exchange credentials are present in the process environment.
 4. start-paper creates only paper-broker activity.
 5. Emergency stop latches and remains latched after restart.

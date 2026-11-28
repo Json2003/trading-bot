@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import secrets
 import shutil
@@ -18,13 +19,12 @@ from validate_paper_deployment import validate
 
 ROOT = Path(__file__).resolve().parents[1]
 ELECTRON_DIR = ROOT / "dashboard" / "electron-app"
-API_SCRIPT = ROOT / "scripts" / "run_operator_api.py"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--runtime", default="synthetic-smoke", choices=["synthetic-smoke", "none"])
+    parser.add_argument("--runtime", default="nyse-demo", choices=["nyse-demo", "synthetic-smoke", "none"])
     parser.add_argument("--cycle-seconds", type=float, default=1.0)
     parser.add_argument("--skip-install", action="store_true")
     return parser.parse_args()
@@ -60,8 +60,8 @@ def verify_paper_health(url: str, token: str) -> None:
         headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
     )
     with urlopen(request, timeout=3.0) as response:  # noqa: S310 - fixed loopback URL
-        payload = response.read().decode("utf-8")
-    if '"mode": "paper"' not in payload or '"kill_switch_latched": false' not in payload:
+        payload = json.load(response)
+    if payload.get("mode") != "paper" or payload.get("kill_switch_latched") is not False:
         raise RuntimeError("operator API health check did not confirm a safe paper state")
 
 
@@ -99,6 +99,7 @@ def main() -> int:
             "TRADING_OPERATOR_PORT": str(args.port),
             "TRADING_OPERATOR_RUNTIME": args.runtime,
             "TRADING_OPERATOR_CYCLE_SECONDS": str(args.cycle_seconds),
+            "DISABLE_STUBS": "1",
         }
     )
     os.environ.update(
@@ -115,7 +116,9 @@ def main() -> int:
 
     api_process: subprocess.Popen[bytes] | None = None
     try:
-        api_process = subprocess.Popen([sys.executable, str(API_SCRIPT)], cwd=ROOT, env=child_env)
+        api_process = subprocess.Popen(
+            [sys.executable, "-m", "scripts.run_operator_api"], cwd=ROOT, env=child_env
+        )
         wait_for_health(f"{base_url}/health", api_process)
         verify_paper_health(base_url, token)
         desktop = subprocess.run([npm, "start"], cwd=ELECTRON_DIR, env=child_env, check=False)

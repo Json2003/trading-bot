@@ -1,267 +1,174 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'">
-  <title>Trading Bot Operator Console</title>
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg: #08111f;
-      --panel: #0f1b2d;
-      --panel-2: #132238;
-      --border: #263850;
-      --text: #e8eef7;
-      --muted: #9eb0c7;
-      --accent: #4cc9f0;
-      --good: #39d98a;
-      --warn: #ffcc66;
-      --danger: #ff6b7a;
-      --shadow: 0 18px 50px rgba(0, 0, 0, .28);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background:
-        radial-gradient(circle at 15% 0%, rgba(76, 201, 240, .12), transparent 34%),
-        radial-gradient(circle at 90% 10%, rgba(57, 217, 138, .08), transparent 30%),
-        var(--bg);
-      color: var(--text);
-    }
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      padding: 22px 28px 14px;
-    }
-    h1 { margin: 0; font-size: 21px; letter-spacing: .02em; }
-    h1 span { color: var(--accent); }
-    h2 { margin: 0; font-size: 15px; letter-spacing: .04em; }
-    .subtitle, .hint { color: var(--muted); font-size: 12px; }
-    .subtitle { margin-top: 5px; font-size: 13px; }
-    .connection {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: rgba(15, 27, 45, .85);
-      color: var(--muted);
-      font-size: 12px;
-    }
-    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 0 4px rgba(255, 107, 122, .12); }
-    .connection.online .dot { background: var(--good); box-shadow: 0 0 0 4px rgba(57, 217, 138, .12); }
-    main { padding: 10px 28px 30px; display: grid; gap: 18px; }
-    .notice {
-      display: none;
-      border: 1px solid rgba(255, 107, 122, .45);
-      background: rgba(255, 107, 122, .09);
-      color: #ffd8dd;
-      border-radius: 13px;
-      padding: 12px 14px;
-      font-size: 13px;
-    }
-    .notice.visible { display: block; }
-    .card {
-      background: linear-gradient(180deg, rgba(19, 34, 56, .96), rgba(15, 27, 45, .96));
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-    }
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(130px, 1fr));
-      gap: 13px;
-    }
-    .metric { padding: 16px; min-height: 104px; }
-    .metric-label { color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
-    .metric-value { margin-top: 12px; font-size: 25px; font-weight: 700; }
-    .metric-value.small { font-size: 17px; text-transform: capitalize; }
-    .state-running, .positive { color: var(--good); }
-    .state-paused, .state-queued, .state-cancelling { color: var(--warn); }
-    .state-stopped, .state-completed, .state-cancelled { color: var(--muted); }
-    .state-killed, .state-failed, .state-interrupted, .negative { color: var(--danger); }
-    .controls, .lab-card { padding: 18px; }
-    .section-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
-    .button-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-    button, select, input {
-      border: 1px solid var(--border);
-      background: #172840;
-      color: var(--text);
-      border-radius: 10px;
-      min-height: 40px;
-    }
-    button {
-      appearance: none;
-      padding: 10px 14px;
-      font-weight: 650;
-      cursor: pointer;
-      transition: transform .12s ease, border-color .12s ease, background .12s ease;
-    }
-    button:hover:not(:disabled) { transform: translateY(-1px); border-color: #3f5c7d; background: #1a304e; }
-    button:disabled, input:disabled, select:disabled { cursor: not-allowed; opacity: .42; }
-    button.primary { background: var(--accent); color: #07111e; border-color: transparent; }
-    button.warning { color: #ffe7af; border-color: rgba(255, 204, 102, .42); background: rgba(255, 204, 102, .08); }
-    button.danger { color: #ffd7dc; border-color: rgba(255, 107, 122, .45); background: rgba(255, 107, 122, .09); }
-    button.emergency { margin-left: auto; color: white; border-color: transparent; background: #d83b50; }
-    .data-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 18px; }
-    .table-card { overflow: hidden; }
-    .table-card .section-head { padding: 17px 18px 0; }
-    .table-wrap { overflow: auto; max-height: 360px; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid rgba(38, 56, 80, .72); white-space: nowrap; }
-    th { position: sticky; top: 0; background: #122139; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; font-size: 10px; z-index: 1; }
-    tbody tr:hover { background: rgba(76, 201, 240, .035); }
-    .empty { padding: 28px 18px; color: var(--muted); text-align: center; font-size: 13px; }
-    .status-line { display: flex; align-items: center; justify-content: space-between; gap: 18px; color: var(--muted); font-size: 12px; padding: 0 2px; }
-    .busy { opacity: .72; pointer-events: none; }
-    .lab-form {
-      display: grid;
-      grid-template-columns: minmax(230px, 2fr) repeat(4, minmax(110px, 1fr));
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-    label { display: grid; gap: 6px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
-    select, input { width: 100%; padding: 8px 10px; font-size: 13px; text-transform: none; }
-    .lab-progress {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(120px, 1fr));
-      gap: 10px;
-      margin: 14px 0;
-    }
-    .lab-stat { padding: 12px; border: 1px solid var(--border); border-radius: 11px; background: rgba(8, 17, 31, .45); }
-    .lab-stat strong { display: block; margin-top: 7px; font-size: 17px; }
-    .research-note {
-      border-left: 3px solid var(--warn);
-      background: rgba(255, 204, 102, .06);
-      color: #f1dfb7;
-      padding: 10px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      line-height: 1.5;
-      margin-bottom: 14px;
-    }
-    @media (max-width: 1050px) {
-      .summary { grid-template-columns: repeat(2, 1fr); }
-      .data-grid { grid-template-columns: 1fr; }
-      .lab-form { grid-template-columns: repeat(2, 1fr); }
-      button.emergency { margin-left: 0; }
-    }
-    @media (max-width: 680px) {
-      header { align-items: flex-start; flex-direction: column; }
-      .lab-form, .lab-progress { grid-template-columns: 1fr; }
-    }
-  </style>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <title>RomanBot Workstation</title>
+  <link rel="stylesheet" href="operator.css">
 </head>
 <body>
-  <header>
-    <div>
-      <h1><span>Splitstar</span> Trading Operator</h1>
-      <div class="subtitle">Paper trading, isolated strategy research and operational safety</div>
-    </div>
-    <div id="connection" class="connection"><span class="dot"></span><span id="connectionText">Operator API offline</span></div>
+  <a class="skip" href="#main">Skip to workstation</a>
+  <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-logo" viewBox="0 0 32 32"><path d="M7 23V9h10a5 5 0 0 1 0 10H7m9-4 8 8m-4-14 5-3" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-desk" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.3"/></symbol>
+    <symbol id="i-positions" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M3 13h18m-11 0v2h4v-2"/></symbol>
+    <symbol id="i-orders" viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H5V3zm8 0v5h4M8 12h8m-8 4h6"/></symbol>
+    <symbol id="i-lab" viewBox="0 0 24 24"><path d="M9 3h6m-5 0v7l-5 8a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-8V3M8 15h8"/></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24"><path d="M8 3v5m8-5v5M6 8h12v4a6 6 0 0 1-12 0V8zm6 10v3"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14-5L3 9m0-5v5h5m-4 4a8 8 0 0 0 14 5l3-3m0 5v-5h-5"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 12 7-12 7z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v6c0 4 3.5 7 7.5 9 4-2 7.5-5 7.5-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 4v16h16M7 15l4-4 3 2 5-6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5m0-8v1"/></symbol>
+  </svg>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark"><svg><use href="#i-logo"/></svg></span><span><strong>RomanBot</strong><small>TRADING WORKSTATION</small></span></div>
+    <div class="top-context"><span class="top-market">US EQUITIES</span><span class="divider"></span><span id="connection" class="connection" data-tone="neutral"><i></i><span id="connectionText">Connecting to operator</span></span></div>
+    <div class="top-right"><span class="top-clock"><svg class="icon"><use href="#i-clock"/></svg><span id="clock">— ET</span></span><button id="refreshButton" class="button icon-button" type="button" title="Refresh workstation" aria-label="Refresh workstation"><svg class="icon"><use href="#i-refresh"/></svg></button></div>
   </header>
-
-  <main id="app">
-    <div id="notice" class="notice" role="alert"></div>
-
-    <section class="summary" aria-label="Service summary">
-      <div class="card metric"><div class="metric-label">Mode</div><div id="mode" class="metric-value small">—</div></div>
-      <div class="card metric"><div class="metric-label">Service state</div><div id="state" class="metric-value small">—</div></div>
-      <div class="card metric"><div class="metric-label">Kill switch</div><div id="killSwitch" class="metric-value small">—</div></div>
-      <div class="card metric"><div class="metric-label">Open orders</div><div id="openOrders" class="metric-value">0</div></div>
-      <div class="card metric"><div class="metric-label">Positions</div><div id="openPositions" class="metric-value">0</div></div>
-    </section>
-
-    <section class="card controls">
-      <div class="section-head">
-        <div><h2>Operator controls</h2><div class="hint">No arbitrary order entry or risk-limit editing is available.</div></div>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Workstation navigation">
+      <nav class="navigation">
+        <div class="nav-group"><span class="nav-label">WORKSPACE</span>
+          <button class="nav-item" type="button" data-page="overview" aria-current="page"><svg class="icon"><use href="#i-desk"/></svg><span>Overview</span></button>
+          <button class="nav-item" type="button" data-page="positions"><svg class="icon"><use href="#i-positions"/></svg><span>Positions</span></button>
+          <button class="nav-item" type="button" data-page="orders"><svg class="icon"><use href="#i-orders"/></svg><span>Orders</span></button>
+        </div>
+        <div class="nav-group"><span class="nav-label">TOOLS</span>
+          <button class="nav-item" type="button" data-page="research"><svg class="icon"><use href="#i-lab"/></svg><span>Research Lab</span></button>
+          <button class="nav-item" type="button" data-page="connection"><svg class="icon"><use href="#i-plug"/></svg><span>TWS connection</span></button>
+        </div>
+      </nav>
+      <div class="sidebar-footer"><div class="exchange-mark">IB</div><div><strong>Interactive Brokers</strong><small>Trader Workstation</small></div></div>
+    </aside>
+    <main id="main" tabindex="-1" class="main">
+      <div id="access" class="card access-card" hidden>
+        <div><h2>Connect to the local operator</h2><p>Enter the workstation token from your local launch session.</p></div>
+        <form id="accessForm" class="access-form">
+          <label class="sr-only" for="accessToken">Operator token</label>
+          <input id="accessToken" type="password" autocomplete="off" spellcheck="false" placeholder="Operator token" required>
+          <button class="button primary" type="submit">Connect</button>
+        </form>
       </div>
-      <div class="button-row">
-        <button id="startButton" class="primary" data-action="startPaper">Start paper</button>
-        <button id="pauseButton" class="warning" data-action="pause">Pause entries</button>
-        <button id="stopButton" data-action="stop">Stop &amp; cancel</button>
-        <button id="cancelButton" data-action="cancelAll">Cancel all orders</button>
-        <button id="refreshButton" data-action="refresh">Refresh</button>
-        <button id="emergencyButton" class="emergency" data-action="emergencyStop">Emergency stop</button>
-      </div>
-    </section>
-
-    <section class="data-grid">
-      <div class="card table-card">
-        <div class="section-head"><h2>Open orders</h2><span id="ordersCount" class="hint">0 records</span></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>ID</th><th>Symbol</th><th>Side</th><th>Quantity</th><th>Filled</th><th>Price</th><th>Status</th></tr></thead>
-            <tbody id="ordersBody"></tbody>
-          </table>
-          <div id="ordersEmpty" class="empty">No open orders.</div>
+      <div class="heading">
+        <div><div class="eyebrow" id="pageKicker">OPERATOR WORKSPACE</div><h1 id="pageTitle">Trading desk</h1><p id="pageDescription">Monitor simulated positions, orders and market activity.</p></div>
+        <div class="mode-switch" role="group" aria-label="Account workspace">
+          <button type="button" data-mode="sim" aria-pressed="true">Simulator</button>
+          <button type="button" data-mode="paper" aria-pressed="false">IBKR Paper</button>
+          <button type="button" data-mode="live" aria-pressed="false">IBKR Live</button>
         </div>
       </div>
-
-      <div class="card table-card">
-        <div class="section-head"><h2>Positions</h2><span id="positionsCount" class="hint">0 records</span></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Symbol</th><th>Quantity</th><th>Average price</th></tr></thead>
-            <tbody id="positionsBody"></tbody>
-          </table>
-          <div id="positionsEmpty" class="empty">No open positions.</div>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <section id="overviewPanel" class="page" aria-label="Trading overview">
+        <div class="metrics">
+          <article class="card metric"><span id="equityLabel">Simulated equity</span><strong id="equity">—</strong><small id="equityDetail">Local simulator</small></article>
+          <article class="card metric"><span id="cashLabel">Simulated cash</span><strong id="cash">—</strong><small id="cashDetail">USD</small></article>
+          <article class="card metric"><span>Open positions</span><strong id="positionMetric">—</strong><small id="positionDetail">Local simulator</small></article>
+          <article class="card metric"><span id="engineLabel">Simulator status</span><strong class="state-value" id="engineStatus" data-tone="neutral">Waiting</strong><small id="engineDetail">Waiting for operator</small></article>
         </div>
-      </div>
-    </section>
-
-    <section class="card lab-card" aria-labelledby="researchHeading">
-      <div class="section-head">
-        <div><h2 id="researchHeading">Research Lab</h2><div class="hint">Isolated $2,000 virtual accounts compare strategy and execution candidates on held-out data.</div></div>
-        <span id="labState" class="hint">Not loaded</span>
-      </div>
-
-      <div class="research-note">
-        Research winners are candidates only. The lab cannot alter the active strategy, place broker orders, enable live mode or reset risk controls. Final holdout results require manual review and a separate paper-probation gate.
-      </div>
-
-      <div class="lab-form">
-        <label>Dataset<select id="labDataset"><option value="">Loading datasets…</option></select></label>
-        <label>Generations<input id="labGenerations" type="number" min="1" max="6" value="3"></label>
-        <label>Accounts / generation<input id="labAccounts" type="number" min="4" max="24" value="12"></label>
-        <label>Final holdout<input id="labHoldout" type="number" min="20" max="40" value="25"><span>%</span></label>
-        <label>Seed<input id="labSeed" type="number" min="0" max="2147483647" value="7"></label>
-      </div>
-
-      <div class="button-row">
-        <button id="labStartButton" class="primary">Run strategy tournament</button>
-        <button id="labCancelButton" class="danger" disabled>Cancel active run</button>
-        <button id="labRefreshButton">Refresh lab</button>
-      </div>
-
-      <div class="lab-progress">
-        <div class="lab-stat"><span class="metric-label">Job state</span><strong id="labJobState">idle</strong></div>
-        <div class="lab-stat"><span class="metric-label">Generation</span><strong id="labGeneration">0 / 0</strong></div>
-        <div class="lab-stat"><span class="metric-label">Candidates tested</span><strong id="labCandidates">0</strong></div>
-        <div class="lab-stat"><span class="metric-label">Leaderboard</span><strong id="labLeaderboardType">none</strong></div>
-      </div>
-
-      <div class="table-card">
-        <div class="section-head"><h2>Strategy leaderboard</h2><span id="labLeaderboardCount" class="hint">0 candidates</span></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Rank</th><th>Strategy</th><th>Execution</th><th>Ending equity</th><th>Return</th><th>Max DD</th><th>Sharpe</th><th>Trades</th><th>Execution cost</th><th>Score</th></tr></thead>
-            <tbody id="labLeaderboardBody"></tbody>
-          </table>
-          <div id="labLeaderboardEmpty" class="empty">No research results yet.</div>
+        <div class="desk-grid">
+          <div class="card chart-card">
+            <header class="card-header chart-header">
+              <div class="instrument"><div class="instrument-mark" id="symbolMark" aria-hidden="true">IBM</div><div><div class="instrument-title"><h2 id="symbolTitle">IBM</h2><span class="exchange-label">NYSE</span></div><p id="symbolName">International Business Machines</p></div></div>
+              <div id="ranges" class="range-switch" role="group" aria-label="Chart range">
+                <button type="button" data-range="hour" aria-pressed="false">1H</button>
+                <button type="button" data-range="session" aria-pressed="true">1 session</button>
+                <button type="button" data-range="all" aria-pressed="false">All</button>
+              </div>
+            </header>
+            <div class="chart-summary"><strong id="lastPrice">—</strong><span id="priceChange" class="change">—</span><span id="chartSource" class="chart-source">SYNTHETIC · 5 MIN</span></div>
+            <div class="chart-stage" id="chartStage">
+              <svg id="chart" class="chart" role="img" aria-label="Price and volume candlestick chart" viewBox="0 0 800 320" preserveAspectRatio="none"></svg>
+              <div id="chartEmpty" class="empty chart-empty"><svg class="icon"><use href="#i-chart"/></svg><strong>No bars to display</strong><span>Waiting for the selected workspace.</span></div>
+            </div>
+            <div class="chart-foot"><span id="barDetails">OHLC · Volume</span><span>Times in ET</span></div>
+          </div>
+          <div class="desk-side">
+            <article class="card watch-card">
+              <header class="card-header"><div><h2>Watchlist</h2><p>NYSE common stocks</p></div><span class="pill neutral">3 symbols</span></header>
+              <div class="watch-table" id="watchlist">
+                <div class="watch-head"><span>SYMBOL</span><span>LAST</span><span>SESSION</span></div>
+                <button class="watch-row" type="button" data-symbol="IBM" aria-pressed="true"><span class="watch-symbol"><span class="symbol-tile tile-ibm">I</span><span><strong>IBM</strong><small>IBM</small></span></span><span data-last="IBM">—</span><span class="change" data-change="IBM">—</span></button>
+                <button class="watch-row" type="button" data-symbol="JPM" aria-pressed="false"><span class="watch-symbol"><span class="symbol-tile tile-jpm">J</span><span><strong>JPM</strong><small>JPMorgan</small></span></span><span data-last="JPM">—</span><span class="change" data-change="JPM">—</span></button>
+                <button class="watch-row" type="button" data-symbol="KO" aria-pressed="false"><span class="watch-symbol"><span class="symbol-tile tile-ko">K</span><span><strong>KO</strong><small>Coca-Cola</small></span></span><span data-last="KO">—</span><span class="change" data-change="KO">—</span></button>
+              </div>
+            </article>
+            <article class="card controls-card" id="simControls">
+              <header class="card-header"><div><h2>Simulation controls</h2><p>Local paper engine</p></div><svg class="icon card-icon"><use href="#i-shield"/></svg></header>
+              <div id="simGuard" class="control-note"><i class="dot"></i><span>Waiting for operator</span></div>
+              <div class="control-buttons">
+                <button class="button primary" type="button" id="startButton" data-action="startPaper" disabled><svg class="icon"><use href="#i-play"/></svg><span>Start simulation</span></button>
+                <div class="button-row"><button class="button" type="button" id="pauseButton" data-action="pause" disabled>Pause</button><button class="button" type="button" id="stopButton" data-action="stop" disabled>Stop &amp; cancel</button></div>
+                <div class="button-row"><button class="button" type="button" id="cancelButton" data-action="cancelAll" disabled>Cancel orders</button><button class="button danger" type="button" id="emergencyButton" data-action="emergencyStop" disabled>Emergency stop</button></div>
+              </div>
+            </article>
+            <article class="card controls-card" id="twsControls" hidden>
+              <header class="card-header"><div><h2 id="twsControlTitle">IBKR connection</h2><p id="twsControlDetail">Trader Workstation</p></div><svg class="icon card-icon"><use href="#i-plug"/></svg></header>
+              <div class="control-note"><i class="dot"></i><span>Account access only · order routing off</span></div>
+              <div class="control-buttons">
+                <button type="button" class="button primary" id="checkTws"><svg class="icon"><use href="#i-plug"/></svg><span>Check TWS account</span></button>
+                <button type="button" class="button" data-page="connection">Connection setup <svg class="icon"><use href="#i-arrow"/></svg></button>
+              </div>
+            </article>
+          </div>
         </div>
-      </div>
-    </section>
-
-    <div class="status-line"><span>All control and research traffic is restricted to the local operator API.</span><span id="lastUpdated">Never refreshed</span></div>
-  </main>
-
-  <script src="operator.js"></script>
+      </section>
+      <section id="activityPanel" class="page" aria-label="Account activity">
+        <article class="card ledger">
+          <header class="card-header ledger-header">
+            <div><h2>Account activity</h2><p id="ledgerSource">Local simulator</p></div>
+            <div class="range-switch ledger-switch" role="group" aria-label="Activity view">
+              <button type="button" data-ledger="positions" aria-pressed="true">Positions <span id="positionsCount">—</span></button>
+              <button type="button" data-ledger="orders" aria-pressed="false">Open orders <span id="ordersCount">—</span></button>
+            </div>
+          </header>
+          <div id="positionTable" class="table-scroll"><table><thead><tr><th scope="col">Symbol</th><th scope="col">Instrument</th><th scope="col">Quantity</th><th scope="col">Average price</th><th scope="col">Currency</th></tr></thead><tbody id="positionsBody"></tbody></table><div id="positionsEmpty" class="empty">Waiting for position data.</div></div>
+          <div id="orderTable" class="table-scroll" hidden><table><thead><tr><th scope="col">Order ID</th><th scope="col">Symbol</th><th scope="col">Side</th><th scope="col">Quantity</th><th scope="col">Filled</th><th scope="col">Price</th><th scope="col">Status</th></tr></thead><tbody id="ordersBody"></tbody></table><div id="ordersEmpty" class="empty">Waiting for order data.</div></div>
+        </article>
+      </section>
+      <section id="researchPanel" class="page" aria-labelledby="researchHeading" hidden>
+        <div class="desk-grid research-grid">
+          <article class="card">
+            <header class="card-header"><div><h2 id="researchHeading">Research Lab</h2><p>Run isolated experiments against local CSV files.</p></div><span class="pill neutral">Manual review</span></header>
+            <form id="labForm" class="lab-form">
+              <label class="full">Dataset<select id="labDataset" required><option value="">Loading datasets…</option></select></label>
+              <label>Generations<input id="labGenerations" type="number" min="1" max="6" value="3" required></label>
+              <label>Accounts per generation<input id="labAccounts" type="number" min="4" max="24" value="12" required></label>
+              <label>Each holdout (%)<input id="labHoldout" type="number" min="20" max="30" value="25" required></label>
+              <label>Seed<input id="labSeed" type="number" min="0" max="2147483647" value="7" required></label>
+              <div class="button-row full"><button class="button primary" id="labStartButton" type="submit" disabled>Run experiment</button><button class="button" type="button" id="labCancelButton" disabled>Cancel run</button></div>
+            </form>
+          </article>
+          <article class="card">
+            <header class="card-header"><div><h2>Current run</h2><p id="labState">Waiting for operator</p></div><span class="pill neutral" id="labJobState">Unknown</span></header>
+            <dl class="facts"><div><dt>Generation</dt><dd id="labGeneration">—</dd></div><div><dt>Candidates evaluated</dt><dd id="labCandidates">—</dd></div></dl>
+            <p class="panel-copy">Research results stay separate from the simulator and both TWS accounts.</p>
+          </article>
+        </div>
+        <article class="card ledger">
+          <header class="card-header"><div><h2>Strategy leaderboard</h2><p id="labLeaderboardType">No scored run</p></div><span class="pill neutral" id="labLeaderboardCount">0 candidates</span></header>
+          <div class="table-scroll"><table><thead><tr><th scope="col">#</th><th scope="col">Strategy</th><th scope="col">Execution</th><th scope="col">Equity</th><th scope="col">Return</th><th scope="col">Drawdown</th><th scope="col">Sharpe</th><th scope="col">Trades</th><th scope="col">Avg cost</th><th scope="col">Score</th></tr></thead><tbody id="labLeaderboardBody"></tbody></table><div id="labLeaderboardEmpty" class="empty">No research results yet.</div></div>
+        </article>
+      </section>
+      <section id="connectionPanel" class="page" aria-label="Trader Workstation connection" hidden>
+        <div class="broker-grid">
+          <article class="card broker-card"><header class="card-header"><div><h2>IBKR Paper</h2><p>Simulated brokerage account in TWS</p></div><span class="pill neutral" id="paperState">Not checked</span></header>
+            <dl class="facts"><div><dt>Socket port</dt><dd id="paperPort">7497</dd></div><div><dt>Expected account</dt><dd id="paperAccount">Not configured</dd></div><div><dt>API client</dt><dd id="paperSdk">—</dd></div><div><dt>Last account check</dt><dd id="paperChecked">—</dd></div></dl>
+            <div class="broker-actions"><button type="button" class="button primary" data-tws-check="paper">Check Paper TWS</button></div></article>
+          <article class="card broker-card"><header class="card-header"><div><h2>IBKR Live</h2><p>Real brokerage account · read-only</p></div><span class="pill neutral" id="liveState">Not checked</span></header>
+            <dl class="facts"><div><dt>Socket port</dt><dd id="livePort">7496</dd></div><div><dt>Expected account</dt><dd id="liveAccount">Not configured</dd></div><div><dt>API client</dt><dd id="liveSdk">—</dd></div><div><dt>Last account check</dt><dd id="liveChecked">—</dd></div></dl>
+            <div class="broker-actions"><button type="button" class="button primary" data-tws-check="live">Check Live TWS</button></div></article>
+        </div>
+        <article class="card setup-card"><header class="card-header"><div><h2>Set up TWS</h2><p>Leave Read-Only API enabled.</p></div><svg class="icon card-icon"><use href="#i-shield"/></svg></header>
+          <ol><li>Sign in to Trader Workstation in the intended Paper or Live mode.</li><li>In TWS API settings, enable socket clients and confirm the socket port.</li><li>Set the corresponding <code>IBKR_TWS_PAPER_ACCOUNT</code> or <code>IBKR_TWS_LIVE_ACCOUNT</code> in the local launch environment, then restart the operator.</li><li>Check the account here. The result verifies the expected account and reports the TWS API server version.</li></ol>
+        </article>
+      </section>
+      <footer class="workspace-footer"><span><svg class="icon"><use href="#i-shield"/></svg> Local operator · broker orders disabled</span><span id="lastUpdated">Waiting for first refresh</span></footer>
+    </main>
+  </div>
+  <script src="operator.js" defer></script>
 </body>
 </html>
